@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./server
+    volumes:
+      - ./server/sandwich.db:/wichway_app/sandwich.db
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
