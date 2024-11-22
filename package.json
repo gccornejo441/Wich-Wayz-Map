@@ -23,6 +23,7 @@
     "@libsql/client": "^0.14.0",
     "@stripe/react-stripe-js": "^2.9.0",
     "@stripe/stripe-js": "^4.10.0",
+    "@swc/core": "^1.9.2",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "blueimp-md5": "^2.19.0",
