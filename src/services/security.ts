@@ -1,7 +1,7 @@
 import { executeQuery } from "./apiClient";
 import bcrypt from "bcryptjs";
 import { JWTPayload, SignJWT, jwtVerify } from "jose";
-import { User } from "./api";
+import { User } from "./shopLoaction";
 
 const SECRET_KEY = new TextEncoder().encode(
   import.meta.env.VITE_JWT_SECRET as string,

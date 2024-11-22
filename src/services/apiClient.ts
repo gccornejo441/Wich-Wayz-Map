@@ -13,6 +13,9 @@ interface QueryResult<T> {
   rows: T[];
 }
 
+/**
+ * Checks if the provided JWT token is valid based on its expiration time.
+ */
 const isTokenValid = (authToken: string): boolean => {
   try {
     const payload = JSON.parse(atob(authToken.split(".")[1]));
@@ -31,6 +34,9 @@ if (!isTokenValid(TURSO_AUTH_TOKEN)) {
   throw new Error("Invalid Turso authToken");
 }
 
+/**
+ * Executes a SQL query against the Turso database.
+ */
 export const executeQuery = async <T>(
   sql: string,
   args: InArgs = [],
@@ -45,12 +51,18 @@ export const executeQuery = async <T>(
   }
 };
 
+/**
+ * Retrieves all rows from the specified table.
+ */
 export const fetchTableData = async <T>(tableName: string): Promise<T[]> => {
   const query = `SELECT * FROM ${tableName}`;
   const { rows } = await executeQuery<T>(query);
   return rows;
 };
 
+/**
+ * Inserts a row of data into the specified table.
+ */
 export const insertData = async (
   tableName: string,
   columns: string[],

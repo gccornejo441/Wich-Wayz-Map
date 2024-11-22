@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AddAShopPayload } from "../types/dataTypes";
-import { Shop, submitLocationWithShop, Location } from "./api";
+import { Shop, submitLocationWithShop, Location } from "./shopLoaction";
 import { cacheData } from "./indexedDB";
 import { getCurrentUser } from "./security";
 

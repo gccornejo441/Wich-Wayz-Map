@@ -6,8 +6,8 @@ import {
   GetShops,
   ShopsContextType,
   ShopWithUser,
-} from "../services/api";
-import { Location } from "./../services/api";
+} from "../services/shopLoaction";
+import { Location } from "../services/shopLoaction";
 
 const ShopsContext = createContext<ShopsContextType>({
   shops: [],

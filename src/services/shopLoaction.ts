@@ -62,6 +62,12 @@ export interface ShopWithUser extends Shop {
   location_ids?: number[];
 }
 
+/**
+ * Retrieves all locations from the database.
+ *
+ * @returns {Promise<Location[]>} A list of all locations.
+ * @throws Logs an error if the fetch fails.
+ */
 export const GetLocations = async (): Promise<Location[]> => {
   try {
     const query = `SELECT * FROM locations`;
@@ -73,6 +79,12 @@ export const GetLocations = async (): Promise<Location[]> => {
   }
 };
 
+/**
+ * Retrieves all shop-location pairs from the database.
+ *
+ * @returns An array of objects, each with `shop_id` and `location_id` properties.
+ * @throws Logs an error if the fetch fails.
+ */
 export const GetShopLocations = async (): Promise<ShopLocation[]> => {
   try {
     const query = `SELECT * FROM shop_locations`;
@@ -84,6 +96,13 @@ export const GetShopLocations = async (): Promise<ShopLocation[]> => {
   }
 };
 
+/**
+ * Inserts a new location into the database.
+ *
+ * @param {Partial<Location>} locationData - An object containing the location data to be inserted.
+ * @returns {Promise<Location | null>} The inserted location object if successful, or null if there was an error.
+ * @throws Logs an error if the insertion fails.
+ */
 export const InsertLocation = async (
   locationData: Partial<Location>,
 ): Promise<Location | null> => {
@@ -111,6 +130,12 @@ export const InsertLocation = async (
   }
 };
 
+/**
+ * Updates a location in the database with the given data.
+ *
+ * @param {Location} locationData The location data to update.
+ * @returns {Promise<Location | null>} The updated location, or null on error.
+ */
 export const UpdateLocation = async (
   locationData: Location,
 ): Promise<Location | null> => {
@@ -152,19 +177,28 @@ export const UpdateLocation = async (
   }
 };
 
+/**
+ * Submits a location and associates it with a shop in a single transaction.
+ *
+ * @param {Object} payload
+ * @param {Object} payload.location - The location to submit.
+ * @param {Object} payload.shop - The shop to submit or associate with.
+ * @returns {Promise<{location: Location, shop: Shop}>}
+ *   The inserted/associated location and shop.
+ */
 export async function submitLocationWithShop(payload: {
   location: Omit<Location, "id">;
-  shop: Omit<Shop, "id" | "id_location">;
+  shop: Omit<Shop, "id" | "id_location"> & { id?: number };
 }): Promise<{ location: Location; shop: Shop }> {
   const db = await tursoClient.transaction();
 
   try {
     const locationStmt = {
       sql: `
-            INSERT INTO locations (postal_code, latitude, longitude, street_address, city, state, country, modified_by, date_created, date_modified)
-            VALUES ($postal_code, $latitude, $longitude, $street_address, $city, $state, $country, $modified_by, $date_created, $date_modified)
-            RETURNING *;
-          `,
+        INSERT INTO locations (postal_code, latitude, longitude, street_address, city, state, country, modified_by, date_created, date_modified)
+        VALUES ($postal_code, $latitude, $longitude, $street_address, $city, $state, $country, $modified_by, $date_created, $date_modified)
+        RETURNING *;
+      `,
       args: {
         postal_code: payload.location.postal_code,
         latitude: payload.location.latitude,
@@ -187,18 +221,19 @@ export async function submitLocationWithShop(payload: {
 
     const location = locationResult.rows[0] as unknown as Location;
 
+    // Step 2: Insert the Shop using the Location ID
     const shopStmt = {
       sql: `
-            INSERT INTO shops (name, description, created_by, modified_by, id_location)
-            VALUES ($name, $description, $created_by, $modified_by, $id_location)
-            RETURNING *;
-          `,
+        INSERT INTO shops (name, description, created_by, modified_by, id_location)
+        VALUES ($name, $description, $created_by, $modified_by, $id_location)
+        RETURNING *;
+      `,
       args: {
         name: payload.shop.name,
         description: payload.shop.description || null,
         created_by: payload.shop.created_by,
         modified_by: payload.shop.modified_by || null,
-        id_location: location.id || null,
+        id_location: location.id || null, // Use the location ID here
       },
     };
 
@@ -210,7 +245,23 @@ export async function submitLocationWithShop(payload: {
 
     const shop = shopResult.rows[0] as unknown as Shop;
 
+    // Step 3: Insert into the `shop_locations` Table
+    const shopLocationStmt = {
+      sql: `
+        INSERT INTO shop_locations (shop_id, location_id)
+        VALUES ($shop_id, $location_id);
+      `,
+      args: {
+        shop_id: shop.id || null,
+        location_id: location.id || null,
+      },
+    };
+
+    await db.execute(shopLocationStmt);
+
+    // Step 4: Commit the Transaction
     await db.commit();
+
     return { location, shop };
   } catch (error) {
     await db.rollback();
@@ -219,6 +270,13 @@ export async function submitLocationWithShop(payload: {
   }
 }
 
+/**
+ * Inserts a new shop into the database.
+ *
+ * @param shopData - An object containing the shop data to be inserted.
+ * @returns The inserted shop object if successful, or null if there was an error.
+ * @throws Logs an error if the insertion fails.
+ */
 export const InsertShop = async (
   shopData: Partial<Shop>,
 ): Promise<Shop | null> => {
@@ -243,6 +301,13 @@ export const InsertShop = async (
   }
 };
 
+/**
+ * Updates a shop's information in the database.
+ *
+ * @param updatedData - An object containing the shop's updated data.
+ * @returns The updated shop object if successful, or null if there was an error.
+ * @throws Logs an error if the update fails.
+ */
 export const UpdateShop = async (updatedData: Shop): Promise<Shop | null> => {
   try {
     const query = `
@@ -271,6 +336,12 @@ export const UpdateShop = async (updatedData: Shop): Promise<Shop | null> => {
   }
 };
 
+/**
+ * Retrieves all shops from the database, including their user information.
+ *
+ * @returns A list of shops with user information.
+ * @throws An error if the fetch fails.
+ */
 export const GetShops = async (): Promise<ShopWithUser[]> => {
   try {
     const shopsQuery = `

@@ -4,8 +4,8 @@ import { Popper } from "./Popper";
 import { ShopMarker } from "../../types/dataTypes";
 
 const sandwichIcon = new L.Icon({
-  iconUrl: "/sandwich.png",
-  iconSize: [30, 30],
+  iconUrl: "/sandwich-pin.svg",
+  iconSize: [50, 50],
   iconAnchor: [20, 40],
   popupAnchor: [0, -40],
 });
@@ -18,7 +18,7 @@ const MapMarker = ({
   return (
     <Marker icon={sandwichIcon} position={position}>
       {isPopupEnabled && (
-        <Popup>
+        <Popup autoClose={true}>
           <Popper {...popupContent} />
         </Popup>
       )}

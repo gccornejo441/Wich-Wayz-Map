@@ -75,14 +75,21 @@ const MapBox = () => {
         zoom={13}
         scrollWheelZoom
         zoomControl={false}
-        style={{ height: "93%", width: "100%", zIndex: -1, position: "fixed" }}
+        style={{
+          height: "100vh",
+          width: "100vw",
+          zIndex: -1,
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <ZoomControl position="topright" />
+        <ZoomControl position="bottomleft" />
 
         {shopMarkers.map((marker, index) => (
           <MapMarker

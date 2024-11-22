@@ -8,6 +8,9 @@ const DB_VERSION = 1;
 const SHOPS_STORE = "shops";
 const LOCATIONS_STORE = "locations";
 
+/**
+ * Initializes the IndexedDB database for the application.
+ */
 export const initDB = async () => {
   const openDB = await getIDB();
   return openDB(DB_NAME, DB_VERSION, {
@@ -22,11 +25,17 @@ export const initDB = async () => {
   });
 };
 
+/**
+ * Retrieves all data from the specified IndexedDB store.
+ */
 export const getCachedData = async (storeName: string) => {
   const db = await initDB();
   return db.getAll(storeName);
 };
 
+/**
+ * Caches the given data in the IndexedDB store specified by the storeName.
+ */
 export const cacheData = async <T>(storeName: string, data: T[]) => {
   const db = await initDB();
   const tx = db.transaction(storeName, "readwrite");

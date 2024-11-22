@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
-import { Toast, Dropdown, Avatar, Modal, Button } from "flowbite-react";
+import { Toast, Dropdown, Avatar, Modal } from "flowbite-react";
 import Logo from "../Logo/Logo";
 import { HiLogin, HiLogout } from "react-icons/hi";
 
@@ -66,10 +66,7 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
       <nav className="bg-primary border-b border-secondary">
         <div className="w-full h-12 mx-auto px-4 flex items-center justify-between">
           <SidebarToggleButton onClick={onToggleSidebar} />
-          <Logo
-            imageSource="/assets/wichway-mini.svg"
-            className="bg-transparent shadow-none rounded-none"
-          />
+          {/* <SearchBar /> */}
           <div className="flex items-center gap-4">
             {showDropdown ? (
               <Dropdown
@@ -110,17 +107,11 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={handleAvatarClick}
               >
-                <Avatar
-                  img={user?.avatar || "/assets/avatars/avatar_1.svg"}
-                  alt="User Avatar"
-                  rounded={true}
-                  status={isAuthenticated ? "online" : "offline"}
-                  statusPosition="bottom-right"
-                >
-                  <div className="font-medium text-sm">
-                    {user?.username || ""}
-                  </div>
-                </Avatar>
+                <Logo
+                  onClick={handleAvatarClick}
+                  imageSource="/assets/wichway-mini.svg"
+                  className="bg-transparent shadow-none rounded-none"
+                />
               </div>
             )}
           </div>
@@ -148,9 +139,6 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
         <Modal.Header />
         <Modal.Body>
           <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900">
-              Enter the required phrase
-            </h3>
             <div className="mt-4">
               <input
                 type="text"
@@ -159,18 +147,24 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
                 value={phrase}
                 onChange={(e) => {
                   setPhrase(e.target.value);
-                  setError(""); // Clear error when typing
+                  setError("");
                 }}
               />
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
             <div className="mt-6 flex justify-center gap-4">
-              <Button color="success" onClick={handlePhraseSubmit}>
+              <button
+                onClick={handlePhraseSubmit}
+                className="hover:text-white bg-primary text-white py-2 px-4 rounded transition"
+              >
                 Submit
-              </Button>
-              <Button color="gray" onClick={() => setIsModalOpen(false)}>
+              </button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className=" bg-white  text-primary border-primary border-2 py-2 px-4 rounded transition"
+              >
                 Cancel
-              </Button>
+              </button>
             </div>
           </div>
         </Modal.Body>

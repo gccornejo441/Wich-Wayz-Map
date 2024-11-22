@@ -8,7 +8,7 @@ export const Popper = ({ shopName, address, description }: PopupContent) => {
   return (
     <div className="w-64 font-sans">
       <h4 className="text-lg font-semibold text-dark">{shopName}</h4>
-      <p className="text-secondary">{description}</p>
+      <p className="text-primary">{description}</p>
 
       <div className="bg-gray-100 px-2 py-2 mb-2 rounded-lg">
         <span className="text-dark">{address}</span>

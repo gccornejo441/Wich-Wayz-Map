@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.0.27",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,6 +28,7 @@
     "bcryptjs": "^2.4.3",
     "blueimp-md5": "^2.19.0",
     "flowbite-react": "^0.10.2",
+    "fuse.js": "^7.0.0",
     "idb": "^8.0.0",
     "jose": "^5.9.6",
     "leaflet": "^1.9.4",
