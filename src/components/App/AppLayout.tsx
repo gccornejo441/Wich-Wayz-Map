@@ -6,6 +6,7 @@ import ToastMessage from "../Toast/ToastMessage";
 import { useModal } from "../../context/modalContext";
 import LoginModal from "../Modal/Login";
 import { useAuth } from "../../context/authContext";
+import SearchWrapper from "../Modal/SearchWrapper";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     closeModal,
     openLoginModal,
     openSignupModal,
+    isSearchModalOpen,
+    onSearchModal,
   } = useModal();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
@@ -48,6 +51,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       />
       <div className="flex">
         <Sidebar
+          onToggleSearch={onSearchModal}
           isOpen={isSidebarOpen}
           onToggleLocation={toggleLocation}
           onToggleSidebar={toggleSidebar}
@@ -61,6 +65,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
       </div>
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}
+      {isSearchModalOpen && <SearchWrapper onClose={closeModal} />}
       {isLoginModalOpen && (
         <>
           {currentModal === "login" && (

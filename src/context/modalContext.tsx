@@ -5,9 +5,10 @@ interface ModalContextProps {
   loginMode: boolean;
   currentModal: "login" | "signup" | "reset";
   openResetModal: () => void;
-
+  onSearchModal: () => void;
   openLoginModal: () => void;
   openSignupModal: () => void;
+  isSearchModalOpen: boolean;
   closeModal: () => void;
 }
 
@@ -19,6 +20,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentModal, setCurrentModal] = useState<
     "login" | "signup" | "reset"
   >("login");
+  const [isSearchModalOpen, setSearchModalOpen] = useState(false);
 
   const openLoginModal = () => {
     setCurrentModal("login");
@@ -39,17 +41,24 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
 
   const closeModal = () => {
     setLoginModalOpen(false);
+    setSearchModalOpen(false);
   };
+
+  const onSearchModal = () => {
+    setSearchModalOpen(true);
+  }
 
   return (
     <ModalContext.Provider
       value={{
         isLoginModalOpen,
+        isSearchModalOpen,
         loginMode,
         currentModal,
         openLoginModal,
         openSignupModal,
         openResetModal,
+        onSearchModal,
         closeModal,
       }}
     >

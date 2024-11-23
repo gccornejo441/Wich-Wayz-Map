@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { SidebarToggleButton } from "./SidebarButtons";
 import SidebarFooter from "./SidebarFooter";
-import { HiPlus, HiAdjustments } from "react-icons/hi";
+import { HiPlus, HiAdjustments, HiSearch } from "react-icons/hi";
 import { useModal } from "../../context/modalContext";
 
 interface TopMenuProps {
@@ -12,6 +12,7 @@ interface TopMenuProps {
 interface SidebarProps extends TopMenuProps {
   isOpen: boolean;
   onToggleLocation: () => void;
+  onToggleSearch: () => void;
 }
 
 interface SidebarItemProps {
@@ -95,6 +96,7 @@ const Sidebar = ({
   isOpen,
   onToggleLocation,
   onToggleSidebar,
+  onToggleSearch,
 }: SidebarProps) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
@@ -122,6 +124,15 @@ const Sidebar = ({
               />
             </li>
           )}
+          <li>
+            <SidebarItem
+              icon={<HiSearch className="w-6 h-6 text-white" />}
+              text="Search"
+              onClick={onToggleSearch}
+              disabled={!isMember}
+              badge={!isMember ? "Members Only" : undefined}
+            />
+          </li>
           <li>
             <SidebarItem
               onClick={onToggleLocation}

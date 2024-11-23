@@ -66,7 +66,6 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
       <nav className="bg-primary border-b border-secondary">
         <div className="w-full h-12 mx-auto px-4 flex items-center justify-between">
           <SidebarToggleButton onClick={onToggleSidebar} />
-          {/* <SearchBar /> */}
           <div className="flex items-center gap-4">
             {showDropdown ? (
               <Dropdown

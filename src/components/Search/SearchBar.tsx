@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { SearchShops } from "../../services/search";
+import { Shop } from "../../services/shopLoaction";
 
 const SearchBar = () => {
   const [search, setSearch] = useState("");
@@ -8,13 +9,13 @@ const SearchBar = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (search.trim() !== "") {
-      const results = SearchShops(search);
+      const results = SearchShops(search) as Promise<{ shop: Shop }[]>;
       console.log(results);
     }
   };
 
   return (
-    <form role="tooltip" className="w-1/3 " onSubmit={handleSubmit}>
+    <form className="w-full p-3" onSubmit={handleSubmit}>
       <label
         htmlFor="search"
         className="mb-2 text-sm font-medium text-primary sr-only"
@@ -30,7 +31,7 @@ const SearchBar = () => {
           id="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="block w-full p-2 ps-12 text-sm text-dark border border-secondary rounded-lg bg-background  focus:ring-0 focus:outline-none focus:border-primary font-sans "
+          className="block w-full p-2 ps-12 text-sm text-dark  border-gray-200 border rounded-lg bg-background  focus:ring-0 focus:outline-none focus:border-primary font-sans "
           placeholder="Search Shops"
           required
         />
