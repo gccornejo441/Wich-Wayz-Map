@@ -92,8 +92,9 @@ function createLocationShopPayload(
 
   const location = {
     street_address: addAShopPayload.house_number
-      ? `${addAShopPayload.house_number} ${addAShopPayload.road}`
+      ? `${addAShopPayload.house_number} ${addAShopPayload.address_first}`
       : addAShopPayload.address,
+    street_address_second: addAShopPayload.address_second,
     postal_code: addAShopPayload.postcode,
     city: addAShopPayload.city || "Unknown City",
     state: addAShopPayload.state || "Unknown State",

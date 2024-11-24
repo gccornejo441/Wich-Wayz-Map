@@ -10,9 +10,10 @@ export interface ShopLocation {
 
 export interface LocationData {
   address: string;
+  address_first?: string;
+  address_second?: string;
   shopName: string;
   house_number?: string;
-  road?: string;
   city?: string;
   state?: string;
   postcode: string;

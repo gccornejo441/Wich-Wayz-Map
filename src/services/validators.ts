@@ -58,8 +58,9 @@ export const resetPasswordSchema = yup.object().shape({
 export const locationSchema = yup.object().shape({
   shopName: yup.string().required("Shop name is required"),
   address: yup.string().required("Address is required"),
+  address_first: yup.string().optional(),
+  address_second: yup.string().optional(),
   house_number: yup.string().optional(),
-  road: yup.string().optional(),
   city: yup.string().optional(),
   state: yup.string().optional(),
   postcode: yup.string().required("Zip code is required"),

@@ -30,8 +30,9 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     defaultValues: {
       shopName: "",
       address: "",
+      address_first: "",
+      address_second: "",
       house_number: "",
-      road: "",
       city: "",
       state: "",
       postcode: "",
@@ -66,8 +67,12 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
       if (addressDetails) {
         setValue("house_number", addressDetails.components.house_number || "");
-        setValue("road", addressDetails.components.road || "");
-        setValue("city", addressDetails.components.city || "");
+        setValue("address_first", addressDetails.components.road || "");
+
+        setValue(
+          "city",
+          addressDetails.components.city || addressDetails.components.town || ""
+        );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
         setValue("country", addressDetails.components.country || "");
@@ -79,7 +84,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         showToast(
           "Address not found. Please try a different address.",
-          "error",
+          "error"
         );
       }
     } catch (error: unknown) {
@@ -89,7 +94,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         showToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
-          "error",
+          "error"
         );
       } else {
         setIsAddressValid(false);
@@ -102,7 +107,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     if (!isAddressValid) {
       showToast(
         "Please prefill and validate the address before submitting.",
-        "error",
+        "error"
       );
       return;
     }
@@ -111,7 +116,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       data,
       showToast,
       setShops,
-      setLocations,
+      setLocations
     );
     if (success) onClose();
   };
@@ -209,7 +214,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               {[
                 { name: "house_number", label: "Street Number" },
-                { name: "road", label: "Road" },
+                { name: "address_first", label: "Address Line 1" },
+                { name: "address_second", label: "Address Line 2" },
                 { name: "city", label: "City" },
                 { name: "state", label: "State" },
                 { name: "postcode", label: "Postcode" },

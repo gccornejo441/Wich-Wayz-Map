@@ -11,6 +11,7 @@ interface AddressComponents {
   neighbourhood?: string;
   suburb?: string;
   city?: string;
+  town?: string;
   county?: string;
   state?: string;
   postcode?: string;
@@ -23,7 +24,7 @@ interface ParsedAddress {
 }
 
 async function GetCoordinatesAndAddressDetails(
-  address: string,
+  address: string
 ): Promise<ParsedAddress | null> {
   try {
     const { data } = await axios.get(
@@ -35,7 +36,7 @@ async function GetCoordinatesAndAddressDetails(
           addressdetails: 1,
           limit: 1,
         },
-      },
+      }
     );
 
     if (Array.isArray(data) && data.length > 0) {

@@ -195,8 +195,8 @@ export async function submitLocationWithShop(payload: {
   try {
     const locationStmt = {
       sql: `
-        INSERT INTO locations (postal_code, latitude, longitude, street_address, city, state, country, modified_by, date_created, date_modified)
-        VALUES ($postal_code, $latitude, $longitude, $street_address, $city, $state, $country, $modified_by, $date_created, $date_modified)
+        INSERT INTO locations (postal_code, latitude, longitude, street_address, street_address_second, city, state, country, modified_by, date_created, date_modified)
+        VALUES ($postal_code, $latitude, $longitude, $street_address, $street_address_second, $city, $state, $country, $modified_by, $date_created, $date_modified)
         RETURNING *;
       `,
       args: {
@@ -204,6 +204,7 @@ export async function submitLocationWithShop(payload: {
         latitude: payload.location.latitude,
         longitude: payload.location.longitude,
         street_address: payload.location.street_address,
+        street_address_second: payload.location.street_address_second || null,
         city: payload.location.city,
         state: payload.location.state,
         country: payload.location.country,
