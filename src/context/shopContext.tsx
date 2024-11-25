@@ -6,8 +6,8 @@ import {
   GetShops,
   ShopsContextType,
   ShopWithUser,
-} from "../services/shopLoaction";
-import { Location } from "../services/shopLoaction";
+} from "../services/shopLocation";
+import { Location } from "../services/shopLocation";
 import { executeQuery } from "../services/apiClient";
 
 const ShopsContext = createContext<ShopsContextType>({
@@ -27,17 +27,17 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
       const cachedLocations = await getCachedData("locations");
 
       const dbResult = await executeQuery<{ locationCount: number }>(
-        `SELECT COUNT(*) as locationCount FROM locations`
+        `SELECT COUNT(*) as locationCount FROM locations`,
       );
       const currentLocationCount = dbResult.rows[0]?.locationCount || 0;
 
       if (
         cachedLocations.length < currentLocationCount ||
-        !cachedShops.length || 
+        !cachedShops.length ||
         !cachedLocations.length
       ) {
         console.info(
-          `Refreshing cache: ${cachedLocations.length} cached vs ${currentLocationCount} in database`
+          `Refreshing cache: ${cachedLocations.length} cached vs ${currentLocationCount} in database`,
         );
         const fetchedShops = await GetShops();
         const fetchedLocations = await GetLocations();

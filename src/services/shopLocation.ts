@@ -222,7 +222,6 @@ export async function submitLocationWithShop(payload: {
 
     const location = locationResult.rows[0] as unknown as Location;
 
-    // Step 2: Insert the Shop using the Location ID
     const shopStmt = {
       sql: `
         INSERT INTO shops (name, description, created_by, modified_by, id_location)
@@ -234,7 +233,7 @@ export async function submitLocationWithShop(payload: {
         description: payload.shop.description || null,
         created_by: payload.shop.created_by,
         modified_by: payload.shop.modified_by || null,
-        id_location: location.id || null, // Use the location ID here
+        id_location: location.id || null,
       },
     };
 
@@ -246,7 +245,6 @@ export async function submitLocationWithShop(payload: {
 
     const shop = shopResult.rows[0] as unknown as Shop;
 
-    // Step 3: Insert into the `shop_locations` Table
     const shopLocationStmt = {
       sql: `
         INSERT INTO shop_locations (shop_id, location_id)
@@ -260,7 +258,6 @@ export async function submitLocationWithShop(payload: {
 
     await db.execute(shopLocationStmt);
 
-    // Step 4: Commit the Transaction
     await db.commit();
 
     return { location, shop };
@@ -381,5 +378,44 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
   } catch (error) {
     console.error("Error fetching shops:", error);
     throw new Error("Failed to fetch shops.");
+  }
+};
+
+/**
+ * Populates the shop_locations table based on existing data in the shops and locations tables.
+ *
+ * @returns {Promise<void>} Resolves when the population process is complete.
+ * @throws Logs an error if the process fails.
+ */
+export const PopulateShopLocations = async (): Promise<void> => {
+  try {
+    const shopsQuery = `SELECT id AS shop_id, id_location FROM shops WHERE id_location IS NOT NULL`;
+    const { rows: shops } = await executeQuery<{
+      shop_id: number;
+      id_location: number;
+    }>(shopsQuery);
+
+    if (!shops.length) {
+      console.info("No shops found to populate shop_locations.");
+      return;
+    }
+
+    const insertShopLocationsQuery = `
+      INSERT INTO shop_locations (shop_id, location_id, date_created, date_modified)
+      VALUES ($shop_id, $location_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (shop_id, location_id) DO NOTHING;
+    `;
+
+    for (const shop of shops) {
+      await executeQuery(insertShopLocationsQuery, {
+        shop_id: shop.shop_id,
+        location_id: shop.id_location,
+      });
+    }
+
+    console.info("Successfully populated shop_locations table.");
+  } catch (error) {
+    console.error("Error populating shop_locations table:", error);
+    throw new Error("Failed to populate shop_locations table.");
   }
 };

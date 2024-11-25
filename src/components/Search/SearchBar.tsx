@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { SearchShops } from "../../services/search";
-import { Shop } from "../../services/shopLoaction";
+import { Shop } from "../../services/shopLocation";
 
 const SearchBar = () => {
   const [search, setSearch] = useState("");

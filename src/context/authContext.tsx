@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import { getCurrentUser, loginUser } from "../services/security";
-import { User } from "../services/shopLoaction";
+import { User } from "../services/shopLocation";
 
 interface AuthContextData {
   user: User | null;

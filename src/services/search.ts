@@ -1,6 +1,6 @@
 import Fuse from "fuse.js";
 import { getCachedData } from "./indexedDB";
-import { Shop } from "./shopLoaction";
+import { Shop } from "./shopLocation";
 
 export const SearchShops = async (query: string): Promise<{ shop: Shop }[]> => {
   const shops = await getCachedData("shops");

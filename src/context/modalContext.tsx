@@ -46,7 +46,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
 
   const onSearchModal = () => {
     setSearchModalOpen(true);
-  }
+  };
 
   return (
     <ModalContext.Provider

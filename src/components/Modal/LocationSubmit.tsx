@@ -71,7 +71,9 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
         setValue(
           "city",
-          addressDetails.components.city || addressDetails.components.town || ""
+          addressDetails.components.city ||
+            addressDetails.components.town ||
+            "",
         );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
@@ -84,7 +86,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         showToast(
           "Address not found. Please try a different address.",
-          "error"
+          "error",
         );
       }
     } catch (error: unknown) {
@@ -94,7 +96,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         showToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
-          "error"
+          "error",
         );
       } else {
         setIsAddressValid(false);
@@ -107,7 +109,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     if (!isAddressValid) {
       showToast(
         "Please prefill and validate the address before submitting.",
-        "error"
+        "error",
       );
       return;
     }
@@ -116,7 +118,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       data,
       showToast,
       setShops,
-      setLocations
+      setLocations,
     );
     if (success) onClose();
   };
