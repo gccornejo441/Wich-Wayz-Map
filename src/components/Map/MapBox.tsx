@@ -11,7 +11,8 @@ const DEFAULT_POSITION: LatLngTuple = [40.7128, -74.006]; // NYC
 const MapBox = () => {
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
-  const { shops, locations } = useShops();
+  const { shops } = useShops();
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -34,37 +35,31 @@ const MapBox = () => {
 
   useEffect(() => {
     const fetchMarkers = async () => {
-      const markers = shops.map((shop) => {
-        const location = locations.find((loc) => loc.id === shop.id_location);
+      const markers = shops.flatMap(
+        (shop) =>
+          shop.locations?.map((location) => ({
+            position: [location.latitude, location.longitude] as LatLngTuple,
+            popupContent: {
+              shopId: shop.id ?? 1,
+              shopName: shop.name,
+              address: `${location.street_address || "Address not available"}, ${
+                location.postal_code || ""
+              }, ${location.city || ""}, ${location.state || ""}`,
+              description: shop.description || undefined,
+              createdBy: shop.created_by_username || "admin",
+              categories:
+                shop.categories?.map((category) => category.name).join(", ") ||
+                "No categories available",
+            },
+            isPopupEnabled: true,
+          })) || [],
+      );
 
-        if (!location) return null;
-
-        const createdBy = shop.created_by_username || "admin";
-
-        return {
-          position: [location.latitude, location.longitude] as LatLngTuple,
-          popupContent: {
-            shopId: shop.id ?? 1,
-            shopName: shop.name,
-            address: `${location.street_address || "Address not available"}, ${
-              location.postal_code || ""
-            }, ${location.city || ""}, ${location.state || ""}`,
-            description: shop.description,
-            createdBy,
-          },
-          isPopupEnabled: true,
-        };
-      });
-
-      const filteredMarkers = markers.filter(
-        (marker) => marker !== null,
-      ) as ShopMarker[];
-
-      setShopMarkers(filteredMarkers);
+      setShopMarkers(markers);
     };
 
     fetchMarkers();
-  }, [shops, locations]);
+  }, [shops]);
 
   if (!position) return <div>Loading map...</div>;
 

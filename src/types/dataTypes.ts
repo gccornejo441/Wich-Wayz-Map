@@ -24,6 +24,7 @@ export interface LocationData {
 
 export interface AddAShopPayload extends LocationData {
   shop_description: string;
+  categoryIds: number[];
 }
 
 export interface PopupContent {
@@ -32,6 +33,7 @@ export interface PopupContent {
   address: string;
   description?: string;
   createdBy: string;
+  categories?: string;
   usersAvatarId?: string;
   usersAvatarEmail?: string;
 }

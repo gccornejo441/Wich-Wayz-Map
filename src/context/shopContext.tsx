@@ -1,16 +1,17 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { ShopsProviderProps } from "../types/dataTypes";
 import { cacheData, getCachedData } from "../services/indexedDB";
-import {
-  GetLocations,
-  GetShops,
-  ShopsContextType,
-  ShopWithUser,
-} from "../services/shopLocation";
-import { Location } from "../services/shopLocation";
+import { GetShops, ShopWithUser, Location } from "../services/shopLocation";
 import { executeQuery } from "../services/apiClient";
 
-const ShopsContext = createContext<ShopsContextType>({
+export interface ShopsContextType {
+  shops: ShopWithUser[];
+  locations: Location[];
+  setShops: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
+  setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
+}
+
+export const ShopsContext = createContext<ShopsContextType>({
   shops: [],
   locations: [],
   setShops: () => {},
@@ -37,11 +38,17 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         !cachedLocations.length
       ) {
         console.info(
-          `Refreshing cache: ${cachedLocations.length} cached vs ${currentLocationCount} in database`,
+          "Refreshing cache: Fetching latest data from the database",
         );
+
         const fetchedShops = await GetShops();
-        const fetchedLocations = await GetLocations();
+
         setShops(fetchedShops);
+
+        const fetchedLocations = fetchedShops.flatMap(
+          (shop) => shop.locations || [],
+        );
+
         setLocations(fetchedLocations);
 
         await cacheData("shops", fetchedShops);
@@ -56,7 +63,14 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   }, []);
 
   return (
-    <ShopsContext.Provider value={{ shops, locations, setShops, setLocations }}>
+    <ShopsContext.Provider
+      value={{
+        shops,
+        locations,
+        setShops,
+        setLocations,
+      }}
+    >
       {children}
     </ShopsContext.Provider>
   );

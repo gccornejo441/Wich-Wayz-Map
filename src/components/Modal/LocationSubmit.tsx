@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { handleLocationSubmit } from "../../services/addShop";
 import { useShops } from "../../context/shopContext";
 import ModalWrapper from "./ModalWrapper";
@@ -7,6 +7,8 @@ import { AddAShopPayload, LocationData } from "../../types/dataTypes";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "../../services/validators";
+import { Category, GetCategories } from "../../services/apiClient";
+import Select from "react-select";
 
 interface LocationSubmitProps {
   onClose: () => void;
@@ -18,6 +20,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [isManualEntry, setIsManualEntry] = useState(false);
   const [isAddressValid, setIsAddressValid] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
   const {
     register,
@@ -39,6 +43,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       country: "",
       latitude: 0,
       longitude: 0,
+      categoryIds: [],
     },
   });
 
@@ -47,6 +52,14 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     setToastType(type);
     setTimeout(() => setToastMessage(null), 5000);
   };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const data = await GetCategories();
+      setCategories(data);
+    };
+    fetchCategories();
+  }, []);
 
   /**
    * Tries to prefill the address fields with data from OpenStreetMap given an
@@ -114,6 +127,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       return;
     }
 
+    data.categoryIds = selectedCategories;
+
     const success = await handleLocationSubmit(
       data,
       showToast,
@@ -173,6 +188,26 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
                 {errors.shop_description.message}
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-dark">
+              Select Categories
+            </label>
+            <Select
+              isMulti
+              options={categories.map((category) => ({
+                value: category.id,
+                label: category.category_name,
+              }))}
+              onChange={(selectedOptions) =>
+                setSelectedCategories(
+                  selectedOptions.map((option) => option.value),
+                )
+              }
+              className="react-select-container"
+              classNamePrefix="react-select"
+            />
           </div>
 
           <div>

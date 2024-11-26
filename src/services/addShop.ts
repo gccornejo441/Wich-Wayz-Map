@@ -76,7 +76,6 @@ export function updateShops(
     return updatedShops;
   });
 }
-
 /**
  * Creates payload for location and shop submission.
  */
@@ -113,5 +112,5 @@ function createLocationShopPayload(
     created_by: modifiedBy,
   };
 
-  return { location, shop };
+  return { location, shop, categoryIds: addAShopPayload.categoryIds };
 }

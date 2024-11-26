@@ -72,3 +72,27 @@ export const insertData = async (
   const query = `INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`;
   await executeQuery(query, values);
 };
+
+export interface Category {
+  id: number;
+  category_name: string;
+}
+
+export const GetCategories = async (): Promise<Category[]> => {
+  const response = await fetch("/categories.json");
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch categories: ${response.statusText}`);
+  }
+
+  const data: Category[] = await response.json();
+
+  if (
+    !Array.isArray(data) ||
+    !data.every((item) => "id" in item && "category_name" in item)
+  ) {
+    throw new Error("Invalid category data format");
+  }
+
+  return data;
+};

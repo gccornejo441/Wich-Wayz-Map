@@ -4,14 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#d9534f", // red
-        secondary: "#f0ad4e", // yellow
-        background: "#f8f9fa", // gray
-        accent: "#9AD14B", // yellow green
+        primary: "#DA291C", // red
+        secondary: "#FFC72C", // yellow
+        background: "#FFFFFF", // white
+        accent: "#333333", // Dark gray/black
         dark: "#343a40", // dark gray
+        lightGray: "#F5F5F5", // light gray
       },
       fontFamily: {
         sans: ["'Open Sans'", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
       borderRadius: {
         lg: "12px",
@@ -22,5 +24,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

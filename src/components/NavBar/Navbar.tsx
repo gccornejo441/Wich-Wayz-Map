@@ -108,9 +108,10 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
               >
                 <Logo
                   onClick={handleAvatarClick}
-                  imageSource="/assets/wichway-mini.svg"
+                  imageSource="/Wich-Wayz-Logo.svg"
                   className="bg-transparent shadow-none rounded-none"
                 />
+                {/* <h1 onClick={handleAvatarClick} className="text-4xl font-bold font-poppins italic text-white">Wich Wayz?</h1> */}
               </div>
             )}
           </div>

@@ -23,13 +23,6 @@ export interface User {
   reset_token?: string;
 }
 
-export interface ShopsContextType {
-  shops: ShopWithUser[];
-  locations: Location[];
-  setShops: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
-  setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
-}
-
 export interface Location {
   id?: number;
   postal_code: string;
@@ -45,6 +38,11 @@ export interface Location {
   country: string;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+}
+
 export interface Shop {
   id?: number;
   name: string;
@@ -52,14 +50,15 @@ export interface Shop {
   created_by: number;
   modified_by?: number | null;
   date_created?: string;
-  date_modified?: string;
-  id_location: number;
+  date_modified?: string | null;
+  id_location?: number;
 }
 
 export interface ShopWithUser extends Shop {
   created_by_username?: string;
   users_avatar_id?: string;
-  location_ids?: number[];
+  locations?: Location[];
+  categories?: Category[];
 }
 
 /**
@@ -178,17 +177,19 @@ export const UpdateLocation = async (
 };
 
 /**
- * Submits a location and associates it with a shop in a single transaction.
+ * Submits a location and associates it with a shop and categories in a single transaction.
  *
  * @param {Object} payload
  * @param {Object} payload.location - The location to submit.
  * @param {Object} payload.shop - The shop to submit or associate with.
+ * @param {number[]} payload.categoryIds - The list of category IDs to associate with the shop.
  * @returns {Promise<{location: Location, shop: Shop}>}
  *   The inserted/associated location and shop.
  */
 export async function submitLocationWithShop(payload: {
   location: Omit<Location, "id">;
   shop: Omit<Shop, "id" | "id_location"> & { id?: number };
+  categoryIds: number[];
 }): Promise<{ location: Location; shop: Shop }> {
   const db = await tursoClient.transaction();
 
@@ -257,6 +258,21 @@ export async function submitLocationWithShop(payload: {
     };
 
     await db.execute(shopLocationStmt);
+
+    const shopCategoryStmts = payload.categoryIds.map((categoryId) => ({
+      sql: `
+        INSERT INTO shop_categories (shop_id, category_id)
+        VALUES ($shop_id, $category_id);
+      `,
+      args: {
+        shop_id: shop.id || null,
+        category_id: categoryId,
+      },
+    }));
+
+    for (const stmt of shopCategoryStmts) {
+      await db.execute(stmt);
+    }
 
     await db.commit();
 
@@ -335,46 +351,125 @@ export const UpdateShop = async (updatedData: Shop): Promise<Shop | null> => {
 };
 
 /**
- * Retrieves all shops from the database, including their user information.
+ * Retrieves all shops from the database, including their associated users, locations, and categories.
  *
- * @returns A list of shops with user information.
+ * @returns {Promise<ShopWithUser[]>} A list of shops with their related information.
  * @throws An error if the fetch fails.
  */
 export const GetShops = async (): Promise<ShopWithUser[]> => {
   try {
+    // Query to fetch shops with users, locations, and categories
     const shopsQuery = `
-        SELECT 
-          shops.id, 
-          shops.name, 
-          shops.description, 
-          shops.modified_by, 
-          shops.created_by, 
-          users.username AS created_by_username, 
-          users.avatar AS users_avatar_id, 
-          shops.date_created, 
-          shops.date_modified, 
-          shops.id_location
-        FROM shops
-        LEFT JOIN users ON shops.created_by = users.id;
-      `;
+      SELECT 
+        shops.id AS shop_id,
+        shops.name AS shop_name,
+        shops.description,
+        shops.modified_by,
+        shops.created_by,
+        users.username AS created_by_username,
+        users.avatar AS users_avatar_id,
+        shops.date_created,
+        shops.date_modified,
+        locations.id AS location_id,
+        locations.postal_code,
+        locations.latitude,
+        locations.longitude,
+        locations.street_address,
+        locations.street_address_second,
+        locations.city,
+        locations.state,
+        locations.country,
+        categories.id AS category_id,
+        categories.category_name
+      FROM shops
+      LEFT JOIN users ON shops.created_by = users.id
+      LEFT JOIN shop_locations ON shops.id = shop_locations.shop_id
+      LEFT JOIN locations ON shop_locations.location_id = locations.id
+      LEFT JOIN shop_categories ON shops.id = shop_categories.shop_id
+      LEFT JOIN categories ON shop_categories.category_id = categories.id;
+    `;
 
-    const { rows: shops } = await executeQuery<ShopWithUser>(shopsQuery);
+    const { rows: shopData } = await executeQuery<{
+      shop_id: number;
+      shop_name: string;
+      description: string | null;
+      modified_by: number | null;
+      created_by: number;
+      created_by_username: string | null;
+      users_avatar_id: string | null;
+      date_created: string;
+      date_modified: string | null;
+      location_id: number | null;
+      postal_code: string | null;
+      latitude: number | null;
+      longitude: number | null;
+      street_address: string | null;
+      street_address_second: string | null;
+      city: string | null;
+      state: string | null;
+      country: string | null;
+      category_id: number | null;
+      category_name: string | null;
+    }>(shopsQuery);
 
-    for (const shop of shops) {
-      const locationQuery = `
-          SELECT location_id 
-          FROM shop_locations 
-          WHERE shop_id = $shop_id;
-        `;
-      const { rows: locationIds } = await executeQuery<{ location_id: number }>(
-        locationQuery,
-        { shop_id: shop.id || null },
-      );
+    // Process the rows to group categories and locations under their respective shops
+    const shopMap: Record<number, ShopWithUser> = {};
 
-      shop.location_ids = locationIds.map((loc) => loc.location_id);
+    for (const row of shopData) {
+      if (!shopMap[row.shop_id]) {
+        shopMap[row.shop_id] = {
+          id: row.shop_id,
+          name: row.shop_name,
+          description: row.description || undefined,
+          modified_by: row.modified_by || undefined,
+          created_by: row.created_by,
+          created_by_username: row.created_by_username || "admin",
+          users_avatar_id: row.users_avatar_id || undefined,
+          date_created: row.date_created,
+          date_modified: row.date_modified || undefined,
+          locations: [],
+          categories: [],
+        };
+      }
+
+      // Add location if it exists
+      if (row.location_id) {
+        const locationExists = shopMap[row.shop_id].locations?.some(
+          (loc) => loc.id === row.location_id,
+        );
+        if (!locationExists) {
+          shopMap[row.shop_id].locations?.push({
+            id: row.location_id,
+            postal_code: row.postal_code || "",
+            latitude: row.latitude || 0,
+            longitude: row.longitude || 0,
+            street_address: row.street_address || "",
+            street_address_second: row.street_address_second || null,
+            city: row.city || "",
+            state: row.state || "",
+            country: row.country || "",
+            modified_by: undefined,
+            date_created: undefined,
+            date_modified: undefined,
+          });
+        }
+      }
+
+      // Add category if it exists
+      if (row.category_id) {
+        const categoryExists = shopMap[row.shop_id].categories?.some(
+          (cat) => cat.id === row.category_id,
+        );
+        if (!categoryExists) {
+          shopMap[row.shop_id].categories?.push({
+            id: row.category_id,
+            name: row.category_name || "Unknown",
+          });
+        }
+      }
     }
 
-    return shops;
+    return Object.values(shopMap);
   } catch (error) {
     console.error("Error fetching shops:", error);
     throw new Error("Failed to fetch shops.");
