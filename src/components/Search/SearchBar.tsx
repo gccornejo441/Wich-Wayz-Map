@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiSearch } from "react-icons/fi";
+import { HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { Shop } from "../../services/shopLocation";
 
@@ -24,7 +24,7 @@ const SearchBar = () => {
       </label>
       <div className="relative">
         <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-          <FiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
+          <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
         </div>
         <input
           type="search"

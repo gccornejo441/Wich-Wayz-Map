@@ -1,8 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { SidebarToggleButton } from "./SidebarButtons";
 import SidebarFooter from "./SidebarFooter";
-import { HiPlus, HiAdjustments, HiSearch } from "react-icons/hi";
+import { HiPlus, HiSearch } from "react-icons/hi";
 import { useModal } from "../../context/modalContext";
 
 interface TopMenuProps {
@@ -99,7 +99,6 @@ const Sidebar = ({
   onToggleSearch,
 }: SidebarProps) => {
   const { isAuthenticated, user } = useAuth();
-  const location = useLocation();
 
   const isMember = isAuthenticated && user?.membership_status === "member";
   return (
@@ -115,15 +114,6 @@ const Sidebar = ({
           <li>
             <SidebarTopMenu onToggleSidebar={onToggleSidebar} />
           </li>
-          {isAuthenticated && location.pathname !== "/settings" && (
-            <li>
-              <SidebarItem
-                icon={<HiAdjustments className="w-6 h-6 text-white" />}
-                text="Settings"
-                linkTo="/settings"
-              />
-            </li>
-          )}
           <li>
             <SidebarItem
               icon={<HiSearch className="w-6 h-6 text-white" />}

@@ -1,5 +1,5 @@
 import { PopupContent } from "../../types/dataTypes";
-import { FaExternalLinkAlt } from "react-icons/fa";
+import { HiExternalLink } from "react-icons/hi";
 export const Popper = ({
   shopName,
   address,
@@ -24,7 +24,7 @@ export const Popper = ({
           className="text-background font-bold flex items-center text-xs gap-2 mt-3"
         >
           Open on Google Maps
-          <FaExternalLinkAlt />
+          <HiExternalLink />
         </a>
       </div>
 

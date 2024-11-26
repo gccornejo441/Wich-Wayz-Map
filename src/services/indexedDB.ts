@@ -42,3 +42,14 @@ export const cacheData = async <T>(storeName: string, data: T[]) => {
   data.forEach((item) => tx.store.put(item));
   await tx.done;
 };
+
+export const refreshCache = async (): Promise<void> => {
+  try {
+    const db = await initDB();
+    db.close();
+    await indexedDB.deleteDatabase(DB_NAME);
+  } catch (error) {
+    console.error("Error refreshing cache:", error);
+    alert("Failed to refresh cache. Please try again.");
+  }
+};
