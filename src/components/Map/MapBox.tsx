@@ -48,8 +48,9 @@ const MapBox = () => {
               description: shop.description || undefined,
               createdBy: shop.created_by_username || "admin",
               categories:
-                shop.categories?.map((category) => category.name).join(", ") ||
-                "No categories available",
+                shop.categories
+                  ?.map((category) => category.category_name)
+                  .join(", ") || "No categories available",
             },
             isPopupEnabled: true,
           })) || [],

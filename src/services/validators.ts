@@ -92,3 +92,27 @@ export const userLoginSchema = yup.object().shape({
     .required("Email is required"),
   password: yup.string().required("Password is required"),
 });
+
+/**
+ * Validation schema for updating location data.
+ * Ensures all fields are in the correct format.
+ *
+ */
+export const updateShopSchema = yup.object().shape({
+  name: yup.string().required("Shop name is required"),
+  address: yup.string().optional(),
+  shop_description: yup
+    .string()
+    .optional()
+    .min(20, "Shop description must be at least 20 characters")
+    .max(250, "Shop description must be at most 250 characters"),
+  categoryIds: yup
+    .array()
+    .of(
+      yup
+        .number()
+        .typeError("Each category must be a number")
+        .required("Each category must be a valid ID"),
+    )
+    .optional(),
+});

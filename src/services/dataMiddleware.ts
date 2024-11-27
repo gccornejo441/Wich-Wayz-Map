@@ -3,6 +3,7 @@ import { AddAShopPayload } from "../types/dataTypes";
 import { Shop, submitLocationWithShop, Location } from "./shopLocation";
 import { cacheData } from "./indexedDB";
 import { getCurrentUser } from "./security";
+import { updateData } from "./apiClient";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -114,3 +115,13 @@ function createLocationShopPayload(
 
   return { location, shop, categoryIds: addAShopPayload.categoryIds };
 }
+
+/**
+ * Updates a shop's basic information in the database.
+ */
+export const updateShopInfo = async (
+  shopId: number,
+  updates: Record<string, string | number | null>,
+): Promise<void> => {
+  await updateData("shops", updates, "id = ?", [shopId]);
+};

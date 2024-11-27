@@ -27,6 +27,22 @@ export interface AddAShopPayload extends LocationData {
   categoryIds: number[];
 }
 
+export interface UpdateShopPayload {
+  name: string;
+  address?: string;
+  address_first?: string;
+  address_second?: string;
+  house_number?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  categoryIds?: number[];
+}
+
 export interface PopupContent {
   shopId: number;
   shopName: string;

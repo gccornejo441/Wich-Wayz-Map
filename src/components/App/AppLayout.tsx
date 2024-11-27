@@ -7,6 +7,7 @@ import { useModal } from "../../context/modalContext";
 import LoginModal from "../Modal/Login";
 import { useAuth } from "../../context/authContext";
 import SearchWrapper from "../Modal/SearchWrapper";
+import UpdateShop from "../Modal/UpdateShop";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -76,6 +77,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           )}
         </>
       )}
+      {currentModal === "updateShop" && <UpdateShop />}
+
       {toastMessage && (
         <ToastMessage
           toastMessage={toastMessage}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { handleLocationSubmit } from "../../services/addShop";
+import { handleLocationSubmit } from "../../services/dataMiddleware";
 import { useShops } from "../../context/shopContext";
 import ModalWrapper from "./ModalWrapper";
 import GetCoordinatesAndAddressDetails from "../../services/geolocation";

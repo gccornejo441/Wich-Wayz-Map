@@ -96,3 +96,64 @@ export const GetCategories = async (): Promise<Category[]> => {
 
   return data;
 };
+
+/**
+ * Updates data in the specified table.
+ */
+export const updateData = async (
+  tableName: string,
+  updates: Record<string, string | number | null>,
+  condition: string,
+  conditionArgs: QueryParams,
+): Promise<void> => {
+  const setClause = Object.keys(updates)
+    .map((column) => `${column} = ?`)
+    .join(", ");
+  const query = `UPDATE ${tableName} SET ${setClause} WHERE ${condition}`;
+
+  const args: InArgs = [...Object.values(updates), ...conditionArgs] as InArgs;
+
+  await executeQuery(query, args);
+};
+
+/**
+ * Updates the categories associated with a shop in the database.
+ */
+export const updateShopCategories = async (
+  shopId: number,
+  categoryIds: number[],
+): Promise<void> => {
+  const db = await tursoClient.transaction();
+
+  try {
+    const deleteStmt = {
+      sql: `
+        DELETE FROM shop_categories
+        WHERE shop_id = $shop_id;
+      `,
+      args: { shop_id: shopId },
+    };
+    await db.execute(deleteStmt);
+
+    const insertCategoryStmts = categoryIds.map((categoryId) => ({
+      sql: `
+        INSERT INTO shop_categories (shop_id, category_id)
+        VALUES ($shop_id, $category_id);
+      `,
+      args: {
+        shop_id: shopId,
+        category_id: categoryId,
+      },
+    }));
+
+    for (const stmt of insertCategoryStmts) {
+      await db.execute(stmt);
+    }
+
+    await db.commit();
+  } catch (error) {
+    await db.rollback();
+    console.error("Failed to update shop categories:", error);
+    throw error;
+  }
+};

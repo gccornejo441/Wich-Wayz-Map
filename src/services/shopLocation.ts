@@ -1,6 +1,6 @@
 import { InValue } from "@libsql/client";
 import { ShopLocation } from "../types/dataTypes";
-import { executeQuery, tursoClient } from "./apiClient";
+import { Category, executeQuery, tursoClient } from "./apiClient";
 
 export interface User {
   id?: number;
@@ -36,11 +36,6 @@ export interface Location {
   city: string;
   state: string;
   country: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
 }
 
 export interface Shop {
@@ -463,7 +458,7 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
         if (!categoryExists) {
           shopMap[row.shop_id].categories?.push({
             id: row.category_id,
-            name: row.category_name || "Unknown",
+            category_name: row.category_name || "Unknown",
           });
         }
       }
