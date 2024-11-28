@@ -11,12 +11,7 @@ export interface ShopsContextType {
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
 }
 
-export const ShopsContext = createContext<ShopsContextType>({
-  shops: [],
-  locations: [],
-  setShops: () => {},
-  setLocations: () => {},
-});
+export const ShopsContext = createContext<ShopsContextType | null>(null);
 
 export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   const [shops, setShops] = useState<ShopWithUser[]>([]);
@@ -24,38 +19,42 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const cachedShops = await getCachedData("shops");
-      const cachedLocations = await getCachedData("locations");
+      try {
+        const cachedShops = await getCachedData("shops");
+        const cachedLocations = await getCachedData("locations");
 
-      const dbResult = await executeQuery<{ locationCount: number }>(
-        `SELECT COUNT(*) as locationCount FROM locations`,
-      );
-      const currentLocationCount = dbResult.rows[0]?.locationCount || 0;
-
-      if (
-        cachedLocations.length < currentLocationCount ||
-        !cachedShops.length ||
-        !cachedLocations.length
-      ) {
-        console.info(
-          "Refreshing cache: Fetching latest data from the database",
+        const dbResult = await executeQuery<{ locationCount: number }>(
+          `SELECT COUNT(*) as locationCount FROM locations`,
         );
+        const currentLocationCount = dbResult.rows[0]?.locationCount || 0;
 
-        const fetchedShops = await GetShops();
+        if (
+          cachedLocations.length < currentLocationCount ||
+          !cachedShops.length ||
+          !cachedLocations.length
+        ) {
+          console.info(
+            "Refreshing cache: Fetching latest data from the database",
+          );
 
-        setShops(fetchedShops);
+          const fetchedShops = await GetShops();
 
-        const fetchedLocations = fetchedShops.flatMap(
-          (shop) => shop.locations || [],
-        );
+          setShops(fetchedShops);
 
-        setLocations(fetchedLocations);
+          const fetchedLocations = fetchedShops.flatMap(
+            (shop) => shop.locations || [],
+          );
 
-        await cacheData("shops", fetchedShops);
-        await cacheData("locations", fetchedLocations);
-      } else {
-        setShops(cachedShops as ShopWithUser[]);
-        setLocations(cachedLocations);
+          setLocations(fetchedLocations);
+
+          await cacheData("shops", fetchedShops);
+          await cacheData("locations", fetchedLocations);
+        } else {
+          setShops(cachedShops as ShopWithUser[]);
+          setLocations(cachedLocations);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -76,5 +75,10 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const useShops = () => useContext(ShopsContext);
+export const useShops = () => {
+  const context = useContext(ShopsContext);
+  if (!context) {
+    throw new Error("useShops must be used within a ShopsProvider");
+  }
+  return context;
+};

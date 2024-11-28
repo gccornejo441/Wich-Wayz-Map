@@ -138,5 +138,10 @@
     "id": 28,
     "category_name": "Homestyle",
     "description": "For sandwiches with a homemade feel, featuring comforting classics."
+  },
+  {
+    "id": 29,
+    "category_name": "Hero",
+    "description": "For large, overstuffed sandwich on a long roll, filled with meats, cheeses, veggies, and condiments, celebrated for its satisfying, hearty size."
   }
 ]

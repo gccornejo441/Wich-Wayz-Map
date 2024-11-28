@@ -80,9 +80,13 @@ export const locationSchema = yup.object().shape({
     .max(250, "Shop description must be at most 250 characters"),
   categoryIds: yup
     .array()
-    .of(yup.number().required("Each category must be a valid ID"))
-    .min(1, "At least one category is required")
-    .required("Categories are required"),
+    .of(
+      yup
+        .number()
+        .typeError("Each category must be a number")
+        .required("Each category must be a valid ID"),
+    )
+    .default([]),
 });
 
 export const userLoginSchema = yup.object().shape({

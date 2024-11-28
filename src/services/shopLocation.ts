@@ -189,6 +189,21 @@ export async function submitLocationWithShop(payload: {
   const db = await tursoClient.transaction();
 
   try {
+    const existingShopStmt = {
+      sql: `
+        SELECT * FROM shops WHERE name = $name LIMIT 1;
+      `,
+      args: { name: payload.shop.name },
+    };
+
+    const existingShopResult = await db.execute(existingShopStmt);
+    const existingShop =
+      existingShopResult.rows && existingShopResult.rows.length > 0
+        ? (existingShopResult.rows[0] as unknown as Shop)
+        : null;
+
+    let shop: Shop;
+
     const locationStmt = {
       sql: `
         INSERT INTO locations (postal_code, latitude, longitude, street_address, street_address_second, city, state, country, modified_by, date_created, date_modified)
@@ -215,31 +230,66 @@ export async function submitLocationWithShop(payload: {
     if (!locationResult.rows || locationResult.rows.length === 0) {
       throw new Error("Failed to insert location.");
     }
-
     const location = locationResult.rows[0] as unknown as Location;
+    if (!existingShop) {
+      // Insert the new shop
+      const shopStmt = {
+        sql: `
+          INSERT INTO shops (name, description, created_by, modified_by, id_location)
+          VALUES ($name, $description, $created_by, $modified_by, $id_location)
+          RETURNING *;
+        `,
+        args: {
+          name: payload.shop.name,
+          description: payload.shop.description || null,
+          created_by: payload.shop.created_by,
+          modified_by: payload.shop.modified_by || null,
+          id_location: location.id ?? 0, // Use the inserted location's ID
+        },
+      };
 
-    const shopStmt = {
-      sql: `
-        INSERT INTO shops (name, description, created_by, modified_by, id_location)
-        VALUES ($name, $description, $created_by, $modified_by, $id_location)
-        RETURNING *;
-      `,
-      args: {
-        name: payload.shop.name,
-        description: payload.shop.description || null,
-        created_by: payload.shop.created_by,
-        modified_by: payload.shop.modified_by || null,
-        id_location: location.id || null,
-      },
-    };
+      const shopResult = await db.execute(shopStmt);
 
-    const shopResult = await db.execute(shopStmt);
+      if (!shopResult.rows || shopResult.rows.length === 0) {
+        throw new Error("Failed to insert shop.");
+      }
 
-    if (!shopResult.rows || shopResult.rows.length === 0) {
-      throw new Error("Failed to insert shop.");
+      shop = shopResult.rows[0] as unknown as Shop;
+
+      // Update the shop with the location ID
+      const updateShopStmt = {
+        sql: `
+          UPDATE shops
+          SET id_location = $id_location
+          WHERE id = $shop_id;
+        `,
+        args: {
+          id_location: location.id ?? 0, // Provide a fallback or validate beforehand
+          shop_id: shop.id ?? 0,
+        },
+      };
+
+      await db.execute(updateShopStmt);
+    } else {
+      shop = existingShop;
+
+      // If the shop exists but does not have id_location, update it
+      if (!shop.id_location) {
+        const updateShopStmt = {
+          sql: `
+            UPDATE shops
+            SET id_location = $id_location
+            WHERE id = $shop_id;
+          `,
+          args: {
+            id_location: location.id ?? 0,
+            shop_id: shop.id ?? 0,
+          },
+        };
+
+        await db.execute(updateShopStmt);
+      }
     }
-
-    const shop = shopResult.rows[0] as unknown as Shop;
 
     const shopLocationStmt = {
       sql: `
@@ -247,26 +297,40 @@ export async function submitLocationWithShop(payload: {
         VALUES ($shop_id, $location_id);
       `,
       args: {
-        shop_id: shop.id || null,
-        location_id: location.id || null,
+        shop_id: shop.id ?? 0,
+        location_id: location.id ?? 0,
       },
     };
 
     await db.execute(shopLocationStmt);
 
-    const shopCategoryStmts = payload.categoryIds.map((categoryId) => ({
-      sql: `
-        INSERT INTO shop_categories (shop_id, category_id)
-        VALUES ($shop_id, $category_id);
-      `,
-      args: {
-        shop_id: shop.id || null,
-        category_id: categoryId,
-      },
-    }));
+    for (const categoryId of payload.categoryIds) {
+      const existingCategoryStmt = {
+        sql: `
+          SELECT 1 FROM shop_categories WHERE shop_id = $shop_id AND category_id = $category_id LIMIT 1;
+        `,
+        args: {
+          shop_id: shop.id ?? 0,
+          category_id: categoryId ?? 0,
+        },
+      };
 
-    for (const stmt of shopCategoryStmts) {
-      await db.execute(stmt);
+      const existingCategoryResult = await db.execute(existingCategoryStmt);
+
+      if (existingCategoryResult.rows.length === 0) {
+        const insertCategoryStmt = {
+          sql: `
+            INSERT INTO shop_categories (shop_id, category_id)
+            VALUES ($shop_id, $category_id);
+          `,
+          args: {
+            shop_id: shop.id ?? 0,
+            category_id: categoryId ?? 0,
+          },
+        };
+
+        await db.execute(insertCategoryStmt);
+      }
     }
 
     await db.commit();

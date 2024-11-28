@@ -1,9 +1,15 @@
 import axios from "axios";
 import { AddAShopPayload } from "../types/dataTypes";
-import { Shop, submitLocationWithShop, Location } from "./shopLocation";
-import { cacheData } from "./indexedDB";
+import {
+  Shop,
+  submitLocationWithShop,
+  Location,
+  GetShops,
+} from "./shopLocation";
+import { cacheData, getCachedData } from "./indexedDB";
 import { getCurrentUser } from "./security";
 import { updateData } from "./apiClient";
+import { useShops } from "../context/shopContext";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -30,8 +36,16 @@ export async function handleLocationSubmit(
       throw new Error("Invalid response from server. Missing processed data.");
     }
 
-    updateLocations(setLocations, [location]);
-    updateShops(setShops, shop);
+    const fetchedShops = await GetShops();
+    const fetchedLocations = fetchedShops.flatMap(
+      (shop) => shop.locations || [],
+    );
+
+    setShops(fetchedShops);
+    cacheData("shops", fetchedShops);
+
+    setLocations(fetchedLocations);
+    cacheData("locations", fetchedLocations);
 
     showToast("Location and shop submitted successfully!", "success");
     return true;
@@ -124,4 +138,37 @@ export const updateShopInfo = async (
   updates: Record<string, string | number | null>,
 ): Promise<void> => {
   await updateData("shops", updates, "id = ?", [shopId]);
+};
+
+export const useUpdateShopCategories = () => {
+  const { setShops } = useShops();
+
+  const SaveUpdatedShopCategories = async (
+    shopId: number,
+    updatedCategories: { id: number; category_name: string }[],
+  ): Promise<void> => {
+    try {
+      const cachedShops = await getCachedData("shops");
+
+      const shopIndex = cachedShops.findIndex((shop) => shop.id === shopId);
+      if (shopIndex === -1) {
+        console.error(`Shop with ID ${shopId} not found in cache.`);
+        return;
+      }
+
+      const updatedShop = { ...cachedShops[shopIndex] };
+      updatedShop.categories = updatedCategories;
+
+      cachedShops[shopIndex] = updatedShop;
+
+      await cacheData("shops", cachedShops);
+
+      setShops([...cachedShops]);
+    } catch (error) {
+      console.error("Failed to update shop categories in IndexedDB:", error);
+      throw error;
+    }
+  };
+
+  return { SaveUpdatedShopCategories };
 };

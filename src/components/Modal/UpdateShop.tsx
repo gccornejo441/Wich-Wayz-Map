@@ -8,10 +8,14 @@ import { Category } from "../../services/apiClient";
 import { updateShopSchema } from "../../services/validators";
 import { UpdateShopPayload } from "../../types/dataTypes";
 import { useModal } from "../../context/modalContext";
-import { updateShopInfo } from "../../services/dataMiddleware";
+import {
+  updateShopInfo,
+  useUpdateShopCategories,
+} from "../../services/dataMiddleware";
 
 const UpdateShop = () => {
   const { currentModal, updateShopData, closeModal } = useModal();
+  const { SaveUpdatedShopCategories } = useUpdateShopCategories();
 
   const fallbackShopData: UpdateShopPayload = {
     name: "",
@@ -69,6 +73,20 @@ const UpdateShop = () => {
 
       await updateShopCategories(shopId, data.categoryIds || []);
 
+      const updatedCategories = data.categoryIds
+        ?.map((id) => {
+          const category = categories.find((cat) => cat.id === id);
+          return category
+            ? { id: category.id, category_name: category.category_name }
+            : null;
+        })
+        .filter(Boolean);
+
+      await SaveUpdatedShopCategories(
+        shopId,
+        updatedCategories as { id: number; category_name: string }[],
+      );
+
       setToastMessage("Shop updated successfully!");
     } catch (error) {
       console.error("Failed to update shop:", error);
@@ -87,9 +105,7 @@ const UpdateShop = () => {
 
   const handleChange = (selectedOptions: SelectOption[]) => {
     const numericIds = selectedOptions.map((option) => option.value);
-
     setSelectedCategories(numericIds);
-
     setValue("categoryIds", numericIds);
   };
 

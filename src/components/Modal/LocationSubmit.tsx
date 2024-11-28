@@ -126,9 +126,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       );
       return;
     }
-
     data.categoryIds = selectedCategories;
-
     const success = await handleLocationSubmit(
       data,
       showToast,

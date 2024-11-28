@@ -34,6 +34,7 @@ const SpeedDial = () => {
     await refreshCache();
     setIsProcessing(false);
     setIsWarningOpen(false);
+    window.location.reload();
   };
 
   return (
