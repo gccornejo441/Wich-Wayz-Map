@@ -1,3 +1,5 @@
+import { IndexedDBShop } from "../types/dataTypes";
+
 const getIDB = async () => {
   const { openDB } = await import("idb");
   return openDB;
@@ -31,6 +33,11 @@ export const initDB = async () => {
 export const getCachedData = async (storeName: string) => {
   const db = await initDB();
   return db.getAll(storeName);
+};
+
+export const getCachedShopLocationData = async (): Promise<IndexedDBShop[]> => {
+  const db = await initDB();
+  return (await db.getAll(SHOPS_STORE)) as IndexedDBShop[];
 };
 
 /**

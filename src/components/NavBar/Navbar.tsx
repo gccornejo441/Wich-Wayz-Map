@@ -4,6 +4,7 @@ import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
 import { Toast, Dropdown, Avatar, Modal } from "flowbite-react";
 import Logo from "../Logo/Logo";
 import { HiLogin, HiLogout } from "react-icons/hi";
+import SearchBar from "../Search/SearchBar";
 
 interface NavBarProps {
   onToggleSidebar: () => void;
@@ -66,6 +67,9 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
       <nav className="bg-primary border-b border-secondary">
         <div className="w-full h-12 mx-auto px-4 flex items-center justify-between">
           <SidebarToggleButton onClick={onToggleSidebar} />
+          <div className="hidden md:flex w-1/2">
+            <SearchBar />
+          </div>
           <div className="flex items-center gap-4">
             {showDropdown ? (
               <Dropdown

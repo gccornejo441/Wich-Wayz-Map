@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
 import { LatLngTuple } from "leaflet";
-import { MapContainer, TileLayer, ZoomControl } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, ZoomControl } from "react-leaflet";
 import MapMarker from "./MapMarker";
 import { useShops } from "../../context/shopContext";
 import { ShopMarker } from "../../types/dataTypes";
 import SpeedDial from "../Dial/SpeedDial";
+import { useMap as useMapContext } from "../../context/mapContext";
 
 const DEFAULT_POSITION: LatLngTuple = [40.7128, -74.006]; // NYC
 
 const MapBox = () => {
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
+  const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
+    null,
+  );
   const { shops } = useShops();
+  const { center } = useMapContext();
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -62,6 +67,12 @@ const MapBox = () => {
     fetchMarkers();
   }, [shops]);
 
+  useEffect(() => {
+    if (center) {
+      setSelectedMarker(center);
+    }
+  }, [center]);
+
   if (!position) return <div>Loading map...</div>;
 
   return (
@@ -87,12 +98,19 @@ const MapBox = () => {
 
         <ZoomControl position="bottomleft" />
 
+        <MapInteraction center={center} />
+
         {shopMarkers.map((marker, index) => (
           <MapMarker
             key={index}
             position={marker.position}
             popupContent={marker.popupContent}
-            isPopupEnabled={marker.isPopupEnabled}
+            autoOpen={
+              !!selectedMarker &&
+              selectedMarker[0] === marker.position[0] &&
+              selectedMarker[1] === marker.position[1]
+            }
+            isPopupEnabled={true}
           />
         ))}
       </MapContainer>
@@ -102,3 +120,15 @@ const MapBox = () => {
 };
 
 export default MapBox;
+
+const MapInteraction = ({ center }: { center: LatLngTuple | null }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 15);
+    }
+  }, [center, map]);
+
+  return null;
+};

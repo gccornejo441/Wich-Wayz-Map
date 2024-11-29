@@ -119,8 +119,6 @@ const Sidebar = ({
               icon={<HiSearch className="w-6 h-6 text-white" />}
               text="Search"
               onClick={onToggleSearch}
-              disabled={!isMember}
-              badge={!isMember ? "Members Only" : undefined}
             />
           </li>
           <li>

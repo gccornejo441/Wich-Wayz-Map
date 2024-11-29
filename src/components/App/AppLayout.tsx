@@ -78,7 +78,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         </>
       )}
       {currentModal === "updateShop" && <UpdateShop />}
-
       {toastMessage && (
         <ToastMessage
           toastMessage={toastMessage}

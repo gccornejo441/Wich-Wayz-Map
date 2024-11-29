@@ -5,15 +5,18 @@ import {
   HiOutlineRefresh,
   HiClipboardCopy,
   HiOutlineDotsHorizontal,
+  HiMap,
 } from "react-icons/hi";
 import WarningDialog from "../Modal/Dialog/WarningDialog";
 import { refreshCache } from "../../services/indexedDB";
+import { useNavigate } from "react-router-dom";
 
 const SpeedDial = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
@@ -47,6 +50,16 @@ const SpeedDial = () => {
         } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 rounded-lg shadow-sm bg-primary`}
       >
         <ul className="text-sm text-white">
+          <li>
+            <button
+              onClick={() => navigate("/add-a-shop")}
+              className="flex items-center px-5 py-2 w-full text-left"
+            >
+              <HiMap className="w-5 h-5 mr-2" />
+              <span className="text-sm font-medium">Add Shop</span>
+            </button>
+          </li>
+
           <li>
             <button
               onClick={() => setIsModalOpen(true)}
