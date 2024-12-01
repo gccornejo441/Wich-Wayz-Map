@@ -8,7 +8,7 @@ const AddShop = () => {
   };
   return (
     <div className="bg-white w-full p-6 md:p-10">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center my-5">
         <button
           onClick={handleBackClick}
           className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition duration-300"

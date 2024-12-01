@@ -53,15 +53,15 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string,
+    email: string
   ) => Promise<{ success: boolean; message: string }>;
   register: (
     email: string,
-    password: string,
+    password: string
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -71,19 +71,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(null);
+  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(() => {
+    // Initialize from sessionStorage if available
+    const storedMetadata = sessionStorage.getItem("userMetadata");
+    return storedMetadata ? JSON.parse(storedMetadata) : null;
+  });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+
+      if (firebaseUser) {
+        // Fetch user metadata only if not already in sessionStorage
+        if (!sessionStorage.getItem("userMetadata")) {
+          try {
+            const metadata = await getUser(firebaseUser.uid);
+            setUserMetadata(metadata);
+            sessionStorage.setItem("userMetadata", JSON.stringify(metadata));
+          } catch (error) {
+            console.error("Error fetching user metadata:", error);
+            setUserMetadata(null);
+            sessionStorage.removeItem("userMetadata");
+          }
+        }
+      } else {
+        setUserMetadata(null);
+        sessionStorage.removeItem("userMetadata");
+      }
     });
+
     return () => unsubscribe();
   }, []);
 
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -95,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
       const { user } = userCredential;
 
@@ -103,9 +126,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return { success: false, message: "Failed to authenticate user." };
       }
 
-      const userMetadata = await getUser(user.uid);
+      const metadata = await getUser(user.uid);
+      setUserMetadata(metadata);
 
-      setUserMetadata(userMetadata);
+      // Store metadata in sessionStorage
+      sessionStorage.setItem("userMetadata", JSON.stringify(metadata));
 
       return { success: true, message: "Login successful." };
     } catch (error: unknown) {
@@ -138,109 +163,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const register = async (
-    email: string,
-    password: string,
-    username: string | null = null,
-    firstName: string | null = null,
-    lastName: string | null = null,
-  ): Promise<{ success: boolean; message: string }> => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      const { user } = userCredential;
-
-      if (!user) {
-        return { success: false, message: "Failed to create user." };
-      }
-
-      await sendEmailVerification(user);
-
-      const hashedPassword = bcrypt.hashSync(password, 10);
-      await storeUser({
-        firebaseUid: user.uid,
-        email,
-        hashedPassword,
-        username,
-        firstName,
-        lastName,
-      });
-
-      return {
-        success: true,
-        message:
-          "User registered successfully. Please check your email for verification.",
-      };
-    } catch (error: unknown) {
-      if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/email-already-in-use":
-            return {
-              success: false,
-              message:
-                "This email is already registered. Please log in or reset your password.",
-            };
-          case "auth/weak-password":
-            return {
-              success: false,
-              message:
-                "Your password is too weak. Please use at least 8 characters.",
-            };
-          case "auth/invalid-email":
-            return {
-              success: false,
-              message:
-                "The email address provided is invalid. Please use a valid email.",
-            };
-          default:
-            return {
-              success: false,
-              message:
-                "An error occurred during registration. Please try again later.",
-            };
-        }
-      }
-
-      console.error("Registration error:", error);
-      return {
-        success: false,
-        message:
-          "An unexpected error occurred during registration. Please try again later.",
-      };
-    }
-  };
-
   const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
       setUser(null);
+      setUserMetadata(null);
+      sessionStorage.removeItem("userMetadata");
     } catch (error) {
       console.error("Error during logout:", error);
     }
   };
-
-  const resetPassword = async (
-    email: string,
-  ): Promise<{ success: boolean; message: string }> => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-      return {
-        success: true,
-        message: "Password reset email sent successfully.",
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof FirebaseError
-          ? error.message
-          : "Failed to send password reset email.";
-      return { success: false, message: errorMessage };
-    }
-  };
-
-  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
@@ -249,11 +181,98 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         userMetadata,
         setUser,
         setUserMetadata,
-        isAuthenticated,
+        isAuthenticated: !!user,
         login,
         logout,
-        resetPassword,
-        register,
+        resetPassword: async (email) => {
+          try {
+            await sendPasswordResetEmail(auth, email);
+            return {
+              success: true,
+              message: "Password reset email sent successfully.",
+            };
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof FirebaseError
+                ? error.message
+                : "Failed to send password reset email.";
+            return { success: false, message: errorMessage };
+          }
+        },
+        register: async (
+          email,
+          password,
+          username = null,
+          firstName = null,
+          lastName = null
+        ) => {
+          try {
+            const userCredential = await createUserWithEmailAndPassword(
+              auth,
+              email,
+              password
+            );
+            const { user } = userCredential;
+
+            if (!user) {
+              return { success: false, message: "Failed to create user." };
+            }
+
+            await sendEmailVerification(user);
+
+            const hashedPassword = bcrypt.hashSync(password, 10);
+            await storeUser({
+              firebaseUid: user.uid,
+              email,
+              hashedPassword,
+              username,
+              firstName,
+              lastName,
+            });
+
+            return {
+              success: true,
+              message:
+                "User registered successfully. Please check your email for verification.",
+            };
+          } catch (error: unknown) {
+            if (error instanceof FirebaseError) {
+              switch (error.code) {
+                case "auth/email-already-in-use":
+                  return {
+                    success: false,
+                    message:
+                      "This email is already registered. Please log in or reset your password.",
+                  };
+                case "auth/weak-password":
+                  return {
+                    success: false,
+                    message:
+                      "Your password is too weak. Please use at least 8 characters.",
+                  };
+                case "auth/invalid-email":
+                  return {
+                    success: false,
+                    message:
+                      "The email address provided is invalid. Please use a valid email.",
+                  };
+                default:
+                  return {
+                    success: false,
+                    message:
+                      "An error occurred during registration. Please try again later.",
+                  };
+              }
+            }
+
+            console.error("Registration error:", error);
+            return {
+              success: false,
+              message:
+                "An unexpected error occurred during registration. Please try again later.",
+            };
+          }
+        },
       }}
     >
       {children}

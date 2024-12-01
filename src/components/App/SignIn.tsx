@@ -51,15 +51,13 @@ const SignIn = () => {
     <div className="bg-lightGray font-sans">
       <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4">
         <div className="max-w-md w-full">
-          <div className="mb-8">
+          <div className="p-8 rounded-xl bg-background shadow-card">
             <Link to="/" className="block">
               <Logo
                 imageSource="/Wich-Wayz-Logo.svg"
-                className="w-32 h-32 md:w-60 md:h-60 mx-auto"
+                className="w-32 h-32 md:w-60 md:h-15 mx-auto"
               />
             </Link>
-          </div>
-          <div className="p-8 rounded-xl bg-background shadow-card">
             <h2 className="text-accent text-center text-2xl font-poppins font-bold">
               Sign in
             </h2>

@@ -6,7 +6,7 @@ import UserAvatar from "../Avatar/UserAvatar";
 import { Dropdown, Toast } from "flowbite-react";
 import { useState } from "react";
 import { useAuth } from "../../context/authContext";
-import { HiLogin, HiUserAdd } from "react-icons/hi";
+import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 
 interface NavBarProps {
@@ -50,10 +50,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
             <SidebarToggleButton onClick={onToggleSidebar} />
             <div className="flex items-center gap-2 cursor-pointer">
               <Link to="/" className="flex items-center gap-2 cursor-pointer">
-                <Logo
-                  imageSource="/Wich-Wayz-Logo.svg"
-                  className="bg-transparent shadow-none rounded-none"
-                />
+                <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-10" />
               </Link>
             </div>
           </div>
@@ -62,6 +59,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
           </div>
           <div className="flex items-center gap-4">
             <Dropdown
+              disabled
               arrowIcon={false}
               inline={true}
               label={
@@ -73,28 +71,50 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
                   />
                 </div>
               }
+              className="rounded-lg shadow-lg bg-white border border-lightGray"
             >
               {isAuthenticated ? (
                 <>
-                  {/* <Dropdown.Item icon={HiLogout} onClick={handleAuthAction}>
-                    Sign Out
-                  </Dropdown.Item>
+                  <Dropdown.Header className="px-4 py-2 text-sm text-gray-700">
+                    <span className="block font-semibold text-base text-accent">
+                      {userMetadata?.username}
+                    </span>
+                    <span className="block truncate text-sm text-primary">
+                      {userMetadata?.email}
+                    </span>
+                  </Dropdown.Header>
                   {userMetadata?.verified && (
-                    <Dropdown.Item icon={HiLogout} onClick={handleSignup}>
+                    <Dropdown.Item
+                      icon={HiUserAdd}
+                      onClick={handleSignup}
+                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                    >
                       Become a Club Member
                     </Dropdown.Item>
                   )}
                   <Dropdown.Divider />
-                  <div className="px-4 py-2 text-sm text-gray-500">
-                    {userMetadata?.username}
-                  </div> */}
+                  <Dropdown.Item
+                    icon={HiLogout}
+                    onClick={handleAuthAction}
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-red-500 rounded-lg transition duration-300 ease-in-out"
+                  >
+                    Sign Out
+                  </Dropdown.Item>
                 </>
               ) : (
                 <>
-                  <Dropdown.Item icon={HiLogin} onClick={handleAuthAction}>
+                  <Dropdown.Item
+                    icon={HiLogin}
+                    onClick={handleAuthAction}
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                  >
                     Sign In
                   </Dropdown.Item>
-                  <Dropdown.Item icon={HiUserAdd} onClick={handleSignup}>
+                  <Dropdown.Item
+                    icon={HiUserAdd}
+                    onClick={handleSignup}
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-red-500 rounded-lg transition duration-300 ease-in-out"
+                  >
                     Register
                   </Dropdown.Item>
                   <Dropdown.Divider />
