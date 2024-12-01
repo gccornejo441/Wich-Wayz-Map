@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,11 +21,14 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@libsql/client": "^0.14.0",
+    "@stripe/react-stripe-js": "^3.0.0",
+    "@stripe/stripe-js": "^5.2.0",
     "@swc/core": "^1.9.2",
     "@tailwindcss/typography": "^0.5.15",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "blueimp-md5": "^2.19.0",
+    "firebaseui": "^6.1.0",
     "flowbite-react": "^0.10.2",
     "fuse.js": "^7.0.0",
     "idb": "^8.0.0",

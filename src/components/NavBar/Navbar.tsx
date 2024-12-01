@@ -1,30 +1,23 @@
+import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
+import Logo from "../Logo/Logo";
+import SearchBar from "../Search/SearchBar";
+import { Link } from "react-router-dom";
+import UserAvatar from "../Avatar/UserAvatar";
+import { Dropdown, Toast } from "flowbite-react";
 import { useState } from "react";
 import { useAuth } from "../../context/authContext";
-import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
-import { Toast, Dropdown, Avatar, Modal } from "flowbite-react";
-import Logo from "../Logo/Logo";
-import { HiLogin, HiLogout } from "react-icons/hi";
-import SearchBar from "../Search/SearchBar";
+import { HiLogin, HiUserAdd } from "react-icons/hi";
+import { useNavigate } from "react-router";
 
 interface NavBarProps {
   onToggleSidebar: () => void;
-  onToggleLoginModel: () => void;
 }
 
-const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
-  const { isAuthenticated, logout, user } = useAuth();
+const NavBar = ({ onToggleSidebar }: NavBarProps) => {
+  const { isAuthenticated, logout, userMetadata } = useAuth();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setClickCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [phrase, setPhrase] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setError] = useState("");
-
-  const SECRET_PHASE = import.meta.env.VITE_SECRET_PHASE as string;
-
-  const requiredPhrase = SECRET_PHASE;
+  const navigate = useNavigate();
 
   const showToast = (message: string, type: "success" | "error") => {
     setToastMessage(message);
@@ -37,87 +30,78 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
       logout();
       showToast("You have been logged out successfully.", "success");
     } else {
-      onToggleLoginModel();
+      navigate("/signin");
     }
   };
 
-  const handleAvatarClick = () => {
-    setClickCount((prev) => {
-      const newCount = prev + 1;
-      if (newCount >= 10) {
-        setIsModalOpen(true);
-      }
-      return newCount;
-    });
-  };
-
-  const handlePhraseSubmit = () => {
-    if (phrase.toLowerCase() === requiredPhrase.toLowerCase()) {
-      setIsModalOpen(false);
-      setClickCount(0);
-      setShowDropdown(true);
-      showToast("Access granted!", "success");
+  const handleSignup = () => {
+    if (isAuthenticated) {
+      navigate("/checkout");
     } else {
-      setError("Incorrect phrase. Please try again.");
+      navigate("/register");
     }
   };
 
   return (
     <>
-      <nav className="bg-primary border-b border-secondary">
+      <nav className="bg-primary border-b border-secondary absolute top-0 left-0 w-full">
         <div className="w-full h-12 mx-auto px-4 flex items-center justify-between">
-          <SidebarToggleButton onClick={onToggleSidebar} />
+          <div className="flex items-center gap-4">
+            <SidebarToggleButton onClick={onToggleSidebar} />
+            <div className="flex items-center gap-2 cursor-pointer">
+              <Link to="/" className="flex items-center gap-2 cursor-pointer">
+                <Logo
+                  imageSource="/Wich-Wayz-Logo.svg"
+                  className="bg-transparent shadow-none rounded-none"
+                />
+              </Link>
+            </div>
+          </div>
           <div className="hidden md:flex w-1/2">
             <SearchBar />
           </div>
           <div className="flex items-center gap-4">
-            {showDropdown ? (
-              <Dropdown
-                arrowIcon={false}
-                inline={true}
-                label={
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <Avatar
-                      img={user?.avatar || "/assets/avatars/avatar_1.svg"}
-                      alt="User Avatar"
-                      rounded={true}
-                      status={isAuthenticated ? "online" : "offline"}
-                      statusPosition="bottom-right"
-                    >
-                      <div className="font-medium text-sm">
-                        {user?.username || ""}
-                      </div>
-                    </Avatar>
-                  </div>
-                }
-              >
-                {isAuthenticated ? (
-                  <>
-                    <Dropdown.Item icon={HiLogout} onClick={handleAuthAction}>
-                      Logout
+            <Dropdown
+              arrowIcon={false}
+              inline={true}
+              label={
+                <div className="cursor-pointer">
+                  <UserAvatar
+                    avatarId={userMetadata?.avatar || "default"}
+                    userEmail={userMetadata?.email || "guest@example.com"}
+                    size="md"
+                  />
+                </div>
+              }
+            >
+              {isAuthenticated ? (
+                <>
+                  {/* <Dropdown.Item icon={HiLogout} onClick={handleAuthAction}>
+                    Sign Out
+                  </Dropdown.Item>
+                  {userMetadata?.verified && (
+                    <Dropdown.Item icon={HiLogout} onClick={handleSignup}>
+                      Become a Club Member
                     </Dropdown.Item>
-                  </>
-                ) : (
-                  <>
-                    <Dropdown.Item icon={HiLogin} onClick={onToggleLoginModel}>
-                      Login
-                    </Dropdown.Item>
-                  </>
-                )}
-              </Dropdown>
-            ) : (
-              <div
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={handleAvatarClick}
-              >
-                <Logo
-                  onClick={handleAvatarClick}
-                  imageSource="/Wich-Wayz-Logo.svg"
-                  className="bg-transparent shadow-none rounded-none"
-                />
-                {/* <h1 onClick={handleAvatarClick} className="text-4xl font-bold font-poppins italic text-white">Wich Wayz?</h1> */}
-              </div>
-            )}
+                  )}
+                  <Dropdown.Divider />
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    {userMetadata?.username}
+                  </div> */}
+                </>
+              ) : (
+                <>
+                  <Dropdown.Item icon={HiLogin} onClick={handleAuthAction}>
+                    Sign In
+                  </Dropdown.Item>
+                  <Dropdown.Item icon={HiUserAdd} onClick={handleSignup}>
+                    Register
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
+                  <div className="px-4 py-2 text-sm text-gray-500">Guest</div>
+                </>
+              )}
+            </Dropdown>
           </div>
         </div>
         {toastMessage && (
@@ -134,45 +118,6 @@ const NavBar = ({ onToggleSidebar, onToggleLoginModel }: NavBarProps) => {
           </div>
         )}
       </nav>
-      <Modal
-        show={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        size="md"
-        popup
-      >
-        <Modal.Header />
-        <Modal.Body>
-          <div className="text-center">
-            <div className="mt-4">
-              <input
-                type="text"
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring"
-                placeholder="Type the phrase"
-                value={phrase}
-                onChange={(e) => {
-                  setPhrase(e.target.value);
-                  setError("");
-                }}
-              />
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-            </div>
-            <div className="mt-6 flex justify-center gap-4">
-              <button
-                onClick={handlePhraseSubmit}
-                className="hover:text-white bg-primary text-white py-2 px-4 rounded transition"
-              >
-                Submit
-              </button>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className=" bg-white  text-primary border-primary border-2 py-2 px-4 rounded transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
     </>
   );
 };

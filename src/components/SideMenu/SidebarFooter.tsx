@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ToastMessage from "../Toast/ToastMessage";
+import { Link } from "react-router-dom";
 
 const SidebarFooter = () => {
   const [toast, setToast] = useState<{
@@ -39,6 +40,9 @@ const SidebarFooter = () => {
         >
           Contact Us
         </button>
+        <Link to="/privacy-policy" className="hover:text-white transition">
+          Privacy Policy
+        </Link>
       </div>
       {toast && (
         <ToastMessage

@@ -4,7 +4,6 @@ import NavBar from "../NavBar/Navbar";
 import LocationSubmit from "../Modal/LocationSubmit";
 import ToastMessage from "../Toast/ToastMessage";
 import { useModal } from "../../context/modalContext";
-import LoginModal from "../Modal/Login";
 import { useAuth } from "../../context/authContext";
 import SearchWrapper from "../Modal/SearchWrapper";
 import UpdateShop from "../Modal/UpdateShop";
@@ -20,25 +19,16 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const { isAuthenticated, user } = useAuth();
 
-  const {
-    isLoginModalOpen,
-    currentModal,
-    closeModal,
-    openLoginModal,
-    openSignupModal,
-    isSearchModalOpen,
-    onSearchModal,
-  } = useModal();
+  const { currentModal, closeModal, isSearchModalOpen, onSearchModal } =
+    useModal();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   const toggleLocation = async () => {
-    if (isAuthenticated && user?.membership_status === "member") {
+    if (isAuthenticated && user?.emailVerified) {
       setModalOpen(!isModalOpen);
     } else {
-      setToastMessage(
-        "Only members can submit locations. Please join as a member.",
-      );
+      setToastMessage("Verify your email before submitting your location.");
       setToastType("error");
       setTimeout(() => setToastMessage(null), 5000);
     }
@@ -46,10 +36,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="relative">
-      <NavBar
-        onToggleSidebar={toggleSidebar}
-        onToggleLoginModel={openLoginModal}
-      />
+      <NavBar onToggleSidebar={toggleSidebar} />
       <div className="flex">
         <Sidebar
           onToggleSearch={onSearchModal}
@@ -58,7 +45,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           onToggleSidebar={toggleSidebar}
         />
         <div
-          className={`flex-1 bg-gray-100 transition-all duration-500 ease-in-out ${
+          className={`flex-1 transition-all duration-500 ease-in-out ${
             isSidebarOpen ? "ml-64" : "ml-0"
           }`}
         >
@@ -67,16 +54,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </div>
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}
       {isSearchModalOpen && <SearchWrapper onClose={closeModal} />}
-      {isLoginModalOpen && (
-        <>
-          {currentModal === "login" && (
-            <LoginModal
-              onClose={closeModal}
-              onSwitchToSignup={openSignupModal}
-            />
-          )}
-        </>
-      )}
       {currentModal === "updateShop" && <UpdateShop />}
       {toastMessage && (
         <ToastMessage

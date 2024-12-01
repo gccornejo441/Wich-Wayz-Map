@@ -120,3 +120,10 @@ export const updateShopSchema = yup.object().shape({
     )
     .optional(),
 });
+
+export const userProfileSchema = yup.object({
+  firstName: yup.string().nullable().max(50, "First name is too long"),
+  lastName: yup.string().nullable().max(50, "Last name is too long"),
+  username: yup.string().nullable().max(30, "Username is too long"),
+  avatar: yup.string().nullable(),
+});
