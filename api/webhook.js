@@ -1,13 +1,52 @@
+import { createClient } from "@libsql/client/web";
 import Stripe from "stripe";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2024-11-20.acacia",
-  });
+
+const TURSO_URL = process.env.VITE_TURSO_URL;
+const TURSO_AUTH_TOKEN = process.env.VITE_TURSO_AUTH_TOKEN;
+
+const tursoClient = createClient({
+  url: TURSO_URL,
+  authToken: TURSO_AUTH_TOKEN,
+});
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2024-11-20.acacia",
+});
+
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
+};
+
+/**
+ * Updates the membership status of a user in the database.
+ * @param {string|number} userId - The ID of the user to update.
+ * @param {string} status - The new membership status.
+ */
+const updateMembershipStatus = async (userId, status) => {
+  console.log(`Updating membership status for user ${userId} to ${status}`);
+  const query = `
+    UPDATE users
+    SET membership_status = $status,
+        date_modified = CURRENT_TIMESTAMP
+    WHERE id = $userId
+  `;
+  try {
+    await tursoClient.execute({
+      sql: query,
+      args: { status, userId },
+    });
+    console.log(`Membership status updated successfully for user ${userId}`);
+  } catch (error) {
+    console.error(
+      `Failed to update membership status for user ${userId}:`,
+      error.message,
+    );
+    throw error;
+  }
 };
 
 export default async function handler(req, res) {
@@ -27,9 +66,10 @@ export default async function handler(req, res) {
     });
 
     const signature = req.headers["stripe-signature"];
-
     if (!signature || !endpointSecret) {
-      return res.status(400).send("Missing Stripe signature or webhook secret.");
+      return res
+        .status(400)
+        .send("Missing Stripe signature or webhook secret.");
     }
 
     event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
@@ -41,22 +81,48 @@ export default async function handler(req, res) {
   console.log(`✅ Received event type: ${event.type}`);
 
   try {
-    const session = event.data.object;
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      session.payment_intent
-    );
+      if (!session.payment_intent) {
+        console.error("Missing payment_intent in session object");
+        return res.status(400).send("Invalid session payload");
+      }
 
-    console.log(
-        `💰 PaymentIntent for ${paymentIntent.amount} was successful!`
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        session.payment_intent,
       );
 
-    const userId = paymentIntent.metadata?.userId;
-    if (userId) {
-      console.log(`Updating membership for user: ${userId}`);
-      await updateMembershipStatus(userId, "member");
+      console.log(
+        `💰 PaymentIntent for ${paymentIntent.amount} was successful!`,
+      );
+
+      const userId = paymentIntent.metadata?.userId;
+      if (userId) {
+        console.log(`Updating membership for user: ${userId}`);
+        await updateMembershipStatus(userId, "member");
+      } else {
+        console.warn("UserId is missing from payment metadata.");
+      }
+    } else if (event.type === "payment_intent.succeeded") {
+      const paymentIntent = event.data.object;
+
+      console.log("Webhook event:", JSON.stringify(event, null, 2));
+
+      console.log(
+        `💰 PaymentIntent for ${paymentIntent.amount} was successful!`,
+      );
+
+      const userId = paymentIntent.metadata?.userId;
+
+      if (userId) {
+        console.log(`Updating membership for user: ${userId}`);
+        await updateMembershipStatus(userId, "member");
+      } else {
+        console.warn("UserId is missing from payment metadata.");
+      }
     } else {
-      console.warn("UserId is missing from payment metadata.");
+      console.log(`Unhandled event type: ${event.type}`);
     }
 
     res.status(200).json({ received: true });

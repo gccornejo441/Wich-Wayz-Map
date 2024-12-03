@@ -6,23 +6,7 @@ import PrivacyPolicy from "./PrivacyPolicy";
 import SignIn from "./SignIn";
 import Register from "./Register";
 import UserProfile from "./UserProfile";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import PaymentSuccess from "./PaymentSuccess";
-import Checkout from "./Checkout";
-
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_TEST_PUBLISHABLE_KEY;
-
-const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
-
-const options = {
-  mode: "payment",
-  amount: 1099,
-  currency: "usd",
-  appearance: {
-    theme: "stripe",
-  },
-} as const;
 
 function MainRoutes() {
   return (
@@ -35,14 +19,6 @@ function MainRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/user" element={<UserProfile />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
-      <Route
-        path="/checkout"
-        element={
-          <Elements stripe={stripePromise} options={options}>
-            <Checkout />
-          </Elements>
-        }
-      />{" "}
     </Routes>
   );
 }

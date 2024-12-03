@@ -1,6 +1,7 @@
 import { useModal } from "../../context/modalContext";
 import { PopupContent } from "../../types/dataTypes";
 import { HiExternalLink, HiPencil } from "react-icons/hi";
+import UserAvatar from "../Avatar/UserAvatar";
 
 export const Popper = ({
   shopId,
@@ -8,6 +9,9 @@ export const Popper = ({
   address,
   description,
   categories,
+  createdBy,
+  usersAvatarId,
+  usersAvatarEmail,
 }: PopupContent) => {
   const { openUpdateShopModal } = useModal();
 
@@ -72,6 +76,17 @@ export const Popper = ({
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {createdBy && (
+          <div className="flex items-center mt-2 text-sm text-gray-600">
+            <UserAvatar
+              avatarId={usersAvatarId || "default"}
+              userEmail={usersAvatarEmail || "guest@example.com"}
+              size="sm"
+            />
+            <span className="ml-2">Added by: {createdBy}</span>
           </div>
         )}
       </div>

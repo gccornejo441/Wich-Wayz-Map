@@ -253,6 +253,47 @@ export const getUser = async (
   return user;
 };
 
+/**
+ * Retrieves user data from Turso given their ID.
+ */
+export const getUserById = async (
+  userId: number,
+): Promise<UserMetadata | null> => {
+  const result = await executeQuery<UserRow>(
+    `SELECT * FROM users WHERE id = ?`,
+    [userId],
+  );
+
+  if (!result.rows || !Array.isArray(result.rows) || result.rows.length === 0) {
+    throw new Error("Invalid query result format");
+  }
+
+  const userRow = result.rows[0];
+  const user: UserMetadata = {
+    id: userRow.id,
+    email: userRow.email,
+    hashedPassword: userRow.hashed_password,
+    username: userRow.username,
+    verified: userRow.verified,
+    verificationToken: userRow.verification_token,
+    modifiedBy: userRow.modified_by,
+    dateCreated: userRow.date_created,
+    dateModified: userRow.date_modified,
+    membershipStatus: userRow.membership_status,
+    firstName: userRow.first_name,
+    lastName: userRow.last_name,
+    role: userRow.role,
+    accountStatus: userRow.account_status,
+    lastLogin: userRow.last_login,
+    avatar: userRow.avatar,
+    tokenExpiry: userRow.token_expiry,
+    resetToken: userRow.reset_token,
+    firebaseUid: userRow.firebase_uid,
+  };
+
+  return user;
+};
+
 export const updateMembershipStatus = async (
   userId: string | number,
   status: string,
@@ -260,12 +301,9 @@ export const updateMembershipStatus = async (
   console.log(`Updating membership for user ${userId} to status ${status}`);
 
   try {
-    await updateData(
-      "users",
-      { membership_status: status },
-      "id = ?",
-      [userId],
-    );
+    await updateData("users", { membership_status: status }, "id = ?", [
+      userId,
+    ]);
     console.log(`Membership status updated successfully for user ${userId}`);
   } catch (error) {
     console.error(

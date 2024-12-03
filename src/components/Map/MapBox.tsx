@@ -56,6 +56,7 @@ const MapBox = () => {
                 shop.categories
                   ?.map((category) => category.category_name)
                   .join(", ") || "No categories available",
+              usersAvatarId: shop.users_avatar_id,
             },
             isPopupEnabled: true,
           })) || [],

@@ -44,6 +44,47 @@ export interface UserMetadata {
   resetToken: string | null;
 }
 
+export interface SessionUserMetadata {
+  id: number;
+  firebaseUid: string;
+  email: string;
+  username: string | null;
+  verified: boolean;
+  verificationToken: string | null;
+  dateModified: string;
+  membershipStatus: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  accountStatus: string;
+  avatar: string | null;
+  tokenExpiry: string | null;
+  resetToken: string | null;
+}
+
+/**
+ * Utility function to map full UserMetadata to SessionUserMetadata.
+ */
+export const mapToSessionUserMetadata = (
+  metadata: UserMetadata,
+): SessionUserMetadata => ({
+  id: metadata.id,
+  firebaseUid: metadata.firebaseUid,
+  email: metadata.email,
+  username: metadata.username,
+  verified: metadata.verified,
+  dateModified: metadata.dateModified,
+  membershipStatus: metadata.membershipStatus,
+  firstName: metadata.firstName,
+  lastName: metadata.lastName,
+  role: metadata.role,
+  accountStatus: metadata.accountStatus,
+  avatar: metadata.avatar,
+  verificationToken: metadata.verificationToken,
+  tokenExpiry: metadata.tokenExpiry,
+  resetToken: metadata.resetToken,
+});
+
 interface AuthContextData {
   user: FirebaseUser | null;
   userMetadata: UserMetadata | null;
@@ -72,7 +113,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(() => {
-    // Initialize from sessionStorage if available
     const storedMetadata = sessionStorage.getItem("userMetadata");
     return storedMetadata ? JSON.parse(storedMetadata) : null;
   });
@@ -82,12 +122,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // Fetch user metadata only if not already in sessionStorage
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUser(firebaseUser.uid);
-            setUserMetadata(metadata);
-            sessionStorage.setItem("userMetadata", JSON.stringify(metadata));
+            if (metadata) {
+              const sessionMetadata = mapToSessionUserMetadata(metadata);
+              setUserMetadata(metadata);
+              sessionStorage.setItem(
+                "userMetadata",
+                JSON.stringify(sessionMetadata),
+              );
+            }
           } catch (error) {
             console.error("Error fetching user metadata:", error);
             setUserMetadata(null);
@@ -127,10 +172,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const metadata = await getUser(user.uid);
-      setUserMetadata(metadata);
-
-      // Store metadata in sessionStorage
-      sessionStorage.setItem("userMetadata", JSON.stringify(metadata));
+      if (metadata) {
+        const sessionMetadata = mapToSessionUserMetadata(metadata);
+        setUserMetadata(metadata);
+        sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+      }
 
       return { success: true, message: "Login successful." };
     } catch (error: unknown) {

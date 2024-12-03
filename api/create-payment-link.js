@@ -15,8 +15,9 @@ export default async function handler(req, res) {
   if (!userId || !email) {
     return res.status(400).json({ error: "Missing user metadata" });
   }
-
   try {
+    const redirectUrl = `https://www.wichwayz.com/payment-success?userId=${userId}`;
+
     const paymentLink = await stripe.paymentLinks.create({
       line_items: [
         {
@@ -27,12 +28,18 @@ export default async function handler(req, res) {
       after_completion: {
         type: "redirect",
         redirect: {
-          url: "https://www.wichwayz.com/",
+          url: redirectUrl,
         },
       },
       metadata: {
-        userId, 
-        email, 
+        userId,
+        email,
+      },
+      payment_intent_data: {
+        metadata: {
+          userId,
+          email,
+        },
       },
     });
 

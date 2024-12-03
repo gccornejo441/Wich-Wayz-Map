@@ -1,52 +1,55 @@
+import { useLocation } from "react-router-dom";
+import { mapToSessionUserMetadata, useAuth } from "../../context/authContext";
 import { useEffect, useState } from "react";
-import { useAuth } from "../../context/authContext";
-import { updateData } from "../../services/apiClient";
+import { getUserById } from "../../services/apiClient";
 
 const PaymentSuccess = () => {
-  const { userMetadata } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
+  const { setUserMetadata } = useAuth();
+  const location = useLocation();
+  const [membershipStatus, setMembershipStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const paymentIntentClientSecret = queryParams.get("payment_intent_client_secret");
-
-    if (!paymentIntentClientSecret) {
-      setMessage("Payment verification failed. Please contact support.");
-      setLoading(false);
-      return;
-    }
-
-    // Verify payment status with your server
-    fetch(`/api/verify-payment?client_secret=${paymentIntentClientSecret}`)
-      .then((response) => response.json())
-      .then(async (data) => {
-        if (data.status === "succeeded" && userMetadata?.firebaseUid) {
-          // Update membership status in the database
-          await updateData(
-            "users",
-            { membership_status: "member" },
-            "firebase_uid = ?",
-            [userMetadata.firebaseUid]
+    const updateSessionMetadata = async (userId: number) => {
+      try {
+        const userMetadata = await getUserById(userId);
+        if (userMetadata) {
+          const sessionMetadata = mapToSessionUserMetadata(userMetadata);
+          setUserMetadata(userMetadata);
+          sessionStorage.setItem(
+            "userMetadata",
+            JSON.stringify(sessionMetadata),
           );
-          setMessage("Your membership has been successfully updated!");
+          setMembershipStatus(userMetadata.membershipStatus);
         } else {
-          setMessage("Payment verification failed. Please contact support.");
+          console.warn("User metadata not found for userId:", userId);
         }
-      })
-      .catch((error) => {
-        console.error("Payment verification error:", error);
-        setMessage("An error occurred. Please try again.");
-      })
-      .finally(() => setLoading(false));
-  }, [userMetadata]);
+      } catch (error) {
+        console.error("Error retrieving user metadata:", error);
+      }
+    };
 
-  if (loading) return <div>Loading...</div>;
+    const queryParams = new URLSearchParams(location.search);
+    const userIdParam = queryParams.get("userId");
+
+    if (userIdParam) {
+      const userId = parseInt(userIdParam, 10);
+      if (!isNaN(userId)) {
+        updateSessionMetadata(userId);
+      } else {
+        console.warn("Invalid userId parameter:", userIdParam);
+      }
+    }
+  }, [location.search, setUserMetadata]);
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6 mt-10">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Payment Status</h2>
-      <p>{message}</p>
+    <div>
+      <h1>Payment Successful!</h1>
+      <p>Your membership has been updated. Thank you!</p>
+      {membershipStatus && (
+        <p>
+          <strong>Your current membership status:</strong> {membershipStatus}
+        </p>
+      )}
     </div>
   );
 };

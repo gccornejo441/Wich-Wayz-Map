@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
+import { createPaymentLink } from "../../services/stripe";
 
 interface NavBarProps {
   onToggleSidebar: () => void;
@@ -37,26 +38,14 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
   const handleSignup = async () => {
     if (isAuthenticated) {
       try {
-        const response = await fetch("/api/create-payment-link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: userMetadata?.id, 
-            email: userMetadata?.email,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create payment link.");
-        }
-
-        const data = await response.json();
-        window.location.href = data.url;
+        const paymentLink = await createPaymentLink(
+          userMetadata?.id,
+          userMetadata?.email,
+        );
+        window.location.href = paymentLink;
       } catch (error) {
-        console.error("Error creating payment link:", error);
         showToast("Failed to create payment link. Please try again.", "error");
+        console.error("Error creating payment link:", error);
       }
     } else {
       navigate("/register");
@@ -80,7 +69,6 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
           </div>
           <div className="flex items-center gap-4">
             <Dropdown
-            disabled
               arrowIcon={false}
               inline={true}
               label={
@@ -104,15 +92,16 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
                       {userMetadata?.email}
                     </span>
                   </Dropdown.Header>
-                  {userMetadata?.verified && (
-                    <Dropdown.Item
-                      icon={HiUserAdd}
-                      onClick={handleSignup}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
-                    >
-                      Become a Club Member
-                    </Dropdown.Item>
-                  )}
+                  {userMetadata?.verified &&
+                    userMetadata?.membershipStatus !== "member" && (
+                      <Dropdown.Item
+                        icon={HiUserAdd}
+                        onClick={handleSignup}
+                        className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                      >
+                        Become a Club Member
+                      </Dropdown.Item>
+                    )}
                   <Dropdown.Divider />
                   <Dropdown.Item
                     icon={HiLogout}
