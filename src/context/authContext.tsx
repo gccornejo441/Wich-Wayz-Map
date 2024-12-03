@@ -53,15 +53,15 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string
+    email: string,
   ) => Promise<{ success: boolean; message: string }>;
   register: (
     email: string,
-    password: string
+    password: string,
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const { user } = userCredential;
 
@@ -204,13 +204,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           password,
           username = null,
           firstName = null,
-          lastName = null
+          lastName = null,
         ) => {
           try {
             const userCredential = await createUserWithEmailAndPassword(
               auth,
               email,
-              password
+              password,
             );
             const { user } = userCredential;
 

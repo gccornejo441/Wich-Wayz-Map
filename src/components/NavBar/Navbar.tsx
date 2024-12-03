@@ -34,9 +34,30 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
     }
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (isAuthenticated) {
-      navigate("/checkout");
+      try {
+        const response = await fetch("/api/create-payment-link", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userMetadata?.id, 
+            email: userMetadata?.email,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create payment link.");
+        }
+
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (error) {
+        console.error("Error creating payment link:", error);
+        showToast("Failed to create payment link. Please try again.", "error");
+      }
     } else {
       navigate("/register");
     }
@@ -59,7 +80,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
           </div>
           <div className="flex items-center gap-4">
             <Dropdown
-              disabled
+            disabled
               arrowIcon={false}
               inline={true}
               label={

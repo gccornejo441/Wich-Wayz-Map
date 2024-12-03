@@ -252,3 +252,26 @@ export const getUser = async (
 
   return user;
 };
+
+export const updateMembershipStatus = async (
+  userId: string | number,
+  status: string,
+): Promise<void> => {
+  console.log(`Updating membership for user ${userId} to status ${status}`);
+
+  try {
+    await updateData(
+      "users",
+      { membership_status: status },
+      "id = ?",
+      [userId],
+    );
+    console.log(`Membership status updated successfully for user ${userId}`);
+  } catch (error) {
+    console.error(
+      `Failed to update membership status for user ${userId}:`,
+      error,
+    );
+    throw error;
+  }
+};

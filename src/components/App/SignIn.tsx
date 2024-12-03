@@ -55,7 +55,7 @@ const SignIn = () => {
             <Link to="/" className="block">
               <Logo
                 imageSource="/Wich-Wayz-Logo.svg"
-                className="w-32 h-32 md:w-60 md:h-15 mx-auto"
+                className="h-15 w-60 mx-auto"
               />
             </Link>
             <h2 className="text-accent text-center text-2xl font-poppins font-bold">
