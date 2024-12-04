@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const paymentLink = await stripe.paymentLinks.create({
       line_items: [
         {
-          price: "price_1QM85XG3MtoJKZ2HUKd0innQ",
+          price: "price_1QN3orG3MtoJKZ2HI4Ja1ihs",
           quantity: 1,
         },
       ],
