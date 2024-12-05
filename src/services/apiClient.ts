@@ -169,12 +169,20 @@ export const storeUser = async (userDetails: {
   firebaseUid: string;
   email: string;
   hashedPassword: string;
-  username: string | null;
+  username: string;
+  membership_status: string;
   firstName: string | null;
   lastName: string | null;
 }) => {
-  const { firebaseUid, email, hashedPassword, username, firstName, lastName } =
-    userDetails;
+  const {
+    firebaseUid,
+    email,
+    hashedPassword,
+    username,
+    membership_status,
+    firstName,
+    lastName,
+  } = userDetails;
 
   await insertData(
     "users",
@@ -183,10 +191,19 @@ export const storeUser = async (userDetails: {
       "email",
       "hashed_password",
       "username",
+      "membership_status",
       "first_name",
       "last_name",
     ],
-    [firebaseUid, email, hashedPassword, username, firstName, lastName],
+    [
+      firebaseUid,
+      email,
+      hashedPassword,
+      username,
+      membership_status,
+      firstName,
+      lastName,
+    ],
   );
 };
 
