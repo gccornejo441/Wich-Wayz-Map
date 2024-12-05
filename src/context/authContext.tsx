@@ -20,7 +20,8 @@ import {
 import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
 import bcrypt from "bcryptjs";
-import { getUser, storeUser } from "../services/apiClient";
+import { getUserMetadataByFirebaseUid, storeUser } from "../services/apiClient";
+import { initializeJWT } from "../services/security";
 
 export interface UserMetadata {
   id: number;
@@ -124,7 +125,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (firebaseUser) {
         if (!sessionStorage.getItem("userMetadata")) {
           try {
-            const metadata = await getUser(firebaseUser.uid);
+            const metadata = await getUserMetadataByFirebaseUid(
+              firebaseUser.uid,
+            );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
@@ -171,11 +174,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return { success: false, message: "Failed to authenticate user." };
       }
 
-      const metadata = await getUser(user.uid);
+      const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (metadata) {
         const sessionMetadata = mapToSessionUserMetadata(metadata);
         setUserMetadata(metadata);
         sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+
+        const jwtResult = await initializeJWT(metadata);
+        if (typeof jwtResult !== "string") {
+          return {
+            success: false,
+            message: jwtResult.message || "Failed to generate session token.",
+          };
+        }
       }
 
       return { success: true, message: "Login successful." };

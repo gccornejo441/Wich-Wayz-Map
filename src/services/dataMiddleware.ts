@@ -23,12 +23,18 @@ export async function handleLocationSubmit(
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser || currentUser.membership_status !== "member") {
+    if (!currentUser || currentUser.membershipStatus !== "member") {
       showToast("Only members can submit locations.", "error");
       return false;
     }
 
-    const payload = createLocationShopPayload(addAShopPayload, currentUser.id);
+    const userId = currentUser.sub ? parseInt(currentUser.sub, 10) : undefined;
+    if (userId === undefined || isNaN(userId)) {
+      showToast("Invalid user ID.", "error");
+      return false;
+    }
+
+    const payload = createLocationShopPayload(addAShopPayload, userId);
 
     const { location, shop } = await submitLocationWithShop(payload);
 

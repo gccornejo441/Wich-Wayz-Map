@@ -215,7 +215,7 @@ interface UserRow {
 /**
  * Retrieves user data from Turso given their Firebase UID.
  */
-export const getUser = async (
+export const getUserMetadataByFirebaseUid = async (
   firebaseUid: string,
 ): Promise<UserMetadata | null> => {
   const result = await executeQuery<UserRow>(

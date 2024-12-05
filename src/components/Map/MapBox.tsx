@@ -17,6 +17,7 @@ const MapBox = () => {
   );
   const { shops } = useShops();
   const { center } = useMapContext();
+  const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -83,6 +84,7 @@ const MapBox = () => {
         zoom={13}
         scrollWheelZoom
         zoomControl={false}
+        preferCanvas={isMobileDevice()}
         style={{
           height: "100vh",
           width: "100vw",
@@ -100,7 +102,6 @@ const MapBox = () => {
         <ZoomControl position="bottomleft" />
 
         <MapInteraction center={center} />
-
         {shopMarkers.map((marker, index) => (
           <MapMarker
             key={index}

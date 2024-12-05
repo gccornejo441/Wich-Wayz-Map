@@ -6,7 +6,7 @@ import GetCoordinatesAndAddressDetails from "../../services/geolocation";
 import { AddAShopPayload, LocationData } from "../../types/dataTypes";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { locationSchema } from "../../services/validators";
+import { locationSchema } from "../../constants/validators";
 import { Category, GetCategories } from "../../services/apiClient";
 import Select from "react-select";
 
@@ -137,12 +137,19 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   };
 
   return (
-    <ModalWrapper toastMessage={toastMessage} toastType={toastType}>
+    <ModalWrapper
+      size="large"
+      toastMessage={toastMessage}
+      toastType={toastType}
+    >
       <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-secondary">
-          <h3 className="text-lg font-semibold text-dark">
-            Add A Sandwich Shop
-          </h3>
+          <div>
+            <h3 className="text-lg font-semibold text-dark">
+              Add A Sandwich Shop
+            </h3>
+            <p></p>
+          </div>
           <button
             onClick={onClose}
             className="text-dark hover:bg-accent/10 rounded-lg text-sm w-8 h-8 flex items-center justify-center"
@@ -193,6 +200,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
               Select Categories
             </label>
             <Select
+              placeholder="Search"
               isMulti
               options={categories.map((category) => ({
                 value: category.id,
@@ -203,6 +211,10 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
                   selectedOptions.map((option) => option.value),
                 )
               }
+              menuPortalTarget={document.body}
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 1050 }),
+              }}
               className="react-select-container"
               classNamePrefix="react-select"
             />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ToastMessage from "../Toast/ToastMessage";
 import { Link } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
 
 const SidebarFooter = () => {
   const [toast, setToast] = useState<{
@@ -40,7 +41,10 @@ const SidebarFooter = () => {
         >
           Contact Us
         </button>
-        <Link to="/privacy-policy" className="hover:text-white transition">
+        <Link
+          to={ROUTES.LEGAL.PRIVACY_POLICY}
+          className="hover:text-white transition"
+        >
           Privacy Policy
         </Link>
       </div>

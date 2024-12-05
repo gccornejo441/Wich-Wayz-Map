@@ -3,22 +3,27 @@ import MapBox from "../Map/MapBox";
 import NotFound from "./NotFound";
 import AddShop from "../Modal/AddShop";
 import PrivacyPolicy from "./PrivacyPolicy";
-import SignIn from "./SignIn";
 import Register from "./Register";
 import UserProfile from "./UserProfile";
 import PaymentSuccess from "./PaymentSuccess";
+import SignIn from "./SignIn";
+import { ROUTES } from "../../constants/routes";
 
 function MainRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<MapBox />} />
-      <Route path="*" element={<NotFound />} />
-      <Route path="/add-a-shop" element={<AddShop />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/signIn" element={<SignIn />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/user" element={<UserProfile />} />
-      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path={ROUTES.HOME} element={<MapBox />} />
+      <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
+
+      <Route path={ROUTES.SHOPS.ADD} element={<AddShop />} />
+
+      <Route path={ROUTES.LEGAL.PRIVACY_POLICY} element={<PrivacyPolicy />} />
+
+      <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
+      <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />
+      <Route path={ROUTES.ACCOUNT.PROFILE} element={<UserProfile />} />
+
+      <Route path={ROUTES.PAYMENT.SUCCESS} element={<PaymentSuccess />} />
     </Routes>
   );
 }

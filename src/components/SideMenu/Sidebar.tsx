@@ -4,6 +4,7 @@ import { SidebarToggleButton } from "./SidebarButtons";
 import SidebarFooter from "./SidebarFooter";
 import { HiAdjustments, HiPlus, HiSearch } from "react-icons/hi";
 import { useModal } from "../../context/modalContext";
+import { ROUTES } from "../../constants/routes";
 
 interface TopMenuProps {
   onToggleSidebar: () => void;
@@ -128,7 +129,7 @@ const Sidebar = ({
               <SidebarItem
                 icon={<HiAdjustments className="w-6 h-6 text-white" />}
                 text="Settings"
-                linkTo="/user"
+                linkTo={ROUTES.ACCOUNT.PROFILE}
               />
             </li>
           )}

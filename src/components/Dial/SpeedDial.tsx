@@ -10,6 +10,7 @@ import {
 import WarningDialog from "../Modal/Dialog/WarningDialog";
 import { refreshCache } from "../../services/indexedDB";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
 
 const SpeedDial = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +53,7 @@ const SpeedDial = () => {
         <ul className="text-sm text-white">
           <li>
             <button
-              onClick={() => navigate("/add-a-shop")}
+              onClick={() => navigate(ROUTES.SHOPS.ADD)}
               className="flex items-center px-5 py-2 w-full text-left"
             >
               <HiMap className="w-5 h-5 mr-2" />

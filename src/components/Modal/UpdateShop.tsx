@@ -5,7 +5,7 @@ import Select from "react-select";
 import { GetCategories, updateShopCategories } from "../../services/apiClient";
 import ModalWrapper from "./ModalWrapper";
 import { Category } from "../../services/apiClient";
-import { updateShopSchema } from "../../services/validators";
+import { updateShopSchema } from "../../constants/validators";
 import { UpdateShopPayload } from "../../types/dataTypes";
 import { useModal } from "../../context/modalContext";
 import {

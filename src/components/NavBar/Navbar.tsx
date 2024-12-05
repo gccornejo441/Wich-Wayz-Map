@@ -9,6 +9,7 @@ import { useAuth } from "../../context/authContext";
 import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
+import { ROUTES } from "../../constants/routes";
 
 interface NavBarProps {
   onToggleSidebar: () => void;
@@ -31,7 +32,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
       logout();
       showToast("You have been logged out successfully.", "success");
     } else {
-      navigate("/signin");
+      navigate(ROUTES.ACCOUNT.SIGN_IN);
     }
   };
 
@@ -48,7 +49,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
         console.error("Error creating payment link:", error);
       }
     } else {
-      navigate("/register");
+      navigate(ROUTES.ACCOUNT.REGISTER);
     }
   };
 

@@ -6,7 +6,7 @@ import { resendVerification } from "../../services/firebase";
 import AvatarUploader from "../Profile/AvatarUploader";
 import Account from "../Profile/Account";
 import { updateData } from "../../services/apiClient";
-import { userProfileSchema } from "../../services/validators";
+import { userProfileSchema } from "../../constants/validators";
 import * as yup from "yup";
 
 const UserProfile = () => {

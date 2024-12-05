@@ -3,6 +3,7 @@ import { useAuth } from "../../context/authContext";
 import { useForm, Controller } from "react-hook-form";
 import * as Yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { ROUTES } from "../../constants/routes";
 
 const registerSchema = Yup.object().shape({
   email: Yup.string()
@@ -130,7 +131,7 @@ const Register = () => {
         <p className="text-dark text-sm text-center mt-4">
           Already have an account?{" "}
           <a
-            href="/signin"
+            href={ROUTES.ACCOUNT.SIGN_IN}
             className="text-primary font-semibold hover:underline"
           >
             Sign in

@@ -3,6 +3,7 @@ import { useAuth } from "../../context/authContext";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../Logo/Logo";
 import { HiEye, HiEyeOff } from "react-icons/hi";
+import { ROUTES } from "../../constants/routes";
 
 const SignIn = () => {
   const { login, resetPassword, user } = useAuth();
@@ -141,7 +142,7 @@ const SignIn = () => {
               <p className="text-dark text-sm !mt-8 text-center">
                 Don't have an account?{" "}
                 <Link
-                  to="/register"
+                  to={ROUTES.ACCOUNT.REGISTER}
                   className="text-primary hover:underline ml-1 font-semibold"
                 >
                   Register here

@@ -1,110 +1,79 @@
 import { executeQuery } from "./apiClient";
 import bcrypt from "bcryptjs";
-import { JWTPayload, SignJWT, jwtVerify } from "jose";
-import { User } from "./shopLocation";
+import { SignJWT, decodeJwt, jwtVerify } from "jose";
+import { UserMetadata } from "../context/authContext";
 
 const SECRET_KEY = new TextEncoder().encode(
   import.meta.env.VITE_JWT_SECRET as string,
 );
 
-interface LoginSuccess {
-  status: "success";
-  user: User;
-  token: string;
-  message: string;
+interface TokenPayload {
+  sub?: string;
+  email?: string;
+  role?: string;
+  username?: string | null;
+  verified?: boolean;
+  membershipStatus?: string;
+  exp?: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar?: string | null;
+  verification_token?: string | null;
+  account_status?: string;
+  last_login?: string | null;
 }
-
-interface LoginError {
-  status: "error";
-  user: null;
-  message: string;
-}
-
-type LoginResponse = LoginSuccess | LoginError;
 
 /**
- * Decodes JWT and extracts user data.
+ * Decodes JWT and extracts user metadata.
  */
-export const decodeJwt = async (token: string): Promise<User | null> => {
+export const decodeJwtWithRefresh = async (
+  token: string,
+  refreshToken: string,
+): Promise<TokenPayload | null> => {
   try {
-    const { payload }: { payload: JWTPayload } = await jwtVerify(
+    const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
       SECRET_KEY,
     );
 
-    const user: User = {
-      id: payload.sub ? parseInt(payload.sub, 10) : undefined,
-      email: payload.email as string,
-      role: payload.role as string,
-      username: payload.username as string,
-      avatar: payload.avatar as string,
-      verified: payload.verified as boolean,
-      account_status: payload.account_status as string,
-      membership_status: payload.membership_status as string,
-      last_login: payload.last_login as string,
-      first_name: payload.first_name as string,
-      last_name: payload.last_name as string,
-      verification_token: (payload.verification_token as string) || "",
-      token_expiry: (payload.token_expiry as string) || "",
-    };
-
-    return user;
+    return payload;
   } catch (error) {
+    if (error instanceof Error && error.name === "JWTExpired") {
+      console.warn("Token expired. Attempting to refresh...");
+
+      const newAccessToken = await refreshAccessToken(refreshToken);
+      if (newAccessToken) {
+        localStorage.setItem("token", newAccessToken);
+
+        const newPayload = await decodeJwt(newAccessToken);
+        return newPayload;
+      } else {
+        console.error("Unable to refresh token. User must log in again.");
+        return null;
+      }
+    }
+
     console.error("Error decoding JWT:", error);
     return null;
   }
 };
 
 /**
- * Logs in the user with email and password, and stores the JWT in localStorage.
+ * Generates a JWT for the given user metadata and stores it in local storage.
  */
-export const loginUser = async (
-  email: string,
-  password: string,
-): Promise<LoginResponse> => {
+export const initializeJWT = async (
+  userMetadata: UserMetadata,
+): Promise<string | { status: string; user: null; message: string }> => {
   try {
-    const query = `SELECT * FROM users WHERE email = $email`;
-    const { rows } = await executeQuery<User>(query, { email });
+    const accessToken = await generateJWT(userMetadata);
+    const refreshToken = await generateRefreshToken(userMetadata);
 
-    if (rows.length === 0) {
-      return {
-        status: "error",
-        user: null,
-        message: "Invalid email or password. Please try again.",
-      };
-    }
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
 
-    const user = rows[0];
-
-    if (!user.hashed_password) {
-      return {
-        status: "error",
-        user: null,
-        message: "Invalid email or password. Please try again.",
-      };
-    }
-
-    const isPasswordValid = bcrypt.compareSync(password, user.hashed_password);
-
-    if (!isPasswordValid) {
-      return {
-        status: "error",
-        user: null,
-        message: "Invalid email or password. Please try again.",
-      };
-    }
-
-    const token = await generateJWT(user);
-    localStorage.setItem("token", token);
-
-    return {
-      status: "success",
-      user,
-      token,
-      message: "Login successful",
-    };
+    return accessToken;
   } catch (error) {
-    console.error("Error logging in user:", error);
+    console.error("Error generating JWT:", error);
     return {
       status: "error",
       user: null,
@@ -114,11 +83,48 @@ export const loginUser = async (
 };
 
 /**
+ * Function to refresh the access token using the refresh token.
+ */
+const refreshAccessToken = async (
+  refreshToken: string,
+): Promise<string | null> => {
+  try {
+    const { payload }: { payload: TokenPayload } = await jwtVerify(
+      refreshToken,
+      SECRET_KEY,
+    );
+
+    const newAccessToken = await generateJWT(payload as UserMetadata);
+    return newAccessToken;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Failed to refresh access token:", error.message);
+    } else {
+      console.error("Unexpected error while refreshing access token:", error);
+    }
+    return null;
+  }
+};
+
+/**
+ * Generates a refresh token for a user.
+ */
+export const generateRefreshToken = async (
+  user: UserMetadata,
+): Promise<string> => {
+  const refreshToken = await new SignJWT({
+    sub: user.id?.toString(),
+    email: user.email,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(SECRET_KEY);
+
+  return refreshToken;
+};
+
+/**
  * Resets a user's password.
- *
- * @param {string} token - The password reset token from the email.
- * @param {string} password - The new password.
- * @returns {Promise<{ success: boolean, message: string }>} - A promise containing the result of the request.
  */
 export const resetPassword = async (
   token: string,
@@ -133,7 +139,6 @@ export const resetPassword = async (
 
   try {
     const query = `UPDATE users SET hashed_password = $hashed_password WHERE verification_token = $token`;
-    // Use bcryptjs for hashing
     const hashedPassword = bcrypt.hashSync(password, 10);
     await executeQuery(query, { hashed_password: hashedPassword, token });
     return { success: true, message: "Password reset successful." };
@@ -146,12 +151,12 @@ export const resetPassword = async (
 /**
  * Generates a JWT for a user.
  */
-export const generateJWT = async (user: User): Promise<string> => {
+export const generateJWT = async (user: UserMetadata): Promise<string> => {
   const token = await new SignJWT({
     sub: user.id?.toString(),
     email: user.email,
     role: user.role,
-    membership_status: user.membership_status,
+    membershipStatus: user.membershipStatus,
     username: user.username,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -162,17 +167,13 @@ export const generateJWT = async (user: User): Promise<string> => {
 };
 
 /**
- * Retrieves the current user from the decoded JWT.
+ * Retrieves the current user from the decoded JWT, with refresh logic.
  */
-export const getCurrentUser = async (): Promise<User | null> => {
+export const getCurrentUser = async (): Promise<TokenPayload | null> => {
   const token = localStorage.getItem("token");
-  if (!token) return null;
+  const refreshToken = localStorage.getItem("refreshToken");
 
-  try {
-    const user = await decodeJwt(token);
-    return user;
-  } catch (error) {
-    console.error("Failed to decode JWT:", error);
-    return null;
-  }
+  if (!token || !refreshToken) return null;
+
+  return decodeJwtWithRefresh(token, refreshToken);
 };

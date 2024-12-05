@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import { resetPasswordSchema } from "../../services/validators";
+import { resetPasswordSchema } from "../../constants/validators";
 import { resetPassword } from "../../services/security";
 
 interface ResetPasswordFormData {
