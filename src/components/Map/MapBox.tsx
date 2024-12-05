@@ -6,6 +6,8 @@ import { useShops } from "../../context/shopContext";
 import { ShopMarker } from "../../types/dataTypes";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
+import L from "leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 const DEFAULT_POSITION: LatLngTuple = [40.7128, -74.006]; // NYC
 
@@ -15,6 +17,7 @@ const MapBox = () => {
   const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
     null,
   );
+  const [progress, setProgress] = useState(0);
   const { shops } = useShops();
   const { center } = useMapContext();
   const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
@@ -29,8 +32,7 @@ const MapBox = () => {
           ];
           setPosition(userPosition);
         },
-        (err) => {
-          console.warn("Geolocation permission denied or another error:", err);
+        () => {
           setPosition(DEFAULT_POSITION);
         },
       );
@@ -79,6 +81,14 @@ const MapBox = () => {
 
   return (
     <div>
+      {progress < 100 && (
+        <div className="fixed top-0 left-0 w-full bg-gray-200">
+          <div
+            className="h-2 bg-blue-500 transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
       <MapContainer
         center={position}
         zoom={13}
@@ -98,23 +108,36 @@ const MapBox = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
         <ZoomControl position="bottomleft" />
-
         <MapInteraction center={center} />
-        {shopMarkers.map((marker, index) => (
-          <MapMarker
-            key={index}
-            position={marker.position}
-            popupContent={marker.popupContent}
-            autoOpen={
-              !!selectedMarker &&
-              selectedMarker[0] === marker.position[0] &&
-              selectedMarker[1] === marker.position[1]
-            }
-            isPopupEnabled={true}
-          />
-        ))}
+        <MarkerClusterGroup
+          maxClusterRadius={150}
+          chunkedLoading={true}
+          chunkInterval={200}
+          chunkDelay={50}
+          chunkProgress={(processed: number, total: number) => {
+            setProgress(Math.floor((processed / total) * 100));
+          }}
+          spiderfyOnMaxZoom={true}
+          removeOutsideVisibleBounds={true}
+          animate={false}
+          iconCreateFunction={createClusterCustomIcon}
+          showCoverageOnHover={false}
+        >
+          {shopMarkers.map((marker, index) => (
+            <MapMarker
+              key={index}
+              position={marker.position}
+              popupContent={marker.popupContent}
+              autoOpen={
+                !!selectedMarker &&
+                selectedMarker[0] === marker.position[0] &&
+                selectedMarker[1] === marker.position[1]
+              }
+              isPopupEnabled={true}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
       <SpeedDial />
     </div>
@@ -133,4 +156,33 @@ const MapInteraction = ({ center }: { center: LatLngTuple | null }) => {
   }, [center, map]);
 
   return null;
+};
+
+/**
+ * Creates a custom cluster icon using TailwindCSS for styling.
+ */
+const createClusterCustomIcon = (cluster: L.MarkerCluster): L.DivIcon => {
+  const childCount = cluster.getChildCount();
+
+  const sizeClass =
+    childCount < 10
+      ? "w-10 h-10 text-sm"
+      : childCount < 50
+        ? "w-12 h-12 text-base text-accent"
+        : "w-16 h-16 text-lg";
+
+  const colorClass =
+    childCount < 10
+      ? "bg-[#FF5B00]"
+      : childCount < 50
+        ? "bg-secondary"
+        : "bg-primary";
+
+  const classes = `flex items-center justify-center text-white rounded-full font-bold ${sizeClass} ${colorClass}`;
+
+  return L.divIcon({
+    html: `<div class="${classes}">${childCount}</div>`,
+    className: "",
+    iconSize: L.point(40, 40, true),
+  });
 };
