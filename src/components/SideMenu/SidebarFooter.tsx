@@ -47,6 +47,12 @@ const SidebarFooter = () => {
         >
           Privacy Policy
         </Link>
+        <Link
+          to={ROUTES.LEGAL.TERMS_OF_SERVICE}
+          className="hover:text-white transition"
+        >
+          Terms of Service
+        </Link>
       </div>
       {toast && (
         <ToastMessage

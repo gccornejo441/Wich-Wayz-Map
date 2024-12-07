@@ -1,6 +1,8 @@
 import { LatLngTuple } from "leaflet";
 import { ReactNode } from "react";
 
+export type Callback = () => void;
+
 export interface ShopLocation {
   shop_id: number;
   location_id: number;
@@ -69,8 +71,8 @@ export interface ToastMessageProps {
 
 export interface WarningDialogProps {
   isOpen: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onConfirm: Callback;
+  onCancel: Callback;
   isProcessing?: boolean;
   title?: string;
   message?: string;

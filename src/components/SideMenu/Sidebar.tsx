@@ -5,19 +5,20 @@ import SidebarFooter from "./SidebarFooter";
 import { HiAdjustments, HiPlus, HiSearch } from "react-icons/hi";
 import { useModal } from "../../context/modalContext";
 import { ROUTES } from "../../constants/routes";
+import { Callback } from "../../types/dataTypes";
 
 interface TopMenuProps {
-  onToggleSidebar: () => void;
+  onToggleSidebar: Callback;
 }
 
 interface SidebarProps extends TopMenuProps {
   isOpen: boolean;
-  onToggleLocation: () => void;
-  onToggleSearch: () => void;
+  onToggleLocation: Callback;
+  onToggleSearch: Callback;
 }
 
 interface SidebarItemProps {
-  onClick?: () => void;
+  onClick?: Callback;
   icon: JSX.Element;
   text: string;
   disabled?: boolean;

@@ -4,13 +4,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Logo from "../Logo/Logo";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import { ROUTES } from "../../constants/routes";
+import GoogleButton from "../Utilites/GoogleButton";
 
 const SignIn = () => {
-  const { login, resetPassword, user } = useAuth();
+  const { login, resetPassword, user, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,6 +46,40 @@ const SignIn = () => {
       setError(response.message);
     } else {
       setMessage("Password reset email sent successfully!");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (isLoading) return;
+
+    setError(null);
+    setMessage(null);
+    setIsLoading(true);
+
+    try {
+      const response = await signInWithGoogle();
+      if (!response.success) {
+        setError(response.message);
+      } else {
+        setMessage("Google sign-in successful!");
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+
+      if (error instanceof Error) {
+        if (error.message.includes("auth/cancelled-popup-request")) {
+          setError("Another sign-in request is in progress. Please wait.");
+        } else if (error.message.includes("auth/popup-closed-by-user")) {
+          setError("Google sign-in popup was closed. Please try again.");
+        } else {
+          setError("An unexpected error occurred.");
+        }
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,6 +173,13 @@ const SignIn = () => {
                 >
                   Sign in
                 </button>
+              </div>
+              <div className="!mt-4">
+                <GoogleButton
+                  disabled={isLoading}
+                  handleClick={handleGoogleSignIn}
+                  title="Sign in with Google"
+                />
               </div>
               <p className="text-dark text-sm !mt-8 text-center">
                 Don't have an account?{" "}

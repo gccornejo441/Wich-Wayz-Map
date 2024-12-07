@@ -1,8 +1,9 @@
+import { Callback } from "../../types/dataTypes";
 import SearchBar from "../Search/SearchBar";
 import ModalWrapper from "./ModalWrapper";
 
 interface SearchWrapperProps {
-  onClose: () => void;
+  onClose: Callback;
 }
 
 const SearchWrapper = ({ onClose }: SearchWrapperProps) => {

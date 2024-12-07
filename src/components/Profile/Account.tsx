@@ -1,3 +1,5 @@
+import { Callback } from "../../types/dataTypes";
+
 export interface AccountProps {
   email: string;
   firstName: string;
@@ -6,7 +8,7 @@ export interface AccountProps {
   setLastName: (value: string) => void;
   username: string;
   setUsername: (value: string) => void;
-  handleUpdateProfile: () => void;
+  handleUpdateProfile: Callback;
 }
 
 const Account = ({

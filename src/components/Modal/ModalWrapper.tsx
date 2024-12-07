@@ -1,5 +1,6 @@
 import React from "react";
 import ToastMessage from "../Toast/ToastMessage";
+import { Callback } from "../../types/dataTypes";
 
 interface ModalWrapperProps {
   children: React.ReactNode;
@@ -9,7 +10,7 @@ interface ModalWrapperProps {
   className?: string;
   toastMessage?: string | null;
   toastType?: "success" | "error";
-  onClose?: () => void;
+  onClose?: Callback;
   showCloseButton?: boolean;
 }
 

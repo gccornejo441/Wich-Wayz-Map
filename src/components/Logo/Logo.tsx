@@ -1,7 +1,9 @@
+import { Callback } from "../../types/dataTypes";
+
 interface LogoProps {
   className?: string;
   imageSource: string;
-  onClick?: () => void;
+  onClick?: Callback;
 }
 
 const Logo = ({ className, imageSource }: LogoProps) => {

@@ -10,9 +10,10 @@ import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
 import { ROUTES } from "../../constants/routes";
+import { Callback } from "../../types/dataTypes";
 
 interface NavBarProps {
-  onToggleSidebar: () => void;
+  onToggleSidebar: Callback;
 }
 
 const NavBar = ({ onToggleSidebar }: NavBarProps) => {

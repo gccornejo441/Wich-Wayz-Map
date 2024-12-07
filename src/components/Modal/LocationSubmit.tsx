@@ -3,7 +3,7 @@ import { handleLocationSubmit } from "../../services/dataMiddleware";
 import { useShops } from "../../context/shopContext";
 import ModalWrapper from "./ModalWrapper";
 import GetCoordinatesAndAddressDetails from "../../services/geolocation";
-import { AddAShopPayload, LocationData } from "../../types/dataTypes";
+import { AddAShopPayload, Callback, LocationData } from "../../types/dataTypes";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "../../constants/validators";
@@ -11,7 +11,7 @@ import { Category, GetCategories } from "../../services/apiClient";
 import Select from "react-select";
 
 interface LocationSubmitProps {
-  onClose: () => void;
+  onClose: Callback;
 }
 
 const LocationSubmit = ({ onClose }: LocationSubmitProps) => {

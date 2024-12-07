@@ -16,6 +16,8 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   setPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
@@ -67,7 +69,7 @@ export interface SessionUserMetadata {
  * Utility function to map full UserMetadata to SessionUserMetadata.
  */
 export const mapToSessionUserMetadata = (
-  metadata: UserMetadata,
+  metadata: UserMetadata
 ): SessionUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
@@ -95,15 +97,20 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string,
+    email: string
   ) => Promise<{ success: boolean; message: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
   register: (
-    email: string,
-    password: string,
+    email: string | null,
+    password: string | null,
+    username?: string | null,
+    firstName?: string | null,
+    lastName?: string | null,
+    useGoogle?: boolean
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -126,14 +133,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid,
+              firebaseUser.uid
             );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
               sessionStorage.setItem(
                 "userMetadata",
-                JSON.stringify(sessionMetadata),
+                JSON.stringify(sessionMetadata)
               );
             }
           } catch (error) {
@@ -154,7 +161,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -166,7 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
       const { user } = userCredential;
 
@@ -231,6 +238,177 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const registerWithGoogle = async (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (!user || !user.email) {
+        throw new Error("Google sign-in failed. Email is required.");
+      }
+
+      const email = user.email.trim();
+      const username = email.split("@")[0];
+
+      if (!user.uid) {
+        throw new Error("Firebase UID is required and cannot be empty.");
+      }
+
+      await storeUser({
+        firebaseUid: user.uid,
+        email,
+        hashedPassword: "",
+        username: username.trim(),
+        membershipStatus: "basic",
+        firstName: null,
+        lastName: "",
+      });
+
+      return { success: true, message: "Google sign-in successful." };
+    } catch (error: unknown) {
+      console.error("Error during Google sign-in:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred.";
+      return { success: false, message };
+    }
+  };
+
+  const register = async (
+    email: string | null,
+    password: string | null,
+    username: string | null = null,
+    firstName: string | null = null,
+    lastName: string | null = null,
+    useGoogle: boolean = false
+  ): Promise<{ success: boolean; message: string }> => {
+    if (useGoogle) {
+      return registerWithGoogle();
+    }
+
+    try {
+      if (!email || email.trim() === "") {
+        throw new Error("Email is required and cannot be empty.");
+      }
+      if (!password || password.trim() === "") {
+        throw new Error("Password is required and cannot be empty.");
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      if (!user) {
+        throw new Error("Failed to create user.");
+      }
+
+      await sendEmailVerification(user);
+
+      const hashedPassword = bcrypt.hashSync(password, 10);
+      const autoUsername = username || email.split("@")[0];
+
+      await storeUser({
+        firebaseUid: user.uid,
+        email: email.trim(),
+        hashedPassword,
+        username: autoUsername.trim(),
+        membershipStatus: "basic",
+        firstName,
+        lastName,
+      });
+
+      return {
+        success: true,
+        message: "User registered successfully. Please check your email.",
+      };
+    } catch (error: unknown) {
+      console.error("Error during registration:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred.";
+      return { success: false, message };
+    }
+  };
+
+  const signInWithGoogle = async (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    try {
+      const provider = new GoogleAuthProvider();
+
+      const result = await signInWithPopup(auth, provider);
+      console.log("popup result", result);
+      const user = result.user;
+
+      if (!user || !user.email) {
+        throw new Error("Google sign-in failed. Email is required.");
+      }
+
+      if (!user.uid) {
+        throw new Error("Firebase UID is required and cannot be empty.");
+      }
+
+      const metadata = await getUserMetadataByFirebaseUid(user.uid);
+      if (!metadata) {
+        throw new Error(
+          "No account found for this Google account. Please register first."
+        );
+      }
+
+      const sessionMetadata = mapToSessionUserMetadata(metadata);
+      setUserMetadata(metadata);
+      sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+
+      const jwtResult = await initializeJWT(metadata);
+      if (typeof jwtResult !== "string") {
+        return {
+          success: false,
+          message: jwtResult.message || "Failed to generate session token.",
+        };
+      }
+
+      return { success: true, message: "Google sign-in successful." };
+    } catch (error: unknown) {
+      console.error("Error during Google sign-in:", error);
+
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/popup-closed-by-user":
+            return {
+              success: false,
+              message: "Sign-in process was canceled. Please try again.",
+            };
+          case "auth/cancelled-popup-request":
+            return {
+              success: false,
+              message: "Another sign-in process is ongoing. Please wait.",
+            };
+          default:
+            return {
+              success: false,
+              message: "An error occurred during sign-in. Please try again.",
+            };
+        }
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred. Please try again.";
+      return { success: false, message };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -240,6 +418,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setUserMetadata,
         isAuthenticated: !!user,
         login,
+        signInWithGoogle,
         logout,
         resetPassword: async (email) => {
           try {
@@ -256,84 +435,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             return { success: false, message: errorMessage };
           }
         },
-        register: async (
-          email: string,
-          password: string,
-          username: string | null = null,
-          firstName: string | null = null,
-          lastName: string | null = null,
-        ) => {
-          try {
-            const autoGeneratedUsername = email.split("@")[0];
-            username = username || autoGeneratedUsername;
-
-            const userCredential = await createUserWithEmailAndPassword(
-              auth,
-              email,
-              password,
-            );
-            const { user } = userCredential;
-
-            if (!user) {
-              return { success: false, message: "Failed to create user." };
-            }
-
-            await sendEmailVerification(user);
-
-            const hashedPassword = bcrypt.hashSync(password, 10);
-            await storeUser({
-              firebaseUid: user.uid,
-              email,
-              hashedPassword,
-              membership_status: "basic",
-              username,
-              firstName,
-              lastName,
-            });
-
-            return {
-              success: true,
-              message:
-                "User registered successfully. Please check your email for verification.",
-            };
-          } catch (error: unknown) {
-            if (error instanceof FirebaseError) {
-              switch (error.code) {
-                case "auth/email-already-in-use":
-                  return {
-                    success: false,
-                    message:
-                      "This email is already registered. Please log in or reset your password.",
-                  };
-                case "auth/weak-password":
-                  return {
-                    success: false,
-                    message:
-                      "Your password is too weak. Please use at least 8 characters.",
-                  };
-                case "auth/invalid-email":
-                  return {
-                    success: false,
-                    message:
-                      "The email address provided is invalid. Please use a valid email.",
-                  };
-                default:
-                  return {
-                    success: false,
-                    message:
-                      "An error occurred during registration. Please try again later.",
-                  };
-              }
-            }
-
-            console.error("Registration error:", error);
-            return {
-              success: false,
-              message:
-                "An unexpected error occurred during registration. Please try again later.",
-            };
-          }
-        },
+        register,
       }}
     >
       {children}

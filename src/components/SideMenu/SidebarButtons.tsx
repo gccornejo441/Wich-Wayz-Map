@@ -1,7 +1,8 @@
 import { HiMenuAlt2 } from "react-icons/hi";
+import { Callback } from "../../types/dataTypes";
 
 interface SidebarToggleButtonProps {
-  onClick: () => void;
+  onClick: Callback;
 }
 
 export const SidebarToggleButton = ({ onClick }: SidebarToggleButtonProps) => (

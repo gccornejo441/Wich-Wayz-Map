@@ -8,6 +8,7 @@ import UserProfile from "./UserProfile";
 import PaymentSuccess from "./PaymentSuccess";
 import SignIn from "./SignIn";
 import { ROUTES } from "../../constants/routes";
+import TearmsOfService from "./TermsOfService";
 
 function MainRoutes() {
   return (
@@ -18,6 +19,8 @@ function MainRoutes() {
       <Route path={ROUTES.SHOPS.ADD} element={<AddShop />} />
 
       <Route path={ROUTES.LEGAL.PRIVACY_POLICY} element={<PrivacyPolicy />} />
+
+      <Route path={ROUTES.LEGAL.TERMS_OF_SERVICE} element={<TearmsOfService />} />
 
       <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
       <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />

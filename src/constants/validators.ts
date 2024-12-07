@@ -100,7 +100,6 @@ export const userLoginSchema = yup.object().shape({
 /**
  * Validation schema for updating location data.
  * Ensures all fields are in the correct format.
- *
  */
 export const updateShopSchema = yup.object().shape({
   name: yup.string().required("Shop name is required"),
@@ -126,4 +125,31 @@ export const userProfileSchema = yup.object({
   lastName: yup.string().nullable().max(50, "Last name is too long"),
   username: yup.string().nullable().max(30, "Username is too long"),
   avatar: yup.string().nullable(),
+});
+
+/**
+ * Validation schema for user registration.
+ * Ensures all required fields are present and in the correct format.
+ */
+export const registerSchema = yup.object().shape({
+  email: yup
+    .string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(4096, "Password must not exceed 4096 characters")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+    .matches(/[0-9]/, "Password must contain at least one numeric character")
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>]/,
+      "Password must contain at least one special character",
+    )
+    .required("Password is required"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password"), undefined], "Passwords do not match")
+    .required("Please confirm your password"),
 });

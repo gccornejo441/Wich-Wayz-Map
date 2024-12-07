@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState } from "react";
-import { UpdateShopPayload } from "../types/dataTypes";
+import { Callback, UpdateShopPayload } from "../types/dataTypes";
 
 interface ModalContextProps {
   isLoginModalOpen: boolean;
   loginMode: boolean;
   currentModal: "login" | "signup" | "updateShop" | null;
-  onSearchModal: () => void;
-  openLoginModal: () => void;
-  openSignupModal: () => void;
+  onSearchModal: Callback;
+  openLoginModal: Callback;
+  openSignupModal: Callback;
   isSearchModalOpen: boolean;
-  closeModal: () => void;
+  closeModal: Callback;
   openUpdateShopModal: (data: UpdateShopModalProps) => void;
   updateShopData: UpdateShopModalProps | null;
 }

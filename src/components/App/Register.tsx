@@ -1,29 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { useForm, Controller } from "react-hook-form";
-import * as Yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { ROUTES } from "../../constants/routes";
-
-const registerSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
-  password: Yup.string()
-    .min(8, "Password must be at least 8 characters")
-    .max(4096, "Password must not exceed 4096 characters")
-    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
-    .matches(/[0-9]/, "Password must contain at least one numeric character")
-    .matches(
-      /[!@#$%^&*(),.?":{}|<>]/,
-      "Password must contain at least one special character",
-    )
-    .required("Password is required"),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password"), undefined], "Passwords do not match")
-    .required("Please confirm your password"),
-});
+import { registerSchema } from "../../constants/validators";
+import GoogleButton from "../Utilites/GoogleButton";
 
 const Register = () => {
   const { register: registerUser } = useAuth();
@@ -47,6 +28,24 @@ const Register = () => {
       setError(response.message);
     } else {
       setMessage("Registration successful! Please log in.");
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    setError(null);
+    setMessage(null);
+
+    try {
+      const response = await registerUser(null, null, null, null, null, true);
+      if (!response.success) {
+        setError(response.message);
+      } else {
+        setMessage("Google sign-in successful! You are now registered.");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      setError("An unexpected error occurred.");
     }
   };
 
@@ -106,7 +105,7 @@ const Register = () => {
                 <input
                   {...field}
                   type="password"
-                  className="w-full border border-lightGray px-4 py-3 rounded-md text-dark focus:outline-none focus:ring focus:ring-secondary"
+                  className="w-full border border-gray-200 px-4 py-3 rounded-md text-dark focus:outline-none focus:ring focus:ring-secondary"
                   placeholder="Confirm your password"
                 />
               )}
@@ -128,6 +127,13 @@ const Register = () => {
             Register
           </button>
         </form>
+        <div className="mt-4">
+          <GoogleButton
+            title="Sign up with Google"
+            handleClick={handleGoogleRegister}
+          />
+        </div>
+
         <p className="text-dark text-sm text-center mt-4">
           Already have an account?{" "}
           <a

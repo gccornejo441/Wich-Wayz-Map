@@ -170,7 +170,7 @@ export const storeUser = async (userDetails: {
   email: string;
   hashedPassword: string;
   username: string;
-  membership_status: string;
+  membershipStatus: string;
   firstName: string | null;
   lastName: string | null;
 }) => {
@@ -179,7 +179,7 @@ export const storeUser = async (userDetails: {
     email,
     hashedPassword,
     username,
-    membership_status,
+    membershipStatus,
     firstName,
     lastName,
   } = userDetails;
@@ -200,7 +200,7 @@ export const storeUser = async (userDetails: {
       email,
       hashedPassword,
       username,
-      membership_status,
+      membershipStatus,
       firstName,
       lastName,
     ],

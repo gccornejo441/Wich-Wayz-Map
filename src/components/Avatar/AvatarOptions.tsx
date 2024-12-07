@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ModalWrapper from "../Modal/ModalWrapper";
+import { Callback } from "../../types/dataTypes";
 
 export const avatarOptions: AvatarOption[] = Array.from(
   { length: 20 },
@@ -11,7 +12,7 @@ export const avatarOptions: AvatarOption[] = Array.from(
 
 interface AvatarOptionsProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: Callback;
   onSelect: (avatarId: string) => void;
   selectedAvatarId: string | undefined;
 }

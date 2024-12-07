@@ -11,6 +11,7 @@ export const ROUTES = {
   },
   LEGAL: {
     PRIVACY_POLICY: "/privacy-policy",
+    TERMS_OF_SERVICE: "/terms-of-service",
   },
   PAYMENT: {
     SUCCESS: "/payment/success",
