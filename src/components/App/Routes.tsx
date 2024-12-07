@@ -20,7 +20,10 @@ function MainRoutes() {
 
       <Route path={ROUTES.LEGAL.PRIVACY_POLICY} element={<PrivacyPolicy />} />
 
-      <Route path={ROUTES.LEGAL.TERMS_OF_SERVICE} element={<TearmsOfService />} />
+      <Route
+        path={ROUTES.LEGAL.TERMS_OF_SERVICE}
+        element={<TearmsOfService />}
+      />
 
       <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
       <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />

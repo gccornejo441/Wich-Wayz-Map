@@ -69,7 +69,7 @@ export interface SessionUserMetadata {
  * Utility function to map full UserMetadata to SessionUserMetadata.
  */
 export const mapToSessionUserMetadata = (
-  metadata: UserMetadata
+  metadata: UserMetadata,
 ): SessionUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
@@ -97,20 +97,21 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string
+    email: string,
   ) => Promise<{ success: boolean; message: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
+  refreshToken: () => Promise<string | null>;
   register: (
     email: string | null,
     password: string | null,
     username?: string | null,
     firstName?: string | null,
     lastName?: string | null,
-    useGoogle?: boolean
+    useGoogle?: boolean,
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -126,6 +127,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   useEffect(() => {
+    const refreshAuthToken = async () => {
+      if (!user || !userMetadata || !userMetadata.tokenExpiry) return;
+
+      const expiryTime = new Date(userMetadata.tokenExpiry).getTime();
+      const now = Date.now();
+
+      if (expiryTime - now <= 60000) {
+        await refreshToken();
+      }
+    };
+
+    const interval = setInterval(refreshAuthToken, 60000);
+    return () => clearInterval(interval);
+  }, [user, userMetadata]);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
 
@@ -133,14 +150,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid
+              firebaseUser.uid,
             );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
               sessionStorage.setItem(
                 "userMetadata",
-                JSON.stringify(sessionMetadata)
+                JSON.stringify(sessionMetadata),
               );
             }
           } catch (error) {
@@ -161,7 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -173,7 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const { user } = userCredential;
 
@@ -285,7 +302,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     username: string | null = null,
     firstName: string | null = null,
     lastName: string | null = null,
-    useGoogle: boolean = false
+    useGoogle: boolean = false,
   ): Promise<{ success: boolean; message: string }> => {
     if (useGoogle) {
       return registerWithGoogle();
@@ -302,7 +319,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -361,7 +378,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (!metadata) {
         throw new Error(
-          "No account found for this Google account. Please register first."
+          "No account found for this Google account. Please register first.",
         );
       }
 
@@ -409,6 +426,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const refreshToken = async (): Promise<string | null> => {
+    if (!user) return null;
+
+    try {
+      const token = await user.getIdToken(true);
+      const tokenExpiryTime = Date.now() + 3600 * 1000;
+
+      if (!userMetadata) return null;
+
+      const updatedMetadata: UserMetadata = {
+        ...userMetadata,
+        tokenExpiry: new Date(tokenExpiryTime).toISOString(),
+        id: userMetadata.id || 0,
+      };
+
+      setUserMetadata(updatedMetadata);
+      sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
+      sessionStorage.setItem("jwtToken", token);
+
+      console.log("Token refreshed successfully!");
+      return token;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      logout();
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -420,6 +465,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         login,
         signInWithGoogle,
         logout,
+        refreshToken,
         resetPassword: async (email) => {
           try {
             await sendPasswordResetEmail(auth, email);
