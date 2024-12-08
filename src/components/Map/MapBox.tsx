@@ -15,11 +15,11 @@ const MapBox = () => {
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
-    null,
+    null
   );
   const [progress, setProgress] = useState(0);
   const { shops } = useShops();
-  const { center } = useMapContext();
+  const { center, shopId } = useMapContext();
   const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
@@ -34,12 +34,23 @@ const MapBox = () => {
         },
         () => {
           setPosition(DEFAULT_POSITION);
-        },
+        }
       );
     } else {
       setPosition(DEFAULT_POSITION);
     }
   }, []);
+
+  useEffect(() => {
+    if (shopId && shopMarkers.length > 0) {
+      const marker = shopMarkers.find(
+        (marker) => marker.popupContent.shopId === parseInt(shopId, 10)
+      );
+      if (marker) {
+        setSelectedMarker(marker.position);
+      }
+    }
+  }, [shopId, shopMarkers]);
 
   useEffect(() => {
     const fetchMarkers = async () => {
@@ -60,9 +71,11 @@ const MapBox = () => {
                   ?.map((category) => category.category_name)
                   .join(", ") || "No categories available",
               usersAvatarId: shop.users_avatar_id,
+              latitude: location.latitude,
+              longitude: location.longitude,
             },
             isPopupEnabled: true,
-          })) || [],
+          })) || []
       );
 
       setShopMarkers(markers);
@@ -148,12 +161,13 @@ export default MapBox;
 
 const MapInteraction = ({ center }: { center: LatLngTuple | null }) => {
   const map = useMap();
+  const { zoom } = useMapContext();
 
   useEffect(() => {
     if (center) {
-      map.setView(center, 15);
+      map.setView(center, zoom);
     }
-  }, [center, map]);
+  }, [center, zoom, map]);
 
   return null;
 };

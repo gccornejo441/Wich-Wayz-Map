@@ -4,7 +4,7 @@ import { SignJWT, decodeJwt, jwtVerify } from "jose";
 import { UserMetadata } from "../context/authContext";
 
 const SECRET_KEY = new TextEncoder().encode(
-  import.meta.env.VITE_JWT_SECRET as string,
+  import.meta.env.VITE_JWT_SECRET as string
 );
 
 interface TokenPayload {
@@ -28,12 +28,12 @@ interface TokenPayload {
  */
 export const decodeJwtWithRefresh = async (
   token: string,
-  refreshToken: string,
+  refreshToken: string
 ): Promise<TokenPayload | null> => {
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
-      SECRET_KEY,
+      SECRET_KEY
     );
 
     return payload;
@@ -62,7 +62,7 @@ export const decodeJwtWithRefresh = async (
  * Generates a JWT for the given user metadata and stores it in local storage.
  */
 export const initializeJWT = async (
-  userMetadata: UserMetadata,
+  userMetadata: UserMetadata
 ): Promise<string | { status: string; user: null; message: string }> => {
   try {
     const accessToken = await generateJWT(userMetadata);
@@ -86,12 +86,12 @@ export const initializeJWT = async (
  * Function to refresh the access token using the refresh token.
  */
 const refreshAccessToken = async (
-  refreshToken: string,
+  refreshToken: string
 ): Promise<string | null> => {
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       refreshToken,
-      SECRET_KEY,
+      SECRET_KEY
     );
 
     const newAccessToken = await generateJWT(payload as UserMetadata);
@@ -110,7 +110,7 @@ const refreshAccessToken = async (
  * Generates a refresh token for a user.
  */
 export const generateRefreshToken = async (
-  user: UserMetadata,
+  user: UserMetadata
 ): Promise<string> => {
   const refreshToken = await new SignJWT({
     sub: user.id?.toString(),
@@ -128,7 +128,7 @@ export const generateRefreshToken = async (
  */
 export const resetPassword = async (
   token: string,
-  password: string,
+  password: string
 ): Promise<{ success: boolean; message: string }> => {
   if (!token || !password) {
     return {
@@ -167,13 +167,61 @@ export const generateJWT = async (user: UserMetadata): Promise<string> => {
 };
 
 /**
+ * Determines if a token is about to expire within a specified buffer time.
+ */
+const isTokenExpiredSoon = (exp: number): boolean => {
+  const currentTime = Math.floor(Date.now() / 1000);
+  const bufferTime = 60;
+  return exp < currentTime + bufferTime;
+};
+
+/**
  * Retrieves the current user from the decoded JWT, with refresh logic.
  */
 export const getCurrentUser = async (): Promise<TokenPayload | null> => {
-  const token = localStorage.getItem("token");
+  let token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
 
   if (!token || !refreshToken) return null;
 
-  return decodeJwtWithRefresh(token, refreshToken);
+  try {
+    const { payload }: { payload: TokenPayload } = await jwtVerify(
+      token,
+      SECRET_KEY
+    );
+    if (payload.exp === undefined) {
+      throw new Error("Token does not have an exp claim.");
+    }
+    if (isTokenExpiredSoon(payload.exp)) {
+      console.warn("Token nearing expiration. Refreshing...");
+      token = await refreshAccessToken(refreshToken);
+
+      if (!token) {
+        console.error("Unable to refresh token. User must log in again.");
+        return null;
+      }
+
+      localStorage.setItem("token", token);
+    }
+
+    return payload;
+  } catch (error) {
+    if (error instanceof Error && error.name === "JWTExpired") {
+      console.warn("Token expired. Attempting to refresh...");
+
+      const newAccessToken = await refreshAccessToken(refreshToken);
+      if (newAccessToken) {
+        localStorage.setItem("token", newAccessToken);
+
+        const { payload } = await jwtVerify(newAccessToken, SECRET_KEY);
+        return payload;
+      } else {
+        console.error("Unable to refresh token. User must log in again.");
+        return null;
+      }
+    }
+
+    console.error("Error decoding JWT:", error);
+    return null;
+  }
 };

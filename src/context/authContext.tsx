@@ -443,7 +443,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setUserMetadata(updatedMetadata);
       sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
-      sessionStorage.setItem("jwtToken", token);
+      sessionStorage.setItem("token", token);
 
       console.log("Token refreshed successfully!");
       return token;

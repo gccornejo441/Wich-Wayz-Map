@@ -1,6 +1,6 @@
 import { useModal } from "../../context/modalContext";
 import { PopupContent } from "../../types/dataTypes";
-import { HiExternalLink, HiPencil } from "react-icons/hi";
+import { HiExternalLink, HiPencil, HiShare } from "react-icons/hi";
 import UserAvatar from "../Avatar/UserAvatar";
 
 export const Popper = ({
@@ -12,11 +12,13 @@ export const Popper = ({
   createdBy,
   usersAvatarId,
   usersAvatarEmail,
+  latitude,
+  longitude,
 }: PopupContent) => {
   const { openUpdateShopModal } = useModal();
 
   const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${shopName} ${address}`,
+    `${shopName} ${address}`
   )}`;
 
   const handleEditShop = () => {
@@ -30,6 +32,18 @@ export const Popper = ({
           : [],
       },
     });
+  };
+
+  const handleShareLocation = () => {
+    const baseUrl = window.location.origin;
+    const params = new URLSearchParams();
+    params.append("lat", latitude.toString());
+    params.append("lng", longitude.toString());
+    if (shopId) params.append("shopId", shopId.toString());
+
+    const shareableLink = `${baseUrl}?${params.toString()}`;
+    navigator.clipboard.writeText(shareableLink);
+    alert("Location link copied to clipboard!");
   };
 
   return (
@@ -53,12 +67,24 @@ export const Popper = ({
           <a
             href={googleMapsSearchUrl}
             target="_blank"
+            aria-label={`Open ${shopName} on Google Maps`}
             rel="noopener noreferrer"
             className="text-background font-bold flex items-center text-xs gap-2 mt-3"
           >
             Open on Google Maps
             <HiExternalLink />
           </a>
+        </div>
+
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={handleShareLocation}
+            className="flex items-center gap-2 text-primary hover:text-secondary focus:outline-none"
+            aria-label="Share location"
+          >
+            <HiShare className="w-4 h-4" />
+            <span>Share</span>
+          </button>
         </div>
 
         {categories && (
