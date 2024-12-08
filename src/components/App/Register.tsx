@@ -5,6 +5,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { ROUTES } from "../../constants/routes";
 import { registerSchema } from "../../constants/validators";
 import GoogleButton from "../Utilites/GoogleButton";
+import { Link } from "react-router-dom";
+import Logo from "../Logo/Logo";
 
 const Register = () => {
   const { register: registerUser } = useAuth();
@@ -50,8 +52,14 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-lightGray font-sans min-h-screen flex items-center justify-center">
+    <div className="bg-lightGray font-sans min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full p-8 bg-background rounded-xl shadow-card">
+        <Link to="/" className="block">
+          <Logo
+            imageSource="/Wich-Wayz-Logo.svg"
+            className="h-15 w-60 mx-auto"
+          />
+        </Link>
         <h2 className="text-accent text-2xl font-poppins font-bold text-center mb-4">
           Register
         </h2>

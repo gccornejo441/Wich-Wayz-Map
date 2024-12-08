@@ -92,7 +92,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-5 p-4 lg:my-5 rounded-lg">
+    <div className="max-w-3xl mx-auto md:mt-5 md:p-4 lg:my-5 rounded-lg">
       <div className="p-6 mx-auto bg-background pb-4 border-b border-secondary">
         <h2 className="text-xl font-semibold text-dark mb-2">App Settings</h2>
         <p className="text-dark mt-2 text-sm">

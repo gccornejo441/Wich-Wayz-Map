@@ -56,7 +56,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
 
   return (
     <>
-      <nav className="bg-primary border-b border-secondary absolute top-0 left-0 w-full">
+      <nav className="bg-primary absolute top-0 left-0 right-0 z-50">
         <div className="w-full h-12 mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SidebarToggleButton onClick={onToggleSidebar} />
@@ -69,7 +69,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
           <div className="hidden md:flex w-1/2">
             <SearchBar />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 z-20">
             <Dropdown
               arrowIcon={false}
               inline={true}

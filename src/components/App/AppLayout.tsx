@@ -35,26 +35,31 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-h-screen bg-lightGray">
       <NavBar onToggleSidebar={toggleSidebar} />
-      <div className="flex">
+
+      <div
+        className={`absolute top-0 left-0 h-full z-50 transition-transform duration-300 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ width: "16rem" }}
+      >
         <Sidebar
           onToggleSearch={onSearchModal}
           isOpen={isSidebarOpen}
           onToggleLocation={toggleLocation}
           onToggleSidebar={toggleSidebar}
         />
-        <div
-          className={`flex-1 transition-all duration-500 ease-in-out ${
-            isSidebarOpen ? "ml-64" : "ml-0"
-          }`}
-        >
-          {children}
-        </div>
       </div>
+
+      <div className="relative z-10">
+        <div className="container mx-auto md:px-4 md:py-6">{children}</div>
+      </div>
+
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}
       {isSearchModalOpen && <SearchWrapper onClose={closeModal} />}
       {currentModal === "updateShop" && <UpdateShop />}
+
       {toastMessage && (
         <ToastMessage
           toastMessage={toastMessage}
