@@ -12,11 +12,12 @@ import {
   updateShopInfo,
   useUpdateShopCategories,
 } from "../../services/dataMiddleware";
+import { useToast } from "../../context/toastContext";
 
 const UpdateShop = () => {
   const { currentModal, updateShopData, closeModal } = useModal();
   const { SaveUpdatedShopCategories } = useUpdateShopCategories();
-
+  const { addToast } = useToast();
   const fallbackShopData: UpdateShopPayload = {
     name: "",
     description: "",
@@ -31,7 +32,6 @@ const UpdateShop = () => {
     shopData.categoryIds || [],
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -87,13 +87,12 @@ const UpdateShop = () => {
         updatedCategories as { id: number; category_name: string }[],
       );
 
-      setToastMessage("Shop updated successfully!");
+      addToast("Shop updated successfully.", "success");
     } catch (error) {
       console.error("Failed to update shop:", error);
-      setToastMessage("Failed to update shop. Please try again.");
+      addToast("Failed to update shop. Please try again.", "error");
     } finally {
       setIsSaving(false);
-      setTimeout(() => setToastMessage(null), 3000);
       closeModal();
     }
   };
@@ -112,7 +111,7 @@ const UpdateShop = () => {
   if (currentModal !== "updateShop") return null;
 
   return (
-    <ModalWrapper toastMessage={toastMessage} toastType="success">
+    <ModalWrapper>
       <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-secondary">
           <h3 className="text-lg font-semibold text-dark">Update Shop</h3>

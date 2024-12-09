@@ -4,18 +4,21 @@ import { BrowserRouter as Router } from "react-router-dom";
 import Routes from "./components/App/Routes";
 import { ModalProvider } from "./context/modalContext";
 import { MapProvider } from "./context/mapContext";
+import { ToastProvider } from "./context/toastContext";
 
 function App() {
   return (
     <Router>
       <MapProvider>
-        <ModalProvider>
-          <AppLayout>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Routes />
-            </Suspense>
-          </AppLayout>
-        </ModalProvider>
+        <ToastProvider>
+          <ModalProvider>
+            <AppLayout>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes />
+              </Suspense>
+            </AppLayout>
+          </ModalProvider>
+        </ToastProvider>
       </MapProvider>
     </Router>
   );

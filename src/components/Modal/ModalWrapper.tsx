@@ -1,5 +1,4 @@
 import React from "react";
-import ToastMessage from "../Toast/ToastMessage";
 import { Callback } from "../../types/dataTypes";
 
 interface ModalWrapperProps {
@@ -8,8 +7,6 @@ interface ModalWrapperProps {
   footer?: React.ReactNode;
   size?: "small" | "medium" | "large";
   className?: string;
-  toastMessage?: string | null;
-  toastType?: "success" | "error";
   onClose?: Callback;
   showCloseButton?: boolean;
 }
@@ -20,8 +17,6 @@ const ModalWrapper = ({
   footer,
   size = "medium",
   className = "",
-  toastMessage,
-  toastType = "success",
   onClose,
   showCloseButton = true,
 }: ModalWrapperProps) => {
@@ -50,9 +45,6 @@ const ModalWrapper = ({
         <div className="modal-body">{children}</div>
         {footer && <div className="mt-4 border-t pt-2">{footer}</div>}
       </div>
-      {toastMessage && (
-        <ToastMessage toastMessage={toastMessage} toastType={toastType} />
-      )}
     </div>
   );
 };

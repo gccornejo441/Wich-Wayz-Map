@@ -9,6 +9,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "../../constants/validators";
 import { Category, GetCategories } from "../../services/apiClient";
 import Select from "react-select";
+import { useToast } from "../../context/toastContext";
 
 interface LocationSubmitProps {
   onClose: Callback;
@@ -16,8 +17,7 @@ interface LocationSubmitProps {
 
 const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   const { setShops, setLocations } = useShops();
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const { addToast } = useToast();
   const [isManualEntry, setIsManualEntry] = useState(false);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -47,12 +47,6 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     },
   });
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToastMessage(message);
-    setToastType(type);
-    setTimeout(() => setToastMessage(null), 5000);
-  };
-
   useEffect(() => {
     const fetchCategories = async () => {
       const data = await GetCategories();
@@ -71,7 +65,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     const address = getValues("address").trim();
     if (!address) {
       setIsAddressValid(false);
-      showToast("Please enter an address before prefilling.", "error");
+      addToast("Please enter an address before prefilling.", "error");
       return;
     }
 
@@ -94,33 +88,30 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setValue("latitude", addressDetails.coordinates.latitude);
         setValue("longitude", addressDetails.coordinates.longitude);
         setIsAddressValid(true);
-        showToast("Address details have been prefilled.", "success");
+        addToast("Address details have been prefilled.", "success");
       } else {
         setIsAddressValid(false);
-        showToast(
-          "Address not found. Please try a different address.",
-          "error",
-        );
+        addToast("Address not found. Please try a different address.", "error");
       }
     } catch (error: unknown) {
       console.error("Error fetching address details:", error);
 
       if (error instanceof Error) {
         setIsAddressValid(false);
-        showToast(
+        addToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
           "error",
         );
       } else {
         setIsAddressValid(false);
-        showToast("An unexpected error occurred. Please try again.", "error");
+        addToast("An unexpected error occurred. Please try again.", "error");
       }
     }
   };
 
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
-      showToast(
+      addToast(
         "Please prefill and validate the address before submitting.",
         "error",
       );
@@ -129,19 +120,15 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     data.categoryIds = selectedCategories;
     const success = await handleLocationSubmit(
       data,
-      showToast,
       setShops,
       setLocations,
+      addToast,
     );
     if (success) onClose();
   };
 
   return (
-    <ModalWrapper
-      size="large"
-      toastMessage={toastMessage}
-      toastType={toastType}
-    >
+    <ModalWrapper size="large">
       <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-secondary">
           <div>

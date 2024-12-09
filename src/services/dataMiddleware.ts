@@ -16,21 +16,21 @@ import { useShops } from "../context/shopContext";
  */
 export async function handleLocationSubmit(
   addAShopPayload: AddAShopPayload,
-  showToast: (message: string, type: "success" | "error") => void,
   setShops: React.Dispatch<React.SetStateAction<Shop[]>>,
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
+  addToast: (message: string, type: "success" | "error") => void,
 ): Promise<boolean> {
   try {
     const currentUser = await getCurrentUser();
 
     if (!currentUser || currentUser.membershipStatus !== "member") {
-      showToast("Only members can submit locations.", "error");
+      addToast("Only members can submit locations.", "error");
       return false;
     }
 
     const userId = currentUser.sub ? parseInt(currentUser.sub, 10) : undefined;
     if (userId === undefined || isNaN(userId)) {
-      showToast("Invalid user ID.", "error");
+      addToast("Invalid user ID.", "error");
       return false;
     }
 
@@ -53,15 +53,15 @@ export async function handleLocationSubmit(
     setLocations(fetchedLocations);
     cacheData("locations", fetchedLocations);
 
-    showToast("Location and shop submitted successfully!", "success");
+    addToast("Location and shop submitted successfully!", "success");
     return true;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error("Axios error:", error.response?.data || error.message);
-      showToast("Server error: Unable to submit location and shop.", "error");
+      addToast("Server error: Unable to submit location and shop.", "error");
     } else {
       console.error("Unexpected error:", error);
-      showToast(
+      addToast(
         "An unexpected error occurred while submitting the location and shop.",
         "error",
       );

@@ -3,14 +3,14 @@ import Logo from "../Logo/Logo";
 import SearchBar from "../Search/SearchBar";
 import { Link } from "react-router-dom";
 import UserAvatar from "../Avatar/UserAvatar";
-import { Dropdown, Toast } from "flowbite-react";
-import { useState } from "react";
+import { Dropdown } from "flowbite-react";
 import { useAuth } from "../../context/authContext";
 import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
 import { ROUTES } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
+import { useToast } from "../../context/toastContext";
 
 interface NavBarProps {
   onToggleSidebar: Callback;
@@ -18,20 +18,13 @@ interface NavBarProps {
 
 const NavBar = ({ onToggleSidebar }: NavBarProps) => {
   const { isAuthenticated, logout, userMetadata } = useAuth();
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
   const navigate = useNavigate();
-
-  const showToast = (message: string, type: "success" | "error") => {
-    setToastMessage(message);
-    setToastType(type);
-    setTimeout(() => setToastMessage(null), 5000);
-  };
+  const { addToast } = useToast();
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
       logout();
-      showToast("You have been logged out successfully.", "success");
+      addToast("You have been logged out successfully.", "success");
     } else {
       navigate(ROUTES.ACCOUNT.SIGN_IN);
     }
@@ -46,7 +39,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
         );
         window.location.href = paymentLink;
       } catch (error) {
-        showToast("Failed to create payment link. Please try again.", "error");
+        addToast("Failed to create payment link. Please try again.", "error");
         console.error("Error creating payment link:", error);
       }
     } else {
@@ -136,19 +129,6 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
             </Dropdown>
           </div>
         </div>
-        {toastMessage && (
-          <div className="fixed bottom-5 left-5">
-            <Toast>
-              <div
-                className={`ml-3 text-sm font-normal ${
-                  toastType === "success" ? "text-green-500" : "text-red-500"
-                }`}
-              >
-                {toastMessage}
-              </div>
-            </Toast>
-          </div>
-        )}
       </nav>
     </>
   );

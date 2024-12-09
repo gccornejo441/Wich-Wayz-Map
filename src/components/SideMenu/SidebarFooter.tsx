@@ -1,26 +1,20 @@
-import { useState } from "react";
-import ToastMessage from "../Toast/ToastMessage";
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
+import { useToast } from "../../context/toastContext";
 
 const SidebarFooter = () => {
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { addToast } = useToast();
 
   const handleContactUsClick = () => {
     const email = "wich.wayz.map@gmail.com";
     navigator.clipboard
       .writeText(email)
       .then(() => {
-        setToast({ message: "Email copied to clipboard!", type: "success" });
+        addToast("Email copied to clipboard!", "success");
       })
       .catch(() => {
-        setToast({ message: "Failed to copy email.", type: "error" });
+        addToast("Failed to copy email.", "error");
       });
-
-    setTimeout(() => setToast(null), 3000);
   };
 
   return (
@@ -54,13 +48,6 @@ const SidebarFooter = () => {
           Terms of Service
         </Link>
       </div>
-      {toast && (
-        <ToastMessage
-          toastMessage={toast.message}
-          toastType={toast.type}
-          position="bottom-5 right-5"
-        />
-      )}
     </div>
   );
 };

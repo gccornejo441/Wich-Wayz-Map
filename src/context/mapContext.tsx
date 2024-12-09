@@ -27,7 +27,7 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (!isNaN(lat) && !isNaN(lng)) {
       setCenter([lat, lng]);
-      setZoom(15);
+      setZoom(30);
     }
 
     if (id) {

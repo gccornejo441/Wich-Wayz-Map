@@ -2,6 +2,7 @@ import { useModal } from "../../context/modalContext";
 import { PopupContent } from "../../types/dataTypes";
 import { HiExternalLink, HiPencil, HiShare } from "react-icons/hi";
 import UserAvatar from "../Avatar/UserAvatar";
+import { useToast } from "../../context/toastContext";
 
 export const Popper = ({
   shopId,
@@ -16,6 +17,7 @@ export const Popper = ({
   longitude,
 }: PopupContent) => {
   const { openUpdateShopModal } = useModal();
+  const { addToast } = useToast();
 
   const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${shopName} ${address}`,
@@ -35,15 +37,21 @@ export const Popper = ({
   };
 
   const handleShareLocation = () => {
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-    params.append("lat", latitude.toString());
-    params.append("lng", longitude.toString());
-    if (shopId) params.append("shopId", shopId.toString());
+    try {
+      const baseUrl = window.location.origin;
+      const params = new URLSearchParams();
+      params.append("lat", latitude.toString());
+      params.append("lng", longitude.toString());
+      if (shopId) params.append("shopId", shopId.toString());
 
-    const shareableLink = `${baseUrl}?${params.toString()}`;
-    navigator.clipboard.writeText(shareableLink);
-    alert("Location link copied to clipboard!");
+      const shareableLink = `${baseUrl}?${params.toString()}`;
+      navigator.clipboard.writeText(shareableLink);
+
+      addToast("Location link copied to clipboard!", "success");
+    } catch (error) {
+      addToast("Failed to copy location link.", "error");
+      console.error("Failed to copy location link:", error);
+    }
   };
 
   return (

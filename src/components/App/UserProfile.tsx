@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { useAuth } from "../../context/authContext";
 import { Navigate } from "react-router-dom";
-import ToastMessage from "../Toast/ToastMessage";
+import { useAuth } from "../../context/authContext";
 import { resendVerification } from "../../services/firebase";
 import AvatarUploader from "../Profile/AvatarUploader";
 import Account from "../Profile/Account";
 import { updateData } from "../../services/apiClient";
 import { userProfileSchema } from "../../constants/validators";
 import * as yup from "yup";
+import { useToast } from "../../context/toastContext";
 
 const UserProfile = () => {
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const { addToast } = useToast();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const { isAuthenticated, user, userMetadata, setUserMetadata } = useAuth();
@@ -20,15 +19,9 @@ const UserProfile = () => {
     return <Navigate to="/" replace />;
   }
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToastMessage(message);
-    setToastType(type);
-    setTimeout(() => setToastMessage(null), 5000);
-  };
-
   const handleUpdateProfile = async () => {
     if (!userMetadata) {
-      showToast("User metadata is incomplete. Please try again.", "error");
+      addToast("User metadata is incomplete. Please try again.", "error");
       return;
     }
 
@@ -53,7 +46,7 @@ const UserProfile = () => {
       };
 
       if (!userMetadata.firebaseUid) {
-        showToast("Firebase UID is missing. Cannot update profile.", "error");
+        addToast("Firebase UID is missing. Cannot update profile.", "error");
         return;
       }
 
@@ -66,27 +59,27 @@ const UserProfile = () => {
         ...validatedData,
       });
 
-      showToast("Profile updated successfully.", "success");
+      addToast("Profile updated successfully.", "success");
     } catch (error) {
       if (error instanceof yup.ValidationError) {
         setValidationErrors(error.errors);
       } else {
         console.error("Error updating profile:", error);
-        showToast("Failed to update profile. Please try again later.", "error");
+        addToast("Failed to update profile. Please try again later.", "error");
       }
     }
   };
 
   const handleResendVerification = async () => {
     if (!user) {
-      showToast("User is not authenticated. Please try again.", "error");
+      addToast("User is not authenticated. Please try again.", "error");
       return;
     }
     try {
       await resendVerification(user);
-      showToast("Verification email resent successfully.", "success");
+      addToast("Verification email resent successfully.", "success");
     } catch (error) {
-      showToast("Failed to resend verification email.", "error");
+      addToast("Failed to resend verification email.", "error");
       console.error("Error resending verification email:", error);
     }
   };
@@ -150,9 +143,6 @@ const UserProfile = () => {
             <li key={idx}>{err}</li>
           ))}
         </ul>
-      )}
-      {toastMessage && (
-        <ToastMessage toastMessage={toastMessage} toastType={toastType} />
       )}
     </div>
   );

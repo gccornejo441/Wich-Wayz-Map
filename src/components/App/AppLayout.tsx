@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import Sidebar from "../SideMenu/Sidebar";
 import NavBar from "../NavBar/Navbar";
 import LocationSubmit from "../Modal/LocationSubmit";
-import ToastMessage from "../Toast/ToastMessage";
 import { useModal } from "../../context/modalContext";
 import { useAuth } from "../../context/authContext";
 import SearchWrapper from "../Modal/SearchWrapper";
 import UpdateShop from "../Modal/UpdateShop";
+import { useToast } from "../../context/toastContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -15,10 +15,8 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const { addToast } = useToast();
   const { isAuthenticated, user } = useAuth();
-
   const { currentModal, closeModal, isSearchModalOpen, onSearchModal } =
     useModal();
 
@@ -28,9 +26,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     if (isAuthenticated && user?.emailVerified) {
       setModalOpen(!isModalOpen);
     } else {
-      setToastMessage("Verify your email before submitting your location.");
-      setToastType("error");
-      setTimeout(() => setToastMessage(null), 5000);
+      addToast("Verify your email before submitting your location.", "error");
     }
   };
 
@@ -59,14 +55,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}
       {isSearchModalOpen && <SearchWrapper onClose={closeModal} />}
       {currentModal === "updateShop" && <UpdateShop />}
-
-      {toastMessage && (
-        <ToastMessage
-          toastMessage={toastMessage}
-          toastType={toastType}
-          position="bottom-5 right-5"
-        />
-      )}
     </div>
   );
 };
