@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { IndexedDBShop } from "../../types/dataTypes";
 
-// Limits the number of suggestions
 const LIMIT = 5;
 
 const SearchBar = () => {
@@ -12,6 +11,7 @@ const SearchBar = () => {
   const [suggestions, setSuggestions] = useState<{ shop: IndexedDBShop }[]>([]);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { setCenter, setShopId, setZoom } = useMap();
 
@@ -34,6 +34,22 @@ const SearchBar = () => {
     fetchSuggestions();
   }, [search]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownVisible(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (focusedIndex >= 0 && suggestions[focusedIndex]) {
@@ -49,9 +65,9 @@ const SearchBar = () => {
       setCenter([location.latitude, location.longitude]);
       setZoom(16);
       setShopId(shop.id.toString());
+      setIsDropdownVisible(false);
     }
     setSearch(shop.name);
-    setIsDropdownVisible(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -61,7 +77,7 @@ const SearchBar = () => {
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex((prevIndex) =>
-          Math.min(prevIndex + 1, suggestions.length - 1),
+          Math.min(prevIndex + 1, suggestions.length - 1)
         );
         break;
       case "ArrowUp":
@@ -73,6 +89,7 @@ const SearchBar = () => {
         if (focusedIndex >= 0 && suggestions[focusedIndex]) {
           handleSuggestionClick(suggestions[focusedIndex].shop);
         }
+        setIsDropdownVisible(false);
         break;
       case "Escape":
         setIsDropdownVisible(false);
@@ -83,8 +100,8 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="relative w-full p-3">
-      <form className="w-full p-3" onSubmit={handleSubmit}>
+    <div className="relative w-full" ref={dropdownRef}>
+      <form className="w-full" onSubmit={handleSubmit}>
         <label
           htmlFor="search"
           className="mb-2 text-sm font-medium text-primary sr-only"
@@ -134,9 +151,9 @@ const SearchBar = () => {
                       : "hover:bg-primary hover:text-white hover:rounded-lg"
                   }`}
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col md:flex-row justify-between md:items-center">
                     <span className="font-medium">{result.shop.name}</span>
-                    <span className="text-sm text-gray-400 truncate ml-2">
+                    <span className="text-sm text-gray-400 truncate md:ml-2">
                       {address}
                     </span>
                   </div>

@@ -4,7 +4,6 @@ import NavBar from "../NavBar/Navbar";
 import LocationSubmit from "../Modal/LocationSubmit";
 import { useModal } from "../../context/modalContext";
 import { useAuth } from "../../context/authContext";
-import SearchWrapper from "../Modal/SearchWrapper";
 import UpdateShop from "../Modal/UpdateShop";
 import { useToast } from "../../context/toastContext";
 
@@ -17,7 +16,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const { addToast } = useToast();
   const { isAuthenticated, user } = useAuth();
-  const { currentModal, closeModal, isSearchModalOpen, onSearchModal } =
+  const { currentModal } =
     useModal();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
@@ -41,7 +40,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         style={{ width: "16rem" }}
       >
         <Sidebar
-          onToggleSearch={onSearchModal}
           isOpen={isSidebarOpen}
           onToggleLocation={toggleLocation}
           onToggleSidebar={toggleSidebar}
@@ -53,7 +51,6 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       </div>
 
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}
-      {isSearchModalOpen && <SearchWrapper onClose={closeModal} />}
       {currentModal === "updateShop" && <UpdateShop />}
     </div>
   );
