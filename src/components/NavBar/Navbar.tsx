@@ -35,7 +35,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
       try {
         const paymentLink = await createPaymentLink(
           userMetadata?.id,
-          userMetadata?.email
+          userMetadata?.email,
         );
         window.location.href = paymentLink;
       } catch (error) {

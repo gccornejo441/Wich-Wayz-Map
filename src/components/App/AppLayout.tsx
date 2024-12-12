@@ -16,8 +16,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const { addToast } = useToast();
   const { isAuthenticated, user } = useAuth();
-  const { currentModal } =
-    useModal();
+  const { currentModal } = useModal();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 

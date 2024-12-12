@@ -77,7 +77,7 @@ const SearchBar = () => {
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex((prevIndex) =>
-          Math.min(prevIndex + 1, suggestions.length - 1)
+          Math.min(prevIndex + 1, suggestions.length - 1),
         );
         break;
       case "ArrowUp":
