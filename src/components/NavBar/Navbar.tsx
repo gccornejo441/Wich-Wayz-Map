@@ -1,6 +1,5 @@
 import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
 import Logo from "../Logo/Logo";
-import SearchBar from "../Search/SearchBar";
 import { Link } from "react-router-dom";
 import UserAvatar from "../Avatar/UserAvatar";
 import { Dropdown } from "flowbite-react";
@@ -11,6 +10,7 @@ import { createPaymentLink } from "../../services/stripe";
 import { ROUTES } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
 import { useToast } from "../../context/toastContext";
+import SearchBar from "../Search/SearchBar";
 
 interface NavBarProps {
   onToggleSidebar: Callback;
@@ -50,7 +50,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
   return (
     <>
       <nav className="absolute top-0 left-0 right-0 z-50">
-        <div className="w-full bg-primary md:mx-auto py-2 px-4  md:justify-between">
+        <div className="w-full bg-primary md:mx-auto py-1 px-4  md:justify-between">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
               <SidebarToggleButton onClick={onToggleSidebar} />

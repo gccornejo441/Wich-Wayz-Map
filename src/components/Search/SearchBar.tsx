@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
+import Autosuggest from "react-autosuggest";
 import { HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
@@ -8,161 +9,97 @@ const LIMIT = 5;
 
 const SearchBar = () => {
   const [search, setSearch] = useState("");
-  const [suggestions, setSuggestions] = useState<{ shop: IndexedDBShop }[]>([]);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
+  const [suggestions, setSuggestions] = useState<IndexedDBShop[]>([]);
   const { setCenter, setShopId, setZoom } = useMap();
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (search.trim() !== "") {
-        try {
-          const results = await SearchShops(search);
-          setSuggestions(results.slice(0, LIMIT));
-          setIsDropdownVisible(true);
-        } catch (error) {
-          console.error("Error fetching suggestions:", error);
-        }
-      } else {
-        setSuggestions([]);
-        setIsDropdownVisible(false);
+  const fetchSuggestions = async (value: string) => {
+    if (value.trim() !== "") {
+      try {
+        const results = await SearchShops(value);
+        setSuggestions(results.map((result) => result.shop).slice(0, LIMIT));
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
       }
-    };
-
-    fetchSuggestions();
-  }, [search]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownVisible(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (focusedIndex >= 0 && suggestions[focusedIndex]) {
-      handleSuggestionClick(suggestions[focusedIndex].shop);
-    } else if (search.trim() !== "" && suggestions.length > 0) {
-      handleSuggestionClick(suggestions[0].shop);
+    } else {
+      setSuggestions([]);
     }
   };
 
-  const handleSuggestionClick = (shop: IndexedDBShop) => {
-    const location = shop.locations?.[0];
+  const onSuggestionsFetchRequested = ({ value }: { value: string }) => {
+    fetchSuggestions(value);
+  };
+
+  const onSuggestionsClearRequested = () => {
+    setSuggestions([]);
+  };
+
+  const getSuggestionValue = (suggestion: IndexedDBShop) => suggestion.name;
+
+  const renderSuggestion = (suggestion: IndexedDBShop) => {
+    const location = suggestion.locations?.[0];
+    const address = location
+      ? `${location.street_address || ""}, ${location.city || ""}`
+      : "Address not available";
+
+    return (
+      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 hover:bg-primary  text-dark hover:text-white rounded-lg">
+        <span className="font-medium  ">{suggestion.name}</span>
+        <span className="text-sm   truncate md:ml-2">{address}</span>
+      </div>
+    );
+  };
+
+  const handleSuggestionSelected = (
+    _: React.FormEvent,
+    { suggestion }: { suggestion: IndexedDBShop },
+  ) => {
+    const location = suggestion.locations?.[0];
     if (location) {
       setCenter([location.latitude, location.longitude]);
       setZoom(16);
-      setShopId(shop.id.toString());
-      setIsDropdownVisible(false);
+      setShopId(suggestion.id.toString());
     }
-    setSearch(shop.name);
+    setSearch(suggestion.name);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isDropdownVisible) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setFocusedIndex((prevIndex) =>
-          Math.min(prevIndex + 1, suggestions.length - 1),
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setFocusedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (focusedIndex >= 0 && suggestions[focusedIndex]) {
-          handleSuggestionClick(suggestions[focusedIndex].shop);
-        }
-        setIsDropdownVisible(false);
-        break;
-      case "Escape":
-        setIsDropdownVisible(false);
-        break;
-      default:
-        break;
-    }
+  const inputProps = {
+    placeholder: "Search shops",
+    value: search,
+    onChange: (
+      _: React.FormEvent<HTMLElement>,
+      { newValue }: { newValue: string },
+    ) => {
+      setSearch(newValue);
+    },
   };
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
-      <form className="w-full" onSubmit={handleSubmit}>
-        <label
-          htmlFor="search"
-          className="mb-2 text-sm font-medium text-primary sr-only"
-        >
-          Search
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-            <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
-          </div>
-          <input
-            type="search"
-            id="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="block w-full p-2 ps-12 text-sm text-dark border-gray-200 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:outline-none"
-            placeholder="Search Shops"
-            required
-          />
+    <div className="relative w-full">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+          <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
         </div>
-
-        {isDropdownVisible && suggestions.length > 0 && (
-          <ul
-            className="absolute z-10 w-[92%] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg transition-opacity duration-300 ease-in-out"
-            role="listbox"
-          >
-            {suggestions.map((result, index) => {
-              const location = result.shop.locations?.[0];
-              const address = location
-                ? `${location.street_address || ""}, ${location.city || ""}`
-                : "Address not available";
-
-              return (
-                <li
-                  key={index}
-                  role="option"
-                  tabIndex={0}
-                  aria-selected={focusedIndex === index}
-                  onClick={() => handleSuggestionClick(result.shop)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSuggestionClick(result.shop);
-                  }}
-                  className={`px-4 py-2 cursor-pointer ${
-                    focusedIndex === index
-                      ? "bg-primary text-white"
-                      : "hover:bg-primary hover:text-white hover:rounded-lg"
-                  }`}
-                >
-                  <div className="flex flex-col md:flex-row justify-between md:items-center">
-                    <span className="font-medium">{result.shop.name}</span>
-                    <span className="text-sm text-gray-400 truncate md:ml-2">
-                      {address}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </form>
+        <Autosuggest
+          suggestions={suggestions}
+          onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+          onSuggestionsClearRequested={onSuggestionsClearRequested}
+          getSuggestionValue={getSuggestionValue}
+          renderSuggestion={renderSuggestion}
+          onSuggestionSelected={handleSuggestionSelected}
+          inputProps={{
+            ...inputProps,
+            className:
+              "w-full p-3 pl-10 text-sm text-accent bg-background border border-lightGray rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-sans",
+          }}
+          theme={{
+            container: "relative",
+            suggestionsContainer:
+              "absolute z-10 mt-2 w-full bg-background rounded-lg shadow-card",
+            suggestion: "cursor-pointer px-3 py-2 bg-white text-background",
+            suggestionHighlighted: "bg-white ",
+          }}
+        />
+      </div>
     </div>
   );
 };
