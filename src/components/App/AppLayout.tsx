@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "../SideMenu/Sidebar";
+import Sidebar from "../Sidebar/Sidebar";
 import NavBar from "../NavBar/Navbar";
 import LocationSubmit from "../Modal/LocationSubmit";
 import { useModal } from "../../context/modalContext";

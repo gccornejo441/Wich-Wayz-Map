@@ -1,4 +1,4 @@
-import { SidebarToggleButton } from "../SideMenu/SidebarButtons";
+import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
 import Logo from "../Logo/Logo";
 import { Link } from "react-router-dom";
 import UserAvatar from "../Avatar/UserAvatar";
