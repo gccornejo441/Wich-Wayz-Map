@@ -9,7 +9,7 @@ export const SidebarToggleButton = ({ onClick }: SidebarToggleButtonProps) => (
   <button
     type="button"
     aria-label="Side menu toggle"
-    className="p-2 mr-2 text-white rounded-lg cursor-pointer hover:bg-transparent bg-white/10  focus:ring-white/20"
+    className="p-2 text-white rounded-lg cursor-pointer hover:bg-transparent bg-white/10 focus:ring-white/20"
     onClick={onClick}
   >
     <span className="sr-only">Open sidebar</span>

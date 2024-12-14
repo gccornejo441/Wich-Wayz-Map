@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
-import { SidebarToggleButton } from "./SidebarButtons";
 import SidebarFooter from "./SidebarFooter";
-import { HiAdjustments, HiPlus } from "react-icons/hi";
+import { HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { useModal } from "../../context/modalContext";
-import { ROUTES } from "../../constants/routes";
+import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
 
 interface TopMenuProps {
@@ -16,7 +15,7 @@ interface SidebarProps extends TopMenuProps {
   onToggleLocation: Callback;
 }
 
-interface SidebarItemProps {
+export interface SidebarItemProps {
   onClick?: Callback;
   icon: JSX.Element;
   text: string;
@@ -25,17 +24,7 @@ interface SidebarItemProps {
   badge?: string;
 }
 
-const SidebarTopMenu = ({ onToggleSidebar }: TopMenuProps) => {
-  return (
-    <div className="flex justify-between pt-1 mb-5 items-center md:h-header-height">
-      <span className="flex" data-state="closed">
-        <SidebarToggleButton onClick={onToggleSidebar} />
-      </span>
-    </div>
-  );
-};
-
-const SidebarItem = ({
+export const SidebarItem = ({
   onClick,
   icon,
   text,
@@ -93,46 +82,52 @@ const SidebarItem = ({
   );
 };
 
-const Sidebar = ({
-  isOpen,
-  onToggleLocation,
-  onToggleSidebar,
-}: SidebarProps) => {
+const Sidebar = ({ isOpen, onToggleLocation }: SidebarProps) => {
   const { isAuthenticated, user } = useAuth();
+  const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
 
   const isMember = isAuthenticated && user?.emailVerified;
 
   return (
     <aside
       id="default-sidebar"
-      className={`fixed top-0 left-0 z-40 w-64 h-screen bg-primary border-primary border-r transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
+      className={`fixed top-0 left-16 z-30 w-64 h-screen bg-primary border-primary border-r transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
         isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
       }`}
       aria-label="Sidebar"
     >
       <div className="flex flex-col h-full px-3 pb-4">
         <ul className="flex-1 overflow-y-auto space-y-2 font-medium">
-          <li>
-            <SidebarTopMenu onToggleSidebar={onToggleSidebar} />
-          </li>
-          {isAuthenticated && (
+          <li className="h-12"></li>
+          {showMap && (
             <li>
               <SidebarItem
-                icon={<HiAdjustments className="w-6 h-6 text-white" />}
-                text="Settings"
+                icon={<HiMap className="w-6 h-6 text-white" />}
+                text="Map"
+                linkTo={ROUTES.HOME}
+              />
+            </li>
+          )}
+          {isAuthenticated && showUserProfile && (
+            <li>
+              <SidebarItem
+                icon={<HiUser className="w-6 h-6 text-white" />}
+                text="Profile"
                 linkTo={ROUTES.ACCOUNT.PROFILE}
               />
             </li>
           )}
-          <li>
-            <SidebarItem
-              onClick={onToggleLocation}
-              icon={<HiPlus className="w-6 h-6 text-white" />}
-              text="Add A New Shop"
-              badge={!isMember ? "Members Only" : undefined}
-              disabled={!isMember}
-            />
-          </li>
+          {showAddShop && (
+            <li>
+              <SidebarItem
+                onClick={onToggleLocation}
+                icon={<HiPlus className="w-6 h-6 text-white" />}
+                text="Add A New Shop"
+                badge={!isMember ? "Members Only" : undefined}
+                disabled={!isMember}
+              />
+            </li>
+          )}
         </ul>
         <SidebarFooter />
       </div>

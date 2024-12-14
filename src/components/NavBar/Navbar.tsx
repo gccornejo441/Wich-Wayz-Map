@@ -1,4 +1,3 @@
-import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
 import Logo from "../Logo/Logo";
 import { Link } from "react-router-dom";
 import UserAvatar from "../Avatar/UserAvatar";
@@ -8,18 +7,21 @@ import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
 import { ROUTES } from "../../constants/routes";
-import { Callback } from "../../types/dataTypes";
 import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
+import { useLocation } from "react-router-dom";
 
 interface NavBarProps {
-  onToggleSidebar: Callback;
+  searchBar: boolean;
+  setSearchBar: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const NavBar = ({ onToggleSidebar }: NavBarProps) => {
+const NavBar = ({ searchBar, setSearchBar }: NavBarProps) => {
   const { isAuthenticated, logout, userMetadata } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const location = useLocation();
+  const showSearchBar = location.pathname === "/";
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
@@ -53,16 +55,17 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
         <div className="w-full bg-primary md:mx-auto py-1 px-4  md:justify-between">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
-              <SidebarToggleButton onClick={onToggleSidebar} />
               <div className="flex items-center gap-2 cursor-pointer">
                 <Link to="/" className="flex items-center gap-2 cursor-pointer">
                   <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-10" />
                 </Link>
               </div>
             </div>
-            <div className="hidden md:flex w-1/2">
-              <SearchBar />
-            </div>
+            {showSearchBar && (
+              <div className="hidden md:flex w-1/2">
+                <SearchBar searchBar={searchBar} setSearchBar={setSearchBar} />
+              </div>
+            )}
             <div className="flex items-center gap-4 z-20">
               <Dropdown
                 arrowIcon={false}
@@ -102,7 +105,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
                     <Dropdown.Item
                       icon={HiLogout}
                       onClick={handleAuthAction}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-red-500 rounded-lg transition duration-300 ease-in-out"
+                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
                     >
                       Sign Out
                     </Dropdown.Item>
@@ -119,7 +122,7 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
                     <Dropdown.Item
                       icon={HiUserAdd}
                       onClick={handleSignup}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-red-500 rounded-lg transition duration-300 ease-in-out"
+                      className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
                     >
                       Register
                     </Dropdown.Item>
@@ -131,9 +134,11 @@ const NavBar = ({ onToggleSidebar }: NavBarProps) => {
             </div>
           </div>
         </div>
-        <div className="flex md:hidden w-full p-2">
-          <SearchBar />
-        </div>
+        {searchBar && (
+          <div className="flex md:hidden w-full p-2">
+            <SearchBar searchBar={searchBar} setSearchBar={setSearchBar} />
+          </div>
+        )}
       </nav>
     </>
   );

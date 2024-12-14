@@ -1,10 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/flowbite-react/**/*.js",
+  ],
   theme: {
     extend: {
       colors: {
         primary: "#DA291C", // red
+        primaryBorder: "#5a110c", // dark red
         secondary: "#FFC72C", // yellow
         background: "#FFFFFF", // white
         accent: "#333333", // Dark gray/black
@@ -24,5 +29,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [require("@tailwindcss/typography"), require("flowbite/plugin")],
 };

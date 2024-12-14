@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import Autosuggest from "react-autosuggest";
-import { HiSearch } from "react-icons/hi";
+import { HiMenuAlt2, HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { IndexedDBShop } from "../../types/dataTypes";
 
 const LIMIT = 5;
+interface SearchBarProps {
+  searchBar: boolean;
+  setSearchBar: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const SearchBar = () => {
+const SearchBar = ({ searchBar, setSearchBar }: SearchBarProps) => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<IndexedDBShop[]>([]);
   const { setCenter, setShopId, setZoom } = useMap();
@@ -73,9 +77,19 @@ const SearchBar = () => {
     },
   };
 
+  const handleShowSideNav = () => {
+    setSearchBar(!searchBar);
+  };
+
   return (
     <div className="relative w-full">
       <div className="relative">
+        <button
+          onClick={handleShowSideNav}
+          className="md:hidden absolute inset-y-0 right-0 flex items-center pr-3 z-10"
+        >
+          <HiMenuAlt2 className="w-5 h-5 text-secondary" aria-hidden="true" />
+        </button>
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
           <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
         </div>
@@ -89,7 +103,7 @@ const SearchBar = () => {
           inputProps={{
             ...inputProps,
             className:
-              "w-full p-3 pl-10 text-sm text-accent bg-background border border-lightGray rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-sans",
+              "w-full p-2 pl-10 text-sm text-accent bg-background border border-lightGray rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-sans",
           }}
           theme={{
             container: "relative",
