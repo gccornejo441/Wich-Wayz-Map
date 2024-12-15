@@ -46,22 +46,30 @@ export const ROUTES: Routes = {
 export const useRouteCheck = (routes: Routes) => {
   const location = useLocation();
 
-  const flattenedRoutes = Object.values(routes).reduce((acc, value) => {
-    if (typeof value === "string") {
-      acc.push(value);
-    } else if (typeof value === "object") {
-      acc.push(...Object.values(value));
-    }
-    return acc;
-  }, []);
+  const flattenedRoutes = Object.values(routes).reduce<string[]>(
+    (acc, value) => {
+      if (typeof value === "string") {
+        acc.push(value);
+      } else if (typeof value === "object") {
+        acc.push(
+          ...Object.values(value).filter(
+            (v): v is string => typeof v === "string",
+          ),
+        );
+      }
+      return acc;
+    },
+    [],
+  );
 
   const isPathValid = flattenedRoutes.includes(location.pathname);
 
+  const isHomePage = location.pathname === ROUTES.HOME;
   return {
     isPathValid,
-    showSearchBar: location.pathname === ROUTES.HOME,
-    showAddShop: location.pathname === ROUTES.HOME,
-    showUserProfile: location.pathname === ROUTES.HOME,
-    showMap: location.pathname !== ROUTES.HOME,
+    showSearchBar: isHomePage,
+    showAddShop: isHomePage,
+    showUserProfile: isHomePage,
+    showMap: !isHomePage,
   };
 };

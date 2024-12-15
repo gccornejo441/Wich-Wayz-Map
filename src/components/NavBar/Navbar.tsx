@@ -6,22 +6,22 @@ import { useAuth } from "../../context/authContext";
 import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
-import { ROUTES } from "../../constants/routes";
+import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
-import { useLocation } from "react-router-dom";
+import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
+import { Callback } from "../../types/dataTypes";
 
 interface NavBarProps {
   searchBar: boolean;
-  setSearchBar: React.Dispatch<React.SetStateAction<boolean>>;
+  onToggleSidebar: Callback;
 }
 
-const NavBar = ({ searchBar, setSearchBar }: NavBarProps) => {
+const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
   const { isAuthenticated, logout, userMetadata } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const location = useLocation();
-  const showSearchBar = location.pathname === "/";
+  const { showSearchBar } = useRouteCheck(ROUTES);
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
@@ -55,6 +55,9 @@ const NavBar = ({ searchBar, setSearchBar }: NavBarProps) => {
         <div className="w-full bg-primary md:mx-auto py-1 px-4  md:justify-between">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
+              {showSearchBar && (
+                <SidebarToggleButton onClick={onToggleSidebar} />
+              )}
               <div className="flex items-center gap-2 cursor-pointer">
                 <Link to="/" className="flex items-center gap-2 cursor-pointer">
                   <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-10" />
@@ -63,7 +66,7 @@ const NavBar = ({ searchBar, setSearchBar }: NavBarProps) => {
             </div>
             {showSearchBar && (
               <div className="hidden md:flex w-1/2">
-                <SearchBar searchBar={searchBar} setSearchBar={setSearchBar} />
+                <SearchBar />
               </div>
             )}
             <div className="flex items-center gap-4 z-20">
@@ -134,9 +137,9 @@ const NavBar = ({ searchBar, setSearchBar }: NavBarProps) => {
             </div>
           </div>
         </div>
-        {searchBar && (
+        {showSearchBar && searchBar && (
           <div className="flex md:hidden w-full p-2">
-            <SearchBar searchBar={searchBar} setSearchBar={setSearchBar} />
+            <SearchBar />
           </div>
         )}
       </nav>

@@ -7,7 +7,6 @@ import { useModal } from "../../context/modalContext";
 import { useAuth } from "../../context/authContext";
 import UpdateShop from "../Modal/UpdateShop";
 import { useToast } from "../../context/toastContext";
-import SideNav from "../Sidebar/SideNav";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -16,15 +15,19 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [searchBar, setSearchBar] = useState(false);
   const { addToast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const { currentModal } = useModal();
   const location = useLocation();
-
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
 
   const toggleLocation = async () => {
     if (isAuthenticated && user?.emailVerified) {
@@ -34,39 +37,42 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     }
   };
 
-  const onSearch = () => setSearchBar((prev) => !prev);
-
   useEffect(() => {
-    setSidebarOpen(false);
-  }, [location]);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         sidebarRef.current &&
         !sidebarRef.current.contains(event.target as Node)
       ) {
-        setSidebarOpen(false);
+        closeSidebar();
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    if (isSidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isSidebarOpen]);
+
+  useEffect(() => {
+    closeSidebar();
+  }, [location]);
 
   return (
     <div className="relative min-h-screen bg-lightGray">
-      <NavBar searchBar={searchBar} setSearchBar={setSearchBar} />
-      <div className="flex flex-col">
-        <div ref={sidebarRef}>
-          {!searchBar && (
-            <SideNav onToggleSidebar={toggleSidebar} onSearch={onSearch} />
-          )}
+      <div>
+        <div className="flex flex-col">
           <div ref={sidebarRef}>
+            <NavBar
+              onToggleSidebar={toggleSidebar}
+              searchBar={!isSidebarOpen}
+            />
             <Sidebar
-              isOpen={isSidebarOpen}
+              isOpen={!isSidebarOpen}
               onToggleLocation={toggleLocation}
               onToggleSidebar={toggleSidebar}
             />

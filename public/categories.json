@@ -148,5 +148,15 @@
     "id": 30,
     "category_name": "Po' Boy",
     "description": "for sandwiches piled with lettuce, tomato and pickles and filled with roast beef, fried shrimp, oysters."
+  },
+  {
+    "id": 31,
+    "category_name": "Reuben",
+    "description": "For sandwiches composed of corned beef, Swiss cheese, sauerkraut, and Russian dressing. "
+  },
+  {
+    "id": 32,
+    "category_name": "Bagel",
+    "description": "For round, dense bread products with a chewy interior and slightly crisp exterior provide a robust foundation for an array of savory fillings."
   }
 ]
