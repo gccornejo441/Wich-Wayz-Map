@@ -97,6 +97,21 @@ export function updateShops(
     return updatedShops;
   });
 }
+
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function cleanString(value: string | null | undefined): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  return toTitleCase(trimmed);
+}
+
 /**
  * Creates payload for location and shop submission.
  */
@@ -104,21 +119,39 @@ function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
   modifiedBy: number | undefined,
 ) {
-  if (!modifiedBy) {
+  if (modifiedBy === undefined || modifiedBy === null) {
     throw new Error("User ID (modifiedBy) is required to create a shop.");
   }
 
   const currentDate = new Date().toISOString();
 
+  const cleanedShopName = cleanString(addAShopPayload.shopName);
+  const cleanedDescription = cleanString(
+    addAShopPayload.shop_description || "No description provided",
+  );
+
+  const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
+  const cleanedAddress = cleanString(addAShopPayload.address);
+  const cleanedAddressFirst = cleanString(addAShopPayload.address_first);
+  const cleanedAddressSecond = cleanString(addAShopPayload.address_second);
+
+  const cleanedCity = cleanString(addAShopPayload.city || "Unknown City");
+  const cleanedState = cleanString(addAShopPayload.state || "Unknown State");
+  const cleanedCountry = cleanString(
+    addAShopPayload.country || "Unknown Country",
+  );
+
+  const streetAddress = cleanedHouseNumber
+    ? `${cleanedHouseNumber} ${cleanedAddressFirst}`
+    : cleanedAddress;
+
   const location = {
-    street_address: addAShopPayload.house_number
-      ? `${addAShopPayload.house_number} ${addAShopPayload.address_first}`
-      : addAShopPayload.address,
-    street_address_second: addAShopPayload.address_second,
-    postal_code: addAShopPayload.postcode,
-    city: addAShopPayload.city || "Unknown City",
-    state: addAShopPayload.state || "Unknown State",
-    country: addAShopPayload.country || "Unknown Country",
+    street_address: streetAddress,
+    street_address_second: cleanedAddressSecond,
+    postal_code: addAShopPayload.postcode?.trim() || "",
+    city: cleanedCity,
+    state: cleanedState,
+    country: cleanedCountry,
     latitude: addAShopPayload.latitude,
     longitude: addAShopPayload.longitude,
     modified_by: modifiedBy,
@@ -127,8 +160,8 @@ function createLocationShopPayload(
   };
 
   const shop = {
-    name: addAShopPayload.shopName,
-    description: addAShopPayload.shop_description || "No description provided",
+    name: cleanedShopName,
+    description: cleanedDescription,
     modified_by: modifiedBy,
     created_by: modifiedBy,
   };

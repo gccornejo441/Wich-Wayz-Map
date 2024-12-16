@@ -29,6 +29,7 @@ const SignIn = () => {
     setMessage(null);
 
     const response = await login(email, password, rememberMe);
+    console.log(response);
     if (!response.success) {
       setError(response.message);
     } else {
@@ -146,7 +147,7 @@ const SignIn = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-secondary border-lightGray rounded"
+                  className="h-4 w-4 text-primary focus:ring-secondary border-accent rounded"
                 />
                 <label htmlFor="remember-me" className="ml-3 text-sm text-dark">
                   Remember me

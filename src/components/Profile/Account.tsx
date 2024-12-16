@@ -22,7 +22,7 @@ const Account = ({
   handleUpdateProfile,
 }: AccountProps) => {
   return (
-    <div className="p-6 mx-auto bg-background pb-4 border-b border-secondary">
+    <div className="p-6 mx-auto bg-background pb-4">
       <h3 className="text-xl font-semibold text-dark mb-2">
         Profile Information
       </h3>

@@ -10,6 +10,7 @@ export interface Routes {
     SIGN_IN: string;
     REGISTER: string;
     PROFILE: string;
+    ADMIN_SETTINGS: string;
   };
   LEGAL: {
     PRIVACY_POLICY: string;
@@ -30,6 +31,7 @@ export const ROUTES: Routes = {
     SIGN_IN: "/account/sign-in",
     REGISTER: "/account/register",
     PROFILE: "/account/profile",
+    ADMIN_SETTINGS: "/account/admin-settings",
   },
   LEGAL: {
     PRIVACY_POLICY: "/privacy-policy",
@@ -65,11 +67,13 @@ export const useRouteCheck = (routes: Routes) => {
   const isPathValid = flattenedRoutes.includes(location.pathname);
 
   const isHomePage = location.pathname === ROUTES.HOME;
+  const isAccountProfile = location.pathname === ROUTES.ACCOUNT.PROFILE;
+
   return {
     isPathValid,
     showSearchBar: isHomePage,
     showAddShop: isHomePage,
     showUserProfile: isHomePage,
-    showMap: !isHomePage,
+    showMap: !isHomePage && isAccountProfile,
   };
 };

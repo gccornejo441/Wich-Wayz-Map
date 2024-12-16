@@ -64,23 +64,18 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="relative min-h-screen bg-lightGray">
-      <div>
-        <div className="flex flex-col">
-          <div ref={sidebarRef}>
-            <NavBar
-              onToggleSidebar={toggleSidebar}
-              searchBar={!isSidebarOpen}
-            />
-            <Sidebar
-              isOpen={!isSidebarOpen}
-              onToggleLocation={toggleLocation}
-              onToggleSidebar={toggleSidebar}
-            />
-          </div>
+      <div className="flex flex-col">
+        <div ref={sidebarRef}>
+          <NavBar onToggleSidebar={toggleSidebar} searchBar={!isSidebarOpen} />
+          <Sidebar
+            isOpen={!isSidebarOpen}
+            onToggleLocation={toggleLocation}
+            onToggleSidebar={toggleSidebar}
+          />
         </div>
-        <div className="relative z-10">
-          <div className="container mx-auto md:px-4 md:py-6">{children}</div>
-        </div>
+      </div>
+      <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <div className="container mx-auto md:px-4 md:py-6">{children}</div>
       </div>
 
       {isModalOpen && <LocationSubmit onClose={toggleLocation} />}

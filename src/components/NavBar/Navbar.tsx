@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import UserAvatar from "../Avatar/UserAvatar";
 import { Dropdown } from "flowbite-react";
 import { useAuth } from "../../context/authContext";
-import { HiLogin, HiLogout, HiUserAdd } from "react-icons/hi";
+import { HiLogin, HiLogout, HiUserAdd, HiKey } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import { createPaymentLink } from "../../services/stripe";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
@@ -21,7 +21,7 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
   const { isAuthenticated, logout, userMetadata } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const { showSearchBar } = useRouteCheck(ROUTES);
+  const { showSearchBar, showMap } = useRouteCheck(ROUTES);
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
@@ -49,6 +49,10 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
     }
   };
 
+  const handleAdminSettings = () => {
+    navigate(ROUTES.ACCOUNT.ADMIN_SETTINGS);
+  };
+
   return (
     <>
       <nav className="absolute top-0 left-0 right-0 z-50">
@@ -58,6 +62,7 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
               {showSearchBar && (
                 <SidebarToggleButton onClick={onToggleSidebar} />
               )}
+              {showMap && <SidebarToggleButton onClick={onToggleSidebar} />}
               <div className="flex items-center gap-2 cursor-pointer">
                 <Link to="/" className="flex items-center gap-2 cursor-pointer">
                   <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-10" />
@@ -105,6 +110,15 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
                         </Dropdown.Item>
                       )}
                     <Dropdown.Divider />
+                    {userMetadata?.role === "admin" && (
+                      <Dropdown.Item
+                        icon={HiKey}
+                        onClick={handleAdminSettings}
+                        className="flex items-center gap-4 px-4 py-2 text-gray-700 hover:text-white hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                      >
+                        Admin Settings
+                      </Dropdown.Item>
+                    )}
                     <Dropdown.Item
                       icon={HiLogout}
                       onClick={handleAuthAction}

@@ -9,6 +9,7 @@ import PaymentSuccess from "./PaymentSuccess";
 import SignIn from "./SignIn";
 import { ROUTES } from "../../constants/routes";
 import TearmsOfService from "./TermsOfService";
+import AdminSettings from "./AdminSettings";
 
 function MainRoutes() {
   return (
@@ -28,7 +29,7 @@ function MainRoutes() {
       <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
       <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />
       <Route path={ROUTES.ACCOUNT.PROFILE} element={<UserProfile />} />
-
+      <Route path={ROUTES.ACCOUNT.ADMIN_SETTINGS} element={<AdminSettings />} />
       <Route path={ROUTES.PAYMENT.SUCCESS} element={<PaymentSuccess />} />
     </Routes>
   );

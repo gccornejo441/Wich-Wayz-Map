@@ -192,6 +192,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         email,
         password,
       );
+
       const { user } = userCredential;
 
       if (!user) {
@@ -227,7 +228,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             "Too many failed attempts. Please wait a few minutes and try again.",
           "auth/network-request-failed":
             "Network error. Please check your connection and try again.",
-          "auth/invalid-email": "Wrong email or password",
+          "auth/invalid-email": "Invalid email or password",
+          "auth/invalid-credential": "Invalid email or password",
         };
 
         const userFriendlyMessage =
@@ -364,7 +366,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const provider = new GoogleAuthProvider();
 
       const result = await signInWithPopup(auth, provider);
-      console.log("popup result", result);
+
       const user = result.user;
 
       if (!user || !user.email) {
@@ -396,8 +398,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       return { success: true, message: "Google sign-in successful." };
     } catch (error: unknown) {
-      console.error("Error during Google sign-in:", error);
-
       if (error instanceof FirebaseError) {
         switch (error.code) {
           case "auth/popup-closed-by-user":

@@ -311,6 +311,9 @@ export const getUserById = async (
   return user;
 };
 
+/**
+ * Updates the membership status of a user in the database.
+ */
 export const updateMembershipStatus = async (
   userId: string | number,
   status: string,
@@ -329,4 +332,92 @@ export const updateMembershipStatus = async (
     );
     throw error;
   }
+};
+
+/**
+ * Retrieves all users from the users table.
+ */
+export const getAllUsers = async (): Promise<UserMetadata[]> => {
+  const result = await executeQuery<UserRow>("SELECT * FROM users");
+  if (!result.rows || !Array.isArray(result.rows)) {
+    throw new Error("Invalid query result format");
+  }
+
+  return result.rows.map((userRow) => ({
+    id: userRow.id,
+    email: userRow.email,
+    hashedPassword: userRow.hashed_password,
+    username: userRow.username,
+    verified: userRow.verified,
+    verificationToken: userRow.verification_token,
+    modifiedBy: userRow.modified_by,
+    dateCreated: userRow.date_created,
+    dateModified: userRow.date_modified,
+    membershipStatus: userRow.membership_status,
+    firstName: userRow.first_name,
+    lastName: userRow.last_name,
+    role: userRow.role,
+    accountStatus: userRow.account_status,
+    lastLogin: userRow.last_login,
+    avatar: userRow.avatar,
+    tokenExpiry: userRow.token_expiry,
+    resetToken: userRow.reset_token,
+    firebaseUid: userRow.firebase_uid,
+  }));
+};
+
+/**
+ * Updates a user's role.
+ */
+export const updateUserRole = async (
+  userId: number,
+  role: string,
+): Promise<void> => {
+  const validRoles = ["admin", "editor", "member"];
+  if (!validRoles.includes(role)) {
+    throw new Error(`Invalid role: ${role}`);
+  }
+
+  await updateData("users", { role }, "id = ?", [userId]);
+};
+
+/**
+ * Deletes a user account from the database.
+ * @param userId - The ID of the user to delete.
+ */
+export const deleteUserAccount = async (userId: number): Promise<void> => {
+  const query = "DELETE FROM users WHERE id = ?";
+  await executeQuery(query, [userId]);
+};
+
+/**
+ * Adds a new category to the database if it does not already exist.
+ */
+export const addCategoryIfNotExists = async (
+  categoryName: string,
+): Promise<void> => {
+  const checkQuery =
+    "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
+  const { rows: existing } = await executeQuery<{ count: number }>(checkQuery, [
+    categoryName,
+  ]);
+
+  if (existing[0].count > 0) {
+    const error = new Error("Category already exists");
+    error.name = "CategoryExistsError";
+    throw error;
+  }
+
+  await insertData("categories", ["category_name"], [categoryName]);
+};
+
+export interface Category {
+  id: number;
+  category_name: string;
+}
+
+export const getAllCategories = async (): Promise<Category[]> => {
+  const query = "SELECT * FROM categories";
+  const { rows } = await executeQuery<Category>(query);
+  return rows;
 };

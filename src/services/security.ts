@@ -107,23 +107,6 @@ const refreshAccessToken = async (
 };
 
 /**
- * Generates a refresh token for a user.
- */
-export const generateRefreshToken = async (
-  user: UserMetadata,
-): Promise<string> => {
-  const refreshToken = await new SignJWT({
-    sub: user.id?.toString(),
-    email: user.email,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
-    .sign(SECRET_KEY);
-
-  return refreshToken;
-};
-
-/**
  * Resets a user's password.
  */
 export const resetPassword = async (
@@ -146,6 +129,26 @@ export const resetPassword = async (
     console.error("Error resetting password:", error);
     return { success: false, message: "An unexpected error occurred." };
   }
+};
+
+/**
+ * Generates a refresh token for a user.
+ */
+export const generateRefreshToken = async (
+  user: UserMetadata,
+): Promise<string> => {
+  const refreshToken = await new SignJWT({
+    sub: user.id?.toString(),
+    email: user.email,
+    role: user.role,
+    membershipStatus: user.membershipStatus,
+    username: user.username,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(SECRET_KEY);
+
+  return refreshToken;
 };
 
 /**

@@ -58,8 +58,6 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   /**
    * Tries to prefill the address fields with data from OpenStreetMap given an
    * address.
-   *
-   * @returns {Promise<void>}
    */
   const prefillAddressFields = async () => {
     const address = getValues("address").trim();
