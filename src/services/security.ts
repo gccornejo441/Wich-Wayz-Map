@@ -192,9 +192,11 @@ export const getCurrentUser = async (): Promise<TokenPayload | null> => {
       token,
       SECRET_KEY,
     );
+
     if (payload.exp === undefined) {
       throw new Error("Token does not have an exp claim.");
     }
+
     if (isTokenExpiredSoon(payload.exp)) {
       console.warn("Token nearing expiration. Refreshing...");
       token = await refreshAccessToken(refreshToken);
@@ -209,22 +211,17 @@ export const getCurrentUser = async (): Promise<TokenPayload | null> => {
 
     return payload;
   } catch (error) {
-    if (error instanceof Error && error.name === "JWTExpired") {
-      console.warn("Token expired. Attempting to refresh...");
+    console.warn("Token verification failed. Attempting forced refresh...");
 
-      const newAccessToken = await refreshAccessToken(refreshToken);
-      if (newAccessToken) {
-        localStorage.setItem("token", newAccessToken);
+    const newAccessToken = await refreshAccessToken(refreshToken);
+    if (newAccessToken) {
+      localStorage.setItem("token", newAccessToken);
 
-        const { payload } = await jwtVerify(newAccessToken, SECRET_KEY);
-        return payload;
-      } else {
-        console.error("Unable to refresh token. User must log in again.");
-        return null;
-      }
+      const { payload } = await jwtVerify(newAccessToken, SECRET_KEY);
+      return payload;
+    } else {
+      console.error("Unable to refresh token. User must log in again.", error);
+      return null;
     }
-
-    console.error("Error decoding JWT:", error);
-    return null;
   }
 };

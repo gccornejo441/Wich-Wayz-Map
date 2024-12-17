@@ -131,7 +131,7 @@ const MapBox = () => {
         <ZoomControl position="bottomleft" />
         <MapInteraction center={center} />
         <MarkerClusterGroup
-          maxClusterRadius={150}
+          maxClusterRadius={50}
           chunkedLoading={true}
           chunkInterval={200}
           chunkDelay={50}
@@ -180,7 +180,7 @@ const MapInteraction = ({ center }: { center: LatLngTuple | null }) => {
 };
 
 /**
- * Creates a custom cluster icon using TailwindCSS for styling.
+ * Creates a custom cluster.
  */
 const createClusterCustomIcon = (cluster: L.MarkerCluster): L.DivIcon => {
   const childCount = cluster.getChildCount();

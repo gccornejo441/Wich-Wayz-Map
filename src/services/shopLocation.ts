@@ -189,6 +189,60 @@ export async function submitLocationWithShop(payload: {
   const db = await tursoClient.transaction();
 
   try {
+    const duplicateLocationStmt = {
+      sql: `
+        SELECT * FROM locations 
+        WHERE (latitude = $latitude AND longitude = $longitude)
+           OR (postal_code = $postal_code AND street_address = $street_address AND city = $city AND state = $state AND country = $country)
+        LIMIT 1;
+      `,
+      args: {
+        latitude: payload.location.latitude,
+        longitude: payload.location.longitude,
+        postal_code: payload.location.postal_code,
+        street_address: payload.location.street_address,
+        city: payload.location.city,
+        state: payload.location.state,
+        country: payload.location.country,
+      },
+    };
+
+    const duplicateLocationResult = await db.execute(duplicateLocationStmt);
+    let location: Location;
+
+    if (duplicateLocationResult.rows.length > 0) {
+      location = duplicateLocationResult.rows[0] as unknown as Location;
+    } else {
+      const locationStmt = {
+        sql: `
+          INSERT INTO locations (postal_code, latitude, longitude, street_address, street_address_second, city, state, country, modified_by, date_created, date_modified)
+          VALUES ($postal_code, $latitude, $longitude, $street_address, $street_address_second, $city, $state, $country, $modified_by, $date_created, $date_modified)
+          RETURNING *;
+        `,
+        args: {
+          postal_code: payload.location.postal_code,
+          latitude: payload.location.latitude,
+          longitude: payload.location.longitude,
+          street_address: payload.location.street_address,
+          street_address_second: payload.location.street_address_second || null,
+          city: payload.location.city,
+          state: payload.location.state,
+          country: payload.location.country,
+          modified_by: payload.location.modified_by || null,
+          date_created: payload.location.date_created || null,
+          date_modified: payload.location.date_modified || null,
+        },
+      };
+
+      const locationResult = await db.execute(locationStmt);
+
+      if (!locationResult.rows || locationResult.rows.length === 0) {
+        throw new Error("Failed to insert location.");
+      }
+
+      location = locationResult.rows[0] as unknown as Location;
+    }
+
     const existingShopStmt = {
       sql: `
         SELECT * FROM shops WHERE name = $name LIMIT 1;
@@ -204,35 +258,7 @@ export async function submitLocationWithShop(payload: {
 
     let shop: Shop;
 
-    const locationStmt = {
-      sql: `
-        INSERT INTO locations (postal_code, latitude, longitude, street_address, street_address_second, city, state, country, modified_by, date_created, date_modified)
-        VALUES ($postal_code, $latitude, $longitude, $street_address, $street_address_second, $city, $state, $country, $modified_by, $date_created, $date_modified)
-        RETURNING *;
-      `,
-      args: {
-        postal_code: payload.location.postal_code,
-        latitude: payload.location.latitude,
-        longitude: payload.location.longitude,
-        street_address: payload.location.street_address,
-        street_address_second: payload.location.street_address_second || null,
-        city: payload.location.city,
-        state: payload.location.state,
-        country: payload.location.country,
-        modified_by: payload.location.modified_by || null,
-        date_created: payload.location.date_created || null,
-        date_modified: payload.location.date_modified || null,
-      },
-    };
-
-    const locationResult = await db.execute(locationStmt);
-
-    if (!locationResult.rows || locationResult.rows.length === 0) {
-      throw new Error("Failed to insert location.");
-    }
-    const location = locationResult.rows[0] as unknown as Location;
     if (!existingShop) {
-      // Insert the new shop
       const shopStmt = {
         sql: `
           INSERT INTO shops (name, description, created_by, modified_by, id_location)
@@ -244,7 +270,7 @@ export async function submitLocationWithShop(payload: {
           description: payload.shop.description || null,
           created_by: payload.shop.created_by,
           modified_by: payload.shop.modified_by || null,
-          id_location: location.id ?? 0, // Use the inserted location's ID
+          id_location: location.id ?? 0,
         },
       };
 
@@ -255,25 +281,9 @@ export async function submitLocationWithShop(payload: {
       }
 
       shop = shopResult.rows[0] as unknown as Shop;
-
-      // Update the shop with the location ID
-      const updateShopStmt = {
-        sql: `
-          UPDATE shops
-          SET id_location = $id_location
-          WHERE id = $shop_id;
-        `,
-        args: {
-          id_location: location.id ?? 0, // Provide a fallback or validate beforehand
-          shop_id: shop.id ?? 0,
-        },
-      };
-
-      await db.execute(updateShopStmt);
     } else {
       shop = existingShop;
 
-      // If the shop exists but does not have id_location, update it
       if (!shop.id_location) {
         const updateShopStmt = {
           sql: `
@@ -417,7 +427,6 @@ export const UpdateShop = async (updatedData: Shop): Promise<Shop | null> => {
  */
 export const GetShops = async (): Promise<ShopWithUser[]> => {
   try {
-    // Query to fetch shops with users, locations, and categories
     const shopsQuery = `
       SELECT 
         shops.id AS shop_id,
@@ -471,7 +480,6 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
       category_name: string | null;
     }>(shopsQuery);
 
-    // Process the rows to group categories and locations under their respective shops
     const shopMap: Record<number, ShopWithUser> = {};
 
     for (const row of shopData) {
@@ -491,7 +499,6 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
         };
       }
 
-      // Add location if it exists
       if (row.location_id) {
         const locationExists = shopMap[row.shop_id].locations?.some(
           (loc) => loc.id === row.location_id,
@@ -514,7 +521,6 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
         }
       }
 
-      // Add category if it exists
       if (row.category_id) {
         const categoryExists = shopMap[row.shop_id].categories?.some(
           (cat) => cat.id === row.category_id,
