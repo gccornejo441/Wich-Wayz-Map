@@ -68,12 +68,15 @@ export const useRouteCheck = (routes: Routes) => {
 
   const isHomePage = location.pathname === ROUTES.HOME;
   const isAccountProfile = location.pathname === ROUTES.ACCOUNT.PROFILE;
+  const isPrivacyOrTOS =
+    location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
+    location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE;
 
   return {
     isPathValid,
     showSearchBar: isHomePage,
     showAddShop: isHomePage,
     showUserProfile: isHomePage,
-    showMap: !isHomePage && isAccountProfile,
+    showMap: (!isHomePage && isAccountProfile) || isPrivacyOrTOS,
   };
 };

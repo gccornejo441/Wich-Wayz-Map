@@ -57,26 +57,36 @@ const MapBox = () => {
     const fetchMarkers = async () => {
       const markers = shops.flatMap(
         (shop) =>
-          shop.locations?.map((location) => ({
-            position: [location.latitude, location.longitude] as LatLngTuple,
-            popupContent: {
-              shopId: shop.id ?? 1,
-              shopName: shop.name,
-              address: `${location.street_address || "Address not available"}, ${
-                location.postal_code || ""
-              }, ${location.city || ""}, ${location.state || ""}`,
-              description: shop.description || undefined,
-              createdBy: shop.created_by_username || "admin",
-              categories:
-                shop.categories
-                  ?.map((category) => category.category_name)
-                  .join(", ") || "No categories available",
-              usersAvatarId: shop.users_avatar_id,
-              latitude: location.latitude,
-              longitude: location.longitude,
-            },
-            isPopupEnabled: true,
-          })) || [],
+          shop.locations?.map((location) => {
+            const fullAddress = [
+              location.street_address || "Address not available",
+              location.street_address_second || null,
+              location.postal_code || "",
+              location.city || "",
+              location.state || "",
+            ]
+              .filter(Boolean)
+              .join(", ");
+
+            return {
+              position: [location.latitude, location.longitude] as LatLngTuple,
+              popupContent: {
+                shopId: shop.id ?? 1,
+                shopName: shop.name,
+                address: fullAddress,
+                description: shop.description || undefined,
+                createdBy: shop.created_by_username || "admin",
+                categories:
+                  shop.categories
+                    ?.map((category) => category.category_name)
+                    .join(", ") || "No categories available",
+                usersAvatarId: shop.users_avatar_id,
+                latitude: location.latitude,
+                longitude: location.longitude,
+              },
+              isPopupEnabled: true,
+            };
+          }) || [],
       );
 
       setShopMarkers(markers);
