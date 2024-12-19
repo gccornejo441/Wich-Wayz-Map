@@ -10,6 +10,8 @@ import { locationSchema } from "../../constants/validators";
 import { Category, GetCategories } from "../../services/apiClient";
 import Select from "react-select";
 import { useToast } from "../../context/toastContext";
+import { useAuth } from "../../context/authContext";
+import { useNavigate } from "react-router-dom";
 
 interface LocationSubmitProps {
   onClose: Callback;
@@ -22,6 +24,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -121,6 +125,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       setShops,
       setLocations,
       addToast,
+      logout,
+      navigate,
     );
     if (success) onClose();
   };

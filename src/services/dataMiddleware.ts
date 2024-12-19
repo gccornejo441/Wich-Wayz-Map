@@ -10,6 +10,7 @@ import { cacheData, getCachedData } from "./indexedDB";
 import { getCurrentUser } from "./security";
 import { updateData } from "./apiClient";
 import { useShops } from "../context/shopContext";
+import { ROUTES } from "../constants/routes";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -19,9 +20,16 @@ export async function handleLocationSubmit(
   setShops: React.Dispatch<React.SetStateAction<Shop[]>>,
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
   addToast: (message: string, type: "success" | "error") => void,
+  logout: () => Promise<void>,
+  navigate: (path: string) => void,
 ): Promise<boolean> {
   try {
-    const currentUser = await getCurrentUser();
+    const currentUser = await getCurrentUser(logout);
+
+    if (!currentUser) {
+      navigate(ROUTES.ACCOUNT.SIGN_IN);
+      return false;
+    }
 
     if (!currentUser || currentUser.membershipStatus !== "member") {
       addToast("Only members can submit locations.", "error");

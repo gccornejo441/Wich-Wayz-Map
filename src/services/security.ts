@@ -138,7 +138,7 @@ export const generateRefreshToken = async (
   user: UserMetadata,
 ): Promise<string> => {
   const refreshToken = await new SignJWT({
-    sub: user.id?.toString(),
+    sub: user.id.toString(),
     email: user.email,
     role: user.role,
     membershipStatus: user.membershipStatus,
@@ -156,7 +156,7 @@ export const generateRefreshToken = async (
  */
 export const generateJWT = async (user: UserMetadata): Promise<string> => {
   const token = await new SignJWT({
-    sub: user.id?.toString(),
+    sub: user.id.toString(),
     email: user.email,
     role: user.role,
     membershipStatus: user.membershipStatus,
@@ -179,13 +179,23 @@ const isTokenExpiredSoon = (exp: number): boolean => {
 };
 
 /**
- * Retrieves the current user from the decoded JWT, with refresh logic.
+ * Retrieves the currently logged in user.
+ *
+ * This function verifies the JWT stored in local storage. If the token is
+ * invalid or expired, it will attempt to refresh the token using the
+ * refresh token stored in local storage. If the token cannot be refreshed,
+ * the user will be logged out.
  */
-export const getCurrentUser = async (): Promise<TokenPayload | null> => {
+export const getCurrentUser = async (
+  logout: () => Promise<void>,
+): Promise<TokenPayload | null> => {
   let token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
 
-  if (!token || !refreshToken) return null;
+  if (!token || !refreshToken) {
+    await logout();
+    return null;
+  }
 
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
@@ -203,6 +213,7 @@ export const getCurrentUser = async (): Promise<TokenPayload | null> => {
 
       if (!token) {
         console.error("Unable to refresh token. User must log in again.");
+        logout();
         return null;
       }
 
@@ -221,6 +232,7 @@ export const getCurrentUser = async (): Promise<TokenPayload | null> => {
       return payload;
     } else {
       console.error("Unable to refresh token. User must log in again.", error);
+      logout();
       return null;
     }
   }
