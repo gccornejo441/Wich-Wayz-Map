@@ -4,7 +4,7 @@ import { SignJWT, decodeJwt, jwtVerify } from "jose";
 import { UserMetadata } from "../context/authContext";
 
 const SECRET_KEY = new TextEncoder().encode(
-  import.meta.env.VITE_JWT_SECRET as string,
+  import.meta.env.VITE_JWT_SECRET as string
 );
 
 interface TokenPayload {
@@ -28,12 +28,12 @@ interface TokenPayload {
  */
 export const decodeJwtWithRefresh = async (
   token: string,
-  refreshToken: string,
+  refreshToken: string
 ): Promise<TokenPayload | null> => {
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
-      SECRET_KEY,
+      SECRET_KEY
     );
 
     return payload;
@@ -62,7 +62,7 @@ export const decodeJwtWithRefresh = async (
  * Generates a JWT for the given user metadata and stores it in local storage.
  */
 export const initializeJWT = async (
-  userMetadata: UserMetadata,
+  userMetadata: UserMetadata
 ): Promise<string | { status: string; user: null; message: string }> => {
   try {
     const accessToken = await generateJWT(userMetadata);
@@ -86,12 +86,12 @@ export const initializeJWT = async (
  * Function to refresh the access token using the refresh token.
  */
 const refreshAccessToken = async (
-  refreshToken: string,
+  refreshToken: string
 ): Promise<string | null> => {
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       refreshToken,
-      SECRET_KEY,
+      SECRET_KEY
     );
 
     const newAccessToken = await generateJWT(payload as UserMetadata);
@@ -111,7 +111,7 @@ const refreshAccessToken = async (
  */
 export const resetPassword = async (
   token: string,
-  password: string,
+  password: string
 ): Promise<{ success: boolean; message: string }> => {
   if (!token || !password) {
     return {
@@ -135,7 +135,7 @@ export const resetPassword = async (
  * Generates a refresh token for a user.
  */
 export const generateRefreshToken = async (
-  user: UserMetadata,
+  user: UserMetadata
 ): Promise<string> => {
   const refreshToken = await new SignJWT({
     sub: user.id.toString(),
@@ -187,7 +187,7 @@ const isTokenExpiredSoon = (exp: number): boolean => {
  * the user will be logged out.
  */
 export const getCurrentUser = async (
-  logout: () => Promise<void>,
+  logout: () => Promise<void>
 ): Promise<TokenPayload | null> => {
   let token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
@@ -200,7 +200,7 @@ export const getCurrentUser = async (
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
-      SECRET_KEY,
+      SECRET_KEY
     );
 
     if (payload.exp === undefined) {

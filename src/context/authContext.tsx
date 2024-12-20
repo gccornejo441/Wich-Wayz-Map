@@ -69,7 +69,7 @@ export interface SessionUserMetadata {
  * Utility function to map full UserMetadata to SessionUserMetadata.
  */
 export const mapToSessionUserMetadata = (
-  metadata: UserMetadata,
+  metadata: UserMetadata
 ): SessionUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
@@ -97,11 +97,11 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string,
+    email: string
   ) => Promise<{ success: boolean; message: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
   refreshToken: () => Promise<string | null>;
@@ -111,7 +111,7 @@ interface AuthContextData {
     username?: string | null,
     firstName?: string | null,
     lastName?: string | null,
-    useGoogle?: boolean,
+    useGoogle?: boolean
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -121,25 +121,65 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+
+  // Initialize userMetadata.tokenExpiry from localStorage
   const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(() => {
     const storedMetadata = sessionStorage.getItem("userMetadata");
-    return storedMetadata ? JSON.parse(storedMetadata) : null;
+    const metadata = storedMetadata ? JSON.parse(storedMetadata) : null;
+
+    if (metadata) {
+      const tokenExpiry = localStorage.getItem("tokenExpiry");
+      if (tokenExpiry) {
+        metadata.tokenExpiry = tokenExpiry;
+        console.log("Initialized tokenExpiry from localStorage:", tokenExpiry);
+      } else {
+        console.warn(
+          "Token expiry missing in localStorage during initialization."
+        );
+      }
+    }
+
+    return metadata;
   });
 
   useEffect(() => {
-    const refreshAuthToken = async () => {
-      if (!user || !userMetadata || !userMetadata.tokenExpiry) return;
+    console.log("useEffect is running");
 
-      const expiryTime = new Date(userMetadata.tokenExpiry).getTime();
+    const refreshAuthToken = async () => {
+      console.log("Checking token refresh condition");
+
+      if (!user || !userMetadata) {
+        console.log("User or metadata is missing, skipping refresh");
+        return;
+      }
+
+      const tokenExpiry =
+        userMetadata.tokenExpiry || localStorage.getItem("tokenExpiry");
+      if (!tokenExpiry) {
+        console.log("Token expiry missing, skipping refresh");
+        return;
+      }
+
+      const expiryTime = new Date(tokenExpiry).getTime();
       const now = Date.now();
 
+      console.log(`Token expires in: ${expiryTime - now}ms`);
+
       if (expiryTime - now <= 60000) {
+        console.log("Refreshing token...");
         await refreshToken();
       }
     };
 
-    const interval = setInterval(refreshAuthToken, 60000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      console.log("Interval triggered");
+      refreshAuthToken();
+    }, 60000);
+
+    return () => {
+      console.log("Cleaning up interval");
+      clearInterval(interval);
+    };
   }, [user, userMetadata]);
 
   useEffect(() => {
@@ -150,14 +190,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid,
+              firebaseUser.uid
             );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
               sessionStorage.setItem(
                 "userMetadata",
-                JSON.stringify(sessionMetadata),
+                JSON.stringify(sessionMetadata)
               );
             }
           } catch (error) {
@@ -178,7 +218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -190,9 +230,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
-
       const { user } = userCredential;
 
       if (!user) {
@@ -202,8 +241,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (metadata) {
         const sessionMetadata = mapToSessionUserMetadata(metadata);
+
+        const tokenExpiryTime = Date.now() + 3600 * 1000;
+        sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
+        metadata.tokenExpiry = sessionMetadata.tokenExpiry;
+
         setUserMetadata(metadata);
         sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+        localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
 
         const jwtResult = await initializeJWT(metadata);
         if (typeof jwtResult !== "string") {
@@ -304,7 +349,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     username: string | null = null,
     firstName: string | null = null,
     lastName: string | null = null,
-    useGoogle: boolean = false,
+    useGoogle: boolean = false
   ): Promise<{ success: boolean; message: string }> => {
     if (useGoogle) {
       return registerWithGoogle();
@@ -321,7 +366,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
       const user = userCredential.user;
 
@@ -380,13 +425,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (!metadata) {
         throw new Error(
-          "No account found for this Google account. Please register first.",
+          "No account found for this Google account. Please register first."
         );
       }
 
       const sessionMetadata = mapToSessionUserMetadata(metadata);
+
+      const tokenExpiryTime = Date.now() + 3600 * 1000;
+      sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
+      metadata.tokenExpiry = sessionMetadata.tokenExpiry;
+
       setUserMetadata(metadata);
       sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+      localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
+      console.log(
+        "Token expiry set during Google sign-in:",
+        sessionMetadata.tokenExpiry
+      );
 
       const jwtResult = await initializeJWT(metadata);
       if (typeof jwtResult !== "string") {
@@ -443,6 +498,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       setUserMetadata(updatedMetadata);
       sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
+
+      if (updatedMetadata.tokenExpiry) {
+        localStorage.setItem("tokenExpiry", updatedMetadata.tokenExpiry);
+      } else {
+        console.error("Token expiry is null; cannot set in localStorage.");
+      }
       sessionStorage.setItem("token", token);
 
       console.log("Token refreshed successfully!");

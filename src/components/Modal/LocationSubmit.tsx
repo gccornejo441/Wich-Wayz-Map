@@ -26,7 +26,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const { logout } = useAuth();
   const navigate = useNavigate();
-
+  
   const {
     register,
     handleSubmit,
