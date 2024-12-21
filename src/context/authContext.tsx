@@ -69,7 +69,7 @@ export interface SessionUserMetadata {
  * Utility function to map full UserMetadata to SessionUserMetadata.
  */
 export const mapToSessionUserMetadata = (
-  metadata: UserMetadata
+  metadata: UserMetadata,
 ): SessionUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
@@ -97,11 +97,11 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string
+    email: string,
   ) => Promise<{ success: boolean; message: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
   refreshToken: () => Promise<string | null>;
@@ -111,7 +111,7 @@ interface AuthContextData {
     username?: string | null,
     firstName?: string | null,
     lastName?: string | null,
-    useGoogle?: boolean
+    useGoogle?: boolean,
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -131,10 +131,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const tokenExpiry = localStorage.getItem("tokenExpiry");
       if (tokenExpiry) {
         metadata.tokenExpiry = tokenExpiry;
-        console.log("Initialized tokenExpiry from localStorage:", tokenExpiry);
       } else {
         console.warn(
-          "Token expiry missing in localStorage during initialization."
+          "Token expiry missing in localStorage during initialization.",
         );
       }
     }
@@ -143,41 +142,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   useEffect(() => {
-    console.log("useEffect is running");
-
     const refreshAuthToken = async () => {
-      console.log("Checking token refresh condition");
-
       if (!user || !userMetadata) {
-        console.log("User or metadata is missing, skipping refresh");
         return;
       }
 
       const tokenExpiry =
         userMetadata.tokenExpiry || localStorage.getItem("tokenExpiry");
       if (!tokenExpiry) {
-        console.log("Token expiry missing, skipping refresh");
         return;
       }
 
       const expiryTime = new Date(tokenExpiry).getTime();
       const now = Date.now();
 
-      console.log(`Token expires in: ${expiryTime - now}ms`);
-
       if (expiryTime - now <= 60000) {
-        console.log("Refreshing token...");
         await refreshToken();
       }
     };
 
     const interval = setInterval(() => {
-      console.log("Interval triggered");
       refreshAuthToken();
     }, 60000);
 
     return () => {
-      console.log("Cleaning up interval");
       clearInterval(interval);
     };
   }, [user, userMetadata]);
@@ -190,14 +178,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid
+              firebaseUser.uid,
             );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
               sessionStorage.setItem(
                 "userMetadata",
-                JSON.stringify(sessionMetadata)
+                JSON.stringify(sessionMetadata),
               );
             }
           } catch (error) {
@@ -218,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -230,7 +218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const { user } = userCredential;
 
@@ -349,7 +337,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     username: string | null = null,
     firstName: string | null = null,
     lastName: string | null = null,
-    useGoogle: boolean = false
+    useGoogle: boolean = false,
   ): Promise<{ success: boolean; message: string }> => {
     if (useGoogle) {
       return registerWithGoogle();
@@ -366,7 +354,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -425,7 +413,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (!metadata) {
         throw new Error(
-          "No account found for this Google account. Please register first."
+          "No account found for this Google account. Please register first.",
         );
       }
 
@@ -438,10 +426,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setUserMetadata(metadata);
       sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
       localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
-      console.log(
-        "Token expiry set during Google sign-in:",
-        sessionMetadata.tokenExpiry
-      );
 
       const jwtResult = await initializeJWT(metadata);
       if (typeof jwtResult !== "string") {
@@ -506,7 +490,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
       sessionStorage.setItem("token", token);
 
-      console.log("Token refreshed successfully!");
       return token;
     } catch (error) {
       console.error("Error refreshing token:", error);

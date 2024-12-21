@@ -29,7 +29,6 @@ const SignIn = () => {
     setMessage(null);
 
     const response = await login(email, password, rememberMe);
-    console.log(response);
     if (!response.success) {
       setError(response.message);
     } else {
