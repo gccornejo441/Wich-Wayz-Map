@@ -12,6 +12,7 @@ import Select from "react-select";
 import { useToast } from "../../context/toastContext";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
+import EnhancedInput from "./Utilities/EnhancedInput";
 
 interface LocationSubmitProps {
   onClose: Callback;
@@ -80,9 +81,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
         setValue(
           "city",
-          addressDetails.components.city ||
-            addressDetails.components.town ||
-            "",
+          addressDetails.components.city || addressDetails.components.town || ""
         );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
@@ -102,7 +101,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         addToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
-          "error",
+          "error"
         );
       } else {
         setIsAddressValid(false);
@@ -115,7 +114,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     if (!isAddressValid) {
       addToast(
         "Please prefill and validate the address before submitting.",
-        "error",
+        "error"
       );
       return;
     }
@@ -126,7 +125,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       setLocations,
       addToast,
       logout,
-      navigate,
+      navigate
     );
     if (success) onClose();
   };
@@ -156,34 +155,26 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
             <label className="block mb-2 text-sm font-medium text-dark">
               Shop Name
             </label>
-            <input
-              type="text"
-              {...register("shopName")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${
-                errors.shopName ? "border-red-500" : "border-secondary"
-              }`}
+            <EnhancedInput
+              name="shopName"
+              placeholder="Enter shop name"
+              register={register}
+              setValue={setValue}
+              errors={errors}
             />
-            {errors.shopName && (
-              <p className="text-red-500 text-sm">{errors.shopName.message}</p>
-            )}
           </div>
 
           <div>
             <label className="block mb-2 text-sm font-medium text-dark">
               Shop Description
             </label>
-            <input
-              type="text"
-              {...register("shop_description")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${
-                errors.shop_description ? "border-red-500" : "border-secondary"
-              }`}
+            <EnhancedInput
+              name="shop_description"
+              placeholder="Enter shop description"
+              register={register}
+              setValue={setValue}
+              errors={errors}
             />
-            {errors.shop_description && (
-              <p className="text-red-500 text-sm">
-                {errors.shop_description.message}
-              </p>
-            )}
           </div>
 
           <div>
@@ -199,13 +190,21 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
               }))}
               onChange={(selectedOptions) =>
                 setSelectedCategories(
-                  selectedOptions.map((option) => option.value),
+                  selectedOptions.map((option) => option.value)
                 )
               }
               menuPortalTarget={document.body}
               styles={{
                 menuPortal: (base) => ({ ...base, zIndex: 1050 }),
+                control: (base, state) => ({
+                  ...base,
+                  boxShadow: state.isFocused ? 'none' : base.boxShadow, 
+                  borderColor: state.isFocused ? 'gray' : base.borderColor, 
+                }),
+
               }}
+              isClearable
+              isSearchable
               className="react-select-container"
               classNamePrefix="react-select"
             />
@@ -215,16 +214,13 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
             <label className="block mb-2 text-sm font-medium text-dark">
               Address
             </label>
-            <input
-              type="text"
-              {...register("address")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${
-                errors.address ? "border-red-500" : "border-secondary"
-              }`}
+            <EnhancedInput
+              name="address"
+              placeholder="Enter address"
+              register={register}
+              setValue={setValue}
+              errors={errors}
             />
-            {errors.address && (
-              <p className="text-red-500 text-sm">{errors.address.message}</p>
-            )}
           </div>
 
           <div className="flex space-x-4">
