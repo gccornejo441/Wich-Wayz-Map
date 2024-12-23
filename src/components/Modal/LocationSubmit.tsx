@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { handleLocationSubmit } from "../../services/dataMiddleware";
 import { useShops } from "../../context/shopContext";
 import ModalWrapper from "./ModalWrapper";
-import GetCoordinatesAndAddressDetails from "../../services/geolocation";
+import {
+  GetCoordinatesAndAddressDetails,
+  MapBoxLocationLookup,
+} from "../../services/geolocation";
 import { AddAShopPayload, Callback, LocationData } from "../../types/dataTypes";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
@@ -52,6 +55,17 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     },
   });
 
+  const isManualEntryValid = (): boolean => {
+    const houseNumber = getValues("house_number")?.trim();
+    const street = getValues("address_first")?.trim();
+    const city = getValues("city")?.trim();
+    const state = getValues("state")?.trim();
+    const postcode = getValues("postcode")?.trim();
+    const country = getValues("country")?.trim();
+
+    return !!(houseNumber && street && city && state && postcode && country);
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       const data = await GetCategories();
@@ -62,23 +76,38 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
   /**
    * Tries to prefill the address fields with data from OpenStreetMap given an
-   * address.
+   * address. If it fails, falls back to MapBox API as a backup.
    */
   const prefillAddressFields = async () => {
-    const address = getValues("address").trim();
-    if (!address) {
+    const address = getValues("address")?.trim();
+    const manualEntryValid = isManualEntryValid();
+
+    if (!address && !manualEntryValid) {
       setIsAddressValid(false);
-      addToast("Please enter an address before prefilling.", "error");
+      addToast(
+        "Please enter a valid address or complete the manual form.",
+        "error"
+      );
       return;
     }
 
     try {
-      const addressDetails = await GetCoordinatesAndAddressDetails(address);
+      let addressDetails = null;
+
+      if (address) {
+        addressDetails = await GetCoordinatesAndAddressDetails(address);
+
+        if (!addressDetails) {
+          console.warn(
+            "Nominatim API returned no results. Falling back to MapBox."
+          );
+          addressDetails = await MapBoxLocationLookup(address);
+        }
+      }
 
       if (addressDetails) {
         setValue("house_number", addressDetails.components.house_number || "");
         setValue("address_first", addressDetails.components.road || "");
-
         setValue(
           "city",
           addressDetails.components.city || addressDetails.components.town || ""
@@ -90,9 +119,12 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setValue("longitude", addressDetails.coordinates.longitude);
         setIsAddressValid(true);
         addToast("Address details have been prefilled.", "success");
+      } else if (manualEntryValid) {
+        setIsAddressValid(true);
+        addToast("Using manually entered data.", "success");
       } else {
         setIsAddressValid(false);
-        addToast("Address not found. Please try a different address.", "error");
+        addToast("Address not found and manual entry is incomplete.", "error");
       }
     } catch (error: unknown) {
       console.error("Error fetching address details:", error);
@@ -130,6 +162,11 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     if (success) onClose();
   };
 
+  const handledManualEntry = () => {
+    setIsManualEntry((prev) => !prev);
+    setIsAddressValid(true);
+  };
+
   return (
     <ModalWrapper size="large">
       <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
@@ -138,7 +175,6 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
             <h3 className="text-lg font-semibold text-dark">
               Add A Sandwich Shop
             </h3>
-            <p></p>
           </div>
           <button
             onClick={onClose}
@@ -198,10 +234,9 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
                 menuPortal: (base) => ({ ...base, zIndex: 1050 }),
                 control: (base, state) => ({
                   ...base,
-                  boxShadow: state.isFocused ? 'none' : base.boxShadow, 
-                  borderColor: state.isFocused ? 'gray' : base.borderColor, 
+                  boxShadow: state.isFocused ? "none" : base.boxShadow,
+                  borderColor: state.isFocused ? "gray" : base.borderColor,
                 }),
-
               }}
               isClearable
               isSearchable
@@ -237,7 +272,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
             <button
               type="button"
-              onClick={() => setIsManualEntry((prev) => !prev)}
+              onClick={handledManualEntry}
               className="w-full px-4 py-2 text-primary bg-white border border-primary rounded-lg hover:bg-gray-100"
             >
               {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}

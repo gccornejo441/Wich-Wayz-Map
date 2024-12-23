@@ -11,10 +11,10 @@ export interface ShopLocation {
 }
 
 export interface LocationData {
-  address: string;
+  shopName: string;
+  address?: string;
   address_first?: string;
   address_second?: string;
-  shopName: string;
   house_number?: string;
   city?: string;
   state?: string;

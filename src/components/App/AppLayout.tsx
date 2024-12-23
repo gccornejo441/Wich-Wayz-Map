@@ -33,6 +33,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     if (isAuthenticated && user?.emailVerified) {
       setModalOpen(!isModalOpen);
     } else {
+      setModalOpen(!isModalOpen);
       addToast("Verify your email before submitting your location.", "error");
     }
   };
