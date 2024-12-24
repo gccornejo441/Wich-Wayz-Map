@@ -12,10 +12,12 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 const DEFAULT_POSITION: LatLngTuple = [40.7128, -74.006]; // NYC
 
 const MapBox = () => {
+  const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
-    null,
+    null
   );
   const [isMapReady, setIsMapReady] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -35,7 +37,7 @@ const MapBox = () => {
         },
         () => {
           setPosition(DEFAULT_POSITION);
-        },
+        }
       );
     } else {
       setPosition(DEFAULT_POSITION);
@@ -45,7 +47,7 @@ const MapBox = () => {
   useEffect(() => {
     if (shopId && shopMarkers.length > 0) {
       const marker = shopMarkers.find(
-        (marker) => marker.popupContent.shopId === parseInt(shopId, 10),
+        (marker) => marker.popupContent.shopId === parseInt(shopId, 10)
       );
       if (marker) {
         setSelectedMarker(marker.position);
@@ -86,7 +88,7 @@ const MapBox = () => {
               },
               isPopupEnabled: true,
             };
-          }) || [],
+          }) || []
       );
 
       setShopMarkers(markers);
@@ -135,8 +137,13 @@ const MapBox = () => {
         }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}"
+          id="mapbox/streets-v11"
+          maxZoom={22}
+          tileSize={512}
+          zoomOffset={-1}
+          accessToken={mapboxAccessToken}
+          attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> contributors'
         />
         <ZoomControl position="bottomleft" />
         <MapInteraction center={center} />

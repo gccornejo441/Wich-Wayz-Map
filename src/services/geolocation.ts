@@ -34,6 +34,7 @@ interface MapBoxContextItem {
  *
  * @param {string} address The search query to use for the geocoding search.
  *
+ * 
  * @returns {Promise<ParsedAddress | null>} The coordinates and address components parsed from the search result, or null if there was an error or no results were found.
  */
 async function GetCoordinatesAndAddressDetails(
