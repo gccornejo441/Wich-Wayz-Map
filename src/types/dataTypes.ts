@@ -109,3 +109,30 @@ export interface IndexedDBShop {
   date_created: string;
   date_modified?: string;
 }
+
+export interface Vote {
+  shop_id: number;
+  user_id: number;
+  upvote: number;
+  downvote: number;
+}
+
+export interface VoteResponse {
+  shop_id: number;
+  upvotes: number;
+  downvotes: number;
+}
+
+export interface VoteContextData {
+  votes: Record<
+    number,
+    {
+      upvotes: number;
+      downvotes: number;
+      userVote: "up" | "down" | null;
+    }
+  >;
+  addVote: (shopId: number, isUpvote: boolean) => void;
+  getVotesForShop: (shopId: number) => Promise<void>;
+  submitVote: (shopId: number, isUpvote: boolean) => Promise<void>;
+}

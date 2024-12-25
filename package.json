@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3100",
@@ -39,6 +39,7 @@
     "jose": "^5.9.6",
     "leaflet": "^1.9.4",
     "leaflet.locatecontrol": "^0.82.0",
+    "mapbox-gl": "^3.9.1",
     "micro": "^10.0.1",
     "react": "^18.3.1",
     "react-autosuggest": "^10.1.0",

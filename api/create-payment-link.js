@@ -4,6 +4,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2024-11-20.acacia",
 });
 
+/**
+ * Handles POST requests to create a payment link for a user.
+ * 
+ * GET /api/votes/:shop_id
+ */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);

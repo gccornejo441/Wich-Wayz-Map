@@ -5,6 +5,7 @@ import Routes from "./components/App/Routes";
 import { ModalProvider } from "./context/modalContext";
 import { MapProvider } from "./context/mapContext";
 import { ToastProvider } from "./context/toastContext";
+import { VoteProvider } from "./context/voteContext";
 
 function App() {
   return (
@@ -12,11 +13,13 @@ function App() {
       <MapProvider>
         <ToastProvider>
           <ModalProvider>
-            <AppLayout>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Routes />
-              </Suspense>
-            </AppLayout>
+            <VoteProvider>
+              <AppLayout>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Routes />
+                </Suspense>
+              </AppLayout>
+            </VoteProvider>
           </ModalProvider>
         </ToastProvider>
       </MapProvider>

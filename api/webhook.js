@@ -4,7 +4,13 @@ import Stripe from "stripe";
 const TURSO_URL = process.env.VITE_TURSO_URL;
 const TURSO_AUTH_TOKEN = process.env.VITE_TURSO_AUTH_TOKEN;
 
-const tursoClient = createClient({
+if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
+  throw new Error(
+    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set"
+  );
+}
+
+export const tursoClient = createClient({
   url: TURSO_URL,
   authToken: TURSO_AUTH_TOKEN,
 });
