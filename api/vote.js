@@ -1,22 +1,31 @@
-import { VercelRequest, VercelResponse } from "@vercel/node";
-import { tursoClient } from "./webhook";
-import { Vote } from "./types";
+import { createClient } from "@libsql/client/web";
+
+const TURSO_URL = process.env.TURSO_URL;
+const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
+
+if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
+  throw new Error(
+    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set"
+  );
+}
+
+export const tursoClient = createClient({
+  url: TURSO_URL,
+  authToken: TURSO_AUTH_TOKEN,
+});
 
 /**
  * Handles POST requests to submit a user's vote on a shop.
  * 
  * POST /api/vote
  */
-export default async function submitVote(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function submitVote(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
   }
 
-  const vote: Vote = req.body;
+  const vote = req.body;
 
   const query = `
         INSERT INTO votes (shop_id, user_id, upvote, downvote)
@@ -28,17 +37,12 @@ export default async function submitVote(
   const params = [vote.shop_id, vote.user_id, vote.upvote, vote.downvote];
 
   try {
-    const result = await tursoClient.execute({ sql: query, args: params });
-    console.log(
-      `Vote submission result: ${result.rowsAffected} row(s) affected.`
-    );
+    await tursoClient.execute({ sql: query, args: params });
     res.status(200).json("Vote submitted successfully");
   } catch (err) {
     if (err.message.includes("UNIQUE constraint failed")) {
-      console.log("Conflict error: User has already voted on this shop.");
       res.status(409).json("User has already voted on this shop.");
     } else {
-      console.error("Database error during vote submission:", err);
       res.status(500).json("An error occurred while submitting the vote.");
     }
   }
