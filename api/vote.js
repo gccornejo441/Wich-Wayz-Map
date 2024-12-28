@@ -1,22 +1,17 @@
-import { VercelRequest, VercelResponse } from "@vercel/node";
 import { tursoClient } from "./webhook";
-import { Vote } from "./types";
 
 /**
  * Handles POST requests to submit a user's vote on a shop.
  * 
  * POST /api/vote
  */
-export default async function submitVote(
-  req: VercelRequest,
-  res: VercelResponse
-) {
+export default async function submitVote(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
   }
 
-  const vote: Vote = req.body;
+  const vote = req.body;
 
   const query = `
         INSERT INTO votes (shop_id, user_id, upvote, downvote)

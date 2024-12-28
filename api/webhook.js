@@ -1,8 +1,8 @@
 import { createClient } from "@libsql/client/web";
 import Stripe from "stripe";
 
-const TURSO_URL = process.env.VITE_TURSO_URL;
-const TURSO_AUTH_TOKEN = process.env.VITE_TURSO_AUTH_TOKEN;
+const TURSO_URL = process.env.TURSO_URL;
+const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
 if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
   throw new Error(

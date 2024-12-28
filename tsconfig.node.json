@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["api/**/*.ts", "vite.config.ts", "api/vote.js", "api/votes/[shop_id].js"]
 }
