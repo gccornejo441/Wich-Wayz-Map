@@ -1,7 +1,11 @@
 {
   "name": "wich-wayz",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "type": "module",
+  "private": true,
+  "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
+  "author": "Gabe Cornejo <wich.wayz.map@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "dev": "vite --port 3100",
     "build": "tsc -b && vite build",
@@ -12,7 +16,7 @@
     "analyze": "vite build --mode production && rollup-plugin-visualizer",
     "release": "npm run format && npm run lint && npm run build && npm run analyze && npx husky install && git add . && git commit -m \"feat: production-ready build for v$npm_package_version\" && git push origin main",
     "test-build": "npm run format && npm run lint && npm run build && npm run analyze && npx husky install",
-    "test": "jest"
+    "test": "vitest"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,scss,md}": [
@@ -76,6 +80,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.13",
     "globals": "^15.11.0",
+    "happy-dom": "^16.0.1",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "postcss": "^8.4.47",
@@ -84,6 +89,7 @@
     "tailwindcss": "^3.4.14",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.10.0",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
   }
 }
