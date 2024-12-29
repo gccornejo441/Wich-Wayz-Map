@@ -135,4 +135,5 @@ export interface VoteContextData {
   addVote: (shopId: number, isUpvote: boolean) => void;
   getVotesForShop: (shopId: number) => Promise<void>;
   submitVote: (shopId: number, isUpvote: boolean) => Promise<void>;
+  loadingVotes: boolean;
 }

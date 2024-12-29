@@ -7,6 +7,7 @@ import { getCurrentUser } from "../../services/security";
 import { useVote } from "../../context/voteContext";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/authContext";
+import { GiSandwich } from "react-icons/gi";
 
 export const Popper = ({
   shopId,
@@ -22,13 +23,13 @@ export const Popper = ({
 }: PopupContent) => {
   const { openUpdateShopModal, openSignupModal } = useModal();
   const { addToast } = useToast();
-  const { votes, addVote, getVotesForShop, submitVote } = useVote();
+  const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
+    useVote();
   const hasFetchedVotes = useRef(false);
   const { logout } = useAuth();
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
   const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
-
   const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
@@ -66,27 +67,13 @@ export const Popper = ({
     }
   }, [votes, shopId]);
 
-  const handleUpvote = () => {
-    if (userVote !== "up") {
-      addVote(shopId, true);
-      setUpvotes((prev) => prev + 1);
-      if (userVote === "down") {
-        setDownvotes((prev) => prev - 1);
+  const handleVote = async (isUpvote: boolean) => {
+    if (isMember) {
+      const isDifferentVote = userVote !== (isUpvote ? "up" : "down");
+      if (isDifferentVote) {
+        addVote(shopId, isUpvote);
+        await submitVote(shopId, isUpvote);
       }
-      setUserVote("up");
-      submitVote(shopId, true);
-    }
-  };
-
-  const handleDownvote = () => {
-    if (userVote !== "down") {
-      addVote(shopId, false);
-      setDownvotes((prev) => prev + 1);
-      if (userVote === "up") {
-        setUpvotes((prev) => prev - 1);
-      }
-      setUserVote("down");
-      submitVote(shopId, false);
     }
   };
 
@@ -209,30 +196,41 @@ export const Popper = ({
                   </span>
                 )}
               </div>
-              <div className="flex justify-around mt-4">
-                <button
-                  onClick={handleUpvote}
-                  title={isMember ? "I like this!" : "Only members can vote"}
-                  className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
-                    isMember ? "bg-primary" : "bg-primary/50 cursor-not-allowed"
-                  }`}
-                  disabled={!isMember || userVote === "up"}
-                >
-                  👍 {upvotes}
-                </button>
-                <button
-                  onClick={handleDownvote}
-                  title={
-                    isMember ? "I don't like this." : "Only members can vote"
-                  }
-                  className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
-                    isMember ? "bg-primary" : "bg-primary/50 cursor-not-allowed"
-                  }`}
-                  disabled={!isMember || userVote === "down"}
-                >
-                  👎 {downvotes}
-                </button>
-              </div>
+              {!loadingVotes ? (
+                <div className="flex items-center justify-center text-primary">
+                  <GiSandwich className="animate-spin text-xl mr-2" />
+                  Loading votes...
+                </div>
+              ) : (
+                <div className="flex justify-around mt-4">
+                  <button
+                    onClick={() => handleVote(true)}
+                    title={isMember ? "I like this!" : "Only members can vote"}
+                    className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
+                      isMember
+                        ? "bg-primary"
+                        : "bg-primary/50 cursor-not-allowed"
+                    }`}
+                    disabled={!isMember || userVote === "up"}
+                  >
+                    👍 {upvotes}
+                  </button>
+                  <button
+                    onClick={() => handleVote(false)}
+                    title={
+                      isMember ? "I don't like this." : "Only members can vote"
+                    }
+                    className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
+                      isMember
+                        ? "bg-primary"
+                        : "bg-primary/50 cursor-not-allowed"
+                    }`}
+                    disabled={!isMember || userVote === "down"}
+                  >
+                    👎 {downvotes}
+                  </button>
+                </div>
+              )}
               <p className="mt-4 text-center italic text-dark">
                 {displayMessage}
               </p>

@@ -13,7 +13,7 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
     >
   >({});
-  
+  const [loadingVotes, setLoadingVotes] = useState<boolean>(false);
 
   const addVote = (shopId: number, isUpvote: boolean) => {
     setVotes((prevVotes) => {
@@ -56,6 +56,7 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getVotesForShop = async (shopId: number) => {
+    setLoadingVotes(true);
     try {
       const voteData = await GetVotesForShop(shopId);
       setVotes((prevVotes) => ({
@@ -72,6 +73,8 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
         ...prevVotes,
         [shopId]: { upvotes: 0, downvotes: 0, userVote: null },
       }));
+    } finally {
+      setLoadingVotes(false);
     }
   };
 
@@ -92,10 +95,10 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
   };
-  
+
   return (
     <VoteContext.Provider
-      value={{ votes, addVote, getVotesForShop, submitVote }}
+      value={{ votes, addVote, getVotesForShop, submitVote, loadingVotes }}
     >
       {children}
     </VoteContext.Provider>
