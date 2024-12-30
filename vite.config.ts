@@ -3,6 +3,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import svgr from "vite-plugin-svgr";
+import { resolve } from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,13 +13,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": "/src",
-      "@components": "/src/components",
-      "@context": "/src/context",
-      "@hooks": "/src/hooks",
-      "@services": "/src/services",
-      "@types": "/src/types",
-      "@utils": "/src/utils",
+      "@": resolve(__dirname, "./src"),
+      "@components": resolve(__dirname, "./src/components"),
+      "@context": resolve(__dirname, "./src/context"),
+      "@constants": resolve(__dirname, "./src/constants"),
+      "@hooks": resolve(__dirname, "./src/hooks"),
+      "@services": resolve(__dirname, "./src/services"),
+      "@types": resolve(__dirname, "./src/types"),
+      "@utils": resolve(__dirname, "./src/utils"),
     },
   },
   build: {

@@ -1,6 +1,6 @@
+import { AddAShopPayload } from "@/types/dataTypes";
 import React, { useState } from "react";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { AddAShopPayload } from "../../../types/dataTypes";
 import { MdClear } from "react-icons/md";
 
 const EnhancedInput = ({

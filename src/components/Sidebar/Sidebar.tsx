@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import SidebarFooter from "./SidebarFooter";
 import { HiMap, HiPlus, HiUser } from "react-icons/hi";
-import { useModal } from "../../context/modalContext";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
+import { ReactNode } from "react";
 
 interface TopMenuProps {
   onToggleSidebar: Callback;
@@ -12,16 +12,16 @@ interface TopMenuProps {
 
 interface SidebarProps extends TopMenuProps {
   isOpen: boolean;
-  onToggleLocation: Callback;
 }
 
-export interface SidebarItemProps {
-  onClick?: Callback;
-  icon: JSX.Element;
+export interface BaseItemProps {
+  onClick?: () => void;
+  icon: ReactNode;
   text: string;
   disabled?: boolean;
   linkTo?: string;
   badge?: string;
+  external?: boolean;
 }
 
 export const SidebarItem = ({
@@ -31,9 +31,8 @@ export const SidebarItem = ({
   disabled,
   linkTo,
   badge,
-}: SidebarItemProps) => {
-  const { openSignupModal } = useModal();
-
+  external,
+}: BaseItemProps) => {
   const handleClick = (e: React.MouseEvent) => {
     if (disabled) {
       e.preventDefault();
@@ -44,49 +43,54 @@ export const SidebarItem = ({
 
   const content = (
     <div
-      className={`relative flex justify-between p-2 w-full text-white rounded-lg ${
+      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${
         disabled
           ? "bg-white/10 cursor-not-allowed"
           : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
       }`}
       onClick={handleClick}
     >
-      <span
-        className={`w-6 h-6 text-white mr-3 ${disabled ? "opacity-50" : ""}`}
-      >
+      <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
         {icon}
       </span>
-      <span className={`text-md font-light ${disabled ? "opacity-50" : ""}`}>
+      <span className={`text-md text-white font-light ${disabled ? "opacity-50" : ""}`}>
         {text}
       </span>
       {badge && (
-        <span
-          onClick={(e) => {
-            e.stopPropagation();
-            openSignupModal();
-          }}
-          className="absolute top-0 right-0 mt-1 mr-2 bg-secondary text-gray-800 text-xs font-bold rounded px-1 cursor-pointer"
-        >
+        <span className="absolute top-0 right-0 mt-1 mr-2 bg-secondary text-gray-800 text-xs font-bold rounded px-1 cursor-pointer">
           {badge}
         </span>
       )}
     </div>
   );
 
-  return linkTo ? (
-    <Link to={linkTo} className="w-full">
-      {content}
-    </Link>
-  ) : (
-    <div className="w-full">{content}</div>
-  );
+  if (linkTo) {
+    return external ? (
+      <a
+        href={linkTo}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full"
+      >
+        {content}
+      </a>
+    ) : (
+      <Link to={linkTo} className="w-full">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="w-full">{content}</div>;
 };
 
-const Sidebar = ({ isOpen, onToggleLocation }: SidebarProps) => {
-  const { isAuthenticated, user } = useAuth();
+const Sidebar = ({ isOpen }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
 
+  // Check if user is authenticated
+  const { isAuthenticated, user } = useAuth();
   const isMember = isAuthenticated && user?.emailVerified;
+  // Check if user is authenticated
 
   return (
     <aside
@@ -120,7 +124,7 @@ const Sidebar = ({ isOpen, onToggleLocation }: SidebarProps) => {
           {showAddShop && (
             <li>
               <SidebarItem
-                onClick={onToggleLocation}
+                linkTo={ROUTES.SHOPS.ADD}
                 icon={<HiPlus className="w-6 h-6 text-white" />}
                 text="Add A New Shop"
                 badge={!isMember ? "Members Only" : undefined}

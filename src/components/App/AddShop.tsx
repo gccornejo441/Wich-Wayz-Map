@@ -1,27 +1,23 @@
-import { useEffect, useState } from "react";
-import { handleLocationSubmit } from "../../services/dataMiddleware";
-import { useShops } from "../../context/shopContext";
-import ModalWrapper from "./ModalWrapper";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useShops } from "@context/shopContext";
+import { useToast } from "@context/toastContext";
+import { useAuth } from "@context/authContext";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { locationSchema } from "@constants/validators";
+import { Category, GetCategories } from "@services/apiClient";
+import { handleLocationSubmit } from "@services/dataMiddleware";
+import { AddAShopPayload, LocationData } from "@/types/dataTypes";
 import {
   GetCoordinatesAndAddressDetails,
   MapBoxLocationLookup,
-} from "../../services/geolocation";
-import { AddAShopPayload, Callback, LocationData } from "../../types/dataTypes";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { locationSchema } from "../../constants/validators";
-import { Category, GetCategories } from "../../services/apiClient";
+} from "@/services/geolocation";
 import Select from "react-select";
-import { useToast } from "../../context/toastContext";
-import { useAuth } from "../../context/authContext";
-import { useNavigate } from "react-router-dom";
-import EnhancedInput from "@components/Utilites/EnhancedInput";
+import EnhancedInput from "../Utilites/EnhancedInput";
+import { HiMap } from "react-icons/hi";
 
-interface LocationSubmitProps {
-  onClose: Callback;
-}
-
-const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
+const AddShop = () => {
   const { setShops, setLocations } = useShops();
   const { addToast } = useToast();
   const [isManualEntry, setIsManualEntry] = useState(false);
@@ -142,6 +138,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     }
   };
 
+  // TODO: Move the on success navigate
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
       addToast(
@@ -159,7 +156,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       logout,
       navigate
     );
-    if (success) onClose();
+    if (success) navigate("/");
   };
 
   const handledManualEntry = () => {
@@ -168,7 +165,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
   };
 
   return (
-    <ModalWrapper size="large">
+    <>
       <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-secondary">
           <div>
@@ -177,10 +174,10 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
             </h3>
           </div>
           <button
-            onClick={onClose}
-            className="text-dark hover:bg-accent/10 rounded-lg text-sm w-8 h-8 flex items-center justify-center"
+            onClick={() => navigate("/")}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary flex gap-2 transition duration-300"
           >
-            <span className="sr-only">Close modal</span>✕
+            <HiMap className="w-5 h-5" /> To Map
           </button>
         </div>
         <form
@@ -338,8 +335,8 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
           </button>
         </form>
       </div>
-    </ModalWrapper>
+    </>
   );
 };
 
-export default LocationSubmit;
+export default AddShop;

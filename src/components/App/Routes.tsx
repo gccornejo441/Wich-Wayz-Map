@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import MapBox from "../Map/MapBox";
 import NotFound from "./NotFound";
-import AddShop from "../Modal/AddShop";
 import PrivacyPolicy from "./PrivacyPolicy";
 import Register from "./Register";
 import UserProfile from "./UserProfile";
@@ -10,6 +9,7 @@ import SignIn from "./SignIn";
 import { ROUTES } from "../../constants/routes";
 import TearmsOfService from "./TermsOfService";
 import AdminSettings from "./AdminSettings";
+import AddShop from "./AddShop";
 
 function MainRoutes() {
   return (
