@@ -17,5 +17,5 @@ export const InsertVote = async (vote: {
   downvote: boolean;
 }) => {
   const response = await axios.post("/api/vote", vote);
-  return response.data; 
+  return response.data;
 };

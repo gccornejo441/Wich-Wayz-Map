@@ -82,7 +82,7 @@ const AddShop = () => {
       setIsAddressValid(false);
       addToast(
         "Please enter a valid address or complete the manual form.",
-        "error"
+        "error",
       );
       return;
     }
@@ -95,7 +95,7 @@ const AddShop = () => {
 
         if (!addressDetails) {
           console.warn(
-            "Nominatim API returned no results. Falling back to MapBox."
+            "Nominatim API returned no results. Falling back to MapBox.",
           );
           addressDetails = await MapBoxLocationLookup(address);
         }
@@ -106,7 +106,9 @@ const AddShop = () => {
         setValue("address_first", addressDetails.components.road || "");
         setValue(
           "city",
-          addressDetails.components.city || addressDetails.components.town || ""
+          addressDetails.components.city ||
+            addressDetails.components.town ||
+            "",
         );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
@@ -129,7 +131,7 @@ const AddShop = () => {
         setIsAddressValid(false);
         addToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
-          "error"
+          "error",
         );
       } else {
         setIsAddressValid(false);
@@ -143,7 +145,7 @@ const AddShop = () => {
     if (!isAddressValid) {
       addToast(
         "Please prefill and validate the address before submitting.",
-        "error"
+        "error",
       );
       return;
     }
@@ -154,7 +156,7 @@ const AddShop = () => {
       setLocations,
       addToast,
       logout,
-      navigate
+      navigate,
     );
     if (success) navigate("/");
   };
@@ -223,7 +225,7 @@ const AddShop = () => {
               }))}
               onChange={(selectedOptions) =>
                 setSelectedCategories(
-                  selectedOptions.map((option) => option.value)
+                  selectedOptions.map((option) => option.value),
                 )
               }
               menuPortalTarget={document.body}

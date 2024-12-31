@@ -86,7 +86,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       setIsAddressValid(false);
       addToast(
         "Please enter a valid address or complete the manual form.",
-        "error"
+        "error",
       );
       return;
     }
@@ -99,7 +99,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
 
         if (!addressDetails) {
           console.warn(
-            "Nominatim API returned no results. Falling back to MapBox."
+            "Nominatim API returned no results. Falling back to MapBox.",
           );
           addressDetails = await MapBoxLocationLookup(address);
         }
@@ -110,7 +110,9 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setValue("address_first", addressDetails.components.road || "");
         setValue(
           "city",
-          addressDetails.components.city || addressDetails.components.town || ""
+          addressDetails.components.city ||
+            addressDetails.components.town ||
+            "",
         );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
@@ -133,7 +135,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
         setIsAddressValid(false);
         addToast(
           `Failed to fetch address details: ${error.message}. Please try again.`,
-          "error"
+          "error",
         );
       } else {
         setIsAddressValid(false);
@@ -146,7 +148,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
     if (!isAddressValid) {
       addToast(
         "Please prefill and validate the address before submitting.",
-        "error"
+        "error",
       );
       return;
     }
@@ -157,7 +159,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
       setLocations,
       addToast,
       logout,
-      navigate
+      navigate,
     );
     if (success) onClose();
   };
@@ -226,7 +228,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
               }))}
               onChange={(selectedOptions) =>
                 setSelectedCategories(
-                  selectedOptions.map((option) => option.value)
+                  selectedOptions.map((option) => option.value),
                 )
               }
               menuPortalTarget={document.body}

@@ -21,7 +21,7 @@ const EnhancedInput = ({
   const [inputValue, setInputValue] = useState("");
 
   const handleClear = () => {
-    setInputValue(""); 
+    setInputValue("");
     setValue(name, "");
   };
 
@@ -48,7 +48,7 @@ const EnhancedInput = ({
           className="absolute bg-primary text-white rounded-full p-1 right-2 top-1/2 transform -translate-y-1/2"
           title="Clear"
         >
-          <MdClear  />
+          <MdClear />
         </button>
       )}
       {errors[name] && (

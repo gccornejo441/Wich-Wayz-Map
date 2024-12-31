@@ -53,7 +53,9 @@ export const SidebarItem = ({
       <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
         {icon}
       </span>
-      <span className={`text-md text-white font-light ${disabled ? "opacity-50" : ""}`}>
+      <span
+        className={`text-md text-white font-light ${disabled ? "opacity-50" : ""}`}
+      >
         {text}
       </span>
       {badge && (

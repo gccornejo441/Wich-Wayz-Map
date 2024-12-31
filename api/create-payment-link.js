@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 
 /**
  * Handles POST requests to create a payment link for a user.
- * 
+ *
  * GET /api/votes/:shop_id
  */
 export default async function handler(req, res) {

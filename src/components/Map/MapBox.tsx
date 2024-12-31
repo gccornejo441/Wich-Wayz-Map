@@ -17,7 +17,7 @@ const MapBox = () => {
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
-    null
+    null,
   );
   const [isMapReady, setIsMapReady] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -37,7 +37,7 @@ const MapBox = () => {
         },
         () => {
           setPosition(DEFAULT_POSITION);
-        }
+        },
       );
     } else {
       setPosition(DEFAULT_POSITION);
@@ -47,7 +47,7 @@ const MapBox = () => {
   useEffect(() => {
     if (shopId && shopMarkers.length > 0) {
       const marker = shopMarkers.find(
-        (marker) => marker.popupContent.shopId === parseInt(shopId, 10)
+        (marker) => marker.popupContent.shopId === parseInt(shopId, 10),
       );
       if (marker) {
         setSelectedMarker(marker.position);
@@ -88,7 +88,7 @@ const MapBox = () => {
               },
               isPopupEnabled: true,
             };
-          }) || []
+          }) || [],
       );
 
       setShopMarkers(markers);

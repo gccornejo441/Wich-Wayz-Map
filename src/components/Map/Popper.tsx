@@ -42,7 +42,7 @@ export const Popper = ({
   }, [logout]);
 
   const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${shopName} ${address}`
+    `${shopName} ${address}`,
   )}`;
 
   useEffect(() => {

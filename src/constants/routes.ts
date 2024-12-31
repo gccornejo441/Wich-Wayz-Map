@@ -55,13 +55,13 @@ export const useRouteCheck = (routes: Routes) => {
       } else if (typeof value === "object") {
         acc.push(
           ...Object.values(value).filter(
-            (v): v is string => typeof v === "string"
-          )
+            (v): v is string => typeof v === "string",
+          ),
         );
       }
       return acc;
     },
-    []
+    [],
   );
 
   const isPathValid = flattenedRoutes.includes(location.pathname);
@@ -72,7 +72,6 @@ export const useRouteCheck = (routes: Routes) => {
   const isPrivacyOrTOS =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
     location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE;
-
 
   return {
     isPathValid,

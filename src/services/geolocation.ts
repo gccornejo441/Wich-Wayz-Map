@@ -34,11 +34,11 @@ interface MapBoxContextItem {
  *
  * @param {string} address The search query to use for the geocoding search.
  *
- * 
+ *
  * @returns {Promise<ParsedAddress | null>} The coordinates and address components parsed from the search result, or null if there was an error or no results were found.
  */
 async function GetCoordinatesAndAddressDetails(
-  address: string
+  address: string,
 ): Promise<ParsedAddress | null> {
   try {
     const { data } = await axios.get(
@@ -50,7 +50,7 @@ async function GetCoordinatesAndAddressDetails(
           addressdetails: 1,
           limit: 1,
         },
-      }
+      },
     );
 
     if (Array.isArray(data) && data.length > 0) {
@@ -95,7 +95,7 @@ const MapBoxLocationLookup = async (
     country?: string;
     language?: string;
     limit?: number;
-  } = {}
+  } = {},
 ): Promise<ParsedAddress | null> => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -129,7 +129,7 @@ const MapBoxLocationLookup = async (
 
     const { data } = await axios.get(
       "https://api.mapbox.com/search/geocode/v6/forward",
-      { params }
+      { params },
     );
 
     if (data?.results?.length > 0) {
@@ -157,7 +157,7 @@ const MapBoxLocationLookup = async (
           if (id.includes("country")) acc.country = text;
           return acc;
         },
-        {} as AddressComponents
+        {} as AddressComponents,
       );
 
       return { coordinates, components: parsedComponents };
@@ -174,22 +174,22 @@ const MapBoxLocationLookup = async (
           break;
         case 403:
           console.error(
-            "Forbidden: Check your account settings or token restrictions."
+            "Forbidden: Check your account settings or token restrictions.",
           );
           break;
         case 404:
           console.error(
-            "Not Found: Check the endpoint or query parameters for correctness."
+            "Not Found: Check the endpoint or query parameters for correctness.",
           );
           break;
         case 422:
           console.error(
-            `Unprocessable Entity: ${data.message || "Invalid request parameters."}`
+            `Unprocessable Entity: ${data.message || "Invalid request parameters."}`,
           );
           break;
         case 429:
           console.error(
-            "Rate limit exceeded: Check your account for rate limit details."
+            "Rate limit exceeded: Check your account for rate limit details.",
           );
           break;
         default:

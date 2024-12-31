@@ -5,7 +5,7 @@ const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
 if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
   throw new Error(
-    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set"
+    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set",
   );
 }
 

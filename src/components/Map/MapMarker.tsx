@@ -12,7 +12,7 @@ const defaultIcon = new L.Icon({
 });
 
 const hoverIcon = new L.Icon({
-  iconUrl: "/sandwich-pin.svg", 
+  iconUrl: "/sandwich-pin.svg",
   iconSize: [60, 60],
   iconAnchor: [25, 50],
   popupAnchor: [0, -50],

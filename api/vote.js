@@ -5,7 +5,7 @@ const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
 if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
   throw new Error(
-    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set"
+    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set",
   );
 }
 
@@ -16,7 +16,7 @@ export const tursoClient = createClient({
 
 /**
  * Handles POST requests to submit a user's vote on a shop.
- * 
+ *
  * POST /api/vote
  */
 export default async function submitVote(req, res) {
