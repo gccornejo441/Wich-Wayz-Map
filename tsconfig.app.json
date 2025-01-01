@@ -15,6 +15,7 @@
       "@types/*": ["./src/types/*"],
       "@utils/*": ["./src/utils/*"]
     },
+    "types": ["@testing-library/jest-dom"],
 
     /* Bundler mode */
     "moduleResolution": "Bundler",

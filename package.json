@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -31,7 +31,6 @@
     "@stripe/stripe-js": "^5.2.0",
     "@swc/core": "^1.9.2",
     "@tailwindcss/typography": "^0.5.15",
-    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/mapbox-gl": "^3.4.1",
     "@types/react-autosuggest": "^10.1.11",
@@ -67,6 +66,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/blueimp-md5": "^2.18.2",
     "@types/jsonwebtoken": "^9.0.7",
