@@ -39,7 +39,7 @@ describe("SearchBar", () => {
 
   it("renders the search icon", () => {
     render(<SearchBar />);
-    const searchIcon = screen.getByTestId("search-icon");
+    const searchIcon = screen.getByRole("img", { hidden: true });
     expect(searchIcon).toBeInTheDocument();
-  })
+  });
 });
