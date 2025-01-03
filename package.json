@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -15,8 +15,10 @@
     "prepare": "husky install",
     "analyze": "vite build --mode production && rollup-plugin-visualizer",
     "release": "npm run format && npm run lint && npm run build && npm run analyze && npx husky install && git add . && git commit -m \"feat: production-ready build for v$npm_package_version\" && git push origin main",
-    "test-build": "npm run format && npm run lint && npm run build && npm run analyze && npx husky install",
-    "test": "vitest"
+    "test-build": "npm run format && npm run lint && npm run build && npm run analyze",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,scss,md}": [
@@ -67,6 +69,7 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.5.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/blueimp-md5": "^2.18.2",
     "@types/jsonwebtoken": "^9.0.7",
