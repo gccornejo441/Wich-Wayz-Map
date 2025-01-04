@@ -13,6 +13,7 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
     >
   >({});
+
   const [loadingVotes, setLoadingVotes] = useState<boolean>(false);
 
   const addVote = (shopId: number, isUpvote: boolean) => {

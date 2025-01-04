@@ -196,8 +196,8 @@ export const Popper = ({
                   </span>
                 )}
               </div>
-              {!loadingVotes ? (
-                <div className="flex items-center justify-center text-primary">
+              {loadingVotes ? (
+                <div className="flex items-center justify-center text-primary mt-4">
                   <GiSandwich className="animate-spin text-xl mr-2" />
                   Loading votes...
                 </div>
