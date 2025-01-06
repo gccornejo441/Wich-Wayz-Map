@@ -56,6 +56,7 @@ export interface PopupContent {
   usersAvatarEmail?: string;
   latitude: number;
   longitude: number;
+  locationOpen?: boolean;
 }
 
 export interface ShopMarker {

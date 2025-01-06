@@ -20,6 +20,7 @@ export const Popper = ({
   usersAvatarEmail,
   latitude,
   longitude,
+  locationOpen,
 }: PopupContent) => {
   const { openUpdateShopModal, openSignupModal } = useModal();
   const { addToast } = useToast();
@@ -150,6 +151,11 @@ export const Popper = ({
 
             <div className="bg-secondary text-background px-3 py-2 my-3 rounded-lg shadow-sm">
               <span className="block text-accent">{address}</span>
+              {locationOpen && (
+                <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
+                  This location is permanently closed.
+                </span>
+              )}
               <a
                 href={googleMapsSearchUrl}
                 target="_blank"

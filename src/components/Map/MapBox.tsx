@@ -85,6 +85,7 @@ const MapBox = () => {
                 usersAvatarId: shop.users_avatar_id,
                 latitude: location.latitude,
                 longitude: location.longitude,
+                locationOpen: location.location_open,
               },
               isPopupEnabled: true,
             };
