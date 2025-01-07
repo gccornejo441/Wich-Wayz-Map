@@ -85,4 +85,32 @@ describe("SearchBar", () => {
     );
     expect(suggestions).toHaveLength(2);
   });
+
+  it("ensures accessibility attributes are correctly set", async () => {
+    const mockSuggestions = [
+      {
+        shop: {
+          id: 1,
+          name: "Molinari Delicatessen",
+          locations: [
+            { street_address: "373 Columbus Ave", city: "San Francisco" },
+          ],
+        },
+      },
+    ];
+    (SearchShops as jest.Mock).mockResolvedValue(mockSuggestions);
+
+    render(<SearchBar />);
+    const input = screen.getByPlaceholderText("Search shops");
+    userEvent.type(input, "Molinari");
+
+    await waitFor(() => expect(SearchShops).toHaveBeenCalledWith("Molinari"));
+
+    const combobox = screen.getByRole("combobox");
+    expect(combobox).toHaveAttribute("aria-expanded", "true");
+
+    const listboxes = screen.getAllByRole("listbox");
+    expect(listboxes).toHaveLength(2);
+    expect(listboxes[1]).toHaveTextContent("Molinari Delicatessen");
+  });
 });
