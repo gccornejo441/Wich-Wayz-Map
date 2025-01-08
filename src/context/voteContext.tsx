@@ -16,7 +16,11 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [loadingVotes, setLoadingVotes] = useState<boolean>(false);
 
-  const addVote = (shopId: number, isUpvote: boolean) => {
+  const addVote = (
+    shopId: number,
+    isUpvote: boolean,
+    intentionalToggle: boolean = true,
+  ) => {
     setVotes((prevVotes) => {
       const currentVote = prevVotes[shopId] || {
         upvotes: 0,
@@ -26,7 +30,22 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
 
       let newUpvotes = currentVote.upvotes;
       let newDownvotes = currentVote.downvotes;
-      let newUserVote: "up" | "down" | null = isUpvote ? "up" : "down";
+      const newUserVote: "up" | "down" | null = isUpvote ? "up" : "down";
+
+      if (!intentionalToggle && currentVote.userVote === newUserVote) {
+        return prevVotes;
+      }
+
+      if (intentionalToggle && currentVote.userVote === newUserVote) {
+        return {
+          ...prevVotes,
+          [shopId]: {
+            upvotes: isUpvote ? newUpvotes - 1 : newUpvotes,
+            downvotes: !isUpvote ? newDownvotes - 1 : newDownvotes,
+            userVote: null,
+          },
+        };
+      }
 
       if (currentVote.userVote === "up" && !isUpvote) {
         newUpvotes -= 1;
@@ -34,12 +53,6 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (currentVote.userVote === "down" && isUpvote) {
         newDownvotes -= 1;
         newUpvotes += 1;
-      } else if (currentVote.userVote === "up" && isUpvote) {
-        newUpvotes -= 1;
-        newUserVote = null;
-      } else if (currentVote.userVote === "down" && !isUpvote) {
-        newDownvotes -= 1;
-        newUserVote = null;
       } else if (currentVote.userVote === null) {
         if (isUpvote) newUpvotes += 1;
         else newDownvotes += 1;
