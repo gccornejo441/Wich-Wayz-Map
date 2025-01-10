@@ -11,6 +11,7 @@ import { getCurrentUser } from "./security";
 import { updateData } from "./apiClient";
 import { useShops } from "../context/shopContext";
 import { ROUTES } from "../constants/routes";
+import { cleanString } from "@/utils/stringUtils";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -106,24 +107,10 @@ export function updateShops(
   });
 }
 
-function toTitleCase(str: string): string {
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function cleanString(value: string | null | undefined): string {
-  if (!value) return "";
-  const trimmed = value.trim();
-  return toTitleCase(trimmed);
-}
-
 /**
  * Creates payload for location and shop submission.
  */
-function createLocationShopPayload(
+export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
   modifiedBy: number | undefined,
 ) {

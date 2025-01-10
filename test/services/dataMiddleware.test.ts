@@ -7,6 +7,7 @@ import {
 } from "../../src/services/shopLocation";
 import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
+import { createLocationShopPayload } from "../../src/services/dataMiddleware";
 
 vi.mock("../../src/services/security");
 vi.mock("../../src/services/shopLocation");
@@ -82,5 +83,104 @@ describe("handleLocationSubmit", () => {
     );
     expect(cacheData).toHaveBeenCalledWith("shops", mockShops);
     expect(cacheData).toHaveBeenCalledWith("locations", mockShops[0].locations);
+  });
+});
+
+describe("createLocationShopPayload", () => {
+  const validPayload: AddAShopPayload = {
+    shopName: "Test Shop",
+    shop_description: "A Test Shop Description",
+    house_number: "123",
+    address: "123 Main St",
+    address_first: "Main St",
+    address_second: "Apt 4b",
+    city: "Test City",
+    state: "Ts",
+    country: "Test Country",
+    postcode: "12345",
+    latitude: 40.7128,
+    longitude: -74.006,
+    categoryIds: [1, 2, 3],
+  };
+
+  it("should throw an error if modifiedBy is undefined", () => {
+    expect(() => createLocationShopPayload(validPayload, undefined)).toThrow(
+      "User ID (modifiedBy) is required to create a shop.",
+    );
+  });
+
+  it("should return the correct location and shop payload for valid inputs", () => {
+    const modifiedBy = 1;
+    const result = createLocationShopPayload(validPayload, modifiedBy);
+
+    expect(result).toEqual({
+      location: {
+        street_address: "123 Main St",
+        street_address_second: "Apt 4b",
+        postal_code: "12345",
+        city: "Test City",
+        state: "Ts",
+        country: "Test Country",
+        latitude: 40.7128,
+        longitude: -74.006,
+        modified_by: modifiedBy,
+        date_created: expect.any(String),
+        date_modified: expect.any(String),
+      },
+      shop: {
+        name: "Test Shop",
+        description: "A Test Shop Description",
+        modified_by: modifiedBy,
+        created_by: modifiedBy,
+      },
+      categoryIds: [1, 2, 3],
+    });
+  });
+
+  it("should use default values if optional fields are missing", () => {
+    const modifiedBy = 1;
+    const payloadWithMissingFields: AddAShopPayload = {
+      shopName: "Shop Without Address",
+      shop_description: "No Description Provided",
+      house_number: "",
+      address: "",
+      address_first: "",
+      address_second: "",
+      city: "",
+      state: "",
+      country: "",
+      postcode: "",
+      latitude: 0,
+      longitude: 0,
+      categoryIds: [],
+    };
+
+    const result = createLocationShopPayload(
+      payloadWithMissingFields,
+      modifiedBy,
+    );
+
+    expect(result).toEqual({
+      location: {
+        street_address: "",
+        street_address_second: "",
+        postal_code: "",
+        city: "Unknown City",
+        state: "Unknown State",
+        country: "Unknown Country",
+        latitude: 0,
+        longitude: 0,
+        modified_by: modifiedBy,
+        date_created: expect.any(String),
+        date_modified: expect.any(String),
+      },
+      shop: {
+        name: "Shop Without Address",
+        description: "No Description Provided",
+        modified_by: modifiedBy,
+        created_by: modifiedBy,
+      },
+      categoryIds: [],
+    });
   });
 });
