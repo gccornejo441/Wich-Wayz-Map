@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { getCurrentUser } from "../../src/services/security";
-import { handleLocationSubmit } from "../../src/services/dataMiddleware";
+import { handleLocationSubmit } from "../../src/services/submitLocationShop";
 import {
   submitLocationWithShop,
   GetShops,
 } from "../../src/services/shopLocation";
 import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
-import { createLocationShopPayload } from "../../src/services/dataMiddleware";
+import { createLocationShopPayload } from "../../src/services/submitLocationShop";
 
 vi.mock("../../src/services/security");
 vi.mock("../../src/services/shopLocation");

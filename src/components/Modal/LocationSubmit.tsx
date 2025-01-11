@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { handleLocationSubmit } from "../../services/dataMiddleware";
+import { handleLocationSubmit } from "../../services/submitLocationShop";
 import { useShops } from "../../context/shopContext";
 import ModalWrapper from "./ModalWrapper";
 import {

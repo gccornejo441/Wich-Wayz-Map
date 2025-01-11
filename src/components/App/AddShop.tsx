@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "@constants/validators";
 import { Category, GetCategories } from "@services/apiClient";
-import { handleLocationSubmit } from "@services/dataMiddleware";
+import { handleLocationSubmit } from "@/services/submitLocationShop";
 import { AddAShopPayload, LocationData } from "@/types/dataTypes";
 import {
   GetCoordinatesAndAddressDetails,
