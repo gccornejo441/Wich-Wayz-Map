@@ -9,7 +9,10 @@ import { updateShopSchema } from "../../constants/validators";
 import { UpdateShopPayload } from "../../types/dataTypes";
 import { useModal } from "../../context/modalContext";
 import { useToast } from "../../context/toastContext";
-import { updateShopInfo, useUpdateShopCategories } from "@/services/updateLocationShop";
+import {
+  updateShopInfo,
+  useUpdateShopCategories,
+} from "@/services/updateLocationShop";
 
 const UpdateShop = () => {
   const { currentModal, updateShopData, closeModal } = useModal();
