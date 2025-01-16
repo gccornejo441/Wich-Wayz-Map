@@ -163,7 +163,7 @@ export const generateJWT = async (user: UserMetadata): Promise<string> => {
     username: user.username,
   })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("1h")
+    .setExpirationTime("7d")
     .sign(SECRET_KEY);
 
   return token;
