@@ -408,11 +408,6 @@ export const addCategoryIfNotExists = async (
   await insertData("categories", ["category_name"], [categoryName]);
 };
 
-export interface Category {
-  id: number;
-  category_name: string;
-}
-
 export const getAllCategories = async (): Promise<Category[]> => {
   const query = "SELECT * FROM categories";
   const { rows } = await executeQuery<Category>(query);

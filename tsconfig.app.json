@@ -13,7 +13,8 @@
       "@hooks/*": ["./src/hooks/*"],
       "@services/*": ["./src/services/*"],
       "@types/*": ["./src/types/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@models/*": ["./src/models/*"]
     },
     "types": ["@testing-library/jest-dom"],
 

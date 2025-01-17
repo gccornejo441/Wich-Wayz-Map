@@ -1,15 +1,13 @@
 import axios from "axios";
 import { AddAShopPayload } from "../types/dataTypes";
-import {
-  Shop,
-  submitLocationWithShop,
-  Location,
-  GetShops,
-} from "./shopLocation";
 import { cacheData } from "./indexedDB";
 import { getCurrentUser } from "./security";
 import { ROUTES } from "../constants/routes";
 import { cleanString } from "@/utils/stringUtils";
+import { Shop } from "@/models/Shop";
+import { Location } from "@/models/Location";
+import { GetShops } from "./shopService";
+import { submitLocationWithShop } from "./shopLocation";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -20,7 +18,7 @@ export async function handleLocationSubmit(
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
   addToast: (message: string, type: "success" | "error") => void,
   logout: () => Promise<void>,
-  navigate: (path: string) => void,
+  navigate: (path: string) => void
 ): Promise<boolean> {
   try {
     const currentUser = await getCurrentUser(logout);
@@ -51,7 +49,7 @@ export async function handleLocationSubmit(
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
-      (shop) => shop.locations || [],
+      (shop) => shop.locations || []
     );
 
     setShops(fetchedShops);
@@ -70,7 +68,7 @@ export async function handleLocationSubmit(
       console.error("Unexpected error:", error);
       addToast(
         "An unexpected error occurred while submitting the location and shop.",
-        "error",
+        "error"
       );
     }
     return false;
@@ -82,7 +80,7 @@ export async function handleLocationSubmit(
  */
 export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
-  modifiedBy: number | undefined,
+  modifiedBy: number | undefined
 ) {
   if (modifiedBy === undefined || modifiedBy === null) {
     throw new Error("User ID (modifiedBy) is required to create a shop.");
@@ -92,7 +90,7 @@ export function createLocationShopPayload(
 
   const cleanedShopName = cleanString(addAShopPayload.shopName);
   const cleanedDescription = cleanString(
-    addAShopPayload.shop_description || "No description provided",
+    addAShopPayload.shop_description || "No description provided"
   );
 
   const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
@@ -103,7 +101,7 @@ export function createLocationShopPayload(
   const cleanedCity = cleanString(addAShopPayload.city || "Unknown City");
   const cleanedState = cleanString(addAShopPayload.state || "Unknown State");
   const cleanedCountry = cleanString(
-    addAShopPayload.country || "Unknown Country",
+    addAShopPayload.country || "Unknown Country"
   );
 
   const streetAddress = cleanedHouseNumber

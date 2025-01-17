@@ -1,8 +1,10 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { ShopsProviderProps } from "../types/dataTypes";
 import { cacheData, getCachedData } from "../services/indexedDB";
-import { GetShops, ShopWithUser, Location } from "../services/shopLocation";
 import { executeQuery } from "../services/apiClient";
+import { Location } from "@models/Location";
+import { ShopWithUser } from "@models/ShopWithUser";
+import { GetShops } from "@/services/shopService";
 
 export interface ShopsContextType {
   shops: ShopWithUser[];

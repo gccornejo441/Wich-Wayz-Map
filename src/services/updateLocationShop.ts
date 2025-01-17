@@ -1,7 +1,7 @@
 import { useShops } from "@/context/shopContext";
 import { updateData } from "./apiClient";
 import { cacheData, getCachedData } from "./indexedDB";
-import { Shop } from "./shopLocation";
+import { Shop } from "@/models/Shop";
 
 /**
  * Updates local state and caches locations.

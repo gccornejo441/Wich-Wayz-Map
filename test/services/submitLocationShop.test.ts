@@ -1,17 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import { getCurrentUser } from "../../src/services/security";
 import { handleLocationSubmit } from "../../src/services/submitLocationShop";
-import {
-  submitLocationWithShop,
-  GetShops,
-} from "../../src/services/shopLocation";
 import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
 import { createLocationShopPayload } from "../../src/services/submitLocationShop";
+import { GetShops } from "../../src/services/shopService";
+import { submitLocationWithShop } from "../../src/services/shopLocation";
 
 vi.mock("../../src/services/security");
 vi.mock("../../src/services/shopLocation");
 vi.mock("../../src/services/indexedDB");
+vi.mock("../../src/services/shopService");
 
 describe("handleLocationSubmit", () => {
   it("should submit location and shop successfully", async () => {
@@ -71,7 +70,7 @@ describe("handleLocationSubmit", () => {
       setLocations,
       addToast,
       logout,
-      navigate,
+      navigate
     );
 
     expect(result).toBe(true);
@@ -79,7 +78,7 @@ describe("handleLocationSubmit", () => {
     expect(setLocations).toHaveBeenCalledWith(mockShops[0].locations);
     expect(addToast).toHaveBeenCalledWith(
       "Location and shop submitted successfully!",
-      "success",
+      "success"
     );
     expect(cacheData).toHaveBeenCalledWith("shops", mockShops);
     expect(cacheData).toHaveBeenCalledWith("locations", mockShops[0].locations);
@@ -105,7 +104,7 @@ describe("createLocationShopPayload", () => {
 
   it("should throw an error if modifiedBy is undefined", () => {
     expect(() => createLocationShopPayload(validPayload, undefined)).toThrow(
-      "User ID (modifiedBy) is required to create a shop.",
+      "User ID (modifiedBy) is required to create a shop."
     );
   });
 
@@ -157,7 +156,7 @@ describe("createLocationShopPayload", () => {
 
     const result = createLocationShopPayload(
       payloadWithMissingFields,
-      modifiedBy,
+      modifiedBy
     );
 
     expect(result).toEqual({
