@@ -143,7 +143,7 @@ export const Popper = ({
         </div>
 
         <div className="flex flex-col">
-          <div className="">
+          <div>
             <h5 className="text-sm font-semibold text-gray-600">
               Description:
             </h5>

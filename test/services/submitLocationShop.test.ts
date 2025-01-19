@@ -70,7 +70,7 @@ describe("handleLocationSubmit", () => {
       setLocations,
       addToast,
       logout,
-      navigate
+      navigate,
     );
 
     expect(result).toBe(true);
@@ -78,7 +78,7 @@ describe("handleLocationSubmit", () => {
     expect(setLocations).toHaveBeenCalledWith(mockShops[0].locations);
     expect(addToast).toHaveBeenCalledWith(
       "Location and shop submitted successfully!",
-      "success"
+      "success",
     );
     expect(cacheData).toHaveBeenCalledWith("shops", mockShops);
     expect(cacheData).toHaveBeenCalledWith("locations", mockShops[0].locations);
@@ -104,7 +104,7 @@ describe("createLocationShopPayload", () => {
 
   it("should throw an error if modifiedBy is undefined", () => {
     expect(() => createLocationShopPayload(validPayload, undefined)).toThrow(
-      "User ID (modifiedBy) is required to create a shop."
+      "User ID (modifiedBy) is required to create a shop.",
     );
   });
 
@@ -128,7 +128,7 @@ describe("createLocationShopPayload", () => {
       },
       shop: {
         name: "Test Shop",
-        description: "A Test Shop Description",
+        description: "A test shop description",
         modified_by: modifiedBy,
         created_by: modifiedBy,
       },
@@ -156,7 +156,7 @@ describe("createLocationShopPayload", () => {
 
     const result = createLocationShopPayload(
       payloadWithMissingFields,
-      modifiedBy
+      modifiedBy,
     );
 
     expect(result).toEqual({
@@ -175,11 +175,38 @@ describe("createLocationShopPayload", () => {
       },
       shop: {
         name: "Shop Without Address",
-        description: "No Description Provided",
+        description: "No description provided",
         modified_by: modifiedBy,
         created_by: modifiedBy,
       },
       categoryIds: [],
     });
+  });
+
+  it("should ensure shopName is in title case and shop_description is in normal case", () => {
+    const modifiedBy = 1;
+    const payloadWithCasingIssues = {
+      shopName: "tEsT sHoP",
+      shop_description: "THIS IS A TEST DESCRIPTION",
+      house_number: "456",
+      address: "456 Another St",
+      address_first: "Another St",
+      address_second: "Suite 10",
+      city: "Another City",
+      state: "AC",
+      country: "Another Country",
+      postcode: "67890",
+      latitude: 34.0522,
+      longitude: -118.2437,
+      categoryIds: [4, 5, 6],
+    };
+
+    const result = createLocationShopPayload(
+      payloadWithCasingIssues,
+      modifiedBy,
+    );
+
+    expect(result.shop.name).toBe("Test Shop");
+    expect(result.shop.description).toBe("This is a test description");
   });
 });

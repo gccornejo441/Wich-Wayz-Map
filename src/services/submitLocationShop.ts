@@ -18,7 +18,7 @@ export async function handleLocationSubmit(
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
   addToast: (message: string, type: "success" | "error") => void,
   logout: () => Promise<void>,
-  navigate: (path: string) => void
+  navigate: (path: string) => void,
 ): Promise<boolean> {
   try {
     const currentUser = await getCurrentUser(logout);
@@ -49,7 +49,7 @@ export async function handleLocationSubmit(
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
-      (shop) => shop.locations || []
+      (shop) => shop.locations || [],
     );
 
     setShops(fetchedShops);
@@ -68,7 +68,7 @@ export async function handleLocationSubmit(
       console.error("Unexpected error:", error);
       addToast(
         "An unexpected error occurred while submitting the location and shop.",
-        "error"
+        "error",
       );
     }
     return false;
@@ -80,7 +80,7 @@ export async function handleLocationSubmit(
  */
 export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
-  modifiedBy: number | undefined
+  modifiedBy: number | undefined,
 ) {
   if (modifiedBy === undefined || modifiedBy === null) {
     throw new Error("User ID (modifiedBy) is required to create a shop.");
@@ -88,9 +88,10 @@ export function createLocationShopPayload(
 
   const currentDate = new Date().toISOString();
 
-  const cleanedShopName = cleanString(addAShopPayload.shopName);
+  const cleanedShopName = cleanString(addAShopPayload.shopName, "title");
   const cleanedDescription = cleanString(
-    addAShopPayload.shop_description || "No description provided"
+    addAShopPayload.shop_description || "No description provided",
+    "sentence",
   );
 
   const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
@@ -98,10 +99,17 @@ export function createLocationShopPayload(
   const cleanedAddressFirst = cleanString(addAShopPayload.address_first);
   const cleanedAddressSecond = cleanString(addAShopPayload.address_second);
 
-  const cleanedCity = cleanString(addAShopPayload.city || "Unknown City");
-  const cleanedState = cleanString(addAShopPayload.state || "Unknown State");
+  const cleanedCity = cleanString(
+    addAShopPayload.city || "Unknown City",
+    "title",
+  );
+  const cleanedState = cleanString(
+    addAShopPayload.state || "Unknown State",
+    "title",
+  );
   const cleanedCountry = cleanString(
-    addAShopPayload.country || "Unknown Country"
+    addAShopPayload.country || "Unknown Country",
+    "title",
   );
 
   const streetAddress = cleanedHouseNumber
