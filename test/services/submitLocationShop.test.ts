@@ -210,3 +210,124 @@ describe("createLocationShopPayload", () => {
     expect(result.shop.description).toBe("This is a test description");
   });
 });
+
+describe("createLocationShopPayload - Edge Cases", () => {
+  const modifiedBy = 1;
+
+  it("should handle empty strings for shopName and shop_description", () => {
+    const payloadWithEmptyStrings: AddAShopPayload = {
+      shopName: "",
+      shop_description: "",
+      house_number: "123",
+      address: "123 Main St",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      postcode: "12345",
+      latitude: 40.7128,
+      longitude: -74.006,
+      categoryIds: [1, 2, 3],
+    };
+
+    const result = createLocationShopPayload(payloadWithEmptyStrings, modifiedBy);
+
+    expect(result.shop.name).toBe("");
+    expect(result.shop.description).toBe("No description provided");
+  });
+
+  it("should handle special characters in shopName and shop_description", () => {
+    const payloadWithSpecialCharacters: AddAShopPayload = {
+      shopName: "T3st! Sh@p#123",
+      shop_description: "Th!s sh@p descr1ption has #peci@l ch@racters.",
+      house_number: "123",
+      address: "123 Main St",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      postcode: "12345",
+      latitude: 40.7128,
+      longitude: -74.006,
+      categoryIds: [1, 2, 3],
+    };
+
+    const result = createLocationShopPayload(payloadWithSpecialCharacters, modifiedBy);
+
+    expect(result.shop.name).toBe("T3st! Sh@p#123");
+    expect(result.shop.description).toBe(
+      "Th!s sh@p descr1ption has #peci@l ch@racters."
+    ); 
+  });
+
+  it("should handle numbers in shopName and shop_description", () => {
+    const payloadWithNumbers: AddAShopPayload = {
+      shopName: "Shop 1234",
+      shop_description: "This shop was established in 2020.",
+      house_number: "123",
+      address: "123 Main St",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      postcode: "12345",
+      latitude: 40.7128,
+      longitude: -74.006,
+      categoryIds: [1, 2, 3],
+    };
+
+    const result = createLocationShopPayload(payloadWithNumbers, modifiedBy);
+
+    expect(result.shop.name).toBe("Shop 1234");
+    expect(result.shop.description).toBe("This shop was established in 2020."); 
+  });
+
+  it("should trim leading and trailing spaces in shopName and shop_description", () => {
+    const payloadWithSpaces: AddAShopPayload = {
+      shopName: "   Test Shop   ",
+      shop_description: "   This is a test description with spaces.   ",
+      house_number: "123",
+      address: "123 Main St",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      postcode: "12345",
+      latitude: 40.7128,
+      longitude: -74.006,
+      categoryIds: [1, 2, 3],
+    };
+
+    const result = createLocationShopPayload(payloadWithSpaces, modifiedBy);
+
+    expect(result.shop.name).toBe("Test Shop");
+    expect(result.shop.description).toBe("This is a test description with spaces.");
+  });
+
+  it("should handle mixed case input and format correctly", () => {
+    const payloadWithMixedCase: AddAShopPayload = {
+      shopName: "tEsT sHoP",
+      shop_description: "ThIs Is A tEsT dEsCrIpTiOn.",
+      house_number: "123",
+      address: "123 Main St",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      postcode: "12345",
+      latitude: 40.7128,
+      longitude: -74.006,
+      categoryIds: [1, 2, 3],
+    };
+
+    const result = createLocationShopPayload(payloadWithMixedCase, modifiedBy);
+
+    expect(result.shop.name).toBe("Test Shop");
+    expect(result.shop.description).toBe("This is a test description."); 
+  });
+});
