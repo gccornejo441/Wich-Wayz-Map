@@ -37,7 +37,7 @@ const EnhancedInput = ({
         placeholder={placeholder}
         value={inputValue}
         onChange={handleChange}
-        className={`w-full p-2 border rounded-lg bg-white text-dark ${
+        className={`w-full p-2 pr-10 border rounded-lg bg-white text-dark ${
           errors[name] ? "border-red-500" : "border-secondary"
         }`}
       />

@@ -231,7 +231,10 @@ describe("createLocationShopPayload - Edge Cases", () => {
       categoryIds: [1, 2, 3],
     };
 
-    const result = createLocationShopPayload(payloadWithEmptyStrings, modifiedBy);
+    const result = createLocationShopPayload(
+      payloadWithEmptyStrings,
+      modifiedBy,
+    );
 
     expect(result.shop.name).toBe("");
     expect(result.shop.description).toBe("No description provided");
@@ -254,12 +257,15 @@ describe("createLocationShopPayload - Edge Cases", () => {
       categoryIds: [1, 2, 3],
     };
 
-    const result = createLocationShopPayload(payloadWithSpecialCharacters, modifiedBy);
+    const result = createLocationShopPayload(
+      payloadWithSpecialCharacters,
+      modifiedBy,
+    );
 
     expect(result.shop.name).toBe("T3st! Sh@p#123");
     expect(result.shop.description).toBe(
-      "Th!s sh@p descr1ption has #peci@l ch@racters."
-    ); 
+      "Th!s sh@p descr1ption has #peci@l ch@racters.",
+    );
   });
 
   it("should handle numbers in shopName and shop_description", () => {
@@ -282,7 +288,7 @@ describe("createLocationShopPayload - Edge Cases", () => {
     const result = createLocationShopPayload(payloadWithNumbers, modifiedBy);
 
     expect(result.shop.name).toBe("Shop 1234");
-    expect(result.shop.description).toBe("This shop was established in 2020."); 
+    expect(result.shop.description).toBe("This shop was established in 2020.");
   });
 
   it("should trim leading and trailing spaces in shopName and shop_description", () => {
@@ -305,7 +311,9 @@ describe("createLocationShopPayload - Edge Cases", () => {
     const result = createLocationShopPayload(payloadWithSpaces, modifiedBy);
 
     expect(result.shop.name).toBe("Test Shop");
-    expect(result.shop.description).toBe("This is a test description with spaces.");
+    expect(result.shop.description).toBe(
+      "This is a test description with spaces.",
+    );
   });
 
   it("should handle mixed case input and format correctly", () => {
@@ -328,6 +336,6 @@ describe("createLocationShopPayload - Edge Cases", () => {
     const result = createLocationShopPayload(payloadWithMixedCase, modifiedBy);
 
     expect(result.shop.name).toBe("Test Shop");
-    expect(result.shop.description).toBe("This is a test description."); 
+    expect(result.shop.description).toBe("This is a test description.");
   });
 });
