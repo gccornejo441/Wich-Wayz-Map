@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -81,6 +81,7 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "@vitest/coverage-v8": "^2.1.8",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^5.0.0",
