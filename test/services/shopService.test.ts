@@ -95,7 +95,7 @@ describe("GetShops", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     (executeQuery as unknown as jest.Mock).mockRejectedValue(
-      new Error("Database connection failed")
+      new Error("Database connection failed"),
     );
 
     await expect(GetShops()).rejects.toThrow("Failed to fetch shops.");

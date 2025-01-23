@@ -392,6 +392,7 @@ export const deleteUserAccount = async (userId: number): Promise<void> => {
  */
 export const addCategoryIfNotExists = async (
   categoryName: string,
+  description: string,
 ): Promise<void> => {
   const checkQuery =
     "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
@@ -405,7 +406,11 @@ export const addCategoryIfNotExists = async (
     throw error;
   }
 
-  await insertData("categories", ["category_name"], [categoryName]);
+  await insertData(
+    "categories",
+    ["category_name", "description"],
+    [categoryName, description],
+  );
 };
 
 export const getAllCategories = async (): Promise<Category[]> => {
