@@ -158,5 +158,15 @@
     "id": 32,
     "category_name": "Bagel",
     "description": "For round, dense bread products with a chewy interior and slightly crisp exterior provide a robust foundation for an array of savory fillings."
+  },
+  {
+    "id": 33,
+    "category_name": "Tuscan Street Fare",
+    "description": "For sandwiches and dishes inspired by traditional street foods of Tuscany, Italy. "
+  },
+  {
+    "id": 34,
+    "category_name": "Roast Beef",
+    "description": "For juicy roast beef piled high, served with au jus or classic toppings for a savory, satisfying bite."
   }
 ]
