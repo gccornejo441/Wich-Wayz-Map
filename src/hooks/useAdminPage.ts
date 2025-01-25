@@ -4,11 +4,11 @@ import {
   updateUserRole,
   deleteUserAccount,
   getAllCategories,
-  addCategoryIfNotExists,
 } from "@services/apiClient";
 import { useToast } from "@context/toastContext";
 import * as yup from "yup";
 import { UserMetadata } from "@context/authContext";
+import { addCategoryIfNotExists } from "@/services/categoryService";
 
 const userRoleSchema = yup.object().shape({
   role: yup

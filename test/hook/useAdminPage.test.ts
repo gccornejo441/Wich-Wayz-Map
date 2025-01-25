@@ -2,7 +2,11 @@ import { renderHook, act } from "@testing-library/react";
 import { Mock, vi } from "vitest";
 import { useToast } from "../../src/context/toastContext";
 import { useAdminPage } from "../../src/hooks/useAdminPage";
-import { addCategoryIfNotExists } from "../../src/services/apiClient";
+import { addCategoryIfNotExists } from "../../src/services/categoryService";
+
+vi.mock("../../src/services/categoryService", () => ({
+  addCategoryIfNotExists: vi.fn(),
+}));
 
 vi.mock("@services/apiClient", () => ({
   addCategoryIfNotExists: vi.fn(),

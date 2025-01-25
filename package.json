@@ -63,7 +63,7 @@
     "rollup": "^4.27.3",
     "stripe": "^17.4.0",
     "title-case": "^4.3.2",
-    "vercel": "^28.18.5",
+    "vercel": "^39.3.0",
     "vite-plugin-svgr": "^4.3.0",
     "yup": "^1.4.0"
   },
@@ -78,6 +78,7 @@
     "@types/leaflet.locatecontrol": "^0.74.6",
     "@types/leaflet.markercluster": "^1.5.5",
     "@types/micro": "^7.3.7",
+    "@types/node": "^22.10.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react-swc": "^3.5.0",

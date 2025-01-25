@@ -387,32 +387,6 @@ export const deleteUserAccount = async (userId: number): Promise<void> => {
   await executeQuery(query, [userId]);
 };
 
-/**
- * Adds a new category to the database if it does not already exist.
- */
-export const addCategoryIfNotExists = async (
-  categoryName: string,
-  description: string,
-): Promise<void> => {
-  const checkQuery =
-    "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
-  const { rows: existing } = await executeQuery<{ count: number }>(checkQuery, [
-    categoryName,
-  ]);
-
-  if (existing[0].count > 0) {
-    const error = new Error("Category already exists");
-    error.name = "CategoryExistsError";
-    throw error;
-  }
-
-  await insertData(
-    "categories",
-    ["category_name", "description"],
-    [categoryName, description],
-  );
-};
-
 export const getAllCategories = async (): Promise<Category[]> => {
   const query = "SELECT * FROM categories";
   const { rows } = await executeQuery<Category>(query);
