@@ -10,12 +10,12 @@ import { AddAShopPayload, Callback, LocationData } from "../../types/dataTypes";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "../../constants/validators";
-import { Category, GetCategories } from "../../services/apiClient";
 import Select from "react-select";
 import { useToast } from "../../context/toastContext";
 import { useAuth } from "../../context/authContext";
 import { useNavigate } from "react-router-dom";
 import EnhancedInput from "@components/Utilites/EnhancedInput";
+import { Category, GetCategories } from "@/services/categoryService";
 
 interface LocationSubmitProps {
   onClose: Callback;
@@ -228,7 +228,7 @@ const LocationSubmit = ({ onClose }: LocationSubmitProps) => {
               }))}
               onChange={(selectedOptions) =>
                 setSelectedCategories(
-                  selectedOptions.map((option) => option.value),
+                  selectedOptions.map((option) => option.value as number),
                 )
               }
               menuPortalTarget={document.body}

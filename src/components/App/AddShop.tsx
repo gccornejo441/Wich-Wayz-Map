@@ -6,7 +6,6 @@ import { useAuth } from "@context/authContext";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { locationSchema } from "@constants/validators";
-import { Category, GetCategories } from "@services/apiClient";
 import { handleLocationSubmit } from "@/services/submitLocationShop";
 import { AddAShopPayload, LocationData } from "@/types/dataTypes";
 import {
@@ -16,6 +15,7 @@ import {
 import Select from "react-select";
 import EnhancedInput from "../Utilites/EnhancedInput";
 import { HiMap } from "react-icons/hi";
+import { Category, GetCategories } from "@/services/categoryService";
 
 const AddShop = () => {
   const { setShops, setLocations } = useShops();
@@ -225,7 +225,7 @@ const AddShop = () => {
               }))}
               onChange={(selectedOptions) =>
                 setSelectedCategories(
-                  selectedOptions.map((option) => option.value),
+                  selectedOptions.map((option) => option.value as number),
                 )
               }
               menuPortalTarget={document.body}

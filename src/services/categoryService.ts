@@ -1,14 +1,13 @@
-import fs from "fs";
-import path from "path";
 import { executeQuery, insertData } from "./apiClient";
 
-export interface CategoryDescription {
+export interface Category {
+  id?: number;
   category_name: string;
-  description: string;
+  description?: string;
 }
 
 export const checkCategoryExistsInDatabase = async (
-  categoryName: string,
+  categoryName: string
 ): Promise<boolean> => {
   const checkQuery =
     "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
@@ -20,57 +19,46 @@ export const checkCategoryExistsInDatabase = async (
 
 export const addCategoryToDatabase = async (
   categoryName: string,
-  description: string,
+  description: string
 ): Promise<void> => {
   await insertData(
     "categories",
     ["category_name", "description"],
-    [categoryName, description],
+    [categoryName, description]
   );
 };
 
-export const readCategoriesFromFile = (): CategoryDescription[] => {
-  const categoriesFilePath = path.join(
-    process.cwd(),
-    "public",
-    "categories.json",
-  );
-  if (!fs.existsSync(categoriesFilePath)) {
-    return [];
+export const fetchCategoriesFromDatabase = async (): Promise<Category[]> => {
+  const query = "SELECT category_name, description FROM categories";
+  const { rows } = await executeQuery<Category>(query);
+  return rows;
+};
+
+export const readCategoriesFromLocalStorage = (): Category[] => {
+  const categories = localStorage.getItem("categories");
+  return categories ? JSON.parse(categories) : [];
+};
+
+export const writeCategoriesToLocalStorage = (categories: Category[]): void => {
+  localStorage.setItem("categories", JSON.stringify(categories));
+};
+
+export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
+  const dbCategories = await fetchCategoriesFromDatabase();
+  const localStorageCategories = readCategoriesFromLocalStorage();
+
+  if (JSON.stringify(dbCategories) !== JSON.stringify(localStorageCategories)) {
+    console.log("Local storage is outdated. Updating from database...");
+    writeCategoriesToLocalStorage(dbCategories);
   }
-  const fileContent = fs.readFileSync(categoriesFilePath, "utf-8");
-  return JSON.parse(fileContent);
-};
-
-export const checkCategoryExistsInFile = (
-  categories: CategoryDescription[],
-  categoryName: string,
-): boolean => {
-  return categories.some((category) => category.category_name === categoryName);
-};
-
-export const addCategoryToFile = (
-  categories: CategoryDescription[],
-  categoryName: string,
-  description: string,
-): void => {
-  const categoriesFilePath = path.join(
-    process.cwd(),
-    "public",
-    "categories.json",
-  );
-  categories.push({ category_name: categoryName, description });
-  fs.writeFileSync(
-    categoriesFilePath,
-    JSON.stringify(categories, null, 2),
-    "utf-8",
-  );
 };
 
 export const addCategoryIfNotExists = async (
   categoryName: string,
-  description: string,
+  description: string
 ): Promise<void> => {
+  await synchronizeLocalStorageWithDatabase();
+
   const categoryExistsInDatabase =
     await checkCategoryExistsInDatabase(categoryName);
   if (categoryExistsInDatabase) {
@@ -79,13 +67,47 @@ export const addCategoryIfNotExists = async (
 
   await addCategoryToDatabase(categoryName, description);
 
-  const categories = readCategoriesFromFile();
-  const categoryExistsInFile = checkCategoryExistsInFile(
-    categories,
-    categoryName,
+  const categories = readCategoriesFromLocalStorage();
+  const categoryExistsInLocalStorage = categories.some(
+    (category) => category.category_name === categoryName
   );
 
-  if (!categoryExistsInFile) {
-    addCategoryToFile(categories, categoryName, description);
+  if (!categoryExistsInLocalStorage) {
+    categories.push({ category_name: categoryName, description });
+    writeCategoriesToLocalStorage(categories);
+    console.log("Category added to local storage successfully!");
   }
+};
+
+/**
+ * Retrieves categories either from local storage or the database.
+ *
+ * This function first attempts to read categories from the local storage. If no categories are found,
+ * it fetches them from the database and writes them back to local storage for future use. It also
+ * validates the structure of the category data to ensure it contains the necessary fields.
+ */
+export const GetCategories = async (): Promise<Category[]> => {
+  let categories = readCategoriesFromLocalStorage();
+
+  if (categories.length === 0) {
+    console.log("No categories in local storage. Fetching from database...");
+    categories = await fetchCategoriesFromDatabase();
+
+    writeCategoriesToLocalStorage(categories);
+  }
+
+  // 4. Validate the categories data
+  if (
+    !Array.isArray(categories) ||
+    !categories.every(
+      (item) =>
+        "id" in item &&
+        "category_name" in item &&
+        ("description" in item || item.description === undefined)
+    )
+  ) {
+    throw new Error("Invalid category data format");
+  }
+
+  return categories;
 };

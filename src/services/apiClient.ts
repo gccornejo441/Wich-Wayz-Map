@@ -1,5 +1,6 @@
 import { createClient, Client, InStatement, InArgs } from "@libsql/client";
 import { UserMetadata } from "../context/authContext";
+import { Category } from "./categoryService";
 
 const TURSO_URL = import.meta.env.VITE_TURSO_URL as string;
 const TURSO_AUTH_TOKEN = import.meta.env.VITE_TURSO_AUTH_TOKEN as string;
@@ -12,11 +13,6 @@ export const tursoClient: Client = createClient({
 type QueryParams = (string | number | null)[];
 interface QueryResult<T> {
   rows: T[];
-}
-
-export interface Category {
-  id: number;
-  category_name: string;
 }
 
 /**
@@ -77,28 +73,6 @@ export const insertData = async (
   const placeholders = values.map(() => "?").join(", ");
   const query = `INSERT INTO ${tableName} (${columns.join(", ")}) VALUES (${placeholders})`;
   await executeQuery(query, values);
-};
-
-/**
- * Fetches the list of categories from a JSON file located at "/categories.json".
- */
-export const GetCategories = async (): Promise<Category[]> => {
-  const response = await fetch("/categories.json");
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch categories: ${response.statusText}`);
-  }
-
-  const data: Category[] = await response.json();
-
-  if (
-    !Array.isArray(data) ||
-    !data.every((item) => "id" in item && "category_name" in item)
-  ) {
-    throw new Error("Invalid category data format");
-  }
-
-  return data;
 };
 
 /**

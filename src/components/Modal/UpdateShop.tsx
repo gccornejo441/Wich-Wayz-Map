@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Select from "react-select";
-import { GetCategories, updateShopCategories } from "../../services/apiClient";
+import { updateShopCategories } from "../../services/apiClient";
 import ModalWrapper from "./ModalWrapper";
-import { Category } from "../../services/apiClient";
 import { updateShopSchema } from "../../constants/validators";
 import { UpdateShopPayload } from "../../types/dataTypes";
 import { useModal } from "../../context/modalContext";
@@ -13,6 +12,7 @@ import {
   updateShopInfo,
   useUpdateShopCategories,
 } from "@/services/updateLocationShop";
+import { Category, GetCategories } from "@/services/categoryService";
 
 const UpdateShop = () => {
   const { currentModal, updateShopData, closeModal } = useModal();
@@ -175,7 +175,7 @@ const UpdateShop = () => {
               defaultValue={
                 categories
                   .filter((category) =>
-                    selectedCategories.includes(category.id),
+                    selectedCategories.includes(category.id as number),
                   )
                   .map((category) => ({
                     value: category.id,
