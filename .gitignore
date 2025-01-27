@@ -41,3 +41,5 @@ sandwich_list.json
 .vercel
 
 coverage
+.vercel
+.env*.local

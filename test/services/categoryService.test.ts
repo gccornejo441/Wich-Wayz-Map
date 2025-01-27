@@ -48,7 +48,7 @@ describe("Category Management", () => {
       expect(exists).toBe(true);
       expect(executeQuery).toHaveBeenCalledWith(
         "SELECT COUNT(*) as count FROM categories WHERE category_name = ?",
-        ["existing-category"]
+        ["existing-category"],
       );
     });
 
@@ -57,7 +57,7 @@ describe("Category Management", () => {
       expect(insertData).toHaveBeenCalledWith(
         "categories",
         ["category_name", "description"],
-        ["new-category", "description"]
+        ["new-category", "description"],
       );
     });
 
@@ -71,7 +71,7 @@ describe("Category Management", () => {
       const result = await fetchCategoriesFromDatabase();
       expect(result).toEqual(mockCategories);
       expect(executeQuery).toHaveBeenCalledWith(
-        "SELECT category_name, description FROM categories"
+        "SELECT category_name, description FROM categories",
       );
     });
   });
@@ -85,7 +85,7 @@ describe("Category Management", () => {
       writeCategoriesToLocalStorage(testData);
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "categories",
-        JSON.stringify(testData)
+        JSON.stringify(testData),
       );
 
       localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(testData));
@@ -106,13 +106,13 @@ describe("Category Management", () => {
 
       (executeQuery as Mock).mockResolvedValue({ rows: dbData });
       localStorageMock.getItem.mockReturnValue(
-        JSON.stringify(localStorageData)
+        JSON.stringify(localStorageData),
       );
 
       await synchronizeLocalStorageWithDatabase();
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "categories",
-        JSON.stringify(dbData)
+        JSON.stringify(dbData),
       );
     });
 

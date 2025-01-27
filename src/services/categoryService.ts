@@ -7,7 +7,7 @@ export interface Category {
 }
 
 export const checkCategoryExistsInDatabase = async (
-  categoryName: string
+  categoryName: string,
 ): Promise<boolean> => {
   const checkQuery =
     "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
@@ -19,12 +19,12 @@ export const checkCategoryExistsInDatabase = async (
 
 export const addCategoryToDatabase = async (
   categoryName: string,
-  description: string
+  description: string,
 ): Promise<void> => {
   await insertData(
     "categories",
     ["category_name", "description"],
-    [categoryName, description]
+    [categoryName, description],
   );
 };
 
@@ -55,7 +55,7 @@ export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
 
 export const addCategoryIfNotExists = async (
   categoryName: string,
-  description: string
+  description: string,
 ): Promise<void> => {
   await synchronizeLocalStorageWithDatabase();
 
@@ -69,7 +69,7 @@ export const addCategoryIfNotExists = async (
 
   const categories = readCategoriesFromLocalStorage();
   const categoryExistsInLocalStorage = categories.some(
-    (category) => category.category_name === categoryName
+    (category) => category.category_name === categoryName,
   );
 
   if (!categoryExistsInLocalStorage) {
@@ -103,7 +103,7 @@ export const GetCategories = async (): Promise<Category[]> => {
       (item) =>
         "id" in item &&
         "category_name" in item &&
-        ("description" in item || item.description === undefined)
+        ("description" in item || item.description === undefined),
     )
   ) {
     throw new Error("Invalid category data format");
