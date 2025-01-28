@@ -22,7 +22,6 @@ export async function handleLocationSubmit(
 ): Promise<boolean> {
   try {
     const currentUser = await getCurrentUser(logout);
-
     if (!currentUser) {
       navigate(ROUTES.ACCOUNT.SIGN_IN);
       return false;

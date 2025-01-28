@@ -29,7 +29,7 @@ export const addCategoryToDatabase = async (
 };
 
 export const fetchCategoriesFromDatabase = async (): Promise<Category[]> => {
-  const query = "SELECT category_name, description FROM categories";
+  const query = "SELECT id, category_name, description FROM categories";
   const { rows } = await executeQuery<Category>(query);
   return rows;
 };
@@ -87,26 +87,11 @@ export const addCategoryIfNotExists = async (
  * validates the structure of the category data to ensure it contains the necessary fields.
  */
 export const GetCategories = async (): Promise<Category[]> => {
-  let categories = readCategoriesFromLocalStorage();
+  let categories = readCategoriesFromLocalStorage() as Category[];
 
   if (categories.length === 0) {
-    console.log("No categories in local storage. Fetching from database...");
-    categories = await fetchCategoriesFromDatabase();
-
+    categories = (await fetchCategoriesFromDatabase()) as Category[];
     writeCategoriesToLocalStorage(categories);
-  }
-
-  // 4. Validate the categories data
-  if (
-    !Array.isArray(categories) ||
-    !categories.every(
-      (item) =>
-        "id" in item &&
-        "category_name" in item &&
-        ("description" in item || item.description === undefined),
-    )
-  ) {
-    throw new Error("Invalid category data format");
   }
 
   return categories;
