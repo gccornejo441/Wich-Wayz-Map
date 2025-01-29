@@ -63,15 +63,15 @@ describe("Category Management", () => {
 
     test("fetchCategoriesFromDatabase returns categories", async () => {
       const mockCategories = [
-        { category_name: "cat1", description: "desc1" },
-        { category_name: "cat2", description: "desc2" },
+        { id: 1, category_name: "cat1", description: "desc1" },
+        { id: 2, category_name: "cat2", description: "desc2" },
       ];
       (executeQuery as Mock).mockResolvedValueOnce({ rows: mockCategories });
 
       const result = await fetchCategoriesFromDatabase();
       expect(result).toEqual(mockCategories);
       expect(executeQuery).toHaveBeenCalledWith(
-        "SELECT category_name, description FROM categories",
+        "SELECT id, category_name, description FROM categories",
       );
     });
   });
