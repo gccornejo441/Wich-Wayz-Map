@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi,  } from "vitest";
-import { render, screen  } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import React from "react";
 import AddShop from "../../src/components/App/AddShop";
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
@@ -30,6 +30,7 @@ vi.mock("../../src/services/geolocation", () => ({
   GetCoordinatesAndAddressDetails: vi.fn(),
   MapBoxLocationLookup: vi.fn(),
 }));
+
 vi.mock("../../src/services/categoryService", () => ({
   GetCategories: vi.fn().mockResolvedValue([
     { id: 1, category_name: "Category A" },
@@ -38,9 +39,8 @@ vi.mock("../../src/services/categoryService", () => ({
 }));
 
 vi.mock("../../src/services/submitLocationShop", () => ({
-    handleLocationSubmit: vi.fn().mockResolvedValue(true),
-  }));
-  
+  handleLocationSubmit: vi.fn().mockResolvedValue(true),
+}));
 
 describe("AddShop Component (Single Location)", () => {
   beforeEach(() => {
@@ -51,6 +51,4 @@ describe("AddShop Component (Single Location)", () => {
     render(<AddShop />);
     expect(screen.getByText("Add A Sandwich Shop")).toBeInTheDocument();
   });
-    
-
 });
