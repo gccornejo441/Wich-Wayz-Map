@@ -1,10 +1,11 @@
+// tsconfig.node.json
 {
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["@testing-library/jest-dom", "node"],
+    "types": ["@testing-library/jest-dom", "node", "vitest/globals"],
     "paths": {
       "@/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
@@ -31,5 +32,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts"]
+  "extends": "./tsconfig.app.json",
+  "include": ["src", "test"]
 }
