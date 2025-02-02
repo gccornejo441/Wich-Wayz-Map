@@ -1,3 +1,4 @@
+import { ChangeEvent } from "react";
 import { Callback } from "../../types/dataTypes";
 
 export interface AccountProps {
@@ -32,7 +33,9 @@ const Account = ({
           <input
             type="text"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setFirstName(e.target.value)
+            }
             className="px-2 py-1 border border-secondary rounded-lg"
           />
         </div>
@@ -41,7 +44,9 @@ const Account = ({
           <input
             type="text"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setLastName(e.target.value)
+            }
             className="px-2 py-1 border border-secondary rounded-lg"
           />
         </div>
@@ -50,7 +55,9 @@ const Account = ({
           <input
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setUsername(e.target.value)
+            }
             className="px-2 py-1 border border-secondary rounded-lg"
           />
         </div>

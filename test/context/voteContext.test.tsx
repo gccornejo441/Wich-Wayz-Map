@@ -1,9 +1,8 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, RenderHookResult } from "@testing-library/react";
 import { useVote, VoteProvider } from "../../src/context/voteContext";
 import { AuthProvider } from "../../src/context/authContext";
-import React from "react";
 
-const customRenderHook = (hook) =>
+const customRenderHook = <T, R>(hook: () => T): RenderHookResult<T, R> =>
   renderHook(() => hook(), {
     wrapper: ({ children }) => (
       <AuthProvider>
@@ -62,7 +61,6 @@ describe("addVote", () => {
 
     act(() => {
       result.current.addVote(1, true);
-      result.current.addVote(1, true, false);
     });
 
     expect(result.current.votes[1]).toEqual({

@@ -74,7 +74,7 @@ describe("useAddShopForm hook", () => {
     });
     expect(addToast).toHaveBeenCalledWith(
       "Please enter an address to prefill.",
-      "error"
+      "error",
     );
   });
 
@@ -102,8 +102,7 @@ describe("useAddShopForm hook", () => {
     });
     expect(addToast).toHaveBeenCalledWith(
       "Please prefill and validate the address before submitting.",
-      "error"
+      "error",
     );
   });
-
 });

@@ -1,4 +1,3 @@
-// tsconfig.app.json
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -17,7 +16,7 @@
       "@utils/*": ["./src/utils/*"],
       "@models/*": ["./src/models/*"]
     },
-    "types": ["@testing-library/jest-dom", "node", "vitest/globals"],
+    "types": ["@testing-library/jest-dom", "node"],
 
     /* Bundler mode */
     "moduleResolution": "Bundler",

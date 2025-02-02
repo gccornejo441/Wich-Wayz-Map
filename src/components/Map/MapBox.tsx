@@ -20,7 +20,6 @@ const MapBox = () => {
     null,
   );
   const [isMapReady, setIsMapReady] = useState(false);
-  const [progress, setProgress] = useState(0);
   const { shops } = useShops();
   const { center, shopId } = useMapContext();
   const isMobileDevice = () => /Mobi|Android/i.test(navigator.userAgent);
@@ -114,14 +113,6 @@ const MapBox = () => {
 
   return (
     <div>
-      {progress < 100 && (
-        <div className="fixed top-0 left-0 w-full bg-gray-200">
-          <div
-            className="h-2 bg-blue-500 transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
       <MapContainer
         center={position || DEFAULT_POSITION}
         zoom={13}
@@ -153,9 +144,6 @@ const MapBox = () => {
           chunkedLoading={true}
           chunkInterval={200}
           chunkDelay={50}
-          chunkProgress={(processed: number, total: number) => {
-            setProgress(Math.floor((processed / total) * 100));
-          }}
           spiderfyOnMaxZoom={true}
           removeOutsideVisibleBounds={true}
           animate={false}
