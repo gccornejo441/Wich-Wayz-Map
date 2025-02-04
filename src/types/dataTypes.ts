@@ -87,30 +87,6 @@ export interface ShopsProviderProps {
   children: ReactNode;
 }
 
-export interface IndexedDBShop {
-  id: number;
-  name: string;
-  description: string;
-  categories: Array<{
-    id: number;
-    category_name: string;
-  }>;
-  locations: Array<{
-    id: number;
-    city: string;
-    state: string;
-    country: string;
-    postal_code: string;
-    street_address: string;
-    latitude: number;
-    longitude: number;
-  }>;
-  created_by: number;
-  created_by_username: string;
-  date_created: string;
-  date_modified?: string;
-}
-
 export interface Vote {
   shop_id: number;
   user_id: number;

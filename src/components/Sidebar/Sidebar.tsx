@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import SidebarFooter from "./SidebarFooter";
-import { HiMap, HiPlus, HiUser } from "react-icons/hi";
+import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
 import { ReactNode } from "react";
@@ -86,6 +86,12 @@ export const SidebarItem = ({
   return <div className="w-full">{content}</div>;
 };
 
+
+/**
+ * A sidebar component that renders a map, profile, and add shop button.
+ *
+ * IMPORTANT NOTE: Add sidebar routes here.
+ */
 const Sidebar = ({ isOpen }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
 
@@ -134,6 +140,13 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               />
             </li>
           )}
+          <li>
+            <SidebarItem
+              linkTo={ROUTES.ANALYTICS}
+              icon={<HiChartBar className="w-6 h-6 text-white" />}
+              text="Map Analytics"
+            />
+          </li>
         </ul>
         <SidebarFooter />
       </div>

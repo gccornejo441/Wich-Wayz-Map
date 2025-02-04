@@ -10,6 +10,7 @@ import { ROUTES } from "../../constants/routes";
 import TearmsOfService from "./TermsOfService";
 import AdminSettings from "./AdminSettings";
 import AddShop from "./AddShop";
+import Analytics from "./Analytics";
 
 function MainRoutes() {
   return (
@@ -25,6 +26,8 @@ function MainRoutes() {
         path={ROUTES.LEGAL.TERMS_OF_SERVICE}
         element={<TearmsOfService />}
       />
+
+      <Route path={ROUTES.ANALYTICS} element={<Analytics />} />
 
       <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
       <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />

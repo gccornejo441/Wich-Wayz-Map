@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.6.19",
+  "version": "0.7.0",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -60,6 +60,7 @@
     "react-map-gl": "^7.1.8",
     "react-router-dom": "^6.28.0",
     "react-select": "^5.8.3",
+    "recharts": "^2.15.1",
     "rollup": "^4.27.3",
     "stripe": "^17.4.0",
     "title-case": "^4.3.2",

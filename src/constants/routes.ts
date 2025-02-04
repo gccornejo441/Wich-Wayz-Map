@@ -18,7 +18,8 @@ export interface Routes {
   };
   PAYMENT: {
     SUCCESS: string;
-  };
+  }; 
+  ANALYTICS: string;
 }
 
 export const ROUTES: Routes = {
@@ -40,6 +41,7 @@ export const ROUTES: Routes = {
   PAYMENT: {
     SUCCESS: "/payment/success",
   },
+  ANALYTICS: "/analytics",
 };
 
 /**

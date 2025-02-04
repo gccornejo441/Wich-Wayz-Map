@@ -1,14 +1,37 @@
-import { IndexedDBShop } from "../types/dataTypes";
-
 const getIDB = async () => {
   const { openDB } = await import("idb");
   return openDB;
 };
 
-const DB_NAME = "SANDWICH_LOCATOR_DB";
-const DB_VERSION = 1;
-const SHOPS_STORE = "shops";
-const LOCATIONS_STORE = "locations";
+export const DB_NAME = "SANDWICH_LOCATOR_DB";
+export const DB_VERSION = 1;
+export const SHOPS_STORE = "shops";
+export const LOCATIONS_STORE = "locations";
+
+
+export interface IndexedDBShop {
+  id: number;
+  name: string;
+  description: string;
+  categories: Array<{
+    id: number;
+    category_name: string;
+  }>;
+  locations: Array<{
+    id: number;
+    city: string;
+    state: string;
+    country: string;
+    postal_code: string;
+    street_address: string;
+    latitude: number;
+    longitude: number;
+  }>;
+  created_by: number;
+  created_by_username: string;
+  date_created: string;
+  date_modified?: string;
+}
 
 /**
  * Initializes the IndexedDB database for the application.
