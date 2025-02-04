@@ -81,7 +81,6 @@ export const useAddShopForm = () => {
    */
   const handledManualEntry = () => {
     setIsManualEntry((prev) => !prev);
-    // If toggling ON, check if the fields are valid
     setIsAddressValid(isManualEntryValid());
   };
 
