@@ -1,13 +1,7 @@
-const getIDB = async () => {
-  const { openDB } = await import("idb");
-  return openDB;
-};
-
 export const DB_NAME = "SANDWICH_LOCATOR_DB";
 export const DB_VERSION = 1;
 export const SHOPS_STORE = "shops";
 export const LOCATIONS_STORE = "locations";
-
 
 export interface IndexedDBShop {
   id: number;
@@ -34,6 +28,15 @@ export interface IndexedDBShop {
 }
 
 /**
+ * Initializes and returns an instance of IDBDatabase.
+ * @returns {Promise<IDBDatabase>} A Promise that resolves to an instance of IDBDatabase.
+ */
+const getIDB = async () => {
+  const { openDB } = await import("idb");
+  return openDB;
+};
+
+/**
  * Initializes the IndexedDB database for the application.
  */
 export const initDB = async () => {
@@ -58,11 +61,6 @@ export const getCachedData = async (storeName: string) => {
   return db.getAll(storeName);
 };
 
-export const getCachedShopLocationData = async (): Promise<IndexedDBShop[]> => {
-  const db = await initDB();
-  return (await db.getAll(SHOPS_STORE)) as IndexedDBShop[];
-};
-
 /**
  * Caches the given data in the IndexedDB store specified by the storeName.
  */
@@ -73,11 +71,14 @@ export const cacheData = async <T>(storeName: string, data: T[]) => {
   await tx.done;
 };
 
+/**
+ * Refreshes the IndexedDB cache by deleting the existing database and reinitializing it.
+ */
 export const refreshCache = async (): Promise<void> => {
   try {
     const db = await initDB();
     db.close();
-    await indexedDB.deleteDatabase(DB_NAME);
+    indexedDB.deleteDatabase(DB_NAME);
   } catch (error) {
     console.error("Error refreshing cache:", error);
     alert("Failed to refresh cache. Please try again.");

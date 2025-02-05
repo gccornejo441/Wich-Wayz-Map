@@ -3,7 +3,7 @@ import Autosuggest from "react-autosuggest";
 import { HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
-import { IndexedDBShop } from "../../types/dataTypes";
+import { IndexedDBShop } from "@/services/indexedDB";
 
 const LIMIT = 5;
 

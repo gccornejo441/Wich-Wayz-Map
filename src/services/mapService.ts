@@ -1,4 +1,10 @@
 import { executeQuery } from "./apiClient";
+import {
+  IndexedDBShop,
+  initDB,
+  LOCATIONS_STORE,
+  SHOPS_STORE,
+} from "./indexedDB";
 
 export interface ShopCountByState {
   state: string;
@@ -39,4 +45,20 @@ export const getShopsPerCategory = async (): Promise<ShopCountByCategory[]> => {
   `;
   const { rows } = await executeQuery<ShopCountByCategory>(query);
   return rows;
+};
+
+/**
+ * Retrieves all shops from the IndexedDB cache.
+ */
+export const getCachedShops = async (): Promise<IndexedDBShop[]> => {
+  const db = await initDB();
+  return (await db.getAll(SHOPS_STORE)) as IndexedDBShop[];
+};
+
+/**
+ * Retrieves all locations from the IndexedDB cache.
+ */
+export const getCachedLocations = async (): Promise<Location[]> => {
+  const db = await initDB();
+  return (await db.getAll(LOCATIONS_STORE)) as Location[];
 };

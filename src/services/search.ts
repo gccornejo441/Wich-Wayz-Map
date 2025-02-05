@@ -1,6 +1,5 @@
 import Fuse from "fuse.js";
-import { getCachedShopLocationData } from "./indexedDB";
-import { IndexedDBShop } from "../types/dataTypes";
+import { IndexedDBShop } from "./indexedDB";
 
 export const SearchShops = async (
   query: string,
@@ -29,3 +28,8 @@ export const SearchShops = async (
 
   return results.map((result) => ({ shop: result.item }));
 };
+function getCachedShopLocationData():
+  | IndexedDBShop[]
+  | PromiseLike<IndexedDBShop[]> {
+  throw new Error("Function not implemented.");
+}

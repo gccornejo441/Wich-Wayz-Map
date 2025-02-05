@@ -18,7 +18,7 @@ export interface Routes {
   };
   PAYMENT: {
     SUCCESS: string;
-  }; 
+  };
   ANALYTICS: string;
 }
 

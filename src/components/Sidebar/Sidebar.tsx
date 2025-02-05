@@ -86,7 +86,6 @@ export const SidebarItem = ({
   return <div className="w-full">{content}</div>;
 };
 
-
 /**
  * A sidebar component that renders a map, profile, and add shop button.
  *

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -10,39 +9,13 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  getShopsPerCategory,
-  getShopsPerState,
-  ShopCountByCategory,
-  ShopCountByState,
-} from "@/services/mapService";
+
+import useShopAnalytics from "@/hooks/useShopAnalytics";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
 const Analytics = () => {
-  const [shopStateData, setShopStateData] = useState<ShopCountByState[]>([]);
-  const [shopCategoryData, setShopCategoryData] = useState<
-    ShopCountByCategory[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stateData = await getShopsPerState();
-        setShopStateData(stateData);
-
-        const categoryData = await getShopsPerCategory();
-        setShopCategoryData(categoryData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const { shopStateData, shopCategoryData, loading } = useShopAnalytics();
 
   if (loading) {
     return (
@@ -56,7 +29,7 @@ const Analytics = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">
-          Shop Analytics Dashboard
+          Wich Wayz Analytics
         </h1>
         <p className="text-gray-600">
           Explore shop distribution by state and category
@@ -64,7 +37,6 @@ const Analytics = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Shops by State (Bar Chart) */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Shops by State</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -77,7 +49,6 @@ const Analytics = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Shops by Category (Pie Chart) */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-4">Shops by Category</h2>
           <ResponsiveContainer width="100%" height={300}>
