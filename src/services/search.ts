@@ -1,11 +1,11 @@
 import Fuse from "fuse.js";
 import { IndexedDBShop } from "./indexedDB";
+import { getCachedShops } from "./mapService";
 
 export const SearchShops = async (
-  query: string,
+  query: string
 ): Promise<{ shop: IndexedDBShop }[]> => {
-  const shops: IndexedDBShop[] = await getCachedShopLocationData();
-
+  const shops: IndexedDBShop[] = await getCachedShops();
   const options = {
     shouldSort: true,
     includeMatches: true,
@@ -28,8 +28,3 @@ export const SearchShops = async (
 
   return results.map((result) => ({ shop: result.item }));
 };
-function getCachedShopLocationData():
-  | IndexedDBShop[]
-  | PromiseLike<IndexedDBShop[]> {
-  throw new Error("Function not implemented.");
-}
