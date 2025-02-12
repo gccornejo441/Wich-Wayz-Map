@@ -73,7 +73,8 @@ export const useRouteCheck = (routes: Routes) => {
   const isAddShopPage = location.pathname === ROUTES.SHOPS.ADD;
   const isPrivacyOrTOS =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
-    location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE;
+    location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE ||
+    location.pathname === ROUTES.ANALYTICS;
 
   return {
     isPathValid,

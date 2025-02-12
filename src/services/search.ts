@@ -3,7 +3,7 @@ import { IndexedDBShop } from "./indexedDB";
 import { getCachedShops } from "./mapService";
 
 export const SearchShops = async (
-  query: string
+  query: string,
 ): Promise<{ shop: IndexedDBShop }[]> => {
   const shops: IndexedDBShop[] = await getCachedShops();
   const options = {

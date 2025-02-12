@@ -51,7 +51,7 @@ const SearchBar = () => {
 
   const handleSuggestionSelected = (
     _: React.FormEvent,
-    { suggestion }: { suggestion: IndexedDBShop }
+    { suggestion }: { suggestion: IndexedDBShop },
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
@@ -67,7 +67,7 @@ const SearchBar = () => {
     value: search,
     onChange: (
       _: React.FormEvent<HTMLElement>,
-      { newValue }: { newValue: string }
+      { newValue }: { newValue: string },
     ) => {
       setSearch(newValue);
     },
