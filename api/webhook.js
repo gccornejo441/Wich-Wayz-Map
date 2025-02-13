@@ -55,6 +55,12 @@ const updateMembershipStatus = async (userId, status) => {
   }
 };
 
+/**
+ * Handles Stripe webhook events.
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
+ * @returns {Promise<void>}
+ */
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
@@ -80,11 +86,11 @@ export default async function handler(req, res) {
 
     event = stripe.webhooks.constructEvent(rawBody, signature, endpointSecret);
   } catch (err) {
-    console.error("⚠️ Webhook signature verification failed:", err.message);
+    console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`✅ Received event type: ${event.type}`);
+  console.log(`Received event type: ${event.type}`);
 
   try {
     if (event.type === "checkout.session.completed") {
@@ -100,7 +106,7 @@ export default async function handler(req, res) {
       );
 
       console.log(
-        `💰 PaymentIntent for ${paymentIntent.amount} was successful!`,
+        `PaymentIntent for ${paymentIntent.amount} was successful!`,
       );
 
       const userId = paymentIntent.metadata?.userId;
@@ -116,7 +122,7 @@ export default async function handler(req, res) {
       console.log("Webhook event:", JSON.stringify(event, null, 2));
 
       console.log(
-        `💰 PaymentIntent for ${paymentIntent.amount} was successful!`,
+        `PaymentIntent for ${paymentIntent.amount} was successful!`,
       );
 
       const userId = paymentIntent.metadata?.userId;
