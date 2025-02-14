@@ -22,7 +22,8 @@ const ShopLocationChart = () => {
   }, []);
 
   return (
-    <div style={{ height: "400px", width: "100%" }}>
+    <div className="h-96 w-full">
+      <div className="mt-10"></div>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

@@ -105,9 +105,7 @@ export default async function handler(req, res) {
         session.payment_intent,
       );
 
-      console.log(
-        `PaymentIntent for ${paymentIntent.amount} was successful!`,
-      );
+      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
 
       const userId = paymentIntent.metadata?.userId;
       if (userId) {
@@ -121,9 +119,7 @@ export default async function handler(req, res) {
 
       console.log("Webhook event:", JSON.stringify(event, null, 2));
 
-      console.log(
-        `PaymentIntent for ${paymentIntent.amount} was successful!`,
-      );
+      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
 
       const userId = paymentIntent.metadata?.userId;
 
