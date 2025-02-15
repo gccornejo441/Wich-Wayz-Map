@@ -1,3 +1,11 @@
+/**
+ * Creates a payment link for a user.
+ *
+ * @param userId - The ID of the user to create a payment link for.
+ * @param email - The email address of the user.
+ * @returns A URL to a payment link for the user.
+ * @throws An error if the payment link cannot be created.
+ */
 export const createPaymentLink = async (
   userId: number | undefined,
   email: string | undefined,
