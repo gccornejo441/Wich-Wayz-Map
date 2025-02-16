@@ -9,7 +9,10 @@ export const GetVotesForShop = async (shopId: number) => {
   return response.data;
 };
 
-// Call the POST /api/vote endpoint
+/**
+ * Submits a user's vote on a shop.
+ *  POST /api/vote endpoint
+ */
 export const InsertVote = async (vote: {
   shop_id: number;
   user_id: number;
