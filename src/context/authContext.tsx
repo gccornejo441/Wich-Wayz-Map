@@ -69,7 +69,7 @@ export interface SessionUserMetadata {
  * Utility function to map full UserMetadata to SessionUserMetadata.
  */
 export const mapToSessionUserMetadata = (
-  metadata: UserMetadata,
+  metadata: UserMetadata
 ): SessionUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
@@ -97,11 +97,11 @@ interface AuthContextData {
   login: (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   resetPassword: (
-    email: string,
+    email: string
   ) => Promise<{ success: boolean; message: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
   refreshToken: () => Promise<string | null>;
@@ -111,7 +111,7 @@ interface AuthContextData {
     username?: string | null,
     firstName?: string | null,
     lastName?: string | null,
-    useGoogle?: boolean,
+    useGoogle?: boolean
   ) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         metadata.tokenExpiry = tokenExpiry;
       } else {
         console.warn(
-          "Token expiry missing in localStorage during initialization.",
+          "Token expiry missing in localStorage during initialization."
         );
       }
     }
@@ -178,14 +178,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (!sessionStorage.getItem("userMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid,
+              firebaseUser.uid
             );
             if (metadata) {
               const sessionMetadata = mapToSessionUserMetadata(metadata);
               setUserMetadata(metadata);
               sessionStorage.setItem(
                 "userMetadata",
-                JSON.stringify(sessionMetadata),
+                JSON.stringify(sessionMetadata)
               );
             }
           } catch (error) {
@@ -206,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (
     email: string,
     password: string,
-    rememberMe: boolean,
+    rememberMe: boolean
   ): Promise<{ success: boolean; message: string }> => {
     try {
       const persistence = rememberMe
@@ -215,27 +215,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       await setPersistence(auth, persistence);
 
+      // Sign in with email and password using the firebase api
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
+
+      // Get the firebase user
       const { user } = userCredential;
 
+      // Check if the user exists
       if (!user) {
         return { success: false, message: "Failed to authenticate user." };
       }
 
+      // Get the user metadata
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
-      if (metadata) {
-        const sessionMetadata = mapToSessionUserMetadata(metadata);
 
-        const tokenExpiryTime = Date.now() + 3600 * 1000;
+      if (metadata) {
+        // Map the UserMetadata to SessionUserMetadata
+        const sessionMetadata: SessionUserMetadata =
+          mapToSessionUserMetadata(metadata);
+
+        const tokenExpiryTime = Date.now() + 3600 * 1000; // 1 hour
+
+        // Update the token expiry
         sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
+
+        // Update the user metadata
         metadata.tokenExpiry = sessionMetadata.tokenExpiry;
 
         setUserMetadata(metadata);
+
+        // Store the user metadata in session storage
         sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
+
+        // Store the token expiry in local storage
         localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
 
         const jwtResult = await initializeJWT(metadata);
@@ -337,7 +353,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     username: string | null = null,
     firstName: string | null = null,
     lastName: string | null = null,
-    useGoogle: boolean = false,
+    useGoogle: boolean = false
   ): Promise<{ success: boolean; message: string }> => {
     if (useGoogle) {
       return registerWithGoogle();
@@ -354,7 +370,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password,
+        password
       );
       const user = userCredential.user;
 
@@ -413,7 +429,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
       if (!metadata) {
         throw new Error(
-          "No account found for this Google account. Please register first.",
+          "No account found for this Google account. Please register first."
         );
       }
 

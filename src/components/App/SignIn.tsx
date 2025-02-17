@@ -28,6 +28,11 @@ const SignIn = () => {
     setError(null);
     setMessage(null);
 
+    if (!email || !password) {
+      setError("Email and password are required.");
+      return;
+    }
+
     const response = await login(email, password, rememberMe);
     if (!response.success) {
       setError(response.message);
