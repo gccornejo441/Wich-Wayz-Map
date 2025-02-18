@@ -35,6 +35,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
           !cachedShops.length ||
           !cachedLocations.length
         ) {
+          
           console.info(
             "Refreshing cache: Fetching latest data from the database",
           );
