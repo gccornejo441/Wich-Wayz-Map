@@ -46,7 +46,7 @@ export const updateShopInfo = async (
  *
  * Provides a function to save updated categories for a specific shop by
  * updating the local cache and state. If the shop is not found in the cache,
- * an error is logged. Any errors during the process will be thrown after 
+ * an error is logged. Any errors during the process will be thrown after
  * logging.
  *
  * @returns {Object} An object containing the `SaveUpdatedShopCategories` function.

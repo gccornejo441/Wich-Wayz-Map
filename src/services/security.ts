@@ -4,7 +4,7 @@ import { SignJWT, decodeJwt, jwtVerify } from "jose";
 import { UserMetadata } from "../context/authContext";
 
 const SECRET_KEY = new TextEncoder().encode(
-  import.meta.env.VITE_JWT_SECRET as string
+  import.meta.env.VITE_JWT_SECRET as string,
 );
 
 interface TokenPayload {
@@ -33,13 +33,13 @@ interface TokenPayload {
  */
 export const decodeJwtWithRefresh = async (
   token: string,
-  refreshToken: string
+  refreshToken: string,
 ): Promise<TokenPayload | null> => {
   try {
     // Decode the JWT
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
-      SECRET_KEY
+      SECRET_KEY,
     );
 
     // Check if the token has expired
@@ -77,7 +77,7 @@ export const decodeJwtWithRefresh = async (
  *          a status, user, and message if token generation fails.
  */
 export const initializeJWT = async (
-  userMetadata: UserMetadata
+  userMetadata: UserMetadata,
 ): Promise<string | { status: string; user: null; message: string }> => {
   try {
     // Generate JWT
@@ -109,13 +109,13 @@ export const initializeJWT = async (
  * @returns A Promise that resolves to the new access token as a string, or null if the token cannot be refreshed.
  */
 const refreshAccessToken = async (
-  refreshToken: string
+  refreshToken: string,
 ): Promise<string | null> => {
   try {
     // Decode the JWT
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       refreshToken,
-      SECRET_KEY
+      SECRET_KEY,
     );
 
     // Generate a new access token
@@ -140,7 +140,7 @@ const refreshAccessToken = async (
  */
 export const resetPassword = async (
   tokenFromEmail: string,
-  password: string
+  password: string,
 ): Promise<{ success: boolean; message: string }> => {
   // Check if token and password are provided
   if (!tokenFromEmail || !password) {
@@ -177,7 +177,7 @@ export const resetPassword = async (
  * @returns A string representing the generated refresh token.
  */
 export const generateRefreshToken = async (
-  user: UserMetadata
+  user: UserMetadata,
 ): Promise<string> => {
   // Generate refresh token
   const refreshToken = await new SignJWT({
@@ -235,7 +235,7 @@ const isTokenExpiredSoon = (exp: number): boolean => {
  * the user will be logged out.
  */
 export const getCurrentUser = async (
-  logout: () => Promise<void>
+  logout: () => Promise<void>,
 ): Promise<TokenPayload | null> => {
   let token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
@@ -248,7 +248,7 @@ export const getCurrentUser = async (
   try {
     const { payload }: { payload: TokenPayload } = await jwtVerify(
       token,
-      SECRET_KEY
+      SECRET_KEY,
     );
 
     if (payload.exp === undefined) {
