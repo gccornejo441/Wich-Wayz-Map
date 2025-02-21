@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import AvatarOptions, { avatarOptions } from "../../src/components/Avatar/AvatarOptions";
+import AvatarOptions, {
+  avatarOptions,
+} from "../../src/components/Avatar/AvatarOptions";
 
 describe("AvatarOptions Component", () => {
   beforeEach(() => {
@@ -24,7 +26,7 @@ describe("AvatarOptions Component", () => {
           onClose={onClose}
           onSelect={onSelect}
           selectedAvatarId={undefined}
-        />
+        />,
       );
     });
 
