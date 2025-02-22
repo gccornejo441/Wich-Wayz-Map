@@ -49,7 +49,9 @@ const MapBox = () => {
         (marker) => marker.popupContent.shopId === parseInt(shopId, 10),
       );
       if (marker) {
-        setSelectedMarker(marker.position);
+        setTimeout(() => {
+          setSelectedMarker(marker.position);
+        }, 500);
       }
     }
   }, [shopId, shopMarkers]);
@@ -86,11 +88,10 @@ const MapBox = () => {
                 longitude: location.longitude,
                 locationOpen: location.location_open,
               },
-              isPopupEnabled: true,
+              isPopupEnabled: false,
             };
           }) || [],
       );
-
       setShopMarkers(markers);
     };
 
@@ -109,6 +110,19 @@ const MapBox = () => {
     }
   }, [position, shopMarkers]);
 
+  useEffect(() => {
+    if (isMapReady) {
+      setTimeout(() => {
+        setShopMarkers((prevMarkers) =>
+          prevMarkers.map((marker) => ({
+            ...marker,
+            isPopupEnabled: true,
+          })),
+        );
+      }, 500);
+    }
+  }, [isMapReady]);
+
   if (!isMapReady) return <div>Loading map...</div>;
 
   return (
@@ -122,7 +136,7 @@ const MapBox = () => {
         style={{
           height: "100vh",
           width: "100vw",
-          zIndex: -1,
+          zIndex: 1,
           position: "absolute",
           top: 0,
           left: 0,
@@ -141,10 +155,8 @@ const MapBox = () => {
         <MapInteraction center={center} />
         <MarkerClusterGroup
           maxClusterRadius={50}
-          chunkedLoading={true}
-          chunkInterval={200}
-          chunkDelay={50}
-          spiderfyOnMaxZoom={true}
+          chunkedLoading={false}
+          spiderfyOnMaxZoom={false}
           removeOutsideVisibleBounds={true}
           animate={false}
           iconCreateFunction={createClusterCustomIcon}
@@ -160,7 +172,7 @@ const MapBox = () => {
                 selectedMarker[0] === marker.position[0] &&
                 selectedMarker[1] === marker.position[1]
               }
-              isPopupEnabled={true}
+              isPopupEnabled={marker.isPopupEnabled}
             />
           ))}
         </MarkerClusterGroup>
