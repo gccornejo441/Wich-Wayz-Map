@@ -20,6 +20,7 @@ export interface Routes {
     SUCCESS: string;
   };
   ANALYTICS: string;
+  USER_LEADERBOARD: string;
 }
 
 export const ROUTES: Routes = {
@@ -42,6 +43,7 @@ export const ROUTES: Routes = {
     SUCCESS: "/payment/success",
   },
   ANALYTICS: "/analytics",
+  USER_LEADERBOARD: "/user-leaderboard",
 };
 
 /**

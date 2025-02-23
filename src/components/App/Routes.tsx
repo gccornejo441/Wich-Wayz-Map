@@ -11,6 +11,7 @@ import TearmsOfService from "./TermsOfService";
 import AdminSettings from "./AdminSettings";
 import AddShop from "./AddShop";
 import Analytics from "./Analytics";
+import UserLeaderboard from "./UserLeaderboard";
 
 function MainRoutes() {
   return (
@@ -34,6 +35,7 @@ function MainRoutes() {
       <Route path={ROUTES.ACCOUNT.PROFILE} element={<UserProfile />} />
       <Route path={ROUTES.ACCOUNT.ADMIN_SETTINGS} element={<AdminSettings />} />
       <Route path={ROUTES.PAYMENT.SUCCESS} element={<PaymentSuccess />} />
+      <Route path={ROUTES.USER_LEADERBOARD} element={<UserLeaderboard />} />
     </Routes>
   );
 }
