@@ -6,6 +6,7 @@ import { ModalProvider } from "./context/modalContext";
 import { MapProvider } from "./context/mapContext";
 import { ToastProvider } from "./context/toastContext";
 import { VoteProvider } from "./context/voteContext";
+import { UserLeaderboardProvider } from "./context/userLeaderboardContext";
 
 function App() {
   return (
@@ -14,11 +15,13 @@ function App() {
         <ToastProvider>
           <ModalProvider>
             <VoteProvider>
-              <AppLayout>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Routes />
-                </Suspense>
-              </AppLayout>
+              <UserLeaderboardProvider>
+                <AppLayout>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <Routes />
+                  </Suspense>
+                </AppLayout>
+              </UserLeaderboardProvider>
             </VoteProvider>
           </ModalProvider>
         </ToastProvider>
