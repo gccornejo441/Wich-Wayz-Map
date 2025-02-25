@@ -4,6 +4,7 @@ export interface ShopCountResult {
   userId: number;
   email: string;
   shopCount: number;
+  avatar: string;
 }
 
 /**
@@ -15,7 +16,8 @@ export const getShopCountsByUser = async (): Promise<ShopCountResult[]> => {
   const query = `
     SELECT 
       u.id AS userId, 
-      u.email, 
+      u.email,
+      u.avatar, 
       COUNT(s.id) AS shopCount
     FROM 
       users u
