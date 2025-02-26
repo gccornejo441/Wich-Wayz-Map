@@ -3,6 +3,7 @@ import {
   getShopCountsByUser,
   ShopCountResult,
 } from "@/services/userLeaderboardService";
+import UserAvatar from "../Avatar/UserAvatar";
 
 /**
  * Retrieves the number of shops created by each user.
@@ -22,10 +23,18 @@ const LeaderboardList = ({
             <span className="text-lg font-bold text-accent w-6">
               {index + 1}
             </span>
-            <div className="w-12 h-12 rounded-full border-2 border-primaryBorder bg-gray-200 flex items-center justify-center">
-              <span className="text-lg font-medium text-dark">
-                {user.email.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-12 h-12 rounded-full border-2 border-primaryBorder bg-gray-200 flex items-center justify-center cursor-pointer">
+              {user.avatar ? (
+                <UserAvatar
+                  avatarId={user.avatar}
+                  userEmail={user.email}
+                  size="md"
+                />
+              ) : (
+                <span className="text-lg font-medium text-dark">
+                  {user.email.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <span className="flex-1 text-lg font-medium text-dark">
               {user.email.split("@")[0]}
@@ -53,7 +62,7 @@ const UserLeaderboard = () => {
       } catch (err) {
         const error = err as Error;
         console.error("Failed to fetch leaderboard:", error);
-          setError("Failed to fetch leaderboard data");
+        setError("Failed to fetch leaderboard data");
       } finally {
         setLoading(false);
       }

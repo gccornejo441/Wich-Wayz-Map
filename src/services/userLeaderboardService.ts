@@ -12,7 +12,6 @@ export interface ShopCountResult {
  * @returns A list of objects containing the user's ID, email, and the number of shops they created.
  */
 export const getShopCountsByUser = async (): Promise<ShopCountResult[]> => {
-    
   const query = `
     SELECT 
       u.id AS userId, 

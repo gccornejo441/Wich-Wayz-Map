@@ -5,6 +5,7 @@ import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
 import { ReactNode } from "react";
+import { BsFillAwardFill } from "react-icons/bs";
 
 interface TopMenuProps {
   onToggleSidebar: Callback;
@@ -144,6 +145,14 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               linkTo={ROUTES.ANALYTICS}
               icon={<HiChartBar className="w-6 h-6 text-white" />}
               text="Map Analytics"
+            />
+          </li>
+          <li>
+            <SidebarItem
+              linkTo={ROUTES.USER_LEADERBOARD}
+              icon={<BsFillAwardFill className="w-6 h-6 text-white" />}
+              text="Leaderboard"
+              badge="New"
             />
           </li>
         </ul>

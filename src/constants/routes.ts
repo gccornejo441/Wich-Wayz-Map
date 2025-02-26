@@ -76,7 +76,8 @@ export const useRouteCheck = (routes: Routes) => {
   const isPrivacyOrTOS =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
     location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE ||
-    location.pathname === ROUTES.ANALYTICS;
+    location.pathname === ROUTES.ANALYTICS ||
+    location.pathname === ROUTES.USER_LEADERBOARD;
 
   return {
     isPathValid,
