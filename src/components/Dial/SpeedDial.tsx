@@ -6,6 +6,7 @@ import {
   HiOutlineDotsHorizontal,
   HiPlus,
   HiClipboardCopy,
+  HiLocationMarker,
 } from "react-icons/hi";
 import WarningDialog from "../Modal/Dialog/WarningDialog";
 import { refreshCache } from "../../services/indexedDB";
@@ -35,7 +36,7 @@ export const DialItem = ({
   );
 };
 
-const SpeedDial = () => {
+const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -67,7 +68,7 @@ const SpeedDial = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-3 group">
+    <div className="fixed bottom-6 right-3 z-50 group">
       <div
         className={`flex flex-col justify-end px-1 ${
           isOpen
@@ -110,6 +111,13 @@ const SpeedDial = () => {
               onClick={() => setIsWarningOpen(true)}
               icon={<HiOutlineRefresh className="w-5 h-5 text-white" />}
               text="Refresh Map"
+            />
+          </li>
+          <li>
+            <DialItem
+              onClick={onLocateUser}
+              icon={<HiLocationMarker className="w-5 h-5 text-white" />}
+              text="My Location"
             />
           </li>
         </ul>

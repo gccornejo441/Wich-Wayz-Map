@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { LatLngTuple } from "leaflet";
-import { MapContainer, TileLayer, useMap, ZoomControl } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+  ZoomControl,
+} from "react-leaflet";
 import MapMarker from "./MapMarker";
 import { useShops } from "../../context/shopContext";
 import { ShopMarker } from "../../types/dataTypes";
@@ -17,7 +24,7 @@ const MapBox = () => {
   const [position, setPosition] = useState<LatLngTuple | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<LatLngTuple | null>(
-    null,
+    null
   );
   const [isMapReady, setIsMapReady] = useState(false);
   const { shops } = useShops();
@@ -36,7 +43,7 @@ const MapBox = () => {
         },
         () => {
           setPosition(DEFAULT_POSITION);
-        },
+        }
       );
     } else {
       setPosition(DEFAULT_POSITION);
@@ -46,7 +53,7 @@ const MapBox = () => {
   useEffect(() => {
     if (shopId && shopMarkers.length > 0) {
       const marker = shopMarkers.find(
-        (marker) => marker.popupContent.shopId === parseInt(shopId, 10),
+        (marker) => marker.popupContent.shopId === parseInt(shopId, 10)
       );
       if (marker) {
         setTimeout(() => {
@@ -90,7 +97,7 @@ const MapBox = () => {
               },
               isPopupEnabled: false,
             };
-          }) || [],
+          }) || []
       );
       setShopMarkers(markers);
     };
@@ -117,7 +124,7 @@ const MapBox = () => {
           prevMarkers.map((marker) => ({
             ...marker,
             isPopupEnabled: true,
-          })),
+          }))
         );
       }, 500);
     }
@@ -153,6 +160,7 @@ const MapBox = () => {
         />
         <ZoomControl position="bottomleft" />
         <MapInteraction center={center} />
+        <LocationMarker />
         <MarkerClusterGroup
           maxClusterRadius={50}
           chunkedLoading={false}
@@ -177,12 +185,40 @@ const MapBox = () => {
           ))}
         </MarkerClusterGroup>
       </MapContainer>
-      <SpeedDial />
+      <SpeedDial
+        onLocateUser={() => {
+          const event = new Event("locateUser");
+          window.dispatchEvent(event);
+        }}
+      />
     </div>
   );
 };
 
 export default MapBox;
+
+const LocationMarker = () => {
+  const [position, setPosition] = useState<LatLngTuple | null>(null);
+  const map = useMapEvents({
+    locationfound(e) {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+
+      map.flyTo(e.latlng, map.getZoom());
+    },
+  });
+
+  useEffect(() => {
+    const handleLocateUser = () => {
+      map.locate();
+    };
+    window.addEventListener("locateUser", handleLocateUser);
+    return () => {
+      window.removeEventListener("locateUser", handleLocateUser);
+    };
+  }, [map]);
+
+  return position === null ? null : <Marker position={position} />;
+};
 
 const MapInteraction = ({ center }: { center: LatLngTuple | null }) => {
   const map = useMap();
