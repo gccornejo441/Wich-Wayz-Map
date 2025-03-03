@@ -3,8 +3,6 @@ import mapboxgl, { Map, GeoJSONSource } from "mapbox-gl";
 import { useShops } from "../../context/shopContext";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
-import MapMarker from "./MapMarker";
-
 
 const DEFAULT_POSITION: Coordinates = [-74.006, 40.7128]; // NYC in [lng, lat] order
 
@@ -28,7 +26,6 @@ export interface ShopMarker {
   isPopupEnabled: boolean;
   autoOpen?: boolean;
 }
-
 
 const MapBox = () => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -113,7 +110,7 @@ const MapBox = () => {
       mapboxgl.accessToken = mapboxAccessToken;
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,
-        style: "mapbox://styles/mapbox/streets-v11",
+        style: "mapbox://styles/mapbox/streets-v12",
         center: position,
         zoom: mapZoom,
       });
@@ -308,7 +305,6 @@ const MapBox = () => {
     };
   }, [position, mapZoom]);
 
-
   return (
     <div>
       <div
@@ -327,21 +323,71 @@ const MapBox = () => {
           window.dispatchEvent(event);
         }}
       />
-      {isMapReady && mapRef.current && shopMarkers.map((marker, index) => (
-    <MapMarker 
-    key={index}
-    map={mapRef.current!} // Assert it's non-null
-    position={marker.position}
-    popupContent={{
-      ...marker.popupContent
-    }}
-    isPopupEnabled={marker.isPopupEnabled}
-    autoOpen={marker.autoOpen}
-  />
-  
-      ))}
+
+      {isMapReady &&
+        mapRef.current &&
+        shopMarkers.map((marker, index) => (
+          <CustomMarker
+            key={index}
+            mapContainer={mapContainerRef}
+            map={mapRef.current!}
+            position={marker.position}
+            popupContent={{
+              ...marker.popupContent,
+            }}
+            isPopupEnabled={marker.isPopupEnabled}
+            autoOpen={marker.autoOpen}
+          />
+        ))}
     </div>
   );
+};
+
+interface MapMarkerProps extends ShopMarker {
+  map: mapboxgl.Map;
+  mapContainer: React.RefObject<HTMLDivElement>;
+}
+
+const CustomMarker = ({
+  map,
+  position,
+  popupContent,
+  isPopupEnabled = true,
+  autoOpen = false,
+}: MapMarkerProps) => {
+  useEffect(() => {
+    if (!map) return;
+
+    // Create a custom HTML element for the marker
+    const el = document.createElement("div");
+    el.className = "custom-marker"; // Optional: Add class for further styling
+    el.style.width = "50px"; // Adjust size as needed
+    el.style.height = "50px";
+    el.style.backgroundImage = "url('/sandwich-pin.svg')";
+    el.style.backgroundSize = "contain"; // Ensures the whole image is visible
+    el.style.backgroundRepeat = "no-repeat";
+    el.style.cursor = "pointer";
+
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat(position)
+      .addTo(map);
+
+    if (isPopupEnabled) {
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(
+          `<strong>${popupContent.shopName}</strong><br/>${popupContent.address}`
+        );
+
+      if (autoOpen) {
+        popup.addTo(map);
+      }
+
+      marker.setPopup(popup);
+    }
+
+  }, [map, position, popupContent, isPopupEnabled, autoOpen]);
+
+  return null; // This component doesn't render anything directly
 };
 
 export default MapBox;
