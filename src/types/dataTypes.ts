@@ -59,13 +59,6 @@ export interface PopupContent {
   locationOpen?: boolean;
 }
 
-export interface ShopMarker {
-  position: LatLngTuple;
-  popupContent: PopupContent;
-  isPopupEnabled: boolean;
-  autoOpen?: boolean;
-}
-
 export interface ToastMessageProps {
   toastMessage: string;
   toastType: "success" | "error";

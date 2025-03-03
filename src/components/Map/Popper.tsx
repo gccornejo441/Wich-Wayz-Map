@@ -1,5 +1,4 @@
 import { useModal } from "../../context/modalContext";
-import { PopupContent } from "../../types/dataTypes";
 import { HiExternalLink, HiPencil, HiShare } from "react-icons/hi";
 import UserAvatar from "../Avatar/UserAvatar";
 import { useToast } from "../../context/toastContext";
@@ -9,6 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { GiSandwich } from "react-icons/gi";
 import VoteButtons from "./VoteButtons";
+import { ShopMarker } from "./MapBox";
+
 
 const checkMembership = async (logout: () => Promise<void>) => {
   const currentUser = await getCurrentUser(logout);
@@ -21,19 +22,22 @@ const getVoteMessage = (upvotes: number, downvotes: number) => {
   return "Mixed reviews from sandwich fans.";
 };
 
-export const Popper = ({
-  shopId,
-  shopName,
-  address,
-  description,
-  categories,
-  createdBy,
-  usersAvatarId,
-  usersAvatarEmail,
-  latitude,
-  longitude,
-  locationOpen,
-}: PopupContent) => {
+export const Popper = ({ position, popupContent }: ShopMarker) => {
+  const latitude = position[1]; 
+  const longitude = position[0];
+
+  const {
+    shopId,
+    shopName,
+    address,
+    description,
+    createdBy,
+    categories,
+    usersAvatarId,
+    usersAvatarEmail,
+    locationOpen,
+  } = popupContent;
+
   const { openUpdateShopModal, openSignupModal } = useModal();
   const { addToast } = useToast();
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
@@ -177,7 +181,7 @@ export const Popper = ({
                 Categories:
               </h5>
               <div className="flex flex-wrap gap-2">
-                {categories.split(", ").map((category, index) => (
+                {categories.split(", ").map((category: string, index: number) => (
                   <span
                     key={index}
                     className="px-3 py-1 rounded-lg text-background bg-primary shadow-sm"
