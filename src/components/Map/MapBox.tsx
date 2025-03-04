@@ -8,6 +8,7 @@ const DEFAULT_POSITION: Coordinates = [-74.006, 40.7128]; // NYC in [lng, lat] o
 
 // Use [number, number] for coordinates (Mapbox expects [lng, lat])
 type Coordinates = [number, number];
+
 interface ShopGeoJsonProperties {
   shopId: number;
   shopName: string;
@@ -32,12 +33,14 @@ const MapBox = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
 
-  // Use our own Coordinates type instead of LatLngTuple to enforce exactly two elements
   const [position, setPosition] = useState<Coordinates | null>(null);
   const [shopMarkers, setShopMarkers] = useState<ShopMarker[]>([]);
+  // New state to store markers that are unclustered
+  const [unclusteredMarkers, setUnclusteredMarkers] = useState<ShopMarker[]>(
+    []
+  );
   const [isMapReady, setIsMapReady] = useState(false);
   const { shops } = useShops();
-  // Removed 'shopId' because it was unused.
   const { center, zoom } = useMapContext();
   const mapZoom = zoom ?? 13;
 
@@ -75,7 +78,6 @@ const MapBox = () => {
             .join(", ");
 
           return {
-            // Ensure coordinates are in [lng, lat] order
             position: [location.longitude, location.latitude] as Coordinates,
             popupContent: {
               shopId: shop.id ?? 1,
@@ -131,7 +133,7 @@ const MapBox = () => {
             properties: { ...marker.popupContent },
             geometry: {
               type: "Point",
-              coordinates: marker.position as [number, number],
+              coordinates: marker.position,
             },
           })),
         };
@@ -139,11 +141,12 @@ const MapBox = () => {
         map.addSource("shops", {
           type: "geojson",
           data: geojson,
-          cluster: true,
+          cluster: true, // Enable clustering
           clusterMaxZoom: 14,
           clusterRadius: 50,
         });
 
+        // Cluster Layer
         map.addLayer({
           id: "clusters",
           type: "circle",
@@ -183,53 +186,18 @@ const MapBox = () => {
           },
         });
 
+        // Add an invisible unclustered-point layer for querying purposes
         map.addLayer({
           id: "unclustered-point",
           type: "circle",
           source: "shops",
           filter: ["!", ["has", "point_count"]],
           paint: {
-            "circle-color": "#11b4da",
-            "circle-radius": 8,
-            "circle-stroke-width": 1,
-            "circle-stroke-color": "#fff",
+            "circle-opacity": 0,
           },
         });
 
-        // Handle click on unclustered markers
-        map.on("click", "unclustered-point", (e: mapboxgl.MapMouseEvent) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ["unclustered-point"],
-          });
-
-          if (!features.length) return;
-          const feature = features[0] as GeoJSON.Feature<
-            GeoJSON.Point,
-            GeoJSON.GeoJsonProperties
-          >;
-
-          if (!feature.geometry || feature.geometry.type !== "Point") return;
-          const coordinates: [number, number] = feature.geometry
-            .coordinates as [number, number];
-
-          const properties = feature.properties as ShopGeoJsonProperties;
-          const popupHtml = `<strong>${properties.shopName}</strong><br/>${properties.address}<br/>${properties.description || ""}<br/><em>${properties.categories}</em>`;
-
-          new mapboxgl.Popup()
-            .setLngLat(coordinates)
-            .setHTML(popupHtml)
-            .addTo(map);
-        });
-
-        // Cursor change on clusters
-        map.on("mouseenter", "clusters", () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-        map.on("mouseleave", "clusters", () => {
-          map.getCanvas().style.cursor = "";
-        });
-
-        // Cluster zoom behavior
+        // Cluster Zoom Behavior (when clicking a cluster)
         map.on("click", "clusters", (e: mapboxgl.MapMouseEvent) => {
           const features = map.queryRenderedFeatures(e.point, {
             layers: ["clusters"],
@@ -250,6 +218,42 @@ const MapBox = () => {
             }
           );
         });
+
+        map.on("click", "unclustered-point", (e: mapboxgl.MapMouseEvent) => {
+          console.log(`Shop ID: ${e.point}`);
+
+          // features represent the clicked point which contains the shopId, shopName, address, etc.
+          const features = map.queryRenderedFeatures(e.point, {
+            layers: ["unclustered-point"],
+          });
+
+          // If features is empty, return.
+          // Which means that the user clicked on the map but not on a shop marker.
+          if (!features.length) return;
+
+          // feature represents the first feature in the features array
+          // which contains the shopId, shopName, address, etc.
+          // Expected output:
+          // { type: 'Feature',
+          // properties: { shopId: 1, shopName: 'Shop Name', address: 'Shop Address' }, geometry: { type: 'Point', coordinates: [ -74.006, 40.7128 ] } }
+          const feature = features[0] as GeoJSON.Feature<
+            GeoJSON.Point,
+            GeoJSON.GeoJsonProperties
+          >;
+          if (!feature.geometry || feature.geometry.type !== "Point") return;
+          const coordinates: [number, number] = feature.geometry
+            .coordinates as [number, number];
+
+          const properties = feature.properties as ShopGeoJsonProperties;
+          console.log(`Shop ID: ${properties}`);
+
+          new mapboxgl.Popup()
+            .setLngLat(coordinates)
+            .setHTML(
+              `<strong>${properties.shopName}</strong><br/>${properties.address}`
+            )
+            .addTo(map);
+        });
       });
 
       mapRef.current = map;
@@ -260,9 +264,7 @@ const MapBox = () => {
   useEffect(() => {
     if (isMapReady && mapRef.current) {
       const source = mapRef.current.getSource("shops") as GeoJSONSource;
-
       if (source) {
-        // Transform shopMarkers to GeoJSON format
         const geojson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
           type: "FeatureCollection",
           features: shopMarkers.map((marker) => ({
@@ -279,11 +281,10 @@ const MapBox = () => {
             },
             geometry: {
               type: "Point",
-              coordinates: marker.position as [number, number], // Ensure it is in [lng, lat] format
+              coordinates: marker.position,
             },
           })),
         };
-
         source.setData(geojson);
       }
     }
@@ -304,6 +305,39 @@ const MapBox = () => {
       window.removeEventListener("locateUser", handleLocateUser);
     };
   }, [position, mapZoom]);
+
+  // New useEffect: Query unclustered features after each map movement
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current) return;
+
+    const updateUnclusteredMarkers = () => {
+      const features = mapRef.current!.queryRenderedFeatures({
+        layers: ["unclustered-point"],
+      });
+      // Map each feature back to our ShopMarker type
+      const markers: ShopMarker[] = features.map((feature) => {
+        const props = feature.properties as ShopGeoJsonProperties;
+        const coords = feature.geometry.coordinates as [number, number];
+        return {
+          position: coords,
+          popupContent: props,
+          isPopupEnabled: false,
+        };
+      });
+      setUnclusteredMarkers(markers);
+    };
+
+    // Update on moveend (or data update)
+    mapRef.current.on("moveend", updateUnclusteredMarkers);
+    // Initial update
+    updateUnclusteredMarkers();
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.off("moveend", updateUnclusteredMarkers);
+      }
+    };
+  }, [isMapReady]);
 
   return (
     <div>
@@ -326,7 +360,8 @@ const MapBox = () => {
 
       {isMapReady &&
         mapRef.current &&
-        shopMarkers.map((marker, index) => (
+        // Render custom markers only for unclustered features
+        unclusteredMarkers.map((marker, index) => (
           <CustomMarker
             key={index}
             mapContainer={mapContainerRef}
@@ -358,36 +393,39 @@ const CustomMarker = ({
   useEffect(() => {
     if (!map) return;
 
+
     // Create a custom HTML element for the marker
     const el = document.createElement("div");
-    el.className = "custom-marker"; // Optional: Add class for further styling
-    el.style.width = "50px"; // Adjust size as needed
+    el.className = "custom-marker";
+    el.style.width = "50px";
     el.style.height = "50px";
     el.style.backgroundImage = "url('/sandwich-pin.svg')";
-    el.style.backgroundSize = "contain"; // Ensures the whole image is visible
+    el.style.backgroundSize = "contain";
     el.style.backgroundRepeat = "no-repeat";
     el.style.cursor = "pointer";
 
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat(position)
-      .addTo(map);
+    const marker = new mapboxgl.Marker(el).setLngLat(position).addTo(map);
+
+    el.addEventListener("click", () => console.log("Marker clicked"));
 
     if (isPopupEnabled) {
-      const popup = new mapboxgl.Popup({ offset: 25 })
-        .setHTML(
-          `<strong>${popupContent.shopName}</strong><br/>${popupContent.address}`
-        );
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+        `<strong>${popupContent.shopName}</strong><br/>${popupContent.address}`
+      );
 
       if (autoOpen) {
         popup.addTo(map);
       }
-
       marker.setPopup(popup);
     }
 
+    return () => {
+      marker.remove();
+    };
   }, [map, position, popupContent, isPopupEnabled, autoOpen]);
 
-  return null; // This component doesn't render anything directly
+  return null;
 };
+
 
 export default MapBox;
