@@ -3,13 +3,14 @@ import mapboxgl, { Map, GeoJSONSource } from "mapbox-gl";
 import { useShops } from "../../context/shopContext";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
+import { useShopSidebar } from "@/context/ShopSidebarContext";
 
 const DEFAULT_POSITION: Coordinates = [-74.006, 40.7128]; // NYC in [lng, lat] order
 
 // Use [number, number] for coordinates (Mapbox expects [lng, lat])
 type Coordinates = [number, number];
 
-interface ShopGeoJsonProperties {
+export interface ShopGeoJsonProperties {
   shopId: number;
   shopName: string;
   address: string;
@@ -19,12 +20,15 @@ interface ShopGeoJsonProperties {
   usersAvatarId?: string;
   usersAvatarEmail?: string;
   locationOpen?: boolean;
+  phone?: string;      
+  website?: string;   
+  imageUrl?: string;    
 }
 
 export interface ShopMarker {
   position: Coordinates;
   popupContent: ShopGeoJsonProperties;
-  isPopupEnabled: boolean;
+  isPopupEnabled?: boolean;
   autoOpen?: boolean;
 }
 
@@ -383,6 +387,14 @@ interface MapMarkerProps extends ShopMarker {
   mapContainer: React.RefObject<HTMLDivElement>;
 }
 
+interface MapMarkerProps {
+  map: mapboxgl.Map;
+  position: Coordinates;
+  popupContent: ShopGeoJsonProperties;
+  isPopupEnabled?: boolean;
+  autoOpen?: boolean;
+}
+
 const CustomMarker = ({
   map,
   position,
@@ -390,11 +402,11 @@ const CustomMarker = ({
   isPopupEnabled = true,
   autoOpen = false,
 }: MapMarkerProps) => {
+  const { openSidebar } = useShopSidebar();
+
   useEffect(() => {
     if (!map) return;
 
-
-    // Create a custom HTML element for the marker
     const el = document.createElement("div");
     el.className = "custom-marker";
     el.style.width = "50px";
@@ -406,7 +418,10 @@ const CustomMarker = ({
 
     const marker = new mapboxgl.Marker(el).setLngLat(position).addTo(map);
 
-    el.addEventListener("click", () => console.log("Marker clicked"));
+    el.addEventListener("click", () => {
+      console.log("Marker clicked:", popupContent);
+      openSidebar(popupContent); // Opens sidebar with shop details
+    });
 
     if (isPopupEnabled) {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
@@ -422,7 +437,7 @@ const CustomMarker = ({
     return () => {
       marker.remove();
     };
-  }, [map, position, popupContent, isPopupEnabled, autoOpen]);
+  }, [map, position, popupContent, isPopupEnabled, autoOpen, openSidebar]);
 
   return null;
 };
