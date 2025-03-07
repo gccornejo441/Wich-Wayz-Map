@@ -1,8 +1,60 @@
+import { useState, useEffect, useRef } from "react";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
-import { FiX, FiMapPin, FiClock, FiPhone, FiGlobe, FiUser } from "react-icons/fi";
+import { useAuth } from "@/context/authContext";
+import { useVote } from "@/context/voteContext";
+import { FiX, FiMapPin, FiClock, FiPhone, FiGlobe, FiUser, FiShare2 } from "react-icons/fi";
+import VoteButtons from "../Map/VoteButtons";
 
 const Sidebar = () => {
   const { selectedShop, sidebarOpen, closeSidebar } = useShopSidebar();
+  const { isAuthenticated, user } = useAuth();
+  // Removed loadingVotes since it is unused.
+  const { votes, addVote, getVotesForShop, submitVote } = useVote();
+  const isMember = isAuthenticated && user?.emailVerified;
+  const hasFetchedVotes = useRef(false);
+
+  // Local vote state
+  const [upvotes, setUpvotes] = useState(0);
+  const [downvotes, setDownvotes] = useState(0);
+  const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
+
+  // Fetch votes when shop changes
+  useEffect(() => {
+    if (selectedShop?.shopId && !hasFetchedVotes.current) {
+      getVotesForShop(selectedShop.shopId)
+        .catch((error) => console.error("Failed to fetch votes:", error));
+      hasFetchedVotes.current = true;
+    }
+  }, [selectedShop, getVotesForShop]);
+
+  // Sync local vote state with fetched votes
+  useEffect(() => {
+    if (selectedShop && votes && selectedShop.shopId in votes) {
+      const currentVotes = votes[selectedShop.shopId] || { upvotes: 0, downvotes: 0, userVote: null };
+      setUpvotes(currentVotes.upvotes);
+      setDownvotes(currentVotes.downvotes);
+      setUserVote(currentVotes.userVote || null);
+    }
+  }, [votes, selectedShop]);
+
+  // Handle voting
+  const handleVote = async (isUpvote: boolean) => {
+    if (!isMember || !selectedShop) return;
+    const isDifferentVote = userVote !== (isUpvote ? "up" : "down");
+    if (isDifferentVote) {
+      addVote(selectedShop.shopId, isUpvote);
+      await submitVote(selectedShop.shopId, isUpvote);
+    }
+  };
+
+  // Handle share link copying
+  const handleShare = () => {
+    if (!isMember) return;
+    const shareUrl = window.location.href;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      alert("Shop link copied to clipboard!");
+    });
+  };
 
   return (
     <aside
@@ -24,14 +76,16 @@ const Sidebar = () => {
             {/* Shop Image */}
             <div className="w-full h-48 bg-lightGray rounded-lg overflow-hidden shadow-card">
               <img
-                src={selectedShop.imageUrl || "/default-shop.jpg"} // Fallback image
+                src={selectedShop.imageUrl || "/default-shop.jpg"}
                 alt={selectedShop.shopName}
                 className="w-full h-full object-cover"
               />
             </div>
 
             {/* Shop Name */}
-            <h2 className="text-2xl font-semibold mt-4 text-accent">{selectedShop.shopName}</h2>
+            <h2 className="text-2xl font-semibold mt-4 text-accent">
+              {selectedShop.shopName}
+            </h2>
 
             {/* Address */}
             <div className="flex items-center mt-2 text-dark">
@@ -55,9 +109,12 @@ const Sidebar = () => {
 
             {/* Opening Hours */}
             {selectedShop.locationOpen !== undefined && (
-              <div className="flex items-center mt-3 text-dark">
-                <FiClock size={18} className={`mr-2 ${selectedShop.locationOpen ? "text-primary" : "text-accent"}`} />
-                <span className={`${selectedShop.locationOpen ? "text-primary" : "text-accent"}`}>
+              <div className="flex items-center mt-3">
+                <FiClock
+                  size={18}
+                  className={`mr-2 ${selectedShop.locationOpen ? "text-secondary" : "text-primary"}`}
+                />
+                <span className={`font-medium ${selectedShop.locationOpen ? "text-secondary" : "text-primary"}`}>
                   {selectedShop.locationOpen ? "Open Now" : "Closed"}
                 </span>
               </div>
@@ -68,7 +125,10 @@ const Sidebar = () => {
               {selectedShop.phone && (
                 <div className="flex items-center text-dark">
                   <FiPhone size={18} className="mr-2 text-primary" />
-                  <a href={`tel:${selectedShop.phone}`} className="hover:underline hover:text-primary">
+                  <a
+                    href={`tel:${selectedShop.phone}`}
+                    className="hover:underline hover:text-primary"
+                  >
                     {selectedShop.phone}
                   </a>
                 </div>
@@ -76,7 +136,10 @@ const Sidebar = () => {
               {selectedShop.usersAvatarEmail && (
                 <div className="flex items-center text-dark">
                   <FiUser size={18} className="mr-2 text-primary" />
-                  <a href={`mailto:${selectedShop.usersAvatarEmail}`} className="hover:underline hover:text-primary">
+                  <a
+                    href={`mailto:${selectedShop.usersAvatarEmail}`}
+                    className="hover:underline hover:text-primary"
+                  >
                     {selectedShop.usersAvatarEmail}
                   </a>
                 </div>
@@ -94,6 +157,28 @@ const Sidebar = () => {
                   </a>
                 </div>
               )}
+            </div>
+
+            {/* Voting and Share Section */}
+            <div className="mt-6 flex items-center justify-between">
+              {/* Voting Buttons */}
+              <VoteButtons
+                isMember={isMember}
+                userVote={userVote}
+                handleVote={handleVote}
+                upvotes={upvotes}
+                downvotes={downvotes}
+              />
+
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                disabled={!isMember}
+                title={!isMember ? "Members Only" : "Share Shop"}
+                className="p-2 bg-secondary rounded-lg text-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <FiShare2 size={20} />
+              </button>
             </div>
 
             {/* Action Buttons */}

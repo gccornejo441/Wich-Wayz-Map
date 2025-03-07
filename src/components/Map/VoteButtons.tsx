@@ -1,5 +1,5 @@
 interface VoteButtonsProps {
-  isMember: boolean;
+  isMember: boolean | undefined;
   userVote: "up" | "down" | null;
   handleVote: (isUpvote: boolean) => void;
   upvotes: number;
