@@ -420,7 +420,7 @@ const CustomMarker = ({
 
     el.addEventListener("click", () => {
       console.log("Marker clicked:", popupContent);
-      openSidebar(popupContent); // Opens sidebar with shop details
+      openSidebar(popupContent);
     });
 
     if (isPopupEnabled) {
