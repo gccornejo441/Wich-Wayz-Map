@@ -85,7 +85,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-screen bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-screen bg-background shadow-lg transition-transform overflow-y-auto duration-500 ease-in-out transform ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
@@ -101,9 +101,9 @@ const Sidebar = () => {
         {selectedShop ? (
           <>
             {/* Shop Image */}
-            <div className="w-full h-48 bg-lightGray rounded-lg overflow-hidden shadow-card">
+            <div className="w-full h-48 bg-lightGray rounded-lg shadow-card">
               <img
-                src={selectedShop.imageUrl || "/default-shop.jpg"}
+                src={selectedShop.imageUrl || "/sandwich-default.png"}
                 alt={selectedShop.shopName}
                 className="w-full h-full object-cover"
               />
@@ -126,7 +126,7 @@ const Sidebar = () => {
                 {selectedShop.categories.split(",").map((category, index) => (
                   <span
                     key={index}
-                    className="bg-secondary text-dark px-3 py-1 rounded-full text-sm font-semibold"
+                    className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
                   >
                     {category.trim()}
                   </span>
@@ -194,8 +194,7 @@ const Sidebar = () => {
               {/* Share Button */}
               <button
                 onClick={handleShare}
-                disabled={!isMember}
-                title={!isMember ? "Members Only" : "Share Shop"}
+                title="Share Shop"
                 className="p-2 bg-secondary rounded-lg text-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FiShare2 size={20} />
