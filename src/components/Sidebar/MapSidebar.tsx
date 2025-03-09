@@ -27,7 +27,7 @@ const Sidebar = () => {
   const { openSignupModal } = useModal();
 
   const { isAuthenticated, user } = useAuth();
-  // Removed loadingVotes since it is unused.
+  // Removed loadingVotes
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
   const isMember = isAuthenticated && user?.emailVerified;
