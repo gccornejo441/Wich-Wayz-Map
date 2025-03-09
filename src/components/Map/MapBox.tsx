@@ -310,38 +310,43 @@ const MapBox = () => {
     };
   }, [position, mapZoom]);
 
-  // New useEffect: Query unclustered features after each map movement
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current) return;
+// New useEffect: Query unclustered features after each map movement
+useEffect(() => {
+  if (!isMapReady || !mapRef.current) return;
 
-    const updateUnclusteredMarkers = () => {
-      const features = mapRef.current!.queryRenderedFeatures({
-        layers: ["unclustered-point"],
-      });
-      // Map each feature back to our ShopMarker type
-      const markers: ShopMarker[] = features.map((feature) => {
+  const updateUnclusteredMarkers = () => {
+    const features = mapRef.current!.queryRenderedFeatures({
+      layers: ["unclustered-point"],
+    });
+
+    // Filter for Point geometries and then map to ShopMarker
+    const markers: ShopMarker[] = features.reduce<ShopMarker[]>((acc, feature) => {
+      if (feature.geometry && feature.geometry.type === "Point") {
         const props = feature.properties as ShopGeoJsonProperties;
-        const coords = feature.geometry.coordinates as [number, number];
-        return {
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+        acc.push({
           position: coords,
           popupContent: props,
           isPopupEnabled: false,
-        };
-      });
-      setUnclusteredMarkers(markers);
-    };
-
-    // Update on moveend (or data update)
-    mapRef.current.on("moveend", updateUnclusteredMarkers);
-    // Initial update
-    updateUnclusteredMarkers();
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.off("moveend", updateUnclusteredMarkers);
+        });
       }
-    };
-  }, [isMapReady]);
+      return acc;
+    }, []);
+
+    setUnclusteredMarkers(markers);
+  };
+
+  // Update on moveend (or data update)
+  mapRef.current.on("moveend", updateUnclusteredMarkers);
+  // Initial update
+  updateUnclusteredMarkers();
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.off("moveend", updateUnclusteredMarkers);
+    }
+  };
+}, [isMapReady]);
 
   return (
     <div>
