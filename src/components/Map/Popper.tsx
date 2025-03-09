@@ -10,7 +10,6 @@ import { GiSandwich } from "react-icons/gi";
 import VoteButtons from "./VoteButtons";
 import { ShopMarker } from "./MapBox";
 
-
 const checkMembership = async (logout: () => Promise<void>) => {
   const currentUser = await getCurrentUser(logout);
   return currentUser?.membershipStatus === "member";
@@ -23,7 +22,7 @@ const getVoteMessage = (upvotes: number, downvotes: number) => {
 };
 
 export const Popper = ({ position, popupContent }: ShopMarker) => {
-  const latitude = position[1]; 
+  const latitude = position[1];
   const longitude = position[0];
 
   const {
@@ -181,14 +180,16 @@ export const Popper = ({ position, popupContent }: ShopMarker) => {
                 Categories:
               </h5>
               <div className="flex flex-wrap gap-2">
-                {categories.split(", ").map((category: string, index: number) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 rounded-lg text-background bg-primary shadow-sm"
-                  >
-                    {category}
-                  </span>
-                ))}
+                {categories
+                  .split(", ")
+                  .map((category: string, index: number) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 rounded-lg text-background bg-primary shadow-sm"
+                    >
+                      {category}
+                    </span>
+                  ))}
               </div>
             </div>
           )}

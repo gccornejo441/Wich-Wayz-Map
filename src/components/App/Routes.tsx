@@ -17,7 +17,7 @@ import MapSidebar from "../Sidebar/MapSidebar";
 function MainRoutes() {
   return (
     <>
-    <MapSidebar/>
+      <MapSidebar />
       <Routes>
         <Route path={ROUTES.HOME} element={<MapBox />} />
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

@@ -1,4 +1,3 @@
-import { LatLngTuple } from "leaflet";
 import { ReactNode } from "react";
 
 export type Callback = () => void;

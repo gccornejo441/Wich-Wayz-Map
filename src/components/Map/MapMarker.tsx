@@ -70,7 +70,7 @@
 //       if (hoverMarkerRef.current) return; // Prevent duplicate hover markers
 
 //       // Hide the original marker while hovering
-//       el.style.display = "none"; 
+//       el.style.display = "none";
 
 //       const hoverEl = createIconElement(60);
 //       hoverMarkerRef.current = new mapboxgl.Marker({ element: hoverEl })
@@ -86,7 +86,7 @@
 //       }
 
 //       // Show the original marker again
-//       el.style.display = "block"; 
+//       el.style.display = "block";
 //     };
 
 //     el.addEventListener("mouseenter", handleMouseOver);
@@ -107,4 +107,3 @@
 // };
 
 // export default MapMarker;
-

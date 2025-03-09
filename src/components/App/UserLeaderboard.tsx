@@ -102,7 +102,9 @@ const UserLeaderboard = () => {
     <div className="min-h-screen bg-background p-6 mt-10 font-poppins">
       <header className="mb-8 text-center">
         <h1 className="text-3xl md:text-4xl font-extrabold text-dark">
-          Wich Wayz?<br/>Leaderboards
+          Wich Wayz?
+          <br />
+          Leaderboards
         </h1>
       </header>
 

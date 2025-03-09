@@ -42,7 +42,7 @@ const Sidebar = () => {
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
       getVotesForShop(selectedShop.shopId).catch((error) =>
-        console.error("Failed to fetch votes:", error)
+        console.error("Failed to fetch votes:", error),
       );
       hasFetchedVotes.current = true;
     }
@@ -190,7 +190,6 @@ const Sidebar = () => {
 
             {/* Share Section */}
             <div className="mt-6 flex items-center justify-between">
-
               {/* Share Button */}
               <button
                 onClick={handleShare}
@@ -257,7 +256,7 @@ const Sidebar = () => {
                 onClick={() =>
                   window.open(
                     `https://www.google.com/maps/dir/?api=1&destination=${selectedShop.address}`,
-                    "_blank"
+                    "_blank",
                   )
                 }
               >
