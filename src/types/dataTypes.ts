@@ -1,4 +1,3 @@
-import { LatLngTuple } from "leaflet";
 import { ReactNode } from "react";
 
 export type Callback = () => void;
@@ -57,13 +56,6 @@ export interface PopupContent {
   latitude: number;
   longitude: number;
   locationOpen?: boolean;
-}
-
-export interface ShopMarker {
-  position: LatLngTuple;
-  popupContent: PopupContent;
-  isPopupEnabled: boolean;
-  autoOpen?: boolean;
 }
 
 export interface ToastMessageProps {

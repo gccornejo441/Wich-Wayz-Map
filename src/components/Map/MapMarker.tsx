@@ -1,59 +1,109 @@
-import { Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import { Popper } from "./Popper";
-import { ShopMarker } from "../../types/dataTypes";
-import { useEffect, useRef, useState } from "react";
+// import { useEffect, useMemo, useRef } from "react";
+// import mapboxgl from "mapbox-gl";
+// import ReactDOMServer from "react-dom/server";
+// import { Popper } from "./Popper";
+// import { ShopMarker } from "./MapBox"; // ShopMarker type with popupContent property
 
-const defaultIcon = new L.Icon({
-  iconUrl: "/sandwich-pin.svg",
-  iconSize: [50, 50],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -40],
-});
+// interface MapMarkerProps extends ShopMarker {
+//   map: mapboxgl.Map;
+// }
 
-const hoverIcon = new L.Icon({
-  iconUrl: "/sandwich-pin.svg",
-  iconSize: [60, 60],
-  iconAnchor: [25, 50],
-  popupAnchor: [0, -50],
-});
+// const MapMarker = ({
+//   map,
+//   position,
+//   popupContent,
+//   autoOpen,
+//   isPopupEnabled = true,
+// }: MapMarkerProps) => {
+//   const markerRef = useRef<mapboxgl.Marker | null>(null);
+//   const hoverMarkerRef = useRef<mapboxgl.Marker | null>(null); // Track hover marker separately
 
-const MapMarker = ({
-  position,
-  popupContent,
-  autoOpen,
-  isPopupEnabled = true,
-}: ShopMarker) => {
-  const markerRef = useRef<L.Marker | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
+//   // Memoize validPosition so that it only changes when `position` changes.
+//   const validPosition = useMemo(
+//     () => [position[0], position[1]] as [number, number],
+//     [position]
+//   );
 
-  useEffect(() => {
-    if (autoOpen && markerRef.current) {
-      markerRef.current.openPopup();
-    }
-  }, [autoOpen]);
+//   // Helper: create an icon element with the given size.
+//   const createIconElement = (size: number) => {
+//     const el = document.createElement("div");
+//     el.className = "mapbox-marker";
+//     el.style.width = `${size}px`;
+//     el.style.height = `${size}px`;
+//     el.style.backgroundImage = "url('/sandwich-pin.svg')";
+//     el.style.backgroundSize = "contain";
+//     el.style.cursor = "pointer";
+//     return el;
+//   };
 
-  return (
-    <Marker
-      icon={isHovered ? hoverIcon : defaultIcon}
-      position={position}
-      ref={(ref) => {
-        if (ref) {
-          markerRef.current = ref;
-        }
-      }}
-      eventHandlers={{
-        mouseover: () => setIsHovered(true),
-        mouseout: () => setIsHovered(false),
-      }}
-    >
-      {isPopupEnabled && (
-        <Popup autoClose={true}>
-          <Popper {...popupContent} />
-        </Popup>
-      )}
-    </Marker>
-  );
-};
+//   useEffect(() => {
+//     if (!map) return;
 
-export default MapMarker;
+//     // Create default icon element.
+//     const el = createIconElement(50);
+
+//     // Create the marker at the valid position.
+//     const marker = new mapboxgl.Marker({ element: el })
+//       .setLngLat(validPosition)
+//       .addTo(map);
+//     markerRef.current = marker;
+
+//     // Create and attach a popup if enabled.
+//     let popup: mapboxgl.Popup | null = null;
+//     if (isPopupEnabled) {
+//       const popupHtml = ReactDOMServer.renderToString(
+//         <Popper
+//           position={position}
+//           popupContent={popupContent}
+//           isPopupEnabled={isPopupEnabled}
+//         />
+//       );
+//       popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml);
+//       marker.setPopup(popup);
+//       if (autoOpen) {
+//         popup.addTo(map);
+//       }
+//     }
+
+//     // Hover effect: on mouseenter, replace the marker with a larger icon.
+//     const handleMouseOver = () => {
+//       if (hoverMarkerRef.current) return; // Prevent duplicate hover markers
+
+//       // Hide the original marker while hovering
+//       el.style.display = "none";
+
+//       const hoverEl = createIconElement(60);
+//       hoverMarkerRef.current = new mapboxgl.Marker({ element: hoverEl })
+//         .setLngLat(validPosition)
+//         .addTo(map);
+//     };
+
+//     // On mouseleave, remove hover marker and show the original marker again.
+//     const handleMouseOut = () => {
+//       if (hoverMarkerRef.current) {
+//         hoverMarkerRef.current.remove();
+//         hoverMarkerRef.current = null;
+//       }
+
+//       // Show the original marker again
+//       el.style.display = "block";
+//     };
+
+//     el.addEventListener("mouseenter", handleMouseOver);
+//     el.addEventListener("mouseleave", handleMouseOut);
+
+//     return () => {
+//       el.removeEventListener("mouseenter", handleMouseOver);
+//       el.removeEventListener("mouseleave", handleMouseOut);
+//       marker.remove();
+//       if (hoverMarkerRef.current) {
+//         hoverMarkerRef.current.remove();
+//         hoverMarkerRef.current = null;
+//       }
+//     };
+//   }, [map, validPosition, popupContent, autoOpen, isPopupEnabled]);
+
+//   return null;
+// };
+
+// export default MapMarker;
