@@ -35,134 +35,168 @@ const MapBox = () => {
   const { openSidebar } = useShopSidebar();
   const mapZoom = zoom ?? 13;
 
+  // Get user's geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const userPosition: Coordinates = [
-            pos.coords.longitude,
-            pos.coords.latitude,
-          ];
-          setPosition(userPosition);
+          setPosition([pos.coords.longitude, pos.coords.latitude]);
         },
-        () => setPosition(DEFAULT_POSITION)
+        () => setPosition(DEFAULT_POSITION),
       );
     } else {
       setPosition(DEFAULT_POSITION);
     }
   }, []);
 
+  // Initialize the Map
   useEffect(() => {
-    if (position && mapContainerRef.current && !mapRef.current) {
-      mapboxgl.accessToken = mapboxAccessToken;
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: position,
-        zoom: mapZoom,
+    if (!position || !mapContainerRef.current) return;
+
+    if (mapRef.current) {
+      mapRef.current.remove(); // Remove the old map instance before reinitializing
+      mapRef.current = null;
+    }
+
+    mapboxgl.accessToken = mapboxAccessToken;
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: position,
+      zoom: mapZoom,
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
+
+    map.on("load", () => {
+      if (!map.isStyleLoaded()) {
+        map.once("style.load", () => initializeMapData(map));
+      } else {
+        initializeMapData(map);
+      }
+    });
+
+    mapRef.current = map;
+  }, [position, mapboxAccessToken, mapZoom]);
+
+  // Update Shops Data on Map
+  useEffect(() => {
+    if (mapRef.current && mapRef.current.getSource("shops")) {
+      updateShopsSource();
+    }
+  }, [shops]);
+
+  // Function to initialize shop markers
+  const initializeMapData = (map: Map) => {
+    const geojson = createGeoJsonData();
+
+    if (map.getSource("shops")) {
+      (map.getSource("shops") as mapboxgl.GeoJSONSource).setData(geojson);
+    } else {
+      map.addSource("shops", { type: "geojson", data: geojson });
+
+      map.addLayer({
+        id: "shop-markers",
+        type: "circle",
+        source: "shops",
+        paint: {
+          "circle-radius": 8,
+          "circle-color": "#DA291C",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#fff",
+        },
       });
 
-      map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
+      map.on("click", "shop-markers", (e: mapboxgl.MapMouseEvent) => {
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: ["shop-markers"],
+        });
 
-      map.on("load", () => {
-        const geojson: GeoJSON.FeatureCollection<
+        if (!features.length) return;
+
+        const feature = features[0] as unknown as GeoJSON.Feature<
           GeoJSON.Point,
           ShopGeoJsonProperties
-        > = {
-          type: "FeatureCollection",
-          features: shops.flatMap(
-            (shop) =>
-              shop.locations?.map((location) => {
-                const fullAddress = [
-                  location.street_address || "Address not available",
-                  location.street_address_second || null,
-                  location.postal_code || "",
-                  location.city || "",
-                  location.state || "",
-                ]
-                  .filter(Boolean)
-                  .join(", ");
+        >;
 
-                return {
-                  type: "Feature",
-                  properties: {
-                    shopId: shop.id ?? 1,
-                    shopName: shop.name,
-                    address: fullAddress,
-                    description: shop.description || undefined,
-                    createdBy: shop.created_by_username || "admin",
-                    categories:
-                      shop.categories
-                        ?.map((category) => category.category_name)
-                        .join(", ") || "No categories available",
-                    usersAvatarId: shop.users_avatar_id,
-                    locationOpen: location.location_open,
-                  },
-                  geometry: {
-                    type: "Point",
-                    coordinates: [
-                      location.longitude,
-                      location.latitude,
-                    ] as Coordinates,
-                  },
-                };
-              }) || []
-          ),
-        };
+        if (!feature.geometry || feature.geometry.type !== "Point") return;
 
-        map.addSource("shops", {
-          type: "geojson",
-          data: geojson,
-        });
+        // Ensure coordinates is a valid [number, number] tuple
+        const coordinates = feature.geometry.coordinates as
+          | Coordinates
+          | undefined;
 
-        map.addLayer({
-          id: "shop-markers",
-          type: "circle",
-          source: "shops",
-          paint: {
-            "circle-radius": 8,
-            "circle-color": "#FF5B00",
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#fff",
-          },
-        });
+        if (!coordinates || coordinates.length !== 2) return;
 
-        map.on("click", "shop-markers", (e: mapboxgl.MapMouseEvent) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ["shop-markers"],
-          });
+        if (!feature.properties) return;
+        const properties = feature.properties;
 
-          if (!features.length) return;
+        if (properties.shopId && properties.shopName && properties.address) {
+          openSidebar(properties);
+        }
 
-          const feature = features[0] as unknown as GeoJSON.Feature<
-            GeoJSON.Point,
-            GeoJSON.GeoJsonProperties
-          >;
-
-          if (!feature.geometry || feature.geometry.type !== "Point") return;
-          const coordinates: [number, number] = feature.geometry
-            .coordinates as [number, number];
-
-          if (!feature.properties) return;
-
-          const properties = feature.properties as ShopGeoJsonProperties;
-
-          if (properties.shopId && properties.shopName && properties.address) {
-            openSidebar(properties);
-          }
-
-          new mapboxgl.Popup()
-            .setLngLat(coordinates)
-            .setHTML(
-              `<strong>${properties.shopName}</strong><br/>${properties.address}`
-            )
-            .addTo(map);
-        });
+        new mapboxgl.Popup()
+          .setLngLat(coordinates)
+          .setHTML(
+            `<strong>${properties.shopName}</strong><br/>${properties.address}`,
+          )
+          .addTo(map);
       });
-
-      mapRef.current = map;
     }
-  }, [position, shops, mapboxAccessToken, mapZoom, openSidebar]);
+  };
+
+  // Function to update the existing GeoJSON source with new shop data
+  const updateShopsSource = () => {
+    if (!mapRef.current) return;
+
+    const geojson = createGeoJsonData();
+    (mapRef.current.getSource("shops") as mapboxgl.GeoJSONSource).setData(
+      geojson,
+    );
+  };
+
+  // Function to create GeoJSON data from shops
+  const createGeoJsonData = (): GeoJSON.FeatureCollection<
+    GeoJSON.Point,
+    ShopGeoJsonProperties
+  > => {
+    return {
+      type: "FeatureCollection",
+      features: shops.flatMap(
+        (shop) =>
+          shop.locations?.map((location) => ({
+            type: "Feature",
+            properties: {
+              shopId: shop.id ?? 1,
+              shopName: shop.name,
+              address: [
+                location.street_address || "Address not available",
+                location.street_address_second || null,
+                location.postal_code || "",
+                location.city || "",
+                location.state || "",
+              ]
+                .filter(Boolean)
+                .join(", "),
+              createdBy: shop.created_by_username || "admin",
+              categories:
+                shop.categories
+                  ?.map((category) => category.category_name)
+                  .join(", ") || "No categories available",
+              usersAvatarId: shop.users_avatar_id,
+              locationOpen: location.location_open,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [
+                location.longitude,
+                location.latitude,
+              ] as Coordinates,
+            },
+          })) || [],
+      ),
+    };
+  };
 
   return (
     <div>

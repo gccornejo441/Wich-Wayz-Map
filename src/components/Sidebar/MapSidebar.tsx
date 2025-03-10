@@ -83,6 +83,7 @@ const Sidebar = () => {
 
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
+  console.log("Upvote, downvote", upvotes);
   return (
     <aside
       className={`fixed top-[48px] left-0 z-30 w-[400px] h-screen bg-background shadow-lg transition-transform overflow-y-auto duration-500 ease-in-out transform ${
