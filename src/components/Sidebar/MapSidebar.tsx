@@ -30,6 +30,7 @@ const Sidebar = () => {
   // Removed loadingVotes
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
+    
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
 
@@ -278,5 +279,7 @@ const Sidebar = () => {
     </aside>
   );
 };
+
+
 
 export default Sidebar;

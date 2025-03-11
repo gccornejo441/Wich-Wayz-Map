@@ -125,7 +125,9 @@ const MapBox = () => {
       if (!feature.geometry || feature.geometry.type !== "Point") return;
 
       // Ensure coordinates is a valid [number, number] tuple
-      const coordinates = feature.geometry.coordinates as Coordinates | undefined;
+      const coordinates = feature.geometry.coordinates as
+        | Coordinates
+        | undefined;
       if (!coordinates || coordinates.length !== 2) return;
 
       if (!feature.properties) return;
@@ -138,7 +140,10 @@ const MapBox = () => {
       new mapboxgl.Popup()
         .setLngLat(coordinates)
         .setHTML(
-          `<strong>${properties.shopName}</strong><br/>${properties.address}`
+          `<div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 8px; background: #fff;">
+        <h2 style="margin: 0 0 8px; color: #DA291C;">${properties.shopName}</h2>
+        <p style="margin: 0; color: #333; font-size: 14px;">${properties.address}</p>
+      </div>`
         )
         .addTo(map);
     });
@@ -149,40 +154,50 @@ const MapBox = () => {
     if (!mapRef.current) return;
 
     const geojson = createGeoJsonData();
-    (mapRef.current.getSource("shops") as mapboxgl.GeoJSONSource).setData(geojson);
+    (mapRef.current.getSource("shops") as mapboxgl.GeoJSONSource).setData(
+      geojson
+    );
   };
 
   // Function to create GeoJSON data from shops
-  const createGeoJsonData = (): GeoJSON.FeatureCollection<GeoJSON.Point, ShopGeoJsonProperties> => {
+  const createGeoJsonData = (): GeoJSON.FeatureCollection<
+    GeoJSON.Point,
+    ShopGeoJsonProperties
+  > => {
     return {
       type: "FeatureCollection",
-      features: shops.flatMap((shop) =>
-        shop.locations?.map((location) => ({
-          type: "Feature",
-          properties: {
-            shopId: shop.id ?? 1,
-            shopName: shop.name,
-            address: [
-              location.street_address || "Address not available",
-              location.street_address_second || null,
-              location.postal_code || "",
-              location.city || "",
-              location.state || "",
-            ]
-              .filter(Boolean)
-              .join(", "),
-            createdBy: shop.created_by_username || "admin",
-            categories:
-              shop.categories?.map((category) => category.category_name).join(", ") ||
-              "No categories available",
-            usersAvatarId: shop.users_avatar_id,
-            locationOpen: location.location_open,
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [location.longitude, location.latitude] as Coordinates,
-          },
-        })) || []
+      features: shops.flatMap(
+        (shop) =>
+          shop.locations?.map((location) => ({
+            type: "Feature",
+            properties: {
+              shopId: shop.id ?? 1,
+              shopName: shop.name,
+              address: [
+                location.street_address || "Address not available",
+                location.street_address_second || null,
+                location.postal_code || "",
+                location.city || "",
+                location.state || "",
+              ]
+                .filter(Boolean)
+                .join(", "),
+              createdBy: shop.created_by_username || "admin",
+              categories:
+                shop.categories
+                  ?.map((category) => category.category_name)
+                  .join(", ") || "No categories available",
+              usersAvatarId: shop.users_avatar_id,
+              locationOpen: location.location_open,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [
+                location.longitude,
+                location.latitude,
+              ] as Coordinates,
+            },
+          })) || []
       ),
     };
   };
