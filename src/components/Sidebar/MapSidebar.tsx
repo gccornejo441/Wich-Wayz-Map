@@ -15,6 +15,7 @@ import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
 import { GiSandwich } from "react-icons/gi";
 import { useModal } from "@/context/modalContext";
+import { HiExternalLink } from "react-icons/hi";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   if (upvotes > downvotes) return "Highly rated by sandwich fans!";
@@ -30,7 +31,7 @@ const Sidebar = () => {
   // Removed loadingVotes
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
-    
+
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
 
@@ -82,6 +83,10 @@ const Sidebar = () => {
     });
   };
 
+  const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${selectedShop?.shopName} ${selectedShop?.address}`,
+  )}`;
+
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
   console.log("Upvote, downvote", upvotes);
@@ -117,9 +122,16 @@ const Sidebar = () => {
             </h2>
 
             {/* Address */}
-            <div className="flex items-center mt-2 text-dark">
-              <FiMapPin size={28} className="mr-2 text-primary" />
-              <span>{selectedShop.address}</span>
+            <div>
+              {selectedShop.locationOpen && (
+                <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
+                  This location is permanently closed.
+                </span>
+              )}
+              <div className="flex items-center mt-2 text-dark">
+                <FiMapPin size={28} className="mr-2 text-primary" />
+                <span>{selectedShop.address}</span>
+              </div>
             </div>
 
             {/* Categories */}
@@ -141,10 +153,18 @@ const Sidebar = () => {
               <div className="flex items-center mt-3">
                 <FiClock
                   size={18}
-                  className={`mr-2 ${selectedShop.locationOpen ? "text-secondary" : "text-primary"}`}
+                  className={`mr-2 ${
+                    selectedShop.locationOpen
+                      ? "text-secondary"
+                      : "text-primary"
+                  }`}
                 />
                 <span
-                  className={`font-medium ${selectedShop.locationOpen ? "text-secondary" : "text-primary"}`}
+                  className={`font-medium ${
+                    selectedShop.locationOpen
+                      ? "text-secondary"
+                      : "text-primary"
+                  }`}
                 >
                   {selectedShop.locationOpen ? "Open Now" : "Closed"}
                 </span>
@@ -190,16 +210,25 @@ const Sidebar = () => {
               )}
             </div>
 
-            {/* Share Section */}
-            <div className="mt-6 flex items-center justify-between">
-              {/* Share Button */}
+            {/* Google Map & Share Buttons */}
+            <div className="mt-6 flex items-center space-x-3">
               <button
                 onClick={handleShare}
                 title="Share Shop"
-                className="p-2 bg-secondary rounded-lg text-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex p-2 bg-secondary rounded-lg text-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FiShare2 size={20} />
               </button>
+              <a
+                href={googleMapsSearchUrl}
+                target="_blank"
+                aria-label={`Open ${selectedShop.shopName} on Google Maps`}
+                rel="noopener noreferrer"
+                title="Open in Google Maps"
+                className="flex p-2 bg-secondary rounded-lg text-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <HiExternalLink size={20} />
+              </a>
             </div>
 
             <div className="h-full justify-between">
@@ -279,7 +308,5 @@ const Sidebar = () => {
     </aside>
   );
 };
-
-
 
 export default Sidebar;

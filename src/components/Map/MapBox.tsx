@@ -43,7 +43,7 @@ const MapBox = () => {
         (pos) => {
           setPosition([pos.coords.longitude, pos.coords.latitude]);
         },
-        () => setPosition(DEFAULT_POSITION)
+        () => setPosition(DEFAULT_POSITION),
       );
     } else {
       setPosition(DEFAULT_POSITION);
@@ -71,92 +71,57 @@ const MapBox = () => {
     map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
 
     map.on("load", () => {
-      initializeMapData(map);
+      renderCustomMarkers(map);
       setMapLoaded(true);
     });
 
     mapRef.current = map;
   }, [position, mapboxAccessToken, mapZoom]);
 
-  // Update Shops Data on Map only after the map has loaded
+  // Update markers on shop data change after the map has loaded
   useEffect(() => {
-    if (mapLoaded && mapRef.current && mapRef.current.getSource("shops")) {
-      updateShopsSource();
+    if (mapLoaded && mapRef.current) {
+      renderCustomMarkers(mapRef.current);
     }
   }, [shops, mapLoaded]);
 
-  // Function to initialize shop markers
-  const initializeMapData = (map: Map) => {
+  // Function to render custom shop markers
+  const renderCustomMarkers = (map: Map) => {
     const geojson = createGeoJsonData();
 
-    // If the source already exists, update it
-    if (map.getSource("shops")) {
-      (map.getSource("shops") as mapboxgl.GeoJSONSource).setData(geojson);
-      return;
-    }
+    const existingMarkers = document.querySelectorAll(".custom-marker");
+    existingMarkers.forEach((el) => el.remove());
 
-    // Otherwise, create a new source and layer
-    map.addSource("shops", { type: "geojson", data: geojson });
+    geojson.features.forEach((feature) => {
+      const { coordinates } = feature.geometry;
+      const { shopName, address } = feature.properties;
 
-    map.addLayer({
-      id: "shop-markers",
-      type: "circle",
-      source: "shops",
-      paint: {
-        "circle-radius": 8,
-        "circle-color": "#DA291C",
-        "circle-stroke-width": 2,
-        "circle-stroke-color": "#fff",
-      },
-    });
+      const markerElement = document.createElement("div");
+      markerElement.className = "custom-marker";
+      markerElement.style.width = "30px";
+      markerElement.style.height = "40px";
+      markerElement.style.backgroundImage = "url('/sandwich-pin-v2.svg')";
+      markerElement.style.backgroundSize = "cover";
+      markerElement.style.backgroundPosition = "center";
+      markerElement.style.backgroundRepeat = "no-repeat";
+      markerElement.style.cursor = "pointer";
 
-    map.on("click", "shop-markers", (e: mapboxgl.MapMouseEvent) => {
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: ["shop-markers"],
+      markerElement.addEventListener("click", () => {
+        openSidebar(feature.properties);
       });
 
-      if (!features.length) return;
-
-      const feature = features[0] as unknown as GeoJSON.Feature<
-        GeoJSON.Point,
-        ShopGeoJsonProperties
-      >;
-
-      if (!feature.geometry || feature.geometry.type !== "Point") return;
-
-      // Ensure coordinates is a valid [number, number] tuple
-      const coordinates = feature.geometry.coordinates as
-        | Coordinates
-        | undefined;
-      if (!coordinates || coordinates.length !== 2) return;
-
-      if (!feature.properties) return;
-      const properties = feature.properties;
-
-      if (properties.shopId && properties.shopName && properties.address) {
-        openSidebar(properties);
-      }
-
-      new mapboxgl.Popup()
-        .setLngLat(coordinates)
-        .setHTML(
-          `<div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 8px; background: #fff;">
-        <h2 style="margin: 0 0 8px; color: #DA291C;">${properties.shopName}</h2>
-        <p style="margin: 0; color: #333; font-size: 14px;">${properties.address}</p>
-      </div>`
+      new mapboxgl.Marker(markerElement)
+        .setLngLat(coordinates as [number, number])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 8px; background: #fff;">
+              <h2 style="margin: 0 0 8px; color: #DA291C;">${shopName}</h2>
+              <p style="margin: 0; color: #333; font-size: 14px;">${address}</p>
+            </div>
+          `),
         )
         .addTo(map);
     });
-  };
-
-  // Function to update the existing GeoJSON source with new shop data
-  const updateShopsSource = () => {
-    if (!mapRef.current) return;
-
-    const geojson = createGeoJsonData();
-    (mapRef.current.getSource("shops") as mapboxgl.GeoJSONSource).setData(
-      geojson
-    );
   };
 
   // Function to create GeoJSON data from shops
@@ -197,7 +162,7 @@ const MapBox = () => {
                 location.latitude,
               ] as Coordinates,
             },
-          })) || []
+          })) || [],
       ),
     };
   };

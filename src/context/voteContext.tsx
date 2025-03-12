@@ -72,7 +72,6 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
   const getVotesForShop = async (shopId: number) => {
     setLoadingVotes(true);
     try {
-      
       const voteData = await GetVotesForShop(shopId);
       setVotes((prevVotes) => ({
         ...prevVotes,
