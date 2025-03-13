@@ -1,10 +1,16 @@
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 import { useState, createContext, useContext } from "react";
 
+type Coordinates = [number, number];
+
 interface ShopSidebarContextProps {
   selectedShop: ShopGeoJsonProperties | null;
+  position: Coordinates | null;
   sidebarOpen: boolean;
-  openSidebar: (shop: ShopGeoJsonProperties) => void;
+  openSidebar: (
+    shop: ShopGeoJsonProperties,
+    position?: Coordinates | null,
+  ) => void;
   closeSidebar: () => void;
 }
 
@@ -19,10 +25,17 @@ export const ShopSidebarProvider = ({
 }) => {
   const [selectedShop, setSelectedShop] =
     useState<ShopGeoJsonProperties | null>(null);
+  const [position, setPosition] = useState<Coordinates | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const openSidebar = (shop: ShopGeoJsonProperties) => {
+  const openSidebar = (
+    shop: ShopGeoJsonProperties,
+    pos?: Coordinates | null,
+  ) => {
     setSelectedShop(shop);
+    if (pos) {
+      setPosition(pos);
+    }
     setSidebarOpen(true);
   };
 
@@ -33,7 +46,7 @@ export const ShopSidebarProvider = ({
 
   return (
     <ShopSidebarContext.Provider
-      value={{ selectedShop, sidebarOpen, openSidebar, closeSidebar }}
+      value={{ selectedShop, position, sidebarOpen, openSidebar, closeSidebar }}
     >
       {children}
     </ShopSidebarContext.Provider>

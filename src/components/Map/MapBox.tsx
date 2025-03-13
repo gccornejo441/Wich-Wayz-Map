@@ -107,7 +107,7 @@ const MapBox = () => {
       markerElement.style.cursor = "pointer";
 
       markerElement.addEventListener("click", () => {
-        openSidebar(feature.properties);
+        openSidebar(feature.properties, position);
       });
 
       new mapboxgl.Marker(markerElement)
