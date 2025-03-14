@@ -8,6 +8,8 @@ type MapContextType = {
   setShopId: React.Dispatch<React.SetStateAction<string | null>>;
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
+  userInteracted: boolean;
+  setUserInteracted: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -18,6 +20,7 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
   const [center, setCenter] = useState<LatLngTuple | null>(null);
   const [shopId, setShopId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(13);
+  const [userInteracted, setUserInteracted] = useState<boolean>(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -37,7 +40,16 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <MapContext.Provider
-      value={{ center, setCenter, shopId, setShopId, zoom, setZoom }}
+      value={{
+        center,
+        setCenter,
+        shopId,
+        setShopId,
+        zoom,
+        setZoom,
+        userInteracted,
+        setUserInteracted,
+      }}
     >
       {children}
     </MapContext.Provider>

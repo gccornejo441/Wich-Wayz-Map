@@ -10,7 +10,7 @@ const LIMIT = 5;
 const SearchBar = () => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<IndexedDBShop[]>([]);
-  const { setCenter, setShopId, setZoom } = useMap();
+  const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
 
   const fetchSuggestions = async (value: string) => {
     if (value.trim() !== "") {
@@ -55,9 +55,10 @@ const SearchBar = () => {
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
-      setCenter([location.latitude, location.longitude]);
+      setCenter([location.longitude, location.latitude]);
       setZoom(16);
       setShopId(suggestion.id.toString());
+      setUserInteracted(false);
     }
     setSearch(suggestion.name);
   };
