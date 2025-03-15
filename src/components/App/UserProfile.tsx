@@ -24,10 +24,10 @@ const UserProfile = () => {
       addToast("User metadata is incomplete. Please try again.", "error");
       return;
     }
-  
+
     try {
       setValidationErrors([]);
-  
+
       const validatedData = await userProfileSchema.validate(
         {
           firstName: userMetadata.firstName,
@@ -35,30 +35,30 @@ const UserProfile = () => {
           username: userMetadata.username,
           avatar: userMetadata.avatar,
         },
-        { abortEarly: false }
+        { abortEarly: false },
       );
-  
+
       const updates = {
         first_name: validatedData.firstName ?? null,
         last_name: validatedData.lastName ?? null,
         username: validatedData.username ?? null,
         avatar: validatedData.avatar ?? null,
       };
-  
+
       if (!userMetadata.firebaseUid) {
         addToast("Firebase UID is missing. Cannot update profile.", "error");
         return;
       }
-  
+
       await updateData("users", updates, "firebase_uid = ?", [
         userMetadata.firebaseUid,
       ]);
-  
+
       setUserMetadata({
         ...userMetadata,
         ...validatedData,
       });
-  
+
       addToast("Profile updated successfully.", "success");
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -72,7 +72,6 @@ const UserProfile = () => {
       }
     }
   };
-  
 
   const handleResendVerification = async () => {
     if (!user) {

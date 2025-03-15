@@ -32,7 +32,6 @@ export default defineConfig({
           "react-vendor": ["react", "react-dom"],
           "leaflet-vendor": ["leaflet", "react-leaflet"],
           "axios-idb": ["axios", "idb"],
-
         },
       },
     },

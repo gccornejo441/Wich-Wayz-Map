@@ -136,8 +136,6 @@ const MapBox = () => {
     font-family: Arial, sans-serif;
     padding: 12px;
     border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     max-width: 250px;
     text-align: left;
   ">
