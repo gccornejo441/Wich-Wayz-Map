@@ -55,26 +55,28 @@ const MapBox = () => {
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
-  
+
     mapboxgl.accessToken = mapboxAccessToken;
-  
+
     const containerElement = mapContainerRef.current;
     if (!containerElement) return;
-  
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLocation: [number, number] = [
           position.coords.longitude,
           position.coords.latitude,
         ];
-  
+
         const map = new mapboxgl.Map({
           container: containerElement,
           style: "mapbox://styles/mapbox/streets-v12",
-          center: center ? ([center[0], center[1]] as [number, number]) : userLocation,
+          center: center
+            ? ([center[0], center[1]] as [number, number])
+            : userLocation,
           zoom,
         });
-  
+
         map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
         mapRef.current = map;
       },
@@ -85,10 +87,10 @@ const MapBox = () => {
           center: DEFAULT_POSITION,
           zoom,
         });
-  
+
         map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
         mapRef.current = map;
-      }
+      },
     );
   }, [mapboxAccessToken, center, zoom]);
 

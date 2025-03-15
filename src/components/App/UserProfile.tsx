@@ -6,8 +6,8 @@ import AvatarUploader from "../Profile/AvatarUploader";
 import Account from "../Profile/Account";
 import { updateData } from "../../services/apiClient";
 import { userProfileSchema } from "../../constants/validators";
-import * as yup from "yup";
 import { useToast } from "../../context/toastContext";
+import { ValidationError } from "yup";
 
 const UserProfile = () => {
   const { addToast } = useToast();
@@ -24,10 +24,10 @@ const UserProfile = () => {
       addToast("User metadata is incomplete. Please try again.", "error");
       return;
     }
-
+  
     try {
       setValidationErrors([]);
-
+  
       const validatedData = await userProfileSchema.validate(
         {
           firstName: userMetadata.firstName,
@@ -35,40 +35,44 @@ const UserProfile = () => {
           username: userMetadata.username,
           avatar: userMetadata.avatar,
         },
-        { abortEarly: false },
+        { abortEarly: false }
       );
-
+  
       const updates = {
         first_name: validatedData.firstName ?? null,
         last_name: validatedData.lastName ?? null,
         username: validatedData.username ?? null,
         avatar: validatedData.avatar ?? null,
       };
-
+  
       if (!userMetadata.firebaseUid) {
         addToast("Firebase UID is missing. Cannot update profile.", "error");
         return;
       }
-
+  
       await updateData("users", updates, "firebase_uid = ?", [
         userMetadata.firebaseUid,
       ]);
-
+  
       setUserMetadata({
         ...userMetadata,
         ...validatedData,
       });
-
+  
       addToast("Profile updated successfully.", "success");
     } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        setValidationErrors(error.errors);
-      } else {
-        console.error("Error updating profile:", error);
+      if (error instanceof ValidationError) {
+        setValidationErrors(error.errors || []);
+      } else if (error instanceof Error) {
+        console.error("Error updating profile:", error.message);
         addToast("Failed to update profile. Please try again later.", "error");
+      } else {
+        console.error("Unknown error:", error);
+        addToast("An unexpected error occurred.", "error");
       }
     }
   };
+  
 
   const handleResendVerification = async () => {
     if (!user) {

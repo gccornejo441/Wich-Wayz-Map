@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -64,7 +64,7 @@
     "title-case": "^4.3.2",
     "vercel": "^39.3.0",
     "vite-plugin-svgr": "^4.3.0",
-    "yup": "^1.4.0"
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
