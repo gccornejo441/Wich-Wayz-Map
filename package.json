@@ -6,6 +6,9 @@
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
   "author": "Gabe Cornejo <wich.wayz.map@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "vite --port 3100",
     "build": "tsc -b && vite build",

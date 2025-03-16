@@ -26,7 +26,6 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ["yup"],
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom"],

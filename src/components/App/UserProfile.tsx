@@ -7,7 +7,7 @@ import Account from "../Profile/Account";
 import { updateData } from "../../services/apiClient";
 import { userProfileSchema } from "../../constants/validators";
 import { useToast } from "../../context/toastContext";
-import { ValidationError } from "yup";
+import * as yup from "yup";
 
 const UserProfile = () => {
   const { addToast } = useToast();
@@ -61,7 +61,7 @@ const UserProfile = () => {
 
       addToast("Profile updated successfully.", "success");
     } catch (error) {
-      if (error instanceof ValidationError) {
+      if (error instanceof yup.ValidationError) {
         setValidationErrors(error.errors || []);
       } else if (error instanceof Error) {
         console.error("Error updating profile:", error.message);

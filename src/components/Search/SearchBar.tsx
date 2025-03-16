@@ -55,13 +55,14 @@ const SearchBar = () => {
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
-      setCenter([location.longitude, location.latitude]);
+      setCenter([location.longitude, location.latitude]); // ✅ This updates the map's center
       setZoom(16);
       setShopId(suggestion.id.toString());
       setUserInteracted(false);
     }
     setSearch(suggestion.name);
   };
+  
 
   const inputProps = {
     placeholder: "Search shops",
