@@ -51,11 +51,9 @@ const MapBox = () => {
     }
   }, []);
 
-  // Initialize the Map
   useEffect(() => {
     if (!position || !mapContainerRef.current) return;
 
-    // Remove any existing map instance
     if (mapRef.current) {
       mapRef.current.remove();
       mapRef.current = null;
@@ -79,7 +77,6 @@ const MapBox = () => {
     mapRef.current = map;
   }, [position, mapboxAccessToken, mapZoom]);
 
-  // Update markers on shop data change after the map has loaded
   useEffect(() => {
     if (mapLoaded && mapRef.current) {
       renderCustomMarkers(mapRef.current);
@@ -87,7 +84,6 @@ const MapBox = () => {
   }, [shops, mapLoaded]);
 
 
-  // Function to render custom shop markers
   const renderCustomMarkers = (map: Map) => {
     setLoading(true);
 
@@ -126,7 +122,6 @@ const MapBox = () => {
         )
         .addTo(map);
 
-      // Mark loading as false once the last marker is added
       if (index === array.length - 1) {
         setTimeout(() => setLoading(false), 500);
       }
@@ -159,6 +154,8 @@ const MapBox = () => {
             properties: {
               shopId: shop.id ?? 1,
               shopName: shop.name,
+              description: shop.description || "No description available",
+              
               address: [
                 location.street_address || "Address not available",
                 location.street_address_second || null,
