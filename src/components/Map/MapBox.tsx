@@ -83,7 +83,6 @@ const MapBox = () => {
     }
   }, [shops, mapLoaded]);
 
-
   const renderCustomMarkers = (map: Map) => {
     setLoading(true);
 
@@ -118,7 +117,7 @@ const MapBox = () => {
               <h2 style="margin: 0 0 8px; color: #DA291C;">${shopName}</h2>
               <p style="margin: 0; color: #333; font-size: 14px;">${address}</p>
             </div>
-          `)
+          `),
         )
         .addTo(map);
 
@@ -127,7 +126,6 @@ const MapBox = () => {
       }
     });
   };
-
 
   useEffect(() => {
     if (mapRef.current && center) {
@@ -138,7 +136,6 @@ const MapBox = () => {
       });
     }
   }, [center]);
-
 
   // Function to create GeoJSON data from shops
   const createGeoJsonData = (): GeoJSON.FeatureCollection<
@@ -155,7 +152,7 @@ const MapBox = () => {
               shopId: shop.id ?? 1,
               shopName: shop.name,
               description: shop.description || "No description available",
-              
+
               address: [
                 location.street_address || "Address not available",
                 location.street_address_second || null,

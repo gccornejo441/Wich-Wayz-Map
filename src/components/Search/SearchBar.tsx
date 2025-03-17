@@ -62,7 +62,6 @@ const SearchBar = () => {
     }
     setSearch(suggestion.name);
   };
-  
 
   const inputProps = {
     placeholder: "Search shops",

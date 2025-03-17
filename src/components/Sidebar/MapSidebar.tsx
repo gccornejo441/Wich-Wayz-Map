@@ -113,8 +113,9 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -183,16 +184,18 @@ const Sidebar = () => {
                 <div className="flex items-center mt-3">
                   <FiClock
                     size={18}
-                    className={`mr-2 ${selectedShop.locationOpen
+                    className={`mr-2 ${
+                      selectedShop.locationOpen
                         ? "text-secondary"
                         : "text-primary"
-                      }`}
+                    }`}
                   />
                   <span
-                    className={`font-medium ${selectedShop.locationOpen
+                    className={`font-medium ${
+                      selectedShop.locationOpen
                         ? "text-secondary"
                         : "text-primary"
-                      }`}
+                    }`}
                   >
                     {selectedShop.locationOpen ? "Open Now" : "Closed"}
                   </span>
