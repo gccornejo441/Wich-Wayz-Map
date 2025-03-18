@@ -37,7 +37,6 @@ const Sidebar = () => {
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
 
-  // Local vote state
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
   const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
@@ -162,6 +161,16 @@ const Sidebar = () => {
                 <div className="flex items-center mt-2 text-dark">
                   <FiMapPin size={28} className="mr-2 text-primary" />
                   <span>{selectedShop.address}</span>
+                </div>
+
+                {selectedShop.website && (
+                  <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
+                    This location is permanently closed.
+                  </span>
+                )}
+                <div className="flex items-center mt-2 text-dark">
+                  <FiGlobe size={22} className="mr-2 text-primary" />
+                  <span>{selectedShop.website}</span>
                 </div>
               </div>
 
