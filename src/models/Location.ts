@@ -12,4 +12,6 @@ export interface Location {
   state: string;
   country: string;
   location_open?: boolean;
+  phone?: string | null;
+  website?: string | null;
 }
