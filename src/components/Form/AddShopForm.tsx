@@ -42,6 +42,23 @@ const AddShopForm = () => {
         placeholder="Enter shop description"
       />
 
+      {/* Website URL */}
+      <InputField
+        name="website_url"
+        label="Website URL"
+        register={register}
+        errors={errors}
+        placeholder="Enter shop website URL"
+      />
+
+<InputField
+        name="phone"
+        label="Phone"
+        register={register}
+        errors={errors}
+        placeholder="Enter phone number"
+      />
+
       {/* Categories */}
       <div>
         <label className="block mb-2 text-sm font-medium text-dark">
@@ -116,11 +133,10 @@ const AddShopForm = () => {
 
       <button
         type="submit"
-        className={`w-full px-4 py-2 rounded-lg text-white ${
-          !isAddressValid || !!errors.shopName || !!errors.address
+        className={`w-full px-4 py-2 rounded-lg text-white ${!isAddressValid || !!errors.shopName || !!errors.address
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-primary hover:bg-secondary"
-        }`}
+          }`}
         disabled={!isAddressValid || !!errors.shopName || !!errors.address}
       >
         Submit Location

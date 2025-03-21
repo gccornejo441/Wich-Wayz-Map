@@ -12,6 +12,8 @@ export interface ShopLocation {
 export interface LocationData {
   shopName: string;
   address?: string;
+  website_url?: string;
+  phone?: string;
   address_first?: string;
   address_second?: string;
   house_number?: string;

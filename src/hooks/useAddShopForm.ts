@@ -38,6 +38,8 @@ export const useAddShopForm = () => {
       shopName: "",
       shop_description: "",
       address: "",
+      website_url: "",
+      phone: "",
       address_first: "",
       address_second: "",
       house_number: "",
