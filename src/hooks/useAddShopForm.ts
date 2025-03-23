@@ -11,10 +11,13 @@ import {
   GetCoordinatesAndAddressDetails,
   MapBoxLocationLookup,
 } from "@/services/geolocation";
-import { AddAShopPayload } from "@/types/dataTypes";
+import { AddAShopPayload, ShopWithId } from "@/types/dataTypes";
 import { locationSchema } from "@constants/validators";
 
-export const useAddShopForm = () => {
+export const useAddShopForm = (
+  initialData?: Partial<ShopWithId>,
+  mode: "add" | "edit" = "add",
+) => {
   const { setShops, setLocations } = useShops();
   const { addToast } = useToast();
   const { logout } = useAuth();
@@ -35,23 +38,39 @@ export const useAddShopForm = () => {
   } = useForm<AddAShopPayload>({
     resolver: yupResolver(locationSchema),
     defaultValues: {
-      shopName: "",
-      shop_description: "",
-      address: "",
-      website_url: "",
-      phone: "",
-      address_first: "",
-      address_second: "",
-      house_number: "",
-      city: "",
-      state: "",
-      postcode: "",
-      country: "",
-      latitude: 0,
-      longitude: 0,
-      categoryIds: [],
+      shopName: initialData?.shopName || "",
+      shop_description: initialData?.shop_description || "",
+      address: initialData?.address || "",
+      website_url: initialData?.website_url || "",
+      phone: initialData?.phone || "",
+      address_first: initialData?.address_first || "",
+      address_second: initialData?.address_second || "",
+      house_number: initialData?.house_number || "",
+      city: initialData?.city || "",
+      state: initialData?.state || "",
+      postcode: initialData?.postcode || "",
+      country: initialData?.country || "",
+      latitude: initialData?.latitude || 0,
+      longitude: initialData?.longitude || 0,
+      categoryIds: initialData?.categoryIds || [],
     },
   });
+
+  useEffect(() => {
+    if (initialData?.categoryIds) {
+      setSelectedCategories(initialData.categoryIds);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (initialData) {
+      for (const [key, value] of Object.entries(initialData)) {
+        if (value !== undefined) {
+          setValue(key as keyof AddAShopPayload, value);
+        }
+      }
+    }
+  }, [initialData]);
 
   /**
    * Fetch categories once on mount
@@ -141,7 +160,6 @@ export const useAddShopForm = () => {
       addToast("Failed to fetch address details. Please try again.", "error");
     }
   };
-
   /**
    * Handle final form submission
    */
@@ -155,16 +173,41 @@ export const useAddShopForm = () => {
     }
 
     data.categoryIds = selectedCategories;
+    let success = false;
+    const shopId = (initialData as { shopId?: number })?.shopId;
 
-    const success = await handleLocationSubmit(
-      data,
-      setShops,
-      setLocations,
-      addToast,
-      logout,
-      navigate,
-    );
-    if (success) navigate("/");
+    if (mode === "edit" && shopId) {
+      try {
+        const { updateShop } = await import("@/services/updateShop");
+        success = await updateShop(shopId, data);
+        if (success) {
+          addToast("Shop updated successfully!", "success");
+
+          // ✅ Update shop in local state
+          setShops((prev) =>
+            prev.map((shop) =>
+              shop.id === shopId ? { ...shop, ...data } : shop,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Update failed:", error);
+        addToast("Failed to update shop.", "error");
+      }
+    } else {
+      success = await handleLocationSubmit(
+        data,
+        setShops,
+        setLocations,
+        addToast,
+        logout,
+        navigate,
+      );
+    }
+
+    if (success) {
+      navigate("/");
+    }
   };
 
   return {

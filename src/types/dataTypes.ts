@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 export type Callback = () => void;
+export type ShopWithId = AddAShopPayload & { shopId: string | number };
 
 export interface ShopLocation {
   shop_id: number;

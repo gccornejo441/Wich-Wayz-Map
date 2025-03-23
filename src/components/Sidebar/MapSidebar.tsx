@@ -10,6 +10,7 @@ import {
   FiGlobe,
   FiUser,
   FiShare2,
+  FiEdit,
 } from "react-icons/fi";
 import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
@@ -17,6 +18,7 @@ import { GiSandwich } from "react-icons/gi";
 import { useModal } from "@/context/modalContext";
 import { HiExternalLink } from "react-icons/hi";
 import { useToast } from "@/context/toastContext";
+import { useNavigate } from "react-router-dom";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   if (upvotes > downvotes) return "Highly rated by sandwich fans!";
@@ -29,6 +31,7 @@ const Sidebar = () => {
     useShopSidebar();
   const { openSignupModal } = useModal();
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   const { isAuthenticated, user } = useAuth();
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
@@ -140,9 +143,24 @@ const Sidebar = () => {
               </div>
 
               {/* Shop Name */}
-              <h2 className="text-2xl font-semibold mt-4 text-accent">
-                {selectedShop.shopName}
-              </h2>
+              <div className="flex items-center justify-between mt-4">
+                <h2 className="text-2xl font-semibold text-accent">
+                  {selectedShop.shopName}
+                </h2>
+                {isMember && (
+                  <button
+                    onClick={() => {
+                      navigate("/add-shop", {
+                        state: { initialData: selectedShop },
+                      });
+                    }}
+                    title="Edit this shop"
+                    className="text-accent hover:text-primary transition-colors"
+                  >
+                    <FiEdit size={20} />
+                  </button>
+                )}
+              </div>
 
               {/* Shop Description */}
               {selectedShop.description && (

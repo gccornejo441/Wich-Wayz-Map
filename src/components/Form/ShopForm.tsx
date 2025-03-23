@@ -3,21 +3,27 @@ import { Category } from "@/services/categoryService";
 import { useAddShopForm } from "@/hooks/useAddShopForm";
 import InputField from "../Utilites/InputField";
 import ManualAddressFields from "../Utilites/ManualAddressFields";
+import { AddAShopPayload } from "@/types/dataTypes";
 
-const AddShopForm = () => {
+type ShopFormProps = {
+  initialData?: Partial<AddAShopPayload>;
+  mode: "add" | "edit";
+};
+
+const ShopForm = ({ initialData, mode }: ShopFormProps) => {
   const {
     register,
     handleSubmit,
-    onSubmit,
     errors,
     isManualEntry,
+    onSubmit,
     handledManualEntry,
     prefillAddressFields,
     isAddressValid,
     categories,
     selectedCategories,
     setSelectedCategories,
-  } = useAddShopForm();
+  } = useAddShopForm(initialData, mode);
 
   return (
     <form
@@ -51,7 +57,7 @@ const AddShopForm = () => {
         placeholder="Enter shop website URL"
       />
 
-<InputField
+      <InputField
         name="phone"
         label="Phone"
         register={register}
@@ -133,16 +139,17 @@ const AddShopForm = () => {
 
       <button
         type="submit"
-        className={`w-full px-4 py-2 rounded-lg text-white ${!isAddressValid || !!errors.shopName || !!errors.address
+        className={`w-full px-4 py-2 rounded-lg text-white ${
+          !isAddressValid || !!errors.shopName || !!errors.address
             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
             : "bg-primary hover:bg-secondary"
-          }`}
+        }`}
         disabled={!isAddressValid || !!errors.shopName || !!errors.address}
       >
-        Submit Location
+        {mode === "edit" ? "Update Location" : "Submit Location"}
       </button>
     </form>
   );
 };
 
-export default AddShopForm;
+export default ShopForm;

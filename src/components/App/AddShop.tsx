@@ -1,9 +1,11 @@
-import { useNavigate } from "react-router-dom";
-import AddShopForm from "../Form/AddShopForm";
+import { useLocation, useNavigate } from "react-router-dom";
 import { HiMap } from "react-icons/hi";
+import ShopForm from "../Form/ShopForm";
 
 const AddShop = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialData = location.state?.initialData;
 
   return (
     <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
@@ -16,7 +18,7 @@ const AddShop = () => {
           <HiMap className="w-5 h-5" /> To Map
         </button>
       </div>
-      <AddShopForm />
+      <ShopForm initialData={initialData} mode={initialData ? "edit" : "add"} />
     </div>
   );
 };
