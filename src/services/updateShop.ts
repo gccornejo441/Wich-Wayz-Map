@@ -1,28 +1,99 @@
+import { executeQuery, updateShopCategories } from "./apiClient";
 import { cacheData, getCachedData } from "./indexedDB";
 import { Shop } from "@/models/Shop";
-import { AddAShopPayload } from "@/types/dataTypes";
+
+export interface LocationData {
+  shopName: string;
+  address?: string;
+  website_url?: string;
+  phone?: string;
+  address_first?: string;
+  address_second?: string;
+  house_number?: string;
+  city?: string;
+  state?: string;
+  postcode: string;
+  country?: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface AddAShopPayload extends LocationData {
+  shop_description: string;
+  categoryIds: number[];
+}
 
 /**
- * Updates a shop's data via API and reflects changes in local cache and state.
+ * Update a shop in the database and cache
+ * @param shopId - The ID of the shop to update
+ * @param payload - The updated shop data
+ * @returns true if the update was successful, false otherwise
  */
 export const updateShop = async (
   shopId: number | string,
   payload: AddAShopPayload,
 ): Promise<boolean> => {
   try {
-    // 1. Send to backend
-    const response = await fetch(`/api/shops/${shopId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const {
+      shopName,
+      shop_description,
+      address,
+      website_url,
+      phone,
+      address_first,
+      address_second,
+      house_number,
+      city,
+      state,
+      postcode,
+      country,
+      latitude,
+      longitude,
+      categoryIds,
+    } = payload;
 
-    if (!response.ok) {
-      console.error("Failed to update shop via API");
-      return false;
+    const updateQuery = `
+      UPDATE shops
+      SET 
+        name = ?,
+        description = ?,
+        address = ?,
+        website_url = ?,
+        phone = ?,
+        address_first = ?,
+        address_second = ?,
+        house_number = ?,
+        city = ?,
+        state = ?,
+        postcode = ?,
+        country = ?,
+        latitude = ?,
+        longitude = ?
+      WHERE id = ?;
+    `;
+
+    await executeQuery(updateQuery, [
+      shopName ?? "",
+      shop_description ?? "",
+      address ?? "",
+      website_url ?? "",
+      phone ?? "",
+      address_first ?? "",
+      address_second ?? "",
+      house_number ?? "",
+      city ?? "",
+      state ?? "",
+      postcode ?? "",
+      country ?? "",
+      latitude ?? 0,
+      longitude ?? 0,
+      shopId,
+    ]);
+
+    if (categoryIds && categoryIds.length > 0) {
+      await updateShopCategories(Number(shopId), categoryIds);
     }
 
-    // 2. Update cache
     const cachedShops: Shop[] = await getCachedData("shops");
     const shopIndex = cachedShops.findIndex((shop) => shop.id === shopId);
 
