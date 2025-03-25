@@ -19,6 +19,7 @@ import { useModal } from "@/context/modalContext";
 import { HiExternalLink } from "react-icons/hi";
 import { useToast } from "@/context/toastContext";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   if (upvotes > downvotes) return "Highly rated by sandwich fans!";
@@ -150,7 +151,7 @@ const Sidebar = () => {
                 {isMember && (
                   <button
                     onClick={() => {
-                      navigate("/add-shop", {
+                      navigate(ROUTES.SHOPS.ADD, {
                         state: { initialData: selectedShop },
                       });
                     }}
@@ -344,7 +345,7 @@ const Sidebar = () => {
           )}
         </div>
 
-        {/* Foote */}
+        {/* Footer */}
         <div className="px-5 py-5">
           <div className="flex flex-col space-y-3">
             <button
