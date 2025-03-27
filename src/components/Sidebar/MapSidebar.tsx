@@ -151,6 +151,7 @@ const Sidebar = () => {
                 {isMember && (
                   <button
                     onClick={() => {
+                      closeSidebar();
                       navigate(ROUTES.SHOPS.ADD, {
                         state: { initialData: selectedShop },
                       });
