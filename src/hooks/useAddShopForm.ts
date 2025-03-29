@@ -70,7 +70,8 @@ export const useAddShopForm = (
     if (initialData) {
       const normalizedData: Partial<AddAShopPayload> = {
         shopName: initialData.shopName ?? "",
-        shop_description: initialData.shop_description ?? initialData.description ?? "",
+        shop_description:
+          initialData.shop_description ?? initialData.description ?? "",
         website_url: initialData.website_url ?? initialData.website ?? "",
         phone: initialData.phone ?? "",
         address: initialData.address ?? "",
@@ -85,22 +86,27 @@ export const useAddShopForm = (
         longitude: initialData.longitude ?? 0,
         categoryIds: initialData.categoryIds ?? [],
       };
-  
+
       for (const [key, value] of Object.entries(normalizedData)) {
         if (value !== undefined) {
           setValue(key as keyof AddAShopPayload, value);
         }
       }
-  
-      if (!initialData.categoryIds && typeof initialData.categories === "string") {
+
+      if (
+        !initialData.categoryIds &&
+        typeof initialData.categories === "string"
+      ) {
         const categoryNames = initialData.categories
           .split(",")
           .map((c: string) => c.trim().toLowerCase());
-  
+
         const matchedIds = categories
-          .filter((cat) => categoryNames.includes(cat.category_name.toLowerCase()))
+          .filter((cat) =>
+            categoryNames.includes(cat.category_name.toLowerCase()),
+          )
           .map((cat) => cat.id!);
-  
+
         setSelectedCategories(matchedIds);
       } else if (initialData.categoryIds) {
         setSelectedCategories(initialData.categoryIds);
@@ -134,7 +140,10 @@ export const useAddShopForm = (
 
     if (!address && !isManualEntryValid()) {
       setIsAddressValid(false);
-      addToast("Please enter a valid address or complete the manual form.", "error");
+      addToast(
+        "Please enter a valid address or complete the manual form.",
+        "error",
+      );
       return;
     }
 
@@ -149,7 +158,12 @@ export const useAddShopForm = (
       if (addressDetails) {
         setValue("house_number", addressDetails.components.house_number || "");
         setValue("address_first", addressDetails.components.road || "");
-        setValue("city", addressDetails.components.city || addressDetails.components.town || "");
+        setValue(
+          "city",
+          addressDetails.components.city ||
+            addressDetails.components.town ||
+            "",
+        );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
         setValue("country", addressDetails.components.country || "");
@@ -171,7 +185,10 @@ export const useAddShopForm = (
 
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
-      addToast("Please prefill and validate the address before submitting.", "error");
+      addToast(
+        "Please prefill and validate the address before submitting.",
+        "error",
+      );
       return;
     }
 
@@ -187,7 +204,9 @@ export const useAddShopForm = (
           addToast("Shop updated successfully!", "success");
 
           setShops((prev) =>
-            prev.map((shop) => (shop.id === shopId ? { ...shop, ...data } : shop)),
+            prev.map((shop) =>
+              shop.id === shopId ? { ...shop, ...data } : shop,
+            ),
           );
         }
       } catch (error) {
