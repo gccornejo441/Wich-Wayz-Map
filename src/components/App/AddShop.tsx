@@ -10,7 +10,9 @@ const AddShop = () => {
   return (
     <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-secondary">
-        <h3 className="text-lg font-semibold text-dark">Add A Sandwich Shop</h3>
+        <h2 className="text-2xl font-bold text-dark">
+          {initialData ? `Edit ${initialData?.shopName}` : "Add New Shop"}
+        </h2>
         <button
           onClick={() => navigate("/")}
           className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary flex gap-2 transition duration-300"
