@@ -11,6 +11,7 @@ export interface ShopsContextType {
   locations: Location[];
   setShops: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
+  updateShopInContext: (updatedShop: ShopWithUser) => void;
 }
 
 export const ShopsContext = createContext<ShopsContextType | null>(null);
@@ -63,6 +64,26 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     fetchData();
   }, []);
 
+  const updateShopInContext = (updatedShop: ShopWithUser) => {
+    setShops((prev) => {
+      const updatedShops = prev.map((shop) =>
+        shop.id === updatedShop.id ? updatedShop : shop
+      );
+      cacheData("shops", updatedShops);
+      return updatedShops;
+    });
+  
+    setLocations((prev) => {
+      const updatedLocations = updatedShop.locations || [];
+      const updatedLocationMap = new Map(updatedLocations.map(loc => [loc.id, loc]));
+      const updatedAll = prev.map((loc) =>
+        updatedLocationMap.has(loc.id) ? updatedLocationMap.get(loc.id)! : loc
+      );
+      cacheData("locations", updatedAll);
+      return updatedAll;
+    });
+  };
+
   return (
     <ShopsContext.Provider
       value={{
@@ -70,6 +91,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         locations,
         setShops,
         setLocations,
+        updateShopInContext,
       }}
     >
       {children}

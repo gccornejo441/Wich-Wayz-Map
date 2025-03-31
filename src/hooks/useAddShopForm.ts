@@ -21,7 +21,7 @@ export const useAddShopForm = (
   initialData?: ShopInitialData,
   mode: "add" | "edit" = "add",
 ) => {
-  const { setShops, setLocations } = useShops();
+  const { setShops, setLocations, updateShopInContext } = useShops();
   const { addToast } = useToast();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -182,53 +182,50 @@ export const useAddShopForm = (
       addToast("Failed to fetch address details. Please try again.", "error");
     }
   };
-
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
-      addToast(
-        "Please prefill and validate the address before submitting.",
-        "error",
-      );
+      addToast("Please prefill and validate the address before submitting.", "error");
       return;
     }
-
+  
     data.categoryIds = selectedCategories;
-    let success = false;
     const shopId = (initialData as { shopId?: number })?.shopId;
-
+  
     if (mode === "edit" && shopId) {
       try {
         const { updateShop } = await import("@/services/updateShop");
-        success = await updateShop(shopId, data);
-        if (success) {
+        const updatedShop = await updateShop(shopId, data);
+  
+        if (updatedShop) {
           addToast("Shop updated successfully!", "success");
-
-          setShops((prev) =>
-            prev.map((shop) =>
-              shop.id === shopId ? { ...shop, ...data } : shop,
-            ),
-          );
+          updateShopInContext(updatedShop);
+          navigate("/");
+        } else {
+          addToast("Failed to update shop.", "error");
         }
       } catch (error) {
         console.error("Update failed:", error);
         addToast("Failed to update shop.", "error");
       }
-    } else {
-      success = await handleLocationSubmit(
-        data,
-        setShops,
-        setLocations,
-        addToast,
-        logout,
-        navigate,
-      );
+  
+      return;
     }
-
+  
+    const success = await handleLocationSubmit(
+      data,
+      setShops,
+      setLocations,
+      addToast,
+      logout,
+      navigate,
+    );
+  
     if (success) {
       navigate("/");
     }
   };
 
+  
   return {
     register,
     handleSubmit,
