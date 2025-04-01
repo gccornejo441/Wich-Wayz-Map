@@ -5,7 +5,6 @@ import { useVote } from "@/context/voteContext";
 import {
   FiArrowLeft,
   FiMapPin,
-  FiClock,
   FiPhone,
   FiGlobe,
   FiUser,
@@ -114,6 +113,8 @@ const Sidebar = () => {
 
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
+  console.warn("Sidebar rendered with selected shop:", selectedShop);
+
   return (
     <aside
       className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
@@ -183,15 +184,11 @@ const Sidebar = () => {
                   <span>{selectedShop.address}</span>
                 </div>
 
-                {selectedShop.website && (
+                {selectedShop.locationOpen && (
                   <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
                     This location is permanently closed.
                   </span>
                 )}
-                <div className="flex items-center mt-2 text-dark">
-                  <FiGlobe size={22} className="mr-2 text-primary" />
-                  <span>{selectedShop.website}</span>
-                </div>
               </div>
 
               {/* Categories */}
@@ -209,7 +206,7 @@ const Sidebar = () => {
               )}
 
               {/* Opening Hours */}
-              {selectedShop.locationOpen !== undefined && (
+              {/* {selectedShop.locationOpen !== undefined && (
                 <div className="flex items-center mt-3">
                   <FiClock
                     size={18}
@@ -229,7 +226,7 @@ const Sidebar = () => {
                     {selectedShop.locationOpen ? "Open Now" : "Closed"}
                   </span>
                 </div>
-              )}
+              )} */}
 
               {/* Contact Information */}
               <div className="mt-4 space-y-3">

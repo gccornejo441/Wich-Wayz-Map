@@ -169,6 +169,8 @@ const MapBox = () => {
                   .join(", ") || "No categories available",
               usersAvatarId: shop.users_avatar_id,
               locationOpen: location.location_open,
+              website: location.website || "No website available",
+              phone: location.phone || "No phone number available",
             },
             geometry: {
               type: "Point",

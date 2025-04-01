@@ -11,32 +11,37 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
   try {
     const shopsQuery = `
       SELECT 
-        shops.id AS shop_id,
-        shops.name AS shop_name,
-        shops.description,
-        shops.modified_by,
-        shops.created_by,
-        users.username AS created_by_username,
-        users.avatar AS users_avatar_id,
-        shops.date_created,
-        shops.date_modified,
-        locations.id AS location_id,
-        locations.postal_code,
-        locations.latitude,
-        locations.longitude,
-        locations.street_address,
-        locations.street_address_second,
-        locations.city,
-        locations.state,
-        locations.country,
-        categories.id AS category_id,
-        categories.category_name
-      FROM shops
-      LEFT JOIN users ON shops.created_by = users.id
-      LEFT JOIN shop_locations ON shops.id = shop_locations.shop_id
-      LEFT JOIN locations ON shop_locations.location_id = locations.id
-      LEFT JOIN shop_categories ON shops.id = shop_categories.shop_id
-      LEFT JOIN categories ON shop_categories.category_id = categories.id;
+        s.id AS shop_id,
+        s.name AS shop_name,
+        s.description,
+        s.modified_by,
+        s.created_by,
+        u.username AS created_by_username,
+        u.avatar AS users_avatar_id,
+        s.date_created,
+        s.date_modified,
+        s.id_location,
+        l.postal_code,
+        l.latitude,
+        l.longitude,
+        l.modified_by AS location_modified_by,
+        l.date_created AS location_date_created,
+        l.date_modified AS location_date_modified,
+        l.street_address,
+        l.street_address_second,
+        l.city,
+        l.state,
+        l.country,
+        l.location_open,
+        l.phone,
+        l.website_url,
+        c.id AS category_id,
+        c.category_name
+      FROM shops s
+      LEFT JOIN users u ON s.created_by = u.id
+      LEFT JOIN shop_categories sc ON s.id = sc.shop_id
+      LEFT JOIN categories c ON sc.category_id = c.id
+      LEFT JOIN locations l ON s.id_location = l.id;
     `;
 
     const { rows: shopData } = await executeQuery<{
@@ -49,15 +54,21 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
       users_avatar_id: string | null;
       date_created: string;
       date_modified: string | null;
-      location_id: number | null;
+      id_location: number | null;
       postal_code: string | null;
       latitude: number | null;
       longitude: number | null;
+      location_modified_by: number | null;
+      location_date_created: string | null;
+      location_date_modified: string | null;
       street_address: string | null;
       street_address_second: string | null;
       city: string | null;
       state: string | null;
       country: string | null;
+      location_open: string | null;
+      phone: string | null;
+      website_url: string | null;
       category_id: number | null;
       category_name: string | null;
     }>(shopsQuery);
@@ -79,36 +90,37 @@ export const GetShops = async (): Promise<ShopWithUser[]> => {
           locations: [],
           categories: [],
         };
-      }
 
-      if (row.location_id) {
-        const locationExists = shopMap[row.shop_id].locations?.some(
-          (loc) => loc.id === row.location_id,
-        );
-        if (!locationExists) {
-          shopMap[row.shop_id].locations?.push({
-            id: row.location_id,
+        if (row.id_location) {
+          shopMap[row.shop_id].locations!.push({
+            id: row.id_location,
             postal_code: row.postal_code || "",
             latitude: row.latitude || 0,
             longitude: row.longitude || 0,
+            modified_by: row.location_modified_by || undefined,
+            date_created: row.location_date_created || undefined,
+            date_modified: row.location_date_modified || undefined,
             street_address: row.street_address || "",
-            street_address_second: row.street_address_second || null,
+            street_address_second: row.street_address_second || "",
             city: row.city || "",
             state: row.state || "",
             country: row.country || "",
-            modified_by: undefined,
-            date_created: undefined,
-            date_modified: undefined,
+            location_open: row.location_open
+              ? row.location_open === "true"
+              : undefined,
+            phone: row.phone || null,
+            website: row.website_url || null,
           });
         }
       }
 
       if (row.category_id) {
-        const categoryExists = shopMap[row.shop_id].categories?.some(
+        const shopEntry = shopMap[row.shop_id]!;
+        const categoryExists = shopEntry.categories!.some(
           (cat) => cat.id === row.category_id,
         );
         if (!categoryExists) {
-          shopMap[row.shop_id].categories?.push({
+          shopEntry.categories!.push({
             id: row.category_id,
             category_name: row.category_name || "Unknown",
           });

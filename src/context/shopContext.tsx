@@ -64,20 +64,28 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     fetchData();
   }, []);
 
-  const updateShopInContext = (updatedShop: ShopWithUser) => {
+  const updateShopInContext = async (updatedShop: ShopWithUser) => {
+    if (!updatedShop.locations?.length) {
+      const allShops = await GetShops();
+      updatedShop =
+        allShops.find((s) => s.id === updatedShop.id) || updatedShop;
+    }
+
     setShops((prev) => {
       const updatedShops = prev.map((shop) =>
-        shop.id === updatedShop.id ? updatedShop : shop
+        shop.id === updatedShop.id ? updatedShop : shop,
       );
       cacheData("shops", updatedShops);
       return updatedShops;
     });
-  
+
     setLocations((prev) => {
       const updatedLocations = updatedShop.locations || [];
-      const updatedLocationMap = new Map(updatedLocations.map(loc => [loc.id, loc]));
+      const updatedLocationMap = new Map(
+        updatedLocations.map((loc) => [loc.id, loc]),
+      );
       const updatedAll = prev.map((loc) =>
-        updatedLocationMap.has(loc.id) ? updatedLocationMap.get(loc.id)! : loc
+        updatedLocationMap.has(loc.id) ? updatedLocationMap.get(loc.id)! : loc,
       );
       cacheData("locations", updatedAll);
       return updatedAll;

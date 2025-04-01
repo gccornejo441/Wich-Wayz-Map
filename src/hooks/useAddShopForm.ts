@@ -184,18 +184,21 @@ export const useAddShopForm = (
   };
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
-      addToast("Please prefill and validate the address before submitting.", "error");
+      addToast(
+        "Please prefill and validate the address before submitting.",
+        "error",
+      );
       return;
     }
-  
+
     data.categoryIds = selectedCategories;
     const shopId = (initialData as { shopId?: number })?.shopId;
-  
+
     if (mode === "edit" && shopId) {
       try {
         const { updateShop } = await import("@/services/updateShop");
         const updatedShop = await updateShop(shopId, data);
-  
+
         if (updatedShop) {
           addToast("Shop updated successfully!", "success");
           updateShopInContext(updatedShop);
@@ -207,10 +210,10 @@ export const useAddShopForm = (
         console.error("Update failed:", error);
         addToast("Failed to update shop.", "error");
       }
-  
+
       return;
     }
-  
+
     const success = await handleLocationSubmit(
       data,
       setShops,
@@ -219,13 +222,12 @@ export const useAddShopForm = (
       logout,
       navigate,
     );
-  
+
     if (success) {
       navigate("/");
     }
   };
 
-  
   return {
     register,
     handleSubmit,

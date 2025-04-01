@@ -13,18 +13,15 @@ import { ShopWithUser } from "@/models/ShopWithUser";
  */
 export const updateShop = async (
   shopId: number | string,
-  payload: AddAShopPayload
+  payload: AddAShopPayload,
 ): Promise<ShopWithUser | null> => {
   try {
-    // Update the shops table
     await updateShopsTable(shopId, payload);
 
-    // Update categories
     if (payload.categoryIds?.length) {
       await updateShopCategories(Number(shopId), payload.categoryIds);
     }
 
-    // Update location
     const locationId = await getLocationIdForShop(shopId);
     if (!locationId) {
       console.error(`No location_id found for shop_id = ${shopId}`);
@@ -33,13 +30,10 @@ export const updateShop = async (
 
     await updateLocationsTable(locationId, payload);
 
-    // Update local cache (optional if you'll replace context instead)
     await updateCachedShops(shopId, payload);
 
-    // ✅ Return updated shop object
     const allShops = await GetShops();
     return allShops.find((s) => s.id === Number(shopId)) || null;
-
   } catch (error) {
     console.error("updateShop error:", error);
     return null;
@@ -53,7 +47,7 @@ export const updateShop = async (
  */
 async function updateShopsTable(
   shopId: number | string,
-  { shopName, shop_description }: AddAShopPayload
+  { shopName, shop_description }: AddAShopPayload,
 ) {
   const query = `
     UPDATE shops
@@ -79,7 +73,7 @@ interface LocationIdRow {
  * @throws May throw an error if the database query fails.
  */
 async function getLocationIdForShop(
-  shopId: number | string
+  shopId: number | string,
 ): Promise<number | null> {
   const query = `
     SELECT location_id
@@ -102,7 +96,7 @@ async function getLocationIdForShop(
  */
 async function updateLocationsTable(
   locationId: number,
-  payload: AddAShopPayload
+  payload: AddAShopPayload,
 ) {
   const {
     house_number,
@@ -163,7 +157,7 @@ async function updateLocationsTable(
  */
 async function updateCachedShops(
   shopId: number | string,
-  payload: AddAShopPayload
+  payload: AddAShopPayload,
 ) {
   const cachedShops: Shop[] = await getCachedData("shops");
   const shopIndex = cachedShops.findIndex((shop) => shop.id === shopId);

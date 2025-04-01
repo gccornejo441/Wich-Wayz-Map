@@ -1,41 +1,6 @@
-import { ShopLocation } from "../types/dataTypes";
-import { executeQuery, tursoClient } from "./apiClient";
+import { tursoClient } from "./apiClient";
 import { Location } from "@models/Location";
 import { Shop } from "@models/Shop";
-
-/**
- * Retrieves all locations from the database.
- *
- * @returns {Promise<Location[]>} A list of all locations.
- * @throws Logs an error if the fetch fails.
- */
-export const GetLocations = async (): Promise<Location[]> => {
-  try {
-    const query = `SELECT * FROM locations`;
-    const { rows } = await executeQuery<Location>(query);
-    return rows;
-  } catch (error) {
-    console.error("Error fetching locations:", error);
-    return [];
-  }
-};
-
-/**
- * Retrieves all shop-location pairs from the database.
- *
- * @returns An array of objects, each with `shop_id` and `location_id` properties.
- * @throws Logs an error if the fetch fails.
- */
-export const GetShopLocations = async (): Promise<ShopLocation[]> => {
-  try {
-    const query = `SELECT * FROM shop_locations`;
-    const { rows } = await executeQuery<ShopLocation>(query);
-    return rows;
-  } catch (error) {
-    console.error("Error fetching shop-locations:", error);
-    return [];
-  }
-};
 
 /**
  * Submits a location and associates it with a shop and categories in a single transaction.
@@ -220,6 +185,40 @@ export async function submitLocationWithShop(payload: {
     throw error;
   }
 }
+
+/**
+ * Retrieves all locations from the database.
+ *
+ * @returns {Promise<Location[]>} A list of all locations.
+ * @throws Logs an error if the fetch fails.
+ */
+// export const GetLocations = async (): Promise<Location[]> => {
+//   try {
+//     const query = `SELECT * FROM locations`;
+//     const { rows } = await executeQuery<Location>(query);
+//     return rows;
+//   } catch (error) {
+//     console.error("Error fetching locations:", error);
+//     return [];
+//   }
+// };
+
+/**
+ * Retrieves all shop-location pairs from the database.
+ *
+ * @returns An array of objects, each with `shop_id` and `location_id` properties.
+ * @throws Logs an error if the fetch fails.
+ */
+// export const GetShopLocations = async (): Promise<ShopLocation[]> => {
+//   try {
+//     const query = `SELECT * FROM shop_locations`;
+//     const { rows } = await executeQuery<ShopLocation>(query);
+//     return rows;
+//   } catch (error) {
+//     console.error("Error fetching shop-locations:", error);
+//     return [];
+//   }
+// };
 
 /**
  * Updates a location in the database with the given data.
