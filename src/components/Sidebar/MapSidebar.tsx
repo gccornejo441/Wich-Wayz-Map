@@ -117,9 +117,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -229,8 +228,9 @@ const Sidebar = () => {
               )} */}
 
               {/* Contact Information */}
+              {/* If selectedShop.phone is No phone number available then don't display phone section */}
               <div className="mt-4 space-y-3">
-                {selectedShop.phone && (
+                {selectedShop.phone && selectedShop.phone !== "No phone number available" && (
                   <div className="flex items-center text-dark">
                     <FiPhone size={18} className="mr-2 text-primary" />
                     <a
@@ -241,6 +241,7 @@ const Sidebar = () => {
                     </a>
                   </div>
                 )}
+
                 {selectedShop.usersAvatarEmail && (
                   <div className="flex items-center text-dark">
                     <FiUser size={18} className="mr-2 text-primary" />

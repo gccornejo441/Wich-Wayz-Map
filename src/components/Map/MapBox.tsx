@@ -37,7 +37,6 @@ const MapBox = () => {
   const { openSidebar } = useShopSidebar();
   const mapZoom = zoom ?? 13;
 
-  // Get user's geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
