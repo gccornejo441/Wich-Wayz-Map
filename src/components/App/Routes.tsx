@@ -9,7 +9,7 @@ import SignIn from "./SignIn";
 import { ROUTES } from "../../constants/routes";
 import TearmsOfService from "./TermsOfService";
 import AdminSettings from "./AdminSettings";
-import AddShop from "./AddShop";
+import AddShop from "./AddEditShop";
 import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
 import MapSidebar from "../Sidebar/MapSidebar";

@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { HiMap } from "react-icons/hi";
 import ShopForm from "../Form/ShopForm";
 
-const AddShop = () => {
+const AddEditShop = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialData = location.state?.initialData;
@@ -25,4 +25,4 @@ const AddShop = () => {
   );
 };
 
-export default AddShop;
+export default AddEditShop;

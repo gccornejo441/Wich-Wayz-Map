@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import AddShop from "../../src/components/App/AddShop";
+import AddShop from "../../src/components/App/AddEditShop";
 import "@testing-library/jest-dom";
 
 vi.mock("react-router-dom", () => ({
