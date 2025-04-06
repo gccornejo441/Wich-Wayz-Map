@@ -117,9 +117,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -193,17 +192,26 @@ const Sidebar = () => {
 
               {/* Categories */}
               {selectedShop.categories && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {selectedShop.categories.split(",").map((category, index) => (
-                    <span
-                      key={index}
-                      className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
-                    >
-                      {category.trim()}
-                    </span>
-                  ))}
+                <div className="mt-2">
+                  <h3 className="sr-only">Shop Categories</h3>
+                  <ul
+                    className="flex flex-wrap gap-2"
+                    aria-label={`Categories for ${selectedShop.shopName}`}
+                  >
+                    {selectedShop.categories.split(",").map((category, index) => (
+                      <li key={index}>
+                        <span
+                          role="listitem"
+                          className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
+                        >
+                          {category.trim()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
+
 
               {/* Opening Hours */}
               {/* {selectedShop.locationOpen !== undefined && (
