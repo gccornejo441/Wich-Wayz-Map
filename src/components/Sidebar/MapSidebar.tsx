@@ -39,6 +39,7 @@ const Sidebar = () => {
 
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
@@ -198,19 +199,41 @@ const Sidebar = () => {
                     className="flex flex-wrap gap-2"
                     aria-label={`Categories for ${selectedShop.shopName}`}
                   >
-                    {selectedShop.categories.split(",").map((category, index) => (
-                      <li key={index}>
-                        <span
-                          role="listitem"
-                          className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
-                        >
-                          {category.trim()}
-                        </span>
-                      </li>
-                    ))}
+                    {selectedShop.categories
+                      .split(",")
+                      .map((category) => category.trim())
+                      .map((category, index) => {
+                        const isHidden = !showAllCategories && index >= 3;
+                        return (
+                          <li
+                            key={index}
+                            className={isHidden ? "hidden" : ""}
+                          >
+                            <span
+                              role="listitem"
+                              className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
+                            >
+                              {category}
+                            </span>
+                          </li>
+                        );
+                      })}
                   </ul>
+
+                  {/* Toggle Button */}
+                  {selectedShop.categories.split(",").length > 3 && (
+                    <button
+                      onClick={() => setShowAllCategories((prev) => !prev)}
+                      className="mt-2 text-xs text-primary underline focus:outline-none"
+                      aria-expanded={showAllCategories}
+                      aria-controls="categories-list"
+                    >
+                      {showAllCategories ? "Show less" : "Show more"}
+                    </button>
+                  )}
                 </div>
               )}
+
 
 
               {/* Opening Hours */}
