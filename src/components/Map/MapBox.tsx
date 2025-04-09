@@ -4,7 +4,7 @@ import { useShops } from "../../context/shopContext";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
-import { FaSpinner } from "react-icons/fa"; 
+import { FaSpinner } from "react-icons/fa";
 const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128]; // NYC
 
 type Coordinates = [number, number];
@@ -183,30 +183,30 @@ const MapBox = () => {
   };
 
   return (
-<div>
-  {/* Map Spinner */}
-  {loading && (
-    <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-white bg-opacity-75 z-50">
-      <FaSpinner className="animate-spin text-primary text-4xl" />
+    <div>
+      {/* Map Spinner */}
+      {loading && (
+        <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-white bg-opacity-75 z-50">
+          <FaSpinner className="animate-spin text-primary text-4xl" />
+        </div>
+      )}
+      <div
+        ref={mapContainerRef}
+        style={{
+          height: "100vh",
+          width: "100vw",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      />
+      <SpeedDial
+        onLocateUser={() => {
+          const event = new Event("locateUser");
+          window.dispatchEvent(event);
+        }}
+      />
     </div>
-  )}
-  <div
-    ref={mapContainerRef}
-    style={{
-      height: "100vh",
-      width: "100vw",
-      position: "absolute",
-      top: 0,
-      left: 0,
-    }}
-  />
-  <SpeedDial
-    onLocateUser={() => {
-      const event = new Event("locateUser");
-      window.dispatchEvent(event);
-    }}
-  />
-</div>
   );
 };
 

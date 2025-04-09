@@ -118,8 +118,9 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -205,10 +206,7 @@ const Sidebar = () => {
                       .map((category, index) => {
                         const isHidden = !showAllCategories && index >= 3;
                         return (
-                          <li
-                            key={index}
-                            className={isHidden ? "hidden" : ""}
-                          >
+                          <li key={index} className={isHidden ? "hidden" : ""}>
                             <span
                               role="listitem"
                               className="bg-secondary text-dark px-3 py-1 rounded-full text-xs font-semibold"
@@ -233,8 +231,6 @@ const Sidebar = () => {
                   )}
                 </div>
               )}
-
-
 
               {/* Opening Hours */}
               {/* {selectedShop.locationOpen !== undefined && (
