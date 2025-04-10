@@ -1,6 +1,6 @@
 {
   "name": "wich-wayz",
-  "version": "0.9.32",
+  "version": "0.9.33",
   "type": "module",
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
@@ -30,6 +30,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@libsql/client": "^0.14.0",
+    "@react-input/mask": "^2.0.4",
     "@stripe/react-stripe-js": "^3.0.0",
     "@stripe/stripe-js": "^5.2.0",
     "@swc/core": "^1.9.2",
