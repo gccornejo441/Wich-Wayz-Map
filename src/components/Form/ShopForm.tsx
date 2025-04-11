@@ -58,18 +58,15 @@ const ShopForm = ({ initialData, mode }: ShopFormProps) => {
         placeholder="Enter shop website URL"
       />
 
-      <InputField
-        name="phone"
-        label="Phone"
-        errors={errors}
-      >
+      <InputField name="phone" label="Phone" errors={errors}>
         <InputMask
           mask="(___) ___-____"
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full p-2 border rounded-lg bg-white text-dark ${errors.phone ? "border-red-500" : "border-secondary"
-            }`}
+          className={`w-full p-2 border rounded-lg bg-white text-dark ${
+            errors.phone ? "border-red-500" : "border-secondary"
+          }`}
         />
       </InputField>
 
@@ -147,10 +144,11 @@ const ShopForm = ({ initialData, mode }: ShopFormProps) => {
 
       <button
         type="submit"
-        className={`w-full px-4 py-2 rounded-lg text-white ${!isAddressValid || !!errors.shopName || !!errors.address
-          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-          : "bg-primary hover:bg-secondary"
-          }`}
+        className={`w-full px-4 py-2 rounded-lg text-white ${
+          !isAddressValid || !!errors.shopName || !!errors.address
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-primary hover:bg-secondary"
+        }`}
         disabled={!isAddressValid || !!errors.shopName || !!errors.address}
       >
         {mode === "edit" ? "Update Location" : "Submit Location"}

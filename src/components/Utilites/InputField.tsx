@@ -13,7 +13,7 @@ interface InputFieldProps<T extends FieldValues> {
   step?: string;
   register?: UseFormRegister<T>;
   errors: FieldErrors<T>;
-  children?: React.ReactNode; 
+  children?: React.ReactNode;
 }
 
 function InputField<T extends FieldValues>({
@@ -43,16 +43,14 @@ function InputField<T extends FieldValues>({
           type={type}
           step={step}
           placeholder={placeholder}
-          {...register?.(name)} 
+          {...register?.(name)}
           className={`w-full p-2 border rounded-lg bg-white text-dark ${
             errors[name] ? "border-red-500" : "border-secondary"
           }`}
         />
       )}
 
-      {errorMessage && (
-        <p className="text-red-500 text-sm">{errorMessage}</p>
-      )}
+      {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
     </div>
   );
 }
