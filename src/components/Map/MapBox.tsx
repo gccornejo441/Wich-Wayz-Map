@@ -109,16 +109,16 @@ const MapBox = () => {
       });
 
       new mapboxgl.Marker(markerElement)
-      .setLngLat(coordinates as [number, number])
-      .setPopup(
-        new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        .setLngLat(coordinates as [number, number])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`
           <div style="font-family: Arial, sans-serif; padding: 6px 6px; border-radius: 10px; max-width: 240px;">
             <h2 style="margin: 0 0 6px 0; font-size: 18px; color: #DA291C; word-wrap: break-word;">${shopName}</h2>
             <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.4;">${address}</p>
           </div>
         `),
-      )
-      .addTo(map);
+        )
+        .addTo(map);
 
       if (index === array.length - 1) {
         setTimeout(() => setLoading(false), 500);
