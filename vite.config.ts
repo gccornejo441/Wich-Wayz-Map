@@ -29,7 +29,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom"],
-          "leaflet-vendor": ["leaflet", "react-leaflet"],
           "axios-idb": ["axios", "idb"],
         },
       },
