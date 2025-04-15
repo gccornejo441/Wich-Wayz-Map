@@ -118,9 +118,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -218,7 +217,7 @@ const Sidebar = () => {
                       })}
                   </ul>
 
-                  {/* Toggle Button */}
+
                   {selectedShop.categories.split(",").length > 3 && (
                     <button
                       onClick={() => setShowAllCategories((prev) => !prev)}
@@ -282,19 +281,18 @@ const Sidebar = () => {
                     </a>
                   </div>
                 )}
-                {selectedShop.website && (
-                  <div className="flex items-center text-dark">
+                {selectedShop.website?.trim() ? (
+                  <a
+                    href={selectedShop.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline hover:text-primary flex items-center text-dark"
+                  >
                     <FiGlobe size={18} className="mr-2 text-primary" />
-                    <a
-                      href={selectedShop.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline hover:text-primary"
-                    >
-                      Visit Website
-                    </a>
-                  </div>
-                )}
+                    Visit Website
+                  </a>
+                ) : null}
+
               </div>
 
               {/* Google Map & Share Buttons */}
