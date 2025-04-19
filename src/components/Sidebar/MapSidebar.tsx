@@ -118,8 +118,9 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -281,7 +282,8 @@ const Sidebar = () => {
                   </div>
                 )}
                 {selectedShop.website?.trim() &&
-                  selectedShop.website.trim().toLowerCase() !== "no website available" ? (
+                selectedShop.website.trim().toLowerCase() !==
+                  "no website available" ? (
                   <a
                     href={selectedShop.website}
                     target="_blank"
@@ -292,7 +294,6 @@ const Sidebar = () => {
                     Visit Website
                   </a>
                 ) : null}
-
               </div>
 
               {/* Google Map & Share Buttons */}
