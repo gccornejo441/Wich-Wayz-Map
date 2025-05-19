@@ -43,6 +43,9 @@ export const writeCategoriesToLocalStorage = (categories: Category[]): void => {
   localStorage.setItem("categories", JSON.stringify(categories));
 };
 
+/**
+ * Synchronizes the local storage with the database.
+ */
 export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
   const dbCategories = await fetchCategoriesFromDatabase();
   const localStorageCategories = readCategoriesFromLocalStorage();
@@ -53,6 +56,13 @@ export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
   }
 };
 
+/**
+ * Adds a category to the database if it doesn't already exist.
+ *
+ * @param categoryName - The name of the category to add.
+ * @param description - The description of the category.
+ * @throws Will throw an error if the category already exists in the database.
+ */
 export const addCategoryIfNotExists = async (
   categoryName: string,
   description: string,

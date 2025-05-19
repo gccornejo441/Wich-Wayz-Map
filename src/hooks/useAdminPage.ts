@@ -105,6 +105,7 @@ export const useAdminPage = () => {
         return;
       }
 
+      // Check if the category already exists, add it if not.
       await addCategoryIfNotExists(categoryName, description);
 
       addToast("Category added successfully!", "success");
