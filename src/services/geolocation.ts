@@ -30,12 +30,9 @@ interface MapBoxContextItem {
 }
 
 /**
- * Perform a forward geocoding search using OpenStreetMap's Nominatim API.
- *
- * @param {string} address The search query to use for the geocoding search.
- *
- *
- * @returns {Promise<ParsedAddress | null>} The coordinates and address components parsed from the search result, or null if there was an error or no results were found.
+ * Get the coordinates and address details for a given address.
+ * @param address The address to lookup.
+ * @returns The parsed address details, or null if not found.
  */
 async function GetCoordinatesAndAddressDetails(
   address: string,
