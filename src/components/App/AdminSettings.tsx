@@ -22,6 +22,7 @@ const AdminPage = () => {
     handleRoleUpdate,
     handleDeleteUser,
     handleAddCategory,
+    handleDownloadCategories,
   } = useAdminPage();
 
   const [description, setDescription] = useState("");
@@ -64,7 +65,7 @@ const AdminPage = () => {
             description={description}
             setDescription={setDescription}
             handleAddCategory={handleAddCategory}
-            handleDownloadCategories={() => {}}
+             handleDownloadCategories={handleDownloadCategories}
           />
         </div>
       )}

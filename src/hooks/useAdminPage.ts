@@ -127,6 +127,7 @@ export const useAdminPage = () => {
   const handleDownloadCategories = async () => {
     try {
       const categories = await getAllCategories();
+      console.log("Categories:", categories);
       const jsonStr = JSON.stringify(categories, null, 2);
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
