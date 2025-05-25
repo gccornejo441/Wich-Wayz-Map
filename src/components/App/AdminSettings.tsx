@@ -65,7 +65,7 @@ const AdminPage = () => {
             description={description}
             setDescription={setDescription}
             handleAddCategory={handleAddCategory}
-             handleDownloadCategories={handleDownloadCategories}
+            handleDownloadCategories={handleDownloadCategories}
           />
         </div>
       )}

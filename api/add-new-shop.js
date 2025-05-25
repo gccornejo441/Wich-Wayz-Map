@@ -85,7 +85,6 @@ export default async function handler(req, res) {
       });
     }
 
-
     await db.commit();
     res.status(200).json({ shopId, locationId });
   } catch (err) {

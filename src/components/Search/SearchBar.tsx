@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Autosuggest from "react-autosuggest";
-import { HiSearch } from "react-icons/hi";
+import {HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { IndexedDBShop } from "@/services/indexedDB";
@@ -55,7 +55,7 @@ const SearchBar = () => {
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
-      setCenter([location.longitude, location.latitude]); // ✅ This updates the map's center
+      setCenter([location.longitude, location.latitude]);
       setZoom(16);
       setShopId(suggestion.id.toString());
       setUserInteracted(false);
@@ -75,14 +75,20 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="relative w-full">
-      <div className="relative">
+    <div className="relative w-full flex items-center gap-2">
+      {/* Filter Button */}
+      {/* <button
+        onClick={() => console.log("Open filter modal")}
+        className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
+      >
+        <HiFilter className="w-5 h-5 mr-1" />
+        <span className="text-sm font-semibold hidden sm:inline">Filter</span>
+      </button> */}
+
+      {/* Search Input */}
+      <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-          <HiSearch
-            className="w-5 h-5 text-secondary"
-            aria-hidden="true"
-            role="img"
-          />
+          <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
         </div>
         <Autosuggest
           suggestions={suggestions}
