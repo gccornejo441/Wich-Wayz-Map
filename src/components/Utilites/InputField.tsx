@@ -4,6 +4,7 @@ import {
   UseFormRegister,
   Path,
 } from "react-hook-form";
+import { ChangeEvent } from "react";
 
 interface InputFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -13,7 +14,9 @@ interface InputFieldProps<T extends FieldValues> {
   step?: string;
   register?: UseFormRegister<T>;
   errors: FieldErrors<T>;
+  value?: string;
   children?: React.ReactNode;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 function InputField<T extends FieldValues>({
@@ -23,12 +26,16 @@ function InputField<T extends FieldValues>({
   type = "text",
   step,
   register,
+  value,
   errors,
   children,
+  onChange,
 }: InputFieldProps<T>) {
   const errorMessage = errors[name]?.message
     ? String(errors[name]?.message)
     : null;
+
+  const registered = register?.(name);
 
   return (
     <div>
@@ -42,8 +49,13 @@ function InputField<T extends FieldValues>({
         <input
           type={type}
           step={step}
+          value={value}
           placeholder={placeholder}
-          {...register?.(name)}
+          {...registered}
+          onChange={(e) => {
+            registered?.onChange(e);
+            onChange?.(e);
+          }}
           className={`w-full p-2 border rounded-lg bg-white text-dark ${
             errors[name] ? "border-red-500" : "border-secondary"
           }`}

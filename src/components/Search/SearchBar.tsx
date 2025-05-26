@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Autosuggest from "react-autosuggest";
-import {HiSearch } from "react-icons/hi";
+import { HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { IndexedDBShop } from "@/services/indexedDB";

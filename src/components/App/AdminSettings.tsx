@@ -5,6 +5,7 @@ import CategoriesList from "../CategoriesList/CategoriesList";
 import CategoryActions from "../Utilites/CategoryActions";
 import UserTable from "../Utilites/UserTable";
 import { useAdminPage } from "@hooks/useAdminPage";
+import { DuplicateLocationsTable } from "../Utilites/DuplicateLocationsTable";
 
 const AdminPage = () => {
   const { isAuthenticated, userMetadata } = useAuth();
@@ -71,6 +72,7 @@ const AdminPage = () => {
       )}
 
       <CategoriesList />
+      <DuplicateLocationsTable />
 
       {validationErrors.length > 0 && (
         <ul className="text-red-500 p-4">

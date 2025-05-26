@@ -9,9 +9,16 @@ import { InputMask } from "@react-input/mask";
 type ShopFormProps = {
   initialData?: Partial<AddAShopPayload>;
   mode: "add" | "edit";
+  address: string;
+  onAddressChange: (value: string) => void;
 };
 
-const ShopForm = ({ initialData, mode }: ShopFormProps) => {
+const ShopForm = ({
+  initialData,
+  mode,
+  address,
+  onAddressChange,
+}: ShopFormProps) => {
   const {
     register,
     handleSubmit,
@@ -116,7 +123,9 @@ const ShopForm = ({ initialData, mode }: ShopFormProps) => {
         label="Address"
         register={register}
         errors={errors}
+        value={address}
         placeholder="Enter address"
+        onChange={(e) => onAddressChange(e.target.value)}
       />
 
       <div className="flex space-x-4">
