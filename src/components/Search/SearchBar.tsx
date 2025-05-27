@@ -1,37 +1,38 @@
 import React, { useState } from "react";
 import Autosuggest from "react-autosuggest";
-import { HiSearch } from "react-icons/hi";
+import { HiFilter, HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { IndexedDBShop } from "@/services/indexedDB";
+import { FilterDropdown } from "../Filter/FilterDropdown";
+import { ShopFilters } from "@/types/shopFilter";
+import { useToast } from "@/context/toastContext";
 
-const LIMIT = 5;
+interface SearchBarProps {
+  navRef?: React.RefObject<HTMLElement>;
+}
 
-const SearchBar = () => {
+const SearchBar = ({ navRef }: SearchBarProps) => {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState<IndexedDBShop[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<ShopFilters>({});
+  const { addToast } = useToast();
+
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
 
-  const fetchSuggestions = async (value: string) => {
-    if (value.trim() !== "") {
-      try {
-        const results = await SearchShops(value);
-        setSuggestions(results.map((result) => result.shop).slice(0, LIMIT));
-      } catch (error) {
-        console.error("Error fetching suggestions:", error);
-      }
-    } else {
-      setSuggestions([]);
-    }
+  const fetchSuggestions = async (value: string, filtersOverride?: ShopFilters) => {
+    const appliedFilters = filtersOverride ?? filters;
+    const results = await SearchShops(value, { ...appliedFilters, search: value });
+
+    console.log("Filtered results:", results.map(r => r.shop.name));
+    setSuggestions(results.map(r => r.shop));
   };
 
-  const onSuggestionsFetchRequested = ({ value }: { value: string }) => {
+  const onSuggestionsFetchRequested = ({ value }: { value: string }) =>
     fetchSuggestions(value);
-  };
 
-  const onSuggestionsClearRequested = () => {
-    setSuggestions([]);
-  };
+  const onSuggestionsClearRequested = () => setSuggestions([]);
 
   const getSuggestionValue = (suggestion: IndexedDBShop) => suggestion.name;
 
@@ -40,18 +41,17 @@ const SearchBar = () => {
     const address = location
       ? `${location.street_address || ""}, ${location.city || ""}`
       : "Address not available";
-
     return (
-      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 hover:bg-primary  text-dark hover:text-white rounded-lg">
-        <span className="font-medium  ">{suggestion.name}</span>
-        <span className="text-sm   truncate md:ml-2">{address}</span>
+      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 hover:bg-primary text-dark hover:text-white rounded-lg">
+        <span className="font-medium">{suggestion.name}</span>
+        <span className="text-sm truncate md:ml-2">{address}</span>
       </div>
     );
   };
 
   const handleSuggestionSelected = (
     _: React.FormEvent,
-    { suggestion }: { suggestion: IndexedDBShop },
+    { suggestion }: { suggestion: IndexedDBShop }
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
@@ -68,24 +68,51 @@ const SearchBar = () => {
     value: search,
     onChange: (
       _: React.FormEvent<HTMLElement>,
-      { newValue }: { newValue: string },
-    ) => {
-      setSearch(newValue);
-    },
+      { newValue }: { newValue: string }
+    ) => setSearch(newValue),
   };
+
+  const handleFilterChange = async (updatedFilters: ShopFilters) => {
+    console.log("Filter updated:", updatedFilters);
+    setFilters(updatedFilters);
+
+    const results = await SearchShops(search, { ...updatedFilters, search });
+    const shops = results.map(r => r.shop);
+    setSuggestions(shops);
+
+    if (shops.length === 0) {
+      addToast("No shops found matching your filters.", "error");
+      return;
+    }
+
+    const firstLoc = shops[0].locations?.[0];
+    if (firstLoc) {
+      setCenter([firstLoc.longitude, firstLoc.latitude]);
+      setZoom(13);
+      setShopId(shops[0].id.toString());
+      setUserInteracted(false);
+    }
+  };
+
 
   return (
     <div className="relative w-full flex items-center gap-2">
-      {/* Filter Button */}
-      {/* <button
-        onClick={() => console.log("Open filter modal")}
-        className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
-      >
-        <HiFilter className="w-5 h-5 mr-1" />
-        <span className="text-sm font-semibold hidden sm:inline">Filter</span>
-      </button> */}
+      <div className="hidden relative" data-filter-button>
+        <button
+          onClick={() => setFilterOpen((o) => !o)}
+          className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
+        >
+          <HiFilter className="w-5 h-5 mr-1" />
+          <span className="text-sm font-semibold hidden sm:inline">Filter</span>
+        </button>
 
-      {/* Search Input */}
+        <FilterDropdown
+          open={filterOpen}
+          navRef={navRef}
+          onFilterChange={handleFilterChange}
+        />
+      </div>
+
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
           <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
@@ -107,7 +134,7 @@ const SearchBar = () => {
             suggestionsContainer:
               "absolute z-10 mt-2 w-full bg-background rounded-lg shadow-card",
             suggestion: "cursor-pointer px-3 py-2 bg-white text-background",
-            suggestionHighlighted: "bg-white ",
+            suggestionHighlighted: "bg-white",
           }}
         />
       </div>

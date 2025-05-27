@@ -15,9 +15,10 @@ import { Callback } from "../../types/dataTypes";
 interface NavBarProps {
   searchBar: boolean;
   onToggleSidebar: Callback;
+  navRef?: React.RefObject<HTMLElement>;
 }
 
-const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
+const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { isAuthenticated, logout, userMetadata } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -55,8 +56,8 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
 
   return (
     <>
-      <nav className="absolute top-0 left-0 right-0 z-50">
-        <div className="w-full bg-primary md:mx-auto py-1 px-4  md:justify-between">
+      <nav ref={navRef} className="absolute top-0 left-0 right-0 z-50">
+        <div className="w-full bg-primary md:mx-auto py-1 px-4 md:justify-between">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
               {showSearchBar && (
@@ -69,11 +70,14 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
                 </Link>
               </div>
             </div>
+
             {showSearchBar && (
               <div className="hidden md:flex w-1/2">
-                <SearchBar />
+                {/* ✅ Pass navRef to SearchBar (desktop) */}
+                <SearchBar navRef={navRef} />
               </div>
             )}
+
             <div className="flex items-center gap-4 z-20">
               <Dropdown
                 arrowIcon={false}
@@ -151,9 +155,10 @@ const NavBar = ({ searchBar, onToggleSidebar }: NavBarProps) => {
             </div>
           </div>
         </div>
+
         {showSearchBar && searchBar && (
           <div className="flex md:hidden w-full p-2">
-            <SearchBar />
+            <SearchBar navRef={navRef} />
           </div>
         )}
       </nav>
