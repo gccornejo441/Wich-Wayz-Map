@@ -1,5 +1,6 @@
 import { executeQuery } from "./apiClient";
 import {
+  FILTERED_SHOPS_STORE,
   IndexedDBShop,
   initDB,
   LOCATIONS_STORE,
@@ -53,6 +54,14 @@ export const getShopsPerCategory = async (): Promise<ShopCountByCategory[]> => {
 export const getCachedShops = async (): Promise<IndexedDBShop[]> => {
   const db = await initDB();
   return (await db.getAll(SHOPS_STORE)) as IndexedDBShop[];
+};
+
+/**
+ * Retrieves all filtered shops from the IndexedDB cache.
+ */
+export const getFilteredShops = async (): Promise<IndexedDBShop[]> => {
+  const db = await initDB();
+  return (await db.getAll(FILTERED_SHOPS_STORE)) as IndexedDBShop[];
 };
 
 /**

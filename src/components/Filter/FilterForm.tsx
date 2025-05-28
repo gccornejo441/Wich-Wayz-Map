@@ -46,14 +46,19 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
     }, []);
 
     const update = <K extends keyof ShopFilters>(k: K, v: ShopFilters[K]) => {
-        setFilters((prev) => ({ ...prev, [k]: v }));
+        const updated = { ...filters, [k]: v };
+        setFilters(updated);
+        onChange(updated); 
     };
 
     const toggleCategory = (id: number, checked: boolean) => {
         const next = checked
             ? [...(filters.categoryIds ?? []), id]
             : (filters.categoryIds ?? []).filter((c) => c !== id);
-        update("categoryIds", next);
+
+        const updatedFilters = { ...filters, categoryIds: next };
+        setFilters(updatedFilters);
+        onChange(updatedFilters);
     };
 
     const handleReset = () => {
@@ -84,10 +89,11 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
                                             id={`cat-${cat.id}`}
                                             label={cat.category_name}
                                             checked={filters.categoryIds?.includes(cat.id) ?? false}
-                                            onChange={(ck) => toggleCategory(cat.id!, ck)}
+                                            onChange={(ck) => toggleCategory(cat.id!, ck)} 
                                         />
                                     )
                             )}
+
                         </div>
                     )}
                 </>

@@ -73,7 +73,6 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
 
             {showSearchBar && (
               <div className="hidden md:flex w-1/2">
-                {/* ✅ Pass navRef to SearchBar (desktop) */}
                 <SearchBar navRef={navRef} />
               </div>
             )}

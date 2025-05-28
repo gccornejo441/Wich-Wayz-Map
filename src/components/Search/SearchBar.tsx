@@ -73,16 +73,17 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   };
 
   const handleFilterChange = async (updatedFilters: ShopFilters) => {
-    console.log("Filter updated:", updatedFilters);
     setFilters(updatedFilters);
 
-    const results = await SearchShops(search, { ...updatedFilters, search });
+    const results = await SearchShops(search, { ...updatedFilters, search }, true);
     const shops = results.map(r => r.shop);
     setSuggestions(shops);
 
     if (shops.length === 0) {
       addToast("No shops found matching your filters.", "error");
       return;
+    } else {
+      addToast(`Showing ${shops.length} filtered shop(s).`, "success");
     }
 
     const firstLoc = shops[0].locations?.[0];
@@ -95,9 +96,10 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   };
 
 
+
   return (
     <div className="relative w-full flex items-center gap-2">
-      <div className="hidden relative" data-filter-button>
+      <div className="relative hidden" data-filter-button>
         <button
           onClick={() => setFilterOpen((o) => !o)}
           className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"

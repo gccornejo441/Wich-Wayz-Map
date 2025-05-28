@@ -1,13 +1,19 @@
 import Fuse from "fuse.js";
-import { IndexedDBShop } from "./indexedDB";
-import { getCachedShops } from "./mapService";
 import { ShopFilters } from "@/types/shopFilter";
+import {
+  SHOPS_STORE,
+  FILTERED_SHOPS_STORE,
+  IndexedDBShop,
+  cacheData,
+  getCachedData,
+} from "./indexedDB";
 
 export const SearchShops = async (
   query: string,
-  filters?: ShopFilters
+  filters?: ShopFilters,
+  updateCache: boolean = false
 ): Promise<{ shop: IndexedDBShop }[]> => {
-  let shops: IndexedDBShop[] = await getCachedShops();
+  let shops: IndexedDBShop[] = await getCachedData(SHOPS_STORE);
 
   if (filters) {
     const { city, state, country, categoryIds, locationOpen } = filters;
@@ -25,23 +31,33 @@ export const SearchShops = async (
         !loc.country?.toLowerCase().includes(country.toLowerCase())
       )
         return false;
+      if (locationOpen && loc.location_open === false) return false;
 
-      if (locationOpen && !("location_open" in loc ? loc.location_open : true))
-        return false;
+      if (categoryIds && categoryIds.length > 0) {
+        const shopCategoryIds = shop.categories.map((cat) => cat.id);
+        const hasMatchingCategory = shopCategoryIds.some((id) =>
+          categoryIds.includes(id)
+        );
 
-      if (
-        categoryIds &&
-        categoryIds.length > 0 &&
-        !shop.categories.some((cat) => categoryIds.includes(cat.id))
-      ) {
-        return false;
+        console.log(`Checking shop: ${shop.name}`);
+        console.log(`→ Shop categories: ${JSON.stringify(shopCategoryIds)}`);
+        console.log(`→ Filtered categoryIds: ${JSON.stringify(categoryIds)}`);
+        console.log(`→ Match: ${hasMatchingCategory}`);
+
+        if (!hasMatchingCategory) return false;
       }
 
       return true;
     });
+
+    if (updateCache) {
+      await cacheData(FILTERED_SHOPS_STORE, shops);
+    }
+  } else {
+    shops = await getCachedData(FILTERED_SHOPS_STORE);
   }
 
-  const options = {
+  const fuse = new Fuse(shops, {
     shouldSort: true,
     includeMatches: true,
     threshold: 0.3,
@@ -49,18 +65,12 @@ export const SearchShops = async (
       { name: "name", weight: 0.7 },
       { name: "description", weight: 0.3 },
     ],
-  };
+  });
 
-  const fuse = new Fuse(shops, options);
   const results = query.trim()
     ? fuse.search(query).map((r) => ({ shop: r.item }))
     : shops.map((s) => ({ shop: s }));
 
   console.log("Filtered results count:", results.length);
-  console.log(
-    "Result shop names:",
-    results.map((r) => r.shop.name)
-  );
-
   return results;
 };

@@ -1,7 +1,13 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { ShopsProviderProps } from "../types/dataTypes";
-import { cacheData, getCachedData } from "../services/indexedDB";
-import { executeQuery } from "../services/apiClient";
+import {
+  cacheData,
+  getCachedData,
+  SHOPS_STORE,
+  LOCATIONS_STORE,
+  FILTERED_SHOPS_STORE,
+} from "@/services/indexedDB";
+import { executeQuery } from "@/services/apiClient";
 import { Location } from "@models/Location";
 import { ShopWithUser } from "@models/ShopWithUser";
 import { GetShops } from "@/services/shopService";
@@ -9,9 +15,11 @@ import { GetShops } from "@/services/shopService";
 export interface ShopsContextType {
   shops: ShopWithUser[];
   locations: Location[];
+  filtered: ShopWithUser[];
   setShops: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>;
-  updateShopInContext: (updatedShop: ShopWithUser) => void;
+  setFiltered: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
+  updateShopInContext: (shop: ShopWithUser) => void;
 }
 
 export const ShopsContext = createContext<ShopsContextType | null>(null);
@@ -19,76 +27,67 @@ export const ShopsContext = createContext<ShopsContextType | null>(null);
 export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   const [shops, setShops] = useState<ShopWithUser[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [filtered, setFiltered] = useState<ShopWithUser[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
       try {
-        const cachedShops = await getCachedData("shops");
-        const cachedLocations = await getCachedData("locations");
-
-        const dbResult = await executeQuery<{ locationCount: number }>(
-          `SELECT COUNT(*) as locationCount FROM locations`,
-        );
-        const currentLocationCount = dbResult.rows[0]?.locationCount || 0;
-
-        if (
-          cachedLocations.length < currentLocationCount ||
-          !cachedShops.length ||
-          !cachedLocations.length
-        ) {
-          console.info(
-            "Refreshing cache: Fetching latest data from the database",
-          );
-
-          const fetchedShops = await GetShops();
-
-          setShops(fetchedShops);
-
-          const fetchedLocations = fetchedShops.flatMap(
-            (shop) => shop.locations || [],
-          );
-
-          setLocations(fetchedLocations);
-
-          await cacheData("shops", fetchedShops);
-          await cacheData("locations", fetchedLocations);
-        } else {
-          setShops(cachedShops as ShopWithUser[]);
-          setLocations(cachedLocations);
+        const cachedFiltered = await getCachedData(FILTERED_SHOPS_STORE);
+        if (cachedFiltered.length) {
+          setFiltered(cachedFiltered as ShopWithUser[]);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+
+        const cachedShops = await getCachedData(SHOPS_STORE);
+        const cachedLocations = await getCachedData(LOCATIONS_STORE);
+
+        const [{ rows }] = await Promise.all([
+          executeQuery<{ count: number }>(`SELECT COUNT(*) AS count FROM locations`)
+        ]);
+        const dbLocationCount = rows[0]?.count ?? 0;
+
+        const cacheIsValid =
+          cachedShops.length &&
+          cachedLocations.length &&
+          cachedLocations.length >= dbLocationCount;
+
+        if (cacheIsValid) {
+          setShops(cachedShops as ShopWithUser[]);
+          setLocations(cachedLocations as Location[]);
+        } else {
+          const freshShops = await GetShops();
+          const freshLocs = freshShops.flatMap(s => s.locations || []);
+
+          setShops(freshShops);
+          setLocations(freshLocs);
+
+          await cacheData(SHOPS_STORE, freshShops);
+          await cacheData(LOCATIONS_STORE, freshLocs);
+          if (!cachedFiltered.length) await cacheData(FILTERED_SHOPS_STORE, freshShops);
+        }
+      } catch (err) {
+        console.error("ShopContext load error:", err);
       }
     };
-
-    fetchData();
+    load();
   }, []);
 
-  const updateShopInContext = async (updatedShop: ShopWithUser) => {
-    if (!updatedShop.locations?.length) {
-      const allShops = await GetShops();
-      updatedShop =
-        allShops.find((s) => s.id === updatedShop.id) || updatedShop;
-    }
-
-    setShops((prev) => {
-      const updatedShops = prev.map((shop) =>
-        shop.id === updatedShop.id ? updatedShop : shop,
-      );
-      cacheData("shops", updatedShops);
-      return updatedShops;
+  const updateShopInContext = async (updated: ShopWithUser) => {
+    setShops(prev => {
+      const next = prev.map(s => (s.id === updated.id ? updated : s));
+      cacheData(SHOPS_STORE, next);
+      return next;
     });
-
-    setLocations((prev) => {
-      const updatedLocations = updatedShop.locations || [];
-      const updatedLocationMap = new Map(
-        updatedLocations.map((loc) => [loc.id, loc]),
-      );
-      const updatedAll = prev.map((loc) =>
-        updatedLocationMap.has(loc.id) ? updatedLocationMap.get(loc.id)! : loc,
-      );
-      cacheData("locations", updatedAll);
-      return updatedAll;
+    setFiltered(prev => {
+      if (!prev.length) return prev;
+      const next = prev.map(s => (s.id === updated.id ? updated : s));
+      cacheData(FILTERED_SHOPS_STORE, next);
+      return next;
+    });
+    setLocations(prev => {
+      const map = new Map((updated.locations ?? []).map(l => [l.id, l]));
+      const next = prev.map(l => map.get(l.id) ?? l);
+      cacheData(LOCATIONS_STORE, next);
+      return next;
     });
   };
 
@@ -96,8 +95,10 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     <ShopsContext.Provider
       value={{
         shops,
+        filtered,
         locations,
         setShops,
+        setFiltered,
         setLocations,
         updateShopInContext,
       }}
@@ -108,9 +109,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
 };
 
 export const useShops = () => {
-  const context = useContext(ShopsContext);
-  if (!context) {
-    throw new Error("useShops must be used within a ShopsProvider");
-  }
-  return context;
+  const ctx = useContext(ShopsContext);
+  if (!ctx) throw new Error("useShops must be used within a ShopsProvider");
+  return ctx;
 };

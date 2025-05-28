@@ -1,7 +1,8 @@
 export const DB_NAME = "SANDWICH_LOCATOR_DB";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 export const SHOPS_STORE = "shops";
 export const LOCATIONS_STORE = "locations";
+export const FILTERED_SHOPS_STORE = "filtered_shops";
 
 export interface IndexedDBShop {
   id: number;
@@ -20,6 +21,7 @@ export interface IndexedDBShop {
     street_address: string;
     latitude: number;
     longitude: number;
+    location_open: boolean;
   }>;
   created_by: number;
   created_by_username: string;
@@ -37,7 +39,7 @@ const getIDB = async () => {
 };
 
 /**
- * Initializes the IndexedDB database for the application.
+ * Initializes the IndexedDB with all necessary object stores.
  */
 export const initDB = async () => {
   const openDB = await getIDB();
@@ -48,6 +50,9 @@ export const initDB = async () => {
       }
       if (!db.objectStoreNames.contains(LOCATIONS_STORE)) {
         db.createObjectStore(LOCATIONS_STORE, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(FILTERED_SHOPS_STORE)) {
+        db.createObjectStore(FILTERED_SHOPS_STORE, { keyPath: "id" });
       }
     },
   });
@@ -62,12 +67,16 @@ export const getCachedData = async (storeName: string) => {
 };
 
 /**
- * Caches the given data in the IndexedDB store specified by the storeName.
+ * Generic: Caches the given data in the specified store.
  */
 export const cacheData = async <T>(storeName: string, data: T[]) => {
   const db = await initDB();
   const tx = db.transaction(storeName, "readwrite");
-  data.forEach((item) => tx.store.put(item));
+  const store = tx.store;
+  await store.clear();
+  for (const item of data) {
+    store.put(item);
+  }
   await tx.done;
 };
 
