@@ -102,7 +102,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   return (
     <div className="relative w-full flex items-center gap-2">
-      <div className="relative" data-filter-button>
+      <div className="relative hidden" data-filter-button>
         <button
           onClick={() => setFilterOpen((o) => !o)}
           className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
