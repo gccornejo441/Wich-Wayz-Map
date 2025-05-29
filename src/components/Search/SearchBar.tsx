@@ -3,6 +3,7 @@ import Autosuggest from "react-autosuggest";
 import { HiFilter, HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
+import { useShops } from "@/context/shopContext"; 
 import { IndexedDBShop } from "@/services/indexedDB";
 import { FilterDropdown } from "../Filter/FilterDropdown";
 import { ShopFilters } from "@/types/shopFilter";
@@ -17,9 +18,10 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const [suggestions, setSuggestions] = useState<IndexedDBShop[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<ShopFilters>({});
-  const { addToast } = useToast();
 
+  const { addToast } = useToast();
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
+  const { applyFilters } = useShops(); 
 
   const fetchSuggestions = async (value: string, filtersOverride?: ShopFilters) => {
     const appliedFilters = filtersOverride ?? filters;
@@ -75,8 +77,11 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const handleFilterChange = async (updatedFilters: ShopFilters) => {
     setFilters(updatedFilters);
 
-    const results = await SearchShops(search, { ...updatedFilters, search }, true);
+    const results = await SearchShops(search, { ...updatedFilters, search });
     const shops = results.map(r => r.shop);
+
+    await applyFilters(shops);
+
     setSuggestions(shops);
 
     if (shops.length === 0) {
@@ -95,11 +100,9 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     }
   };
 
-
-
   return (
     <div className="relative w-full flex items-center gap-2">
-      <div className="relative hidden" data-filter-button>
+      <div className="relative" data-filter-button>
         <button
           onClick={() => setFilterOpen((o) => !o)}
           className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
