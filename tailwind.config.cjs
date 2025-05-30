@@ -7,14 +7,20 @@ module.exports = {
   ],
   theme: {
     extend: {
-         keyframes: {
-        'fade-in-up': {
-          '0%': { opacity: 0, transform: 'translateY(20px)' },
-          '100%': { opacity: 1, transform: 'translateY(0)' },
+      keyframes: {
+        "fade-in-up": {
+          "0%": { opacity: 0, transform: "translateY(20px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
+        "check-bounce": {
+          "0%": { transform: "scale(0.8)", opacity: 0 },
+          "50%": { transform: "scale(1.2)", opacity: 1 },
+          "100%": { transform: "scale(1)", opacity: 1 },
         },
       },
       animation: {
-        'fade-in-up': 'fade-in-up 0.5s ease-out both',
+        "fade-in-up": "fade-in-up 0.5s ease-out both",
+        "check-bounce": "check-bounce 0.5s ease-out both",
       },
       colors: {
         primary: "#DA291C", // red

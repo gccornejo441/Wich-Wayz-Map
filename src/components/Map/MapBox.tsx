@@ -9,7 +9,6 @@ import { FaSpinner } from "react-icons/fa";
 const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128]; // NYC
 type Coordinates = [number, number];
 
-/* --- GeoJSON prop typing --- */
 export interface ShopGeoJsonProperties {
   shopId: number;
   shopName: string;
@@ -29,7 +28,7 @@ const MapBox = () => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);  
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [position, setPosition] = useState<Coordinates | null>(null);
@@ -71,7 +70,10 @@ const MapBox = () => {
             shop.categories?.map((c) => c.category_name).join(", ") ||
             "No categories available",
           usersAvatarId: shop.users_avatar_id,
-          locationOpen: location.location_open,
+          locationOpen:
+            location.location_open === undefined
+              ? undefined
+              : Number(location.location_open) === 1,
           website: location.website || "No website available",
           phone: location.phone || "No phone number available",
         },
@@ -85,7 +87,7 @@ const MapBox = () => {
 
   const renderCustomMarkers = (map: Map) => {
     setLoading(true);
-    clearMarkers();                             
+    clearMarkers();
 
     const geojson = createGeoJsonData();
 
@@ -95,6 +97,7 @@ const MapBox = () => {
 
       const el = document.createElement("div");
       el.className = "custom-marker";
+      el.title = shopName;
       el.style.cssText =
         "width:30px;height:40px;background:url('/sandwich-pin-v2.svg') center/cover no-repeat;cursor:pointer;";
 
@@ -106,21 +109,20 @@ const MapBox = () => {
         .setLngLat(coordinates as [number, number])
         .setPopup(
           new mapboxgl.Popup({ offset: 25 }).setHTML(`
-            <div style="font-family:Arial;padding:6px;max-width:240px;">
-              <h2 style="margin:0 0 6px;font-size:18px;color:#DA291C;">${shopName}</h2>
-              <p style="margin:0;font-size:14px;color:#555;">${address}</p>
-            </div>`),
+          <div style="font-family:Arial;padding:6px;max-width:240px;">
+            <h2 style="margin:0 0 6px;font-size:18px;color:#DA291C;">${shopName}</h2>
+            <p style="margin:0;font-size:14px;color:#555;">${address}</p>
+          </div>`),
         )
         .addTo(map);
 
-      markersRef.current.push(marker); 
+      markersRef.current.push(marker);
 
       if (index === array.length - 1) {
         setTimeout(() => setLoading(false), 400);
       }
     });
   };
-
 
   useEffect(() => {
     if (navigator.geolocation) {

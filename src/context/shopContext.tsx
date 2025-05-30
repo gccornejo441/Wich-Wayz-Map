@@ -5,7 +5,6 @@ import {
   getCachedData,
   SHOPS_STORE,
   LOCATIONS_STORE,
-  FILTERED_SHOPS_STORE,
 } from "@/services/indexedDB";
 import { executeQuery } from "@/services/apiClient";
 import { Location } from "@models/Location";
@@ -14,8 +13,8 @@ import { GetShops } from "@/services/shopService";
 
 export interface ShopsContextType {
   shops: ShopWithUser[];
-  filtered: ShopWithUser[];         
-  displayedShops: ShopWithUser[];   
+  filtered: ShopWithUser[];
+  displayedShops: ShopWithUser[];
   locations: Location[];
 
   setShops: React.Dispatch<React.SetStateAction<ShopWithUser[]>>;
@@ -25,6 +24,8 @@ export interface ShopsContextType {
   clearFilters: () => Promise<void>;
   updateShopInContext: (shop: ShopWithUser) => void;
 }
+
+const FILTERED_SHOPS_KEY = "filtered_shops";
 
 export const ShopsContext = createContext<ShopsContextType | null>(null);
 
@@ -41,8 +42,18 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   useEffect(() => {
     const load = async () => {
       try {
-        const cachedFiltered = await getCachedData(FILTERED_SHOPS_STORE);
-        if (cachedFiltered.length) setFiltered(cachedFiltered as ShopWithUser[]);
+        const navEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+        const isFreshLoad = navEntry?.type === "reload";
+
+        if (isFreshLoad) {
+          sessionStorage.removeItem(FILTERED_SHOPS_KEY);
+          setFiltered([]);
+        } else {
+          const storedFiltered = sessionStorage.getItem(FILTERED_SHOPS_KEY);
+          if (storedFiltered) {
+            setFiltered(JSON.parse(storedFiltered));
+          }
+        }
 
         const cachedShops = await getCachedData(SHOPS_STORE);
         const cachedLocations = await getCachedData(LOCATIONS_STORE);
@@ -79,12 +90,12 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
 
   const applyFilters = async (next: ShopWithUser[]) => {
     setFiltered(next);
-    await cacheData(FILTERED_SHOPS_STORE, next);
+    sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
   };
 
   const clearFilters = async () => {
     setFiltered([]);
-    await cacheData(FILTERED_SHOPS_STORE, []);
+    sessionStorage.removeItem(FILTERED_SHOPS_KEY);
   };
 
   const updateShopInContext = async (updated: ShopWithUser) => {
@@ -96,7 +107,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     setFiltered((prev) => {
       if (!prev.length) return prev;
       const next = prev.map((s) => (s.id === updated.id ? updated : s));
-      cacheData(FILTERED_SHOPS_STORE, next);
+      sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
       return next;
     });
     setLocations((prev) => {

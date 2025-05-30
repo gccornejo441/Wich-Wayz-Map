@@ -118,9 +118,8 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-background shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         {/* Header: Close button */}
@@ -175,7 +174,7 @@ const Sidebar = () => {
 
               {/* Address */}
               <div>
-                {selectedShop.locationOpen && (
+                {selectedShop.locationOpen !== false && (
                   <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
                     This location is permanently closed.
                   </span>
@@ -184,13 +183,8 @@ const Sidebar = () => {
                   <FiMapPin size={28} className="mr-2 text-primary" />
                   <span>{selectedShop.address}</span>
                 </div>
-
-                {selectedShop.locationOpen && (
-                  <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
-                    This location is permanently closed.
-                  </span>
-                )}
               </div>
+
 
               {/* Categories */}
               {selectedShop.categories && (
@@ -282,7 +276,7 @@ const Sidebar = () => {
                   </div>
                 )}
                 {selectedShop.website?.trim() &&
-                selectedShop.website.trim().toLowerCase() !==
+                  selectedShop.website.trim().toLowerCase() !==
                   "no website available" ? (
                   <a
                     href={selectedShop.website}
