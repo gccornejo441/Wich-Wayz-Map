@@ -5,6 +5,7 @@ export interface Routes {
   NOT_FOUND: string;
   SHOPS: {
     ADD: string;
+    SAVED_SHOPS: string;
   };
   ACCOUNT: {
     SIGN_IN: string;
@@ -28,6 +29,7 @@ export const ROUTES: Routes = {
   NOT_FOUND: "*",
   SHOPS: {
     ADD: "/shops/add",
+    SAVED_SHOPS: "/shops/saved",
   },
   ACCOUNT: {
     SIGN_IN: "/account/sign-in",
@@ -59,13 +61,13 @@ export const useRouteCheck = (routes: Routes) => {
       } else if (typeof value === "object") {
         acc.push(
           ...Object.values(value).filter(
-            (v): v is string => typeof v === "string",
-          ),
+            (v): v is string => typeof v === "string"
+          )
         );
       }
       return acc;
     },
-    [],
+    []
   );
 
   const isPathValid = flattenedRoutes.includes(location.pathname);

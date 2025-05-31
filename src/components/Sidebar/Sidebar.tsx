@@ -4,8 +4,9 @@ import SidebarFooter from "./SidebarFooter";
 import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
-import { ReactNode } from "react";
 import { BsFillAwardFill } from "react-icons/bs";
+import { ReactNode } from "react";
+// import { MdFormatListBulletedAdd } from "react-icons/md";
 
 interface TopMenuProps {
   onToggleSidebar: Callback;
@@ -44,11 +45,10 @@ export const SidebarItem = ({
 
   const content = (
     <div
-      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${
-        disabled
-          ? "bg-white/10 cursor-not-allowed"
-          : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
-      }`}
+      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${disabled
+        ? "bg-white/10 cursor-not-allowed"
+        : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
+        }`}
       onClick={handleClick}
     >
       <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
@@ -94,6 +94,7 @@ export const SidebarItem = ({
  */
 const Sidebar = ({ isOpen }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
+  // const [showShopList, setShowShopList] = useState(false);
 
   // Check if user is authenticated
   const { isAuthenticated, user } = useAuth();
@@ -103,9 +104,8 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
   return (
     <aside
       id="default-sidebar"
-      className={`fixed top-0 left-0 z-30 w-64 h-screen bg-primary border-primary border-r transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
-        !isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
-      }`}
+      className={`fixed top-0 left-0 z-30 w-64 h-screen bg-primary border-primary border-r transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${!isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+        }`}
       aria-label="Sidebar"
     >
       <div className="flex flex-col h-full px-3 pb-4">
@@ -155,6 +155,14 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               badge="New"
             />
           </li>
+          {/* <li>
+            <SidebarItem
+              icon={<MdFormatListBulletedAdd className="w-6 h-6 text-white" />}
+              text="Browse Shops"
+              onClick={() => setShowShopList((prev) => !prev)}
+              badge={showShopList ? undefined : "New"}
+            />
+          </li> */}
         </ul>
         <SidebarFooter />
       </div>

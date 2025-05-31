@@ -7,35 +7,24 @@ interface ShopSidebarContextProps {
   selectedShop: ShopGeoJsonProperties | null;
   position: Coordinates | null;
   sidebarOpen: boolean;
-  openSidebar: (
-    shop: ShopGeoJsonProperties,
-    position?: Coordinates | null,
-  ) => void;
+  openSidebar: (shop: ShopGeoJsonProperties, position?: Coordinates | null) => void;
   closeSidebar: () => void;
+  savedShops: ShopGeoJsonProperties[];
+  addSavedShop: (shop: ShopGeoJsonProperties) => void;
+  removeSavedShop: (shopId: number | string) => void;
 }
 
-const ShopSidebarContext = createContext<ShopSidebarContextProps | undefined>(
-  undefined,
-);
+const ShopSidebarContext = createContext<ShopSidebarContextProps | undefined>(undefined);
 
-export const ShopSidebarProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [selectedShop, setSelectedShop] =
-    useState<ShopGeoJsonProperties | null>(null);
+export const ShopSidebarProvider = ({ children }: { children: React.ReactNode }) => {
+  const [selectedShop, setSelectedShop] = useState<ShopGeoJsonProperties | null>(null);
   const [position, setPosition] = useState<Coordinates | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [savedShops, setSavedShops] = useState<ShopGeoJsonProperties[]>([]);
 
-  const openSidebar = (
-    shop: ShopGeoJsonProperties,
-    pos?: Coordinates | null,
-  ) => {
+  const openSidebar = (shop: ShopGeoJsonProperties, pos?: Coordinates | null) => {
     setSelectedShop(shop);
-    if (pos) {
-      setPosition(pos);
-    }
+    if (pos) setPosition(pos);
     setSidebarOpen(true);
   };
 
@@ -44,9 +33,29 @@ export const ShopSidebarProvider = ({
     setSidebarOpen(false);
   };
 
+  const addSavedShop = (shop: ShopGeoJsonProperties) => {
+    setSavedShops((prev) => {
+      const exists = prev.some((s) => s.shopId === shop.shopId);
+      return exists ? prev : [...prev, shop];
+    });
+  };
+
+  const removeSavedShop = (shopId: number | string) => {
+    setSavedShops((prev) => prev.filter((s) => s.shopId !== shopId));
+  };
+
   return (
     <ShopSidebarContext.Provider
-      value={{ selectedShop, position, sidebarOpen, openSidebar, closeSidebar }}
+      value={{
+        selectedShop,
+        position,
+        sidebarOpen,
+        openSidebar,
+        closeSidebar,
+        savedShops,
+        addSavedShop,
+        removeSavedShop,
+      }}
     >
       {children}
     </ShopSidebarContext.Provider>
