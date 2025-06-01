@@ -26,7 +26,7 @@ const getVoteMessage = (upvotes: number, downvotes: number) => {
   return "Mixed reviews from sandwich fans.";
 };
 
-const Sidebar = () => {
+const MapSidebar = () => {
   const { selectedShop, position, sidebarOpen, closeSidebar } =
     useShopSidebar();
   const { openSignupModal } = useModal();
@@ -393,4 +393,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar;
+export default MapSidebar;

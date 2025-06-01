@@ -13,13 +13,11 @@ import AddShop from "./AddEditShop";
 import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
 import MapSidebar from "../Sidebar/MapSidebar";
-// import ShopListSidebar from "../Sidebar/ShopListSidebar";
 
 function MainRoutes() {
   return (
     <>
       <MapSidebar />
-      {/* <ShopListSidebar />  */}
       <Routes>
         <Route path={ROUTES.HOME} element={<MapBox />} />
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

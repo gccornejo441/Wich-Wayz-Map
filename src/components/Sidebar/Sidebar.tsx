@@ -4,9 +4,10 @@ import SidebarFooter from "./SidebarFooter";
 import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { Callback } from "../../types/dataTypes";
-import { BsFillAwardFill } from "react-icons/bs";
 import { ReactNode } from "react";
-// import { MdFormatListBulletedAdd } from "react-icons/md";
+import { BsFillAwardFill } from "react-icons/bs";
+import { MdFormatListBulletedAdd } from "react-icons/md";
+import { useShopSidebar } from "@/context/ShopSidebarContext";
 
 interface TopMenuProps {
   onToggleSidebar: Callback;
@@ -87,19 +88,11 @@ export const SidebarItem = ({
   return <div className="w-full">{content}</div>;
 };
 
-/**
- * A sidebar component that renders a map, profile, and add shop button.
- *
- * IMPORTANT NOTE: Add sidebar routes here.
- */
-const Sidebar = ({ isOpen }: SidebarProps) => {
+const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
-  // const [showShopList, setShowShopList] = useState(false);
-
-  // Check if user is authenticated
+  const { openShopList } = useShopSidebar();
   const { isAuthenticated, user } = useAuth();
   const isMember = isAuthenticated && user?.emailVerified;
-  // Check if user is authenticated
 
   return (
     <aside
@@ -155,14 +148,17 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               badge="New"
             />
           </li>
-          {/* <li>
+          <li className="hidden">
             <SidebarItem
               icon={<MdFormatListBulletedAdd className="w-6 h-6 text-white" />}
-              text="Browse Shops"
-              onClick={() => setShowShopList((prev) => !prev)}
-              badge={showShopList ? undefined : "New"}
+              text="Saved Shops"
+              onClick={() => {
+                openShopList();
+                onToggleSidebar();
+              }}
+              badge="New"
             />
-          </li> */}
+          </li>
         </ul>
         <SidebarFooter />
       </div>

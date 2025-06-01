@@ -7,8 +7,11 @@ interface ShopSidebarContextProps {
   selectedShop: ShopGeoJsonProperties | null;
   position: Coordinates | null;
   sidebarOpen: boolean;
+  shopListOpen: boolean;
   openSidebar: (shop: ShopGeoJsonProperties, position?: Coordinates | null) => void;
   closeSidebar: () => void;
+  openShopList: () => void;
+  closeShopList: () => void;
   savedShops: ShopGeoJsonProperties[];
   addSavedShop: (shop: ShopGeoJsonProperties) => void;
   removeSavedShop: (shopId: number | string) => void;
@@ -21,6 +24,10 @@ export const ShopSidebarProvider = ({ children }: { children: React.ReactNode })
   const [position, setPosition] = useState<Coordinates | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedShops, setSavedShops] = useState<ShopGeoJsonProperties[]>([]);
+  const [shopListOpen, setShopListOpen] = useState(false);
+
+  const openShopList = () => setShopListOpen(true);
+  const closeShopList = () => setShopListOpen(false);
 
   const openSidebar = (shop: ShopGeoJsonProperties, pos?: Coordinates | null) => {
     setSelectedShop(shop);
@@ -50,8 +57,11 @@ export const ShopSidebarProvider = ({ children }: { children: React.ReactNode })
         selectedShop,
         position,
         sidebarOpen,
+        shopListOpen,
         openSidebar,
         closeSidebar,
+        openShopList,
+        closeShopList,
         savedShops,
         addSavedShop,
         removeSavedShop,

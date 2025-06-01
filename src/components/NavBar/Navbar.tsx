@@ -11,6 +11,7 @@ import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
 import { Callback } from "../../types/dataTypes";
+import { useShopSidebar } from "@/context/ShopSidebarContext";
 
 interface NavBarProps {
   searchBar: boolean;
@@ -23,6 +24,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
+  const { shopListOpen } = useShopSidebar();
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
@@ -71,7 +73,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
               </div>
             </div>
 
-            {showSearchBar && (
+            {showSearchBar && !shopListOpen && (
               <div className="hidden md:flex w-1/2">
                 <SearchBar navRef={navRef} />
               </div>
@@ -155,7 +157,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
           </div>
         </div>
 
-        {showSearchBar && searchBar && (
+        {showSearchBar && searchBar && !shopListOpen && (
           <div className="flex md:hidden w-full p-2">
             <SearchBar navRef={navRef} />
           </div>
