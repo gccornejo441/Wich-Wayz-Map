@@ -23,17 +23,19 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
   const { applyFilters } = useShops(); 
 
+  // Fetch suggestions based on the input value and current filters
   const fetchSuggestions = async (value: string, filtersOverride?: ShopFilters) => {
     const appliedFilters = filtersOverride ?? filters;
     const results = await SearchShops(value, { ...appliedFilters, search: value });
 
-    console.log("Filtered results:", results.map(r => r.shop.name));
     setSuggestions(results.map(r => r.shop));
   };
 
+  // Fetch suggestions when the input value changes
   const onSuggestionsFetchRequested = ({ value }: { value: string }) =>
     fetchSuggestions(value);
 
+  // Clear suggestions when the input is cleared
   const onSuggestionsClearRequested = () => setSuggestions([]);
 
   const getSuggestionValue = (suggestion: IndexedDBShop) => suggestion.name;
@@ -74,6 +76,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     ) => setSearch(newValue),
   };
 
+  // Handle filter changes and apply them to the search results
   const handleFilterChange = async (updatedFilters: ShopFilters) => {
     setFilters(updatedFilters);
 
