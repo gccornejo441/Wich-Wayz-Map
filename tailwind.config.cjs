@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
+
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -21,6 +23,9 @@ module.exports = {
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out both",
         "check-bounce": "check-bounce 0.5s ease-out both",
+      },
+      transitionProperty: {
+        sidebar: "background-color, color, border-color",
       },
       colors: {
         primary: "#DA291C", // red

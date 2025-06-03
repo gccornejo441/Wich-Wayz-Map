@@ -7,4 +7,5 @@ export interface Shop {
   date_created?: string;
   date_modified?: string | null;
   id_location?: number;
+  address?: string | null;
 }

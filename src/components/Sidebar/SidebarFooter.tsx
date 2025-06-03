@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { useToast } from "../../context/toastContext";
+import ThemeToggle from "../Utilites/ThemeToggle";
 
 const SidebarFooter = () => {
   const { addToast } = useToast();
@@ -47,6 +48,9 @@ const SidebarFooter = () => {
         >
           Terms of Service
         </Link>
+      </div>
+      <div className="hidden mt-2 text-xs text-white/70">
+        <ThemeToggle />
       </div>
     </div>
   );

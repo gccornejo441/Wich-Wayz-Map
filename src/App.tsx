@@ -8,6 +8,7 @@ import { ToastProvider } from "./context/toastContext";
 import { VoteProvider } from "./context/voteContext";
 import { UserLeaderboardProvider } from "./context/userLeaderboardContext";
 import { ShopSidebarProvider } from "./context/ShopSidebarContext";
+import { SavedShopsProvider } from "./context/useSavedShop";
 
 function App() {
   return (
@@ -18,11 +19,13 @@ function App() {
             <VoteProvider>
               <UserLeaderboardProvider>
                 <ShopSidebarProvider>
-                  <AppLayout>
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Routes />
-                    </Suspense>
-                  </AppLayout>
+                  <SavedShopsProvider>
+                    <AppLayout>
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Routes />
+                      </Suspense>
+                    </AppLayout>
+                  </SavedShopsProvider>
                 </ShopSidebarProvider>
               </UserLeaderboardProvider>
             </VoteProvider>
