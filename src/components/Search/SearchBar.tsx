@@ -3,7 +3,7 @@ import Autosuggest from "react-autosuggest";
 import { HiFilter, HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
-import { useShops } from "@/context/shopContext"; 
+import { useShops } from "@/context/shopContext";
 import { IndexedDBShop } from "@/services/indexedDB";
 import { FilterDropdown } from "../Filter/FilterDropdown";
 import { ShopFilters } from "@/types/shopFilter";
@@ -21,21 +21,17 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   const { addToast } = useToast();
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
-  const { applyFilters } = useShops(); 
+  const { applyFilters } = useShops();
 
-  // Fetch suggestions based on the input value and current filters
   const fetchSuggestions = async (value: string, filtersOverride?: ShopFilters) => {
     const appliedFilters = filtersOverride ?? filters;
     const results = await SearchShops(value, { ...appliedFilters, search: value });
-
     setSuggestions(results.map(r => r.shop));
   };
 
-  // Fetch suggestions when the input value changes
   const onSuggestionsFetchRequested = ({ value }: { value: string }) =>
     fetchSuggestions(value);
 
-  // Clear suggestions when the input is cleared
   const onSuggestionsClearRequested = () => setSuggestions([]);
 
   const getSuggestionValue = (suggestion: IndexedDBShop) => suggestion.name;
@@ -45,8 +41,9 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     const address = location
       ? `${location.street_address || ""}, ${location.city || ""}`
       : "Address not available";
+
     return (
-      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 hover:bg-primary text-dark hover:text-white rounded-lg">
+      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg hover:bg-white/20 text-white">
         <span className="font-medium">{suggestion.name}</span>
         <span className="text-sm truncate md:ml-2">{address}</span>
       </div>
@@ -76,20 +73,15 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     ) => setSearch(newValue),
   };
 
-  // Handle filter changes and apply them to the search results
   const handleFilterChange = async (updatedFilters: ShopFilters) => {
     setFilters(updatedFilters);
-
     const results = await SearchShops(search, { ...updatedFilters, search });
     const shops = results.map(r => r.shop);
-
     await applyFilters(shops);
-
     setSuggestions(shops);
 
     if (shops.length === 0) {
       addToast("No shops found matching your filters.", "error");
-      return;
     } else {
       addToast(`Showing ${shops.length} filtered shop(s).`, "success");
     }
@@ -108,7 +100,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       <div className="relative hidden" data-filter-button>
         <button
           onClick={() => setFilterOpen((o) => !o)}
-          className="flex items-center px-3 py-2 bg-secondary text-accent rounded-lg shadow hover:bg-yellow-400 transition"
+          className="flex items-center px-3 py-2 bg-secondary text-accent dark:bg-white/10 dark:text-white rounded-lg shadow hover:bg-yellow-400 dark:hover:bg-white/20 transition"
         >
           <HiFilter className="w-5 h-5 mr-1" />
           <span className="text-sm font-semibold hidden sm:inline">Filter</span>
@@ -123,7 +115,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-          <HiSearch className="w-5 h-5 text-secondary" aria-hidden="true" />
+          <HiSearch className="w-5 h-5 text-secondary dark:text-white" aria-hidden="true" />
         </div>
         <Autosuggest
           suggestions={suggestions}
@@ -135,14 +127,15 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
           inputProps={{
             ...inputProps,
             className:
-              "w-full p-2 pl-10 text-sm text-accent bg-background border border-lightGray rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none font-sans",
+              "w-full p-2 pl-10 text-sm text-accent dark:text-white bg-background dark:bg-dark border border-lightGray dark:border-gray-700 rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary dark:focus:ring-0 dark:focus:border-gray-600 focus:outline-none font-sans",
           }}
           theme={{
             container: "relative",
             suggestionsContainer:
-              "absolute z-10 mt-2 w-full bg-background rounded-lg shadow-card",
-            suggestion: "cursor-pointer px-3 py-2 bg-white text-background",
-            suggestionHighlighted: "bg-white",
+              "absolute z-10 mt-2 w-full bg-background dark:bg-dark rounded-lg shadow-card",
+            suggestion:
+              "cursor-pointer px-3 py-2 text-accent dark:text-white bg-white dark:bg-transparent hover:bg-primary dark:hover:bg-white/20 hover:text-white",
+            suggestionHighlighted: "bg-white dark:bg-transparent",
           }}
         />
       </div>
