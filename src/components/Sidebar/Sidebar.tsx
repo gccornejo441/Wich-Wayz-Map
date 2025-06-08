@@ -97,7 +97,7 @@ const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
       className={`fixed top-0 left-0 z-30 w-64 h-screen 
         bg-brand-primary dark:bg-surface-darker 
         text-white dark:text-text-inverted 
-        border-r border-brand-primaryBorder dark:border-gray-700 
+        dark:border-r dark:border-gray-700 
         transition-all duration-500 ease-in-out transform shadow-2xl ${!isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         }`}
       aria-label="Sidebar"
