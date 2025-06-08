@@ -61,7 +61,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
       ref={navRef}
       className="absolute top-0 left-0 right-0 z-50 transition-colors duration-500"
     >
-      <div className="w-full bg-primary dark:bg-dark text-white dark:text-white py-1 px-4 transition-colors duration-500">
+      <div className="w-full bg-brand-primary dark:bg-surface-darker text-white dark:text-text-inverted py-1 px-4 transition-colors duration-500">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-4">
             {(showSearchBar || showMap) && (
@@ -91,15 +91,15 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   />
                 </div>
               }
-              className="rounded-lg shadow-lg bg-white dark:bg-gray-900 border border-lightGray dark:border-gray-700 text-sm"
+              className="rounded-lg shadow-lg bg-white dark:bg-surface-dark border border-surface-muted dark:border-gray-700 text-sm"
             >
               {isAuthenticated ? (
                 <>
                   <Dropdown.Header className="px-4 py-2 text-sm text-gray-700 dark:text-white">
-                    <span className="block font-semibold text-base text-accent dark:text-secondary">
+                    <span className="block font-semibold text-base text-accent dark:text-brand-secondary">
                       {userMetadata?.username}
                     </span>
-                    <span className="block truncate text-sm text-primary dark:text-gray-400">
+                    <span className="block truncate text-sm text-white dark:text-gray-400">
                       {userMetadata?.email}
                     </span>
                   </Dropdown.Header>
@@ -109,7 +109,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                       <Dropdown.Item
                         icon={HiUserAdd}
                         onClick={handleSignup}
-                        className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                        className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
                       >
                         Become a Club Member
                       </Dropdown.Item>
@@ -120,7 +120,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                     <Dropdown.Item
                       icon={HiKey}
                       onClick={handleAdminSettings}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                      className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
                     >
                       Admin Settings
                     </Dropdown.Item>
@@ -128,7 +128,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   <Dropdown.Item
                     icon={HiLogout}
                     onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
                   >
                     Sign Out
                   </Dropdown.Item>
@@ -138,14 +138,14 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   <Dropdown.Item
                     icon={HiLogin}
                     onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
                   >
                     Sign In
                   </Dropdown.Item>
                   <Dropdown.Item
                     icon={HiUserAdd}
                     onClick={handleSignup}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-primary dark:hover:bg-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
                   >
                     Register
                   </Dropdown.Item>
@@ -170,3 +170,4 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
 };
 
 export default NavBar;
+

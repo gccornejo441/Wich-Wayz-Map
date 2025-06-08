@@ -5,6 +5,7 @@ import { useModal } from "../../context/modalContext";
 import UpdateShop from "../Modal/UpdateShop";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import ShopListSidebar from "../Sidebar/ShopListSidebar";
+import MapSidebar from "../Sidebar/MapSidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { currentModal } = useModal();
-  const { shopListOpen, closeShopList } = useShopSidebar();
+  const { shopListOpen, closeShopList, sidebarOpen: mapSidebarOpen } = useShopSidebar();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -51,16 +52,17 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [isSidebarOpen]);
 
   return (
-    <div className="relative min-h-screen bg-lightGray">
+    <div className="relative min-h-screen bg-lightGray dark:bg-surface-dark transition-colors duration-500">
       <div className="flex flex-col">
         <div ref={sidebarRef}>
           <NavBar
             onToggleSidebar={toggleSidebar}
-            searchBar={!isSidebarOpen}
+            searchBar={!isSidebarOpen && !mapSidebarOpen}
             navRef={navRef}
           />
           <Sidebar isOpen={!isSidebarOpen} onToggleSidebar={toggleSidebar} />
           <ShopListSidebar isOpen={shopListOpen} />
+          <MapSidebar />
         </div>
       </div>
       <div className="relative z-10 flex items-center justify-center min-h-screen">

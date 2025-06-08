@@ -30,15 +30,15 @@ const AvatarUploader = ({
   };
 
   return (
-    <div className="p-6 mx-auto bg-background pb-4 border-b border-secondary">
-      <h2 className="text-xl font-semibold text-dark mb-2">Public avatar</h2>
-      <p className="text-sm text-gray-600 mb-4">
+    <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted pb-4 border-b border-brand-secondary dark:border-brand-secondary">
+      <h2 className="text-xl font-semibold mb-2">Public avatar</h2>
+      <p className="text-sm text-text-muted dark:text-gray-400 mb-4">
         Choose an avatar from our collection or update your avatar at{" "}
         <a
           href="https://gravatar.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:underline"
+          className="text-brand-primary hover:underline"
         >
           gravatar.com
         </a>
@@ -51,17 +51,17 @@ const AvatarUploader = ({
           <img
             src={`/assets/avatars/${avatarId}.svg`}
             alt="Selected Avatar"
-            className="w-24 h-24 rounded-full border border-gray-300"
+            className="w-24 h-24 rounded-full border border-gray-300 dark:border-gray-600"
           />
         ) : (
-          <div className="w-24 h-24 bg-gray-200 rounded-full border border-gray-300 flex items-center justify-center">
+          <div className="w-24 h-24 bg-muted dark:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center">
             <span className="text-gray-400">No image</span>
           </div>
         )}
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mt-4 px-4 py-2 text-white bg-primary rounded-lg hover:bg-secondary transition-colors"
+          className="mt-4 px-4 py-2 text-white bg-brand-primary hover:bg-brand-primary/90 dark:hover:bg-brand-primaryBorder rounded-lg transition-colors"
         >
           Choose Avatar
         </button>

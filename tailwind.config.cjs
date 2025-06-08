@@ -7,6 +7,7 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/flowbite-react/**/*.js",
   ],
+
   theme: {
     extend: {
       keyframes: {
@@ -28,13 +29,23 @@ module.exports = {
         sidebar: "background-color, color, border-color",
       },
       colors: {
-        primary: "#DA291C", // red
-        primaryBorder: "#5a110c", // dark red
-        secondary: "#FFC72C", // yellow
-        background: "#FFFFFF", // white
-        accent: "#333333", // Dark gray/black
-        dark: "#343a40", // dark gray
-        lightGray: "#F5F5F5", // light gray
+        brand: {
+          primary: "#DA291C", // red
+          primaryBorder: "#5a110c", // dark red
+          secondary: "#FFC72C", // yellow
+        },
+        surface: {
+          light: "#FFFFFF", // for light backgrounds
+          dark: "#1E1E2F", // updated: deeper slate for full-page dark backgrounds
+          darker: "#14141F", // new: for card containers in dark mode
+          muted: "#F5F5F5", // for light panels/cards
+        },
+        text: {
+          base: "#333333", // default text
+          inverted: "#FFFFFF", // text on dark background
+          muted: "#9CA3AF", // secondary text
+        },
+        accent: "#DA291C", // alias red accent
       },
       fontFamily: {
         sans: ["'Open Sans'", "sans-serif"],
@@ -49,5 +60,6 @@ module.exports = {
       },
     },
   },
+
   plugins: [require("@tailwindcss/typography"), require("flowbite/plugin")],
 };

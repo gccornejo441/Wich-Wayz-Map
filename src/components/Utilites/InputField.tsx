@@ -39,7 +39,7 @@ function InputField<T extends FieldValues>({
 
   return (
     <div>
-      <label className="block mb-2 text-sm font-medium text-dark">
+      <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
         {label}
       </label>
 
@@ -56,13 +56,22 @@ function InputField<T extends FieldValues>({
             registered?.onChange(e);
             onChange?.(e);
           }}
-          className={`w-full p-2 border rounded-lg bg-white text-dark ${
-            errors[name] ? "border-red-500" : "border-secondary"
-          }`}
+          className={`w-full p-2 border rounded-lg 
+    bg-background dark:bg-surface-dark 
+    text-text-base dark:text-text-inverted 
+    placeholder:text-text-muted dark:placeholder:text-text-muted 
+    ${errors[name]
+              ? "border-red-500 dark:border-red-500"
+              : "border-secondary dark:border-gray-700"
+            }`}
         />
       )}
 
-      {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }

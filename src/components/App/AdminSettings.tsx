@@ -32,22 +32,24 @@ const AdminPage = () => {
   if (userMetadata?.role !== "admin") return <Navigate to="/" replace />;
 
   return (
-    <div className="max-w-5xl mx-auto p-4 lg:my-5 rounded-lg bg-background">
-      <div className="p-6 mx-auto bg-background pb-4 border-b border-secondary">
-        <h2 className="text-2xl font-semibold text-dark mb-2">
+    <div className="mt-10 max-w-5xl mx-auto p-4 lg:my-5 rounded-lg bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted">
+      <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark pb-4 border-b border-brand-secondary dark:border-brand-secondary">
+        <h2 className="text-2xl font-semibold text-text-base dark:text-text-inverted mb-2">
           Admin Dashboard
         </h2>
-        <p className="text-dark mt-2 text-sm">
+        <p className="mt-2 text-sm text-text-muted dark:text-text-inverted">
           Manage application users, their roles, and access.
         </p>
       </div>
 
       {isLoading ? (
-        <p className="p-4 text-center">Loading users...</p>
+        <p className="p-4 text-center text-text-base dark:text-text-inverted">
+          Loading users...
+        </p>
       ) : (
         <div className="p-4">
           {users.length === 0 ? (
-            <p>No users found.</p>
+            <p className="text-text-base dark:text-text-inverted">No users found.</p>
           ) : (
             <UserTable
               users={users}

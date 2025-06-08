@@ -12,9 +12,9 @@ const AddEditShop = () => {
   const [address, setAddress] = useState(initialData?.address || "");
 
   return (
-    <div className="max-w-6xl w-full mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-secondary bg-lightGray">
-        <h2 className="text-2xl font-bold text-dark">
+    <div className="max-w-6xl w-full mx-auto bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted rounded-lg shadow-lg overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-secondary bg-lightGray dark:bg-surface-muted">
+        <h2 className="text-2xl font-bold">
           {initialData ? `Edit ${initialData?.shopName}` : "Add New Shop"}
         </h2>
         <button
@@ -34,7 +34,7 @@ const AddEditShop = () => {
             mode={initialData ? "edit" : "add"}
           />
         </div>
-        <div className="w-full lg:w-1/3 p-6 bg-lightGray border-t lg:border-t-0 lg:border-l border-lightGray">
+        <div className="w-full lg:w-1/3 p-6 bg-lightGray dark:bg-surface-muted border-t lg:border-t-0 lg:border-l border-lightGray dark:border-surface-light">
           <MapPreview address={address} onAddressUpdate={setAddress} />
         </div>
       </div>

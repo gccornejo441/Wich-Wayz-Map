@@ -47,8 +47,8 @@ export const SidebarItem = ({
   const content = (
     <div
       className={`relative flex items-center justify-between p-2 w-full rounded-lg ${disabled
-        ? "bg-white/10 cursor-not-allowed"
-        : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
+          ? "bg-white/10 cursor-not-allowed"
+          : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
         }`}
       onClick={handleClick}
     >
@@ -56,12 +56,13 @@ export const SidebarItem = ({
         {icon}
       </span>
       <span
-        className={`text-md text-white font-light ${disabled ? "opacity-50" : ""}`}
+        className={`text-md font-light text-white dark:text-text-inverted ${disabled ? "opacity-50" : ""
+          }`}
       >
         {text}
       </span>
       {badge && (
-        <span className="absolute top-0 right-0 mt-1 mr-2 bg-secondary text-gray-800 text-xs font-bold rounded px-1 cursor-pointer">
+        <span className="absolute top-0 right-0 mt-1 mr-2 bg-brand-secondary text-gray-800 text-xs font-bold rounded px-1 cursor-pointer">
           {badge}
         </span>
       )}
@@ -70,12 +71,7 @@ export const SidebarItem = ({
 
   if (linkTo) {
     return external ? (
-      <a
-        href={linkTo}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="w-full"
-      >
+      <a href={linkTo} target="_blank" rel="noopener noreferrer" className="w-full">
         {content}
       </a>
     ) : (
@@ -88,6 +84,7 @@ export const SidebarItem = ({
   return <div className="w-full">{content}</div>;
 };
 
+
 const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
   const { openShopList } = useShopSidebar();
@@ -97,13 +94,17 @@ const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
   return (
     <aside
       id="default-sidebar"
-      className={`fixed top-0 left-0 z-30 w-64 h-screen bg-primary border-primary  dark:bg-dark dark:text-white dark:border-gray-700  border-r transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${!isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+      className={`fixed top-0 left-0 z-30 w-64 h-screen 
+        bg-brand-primary dark:bg-surface-darker 
+        text-white dark:text-text-inverted 
+        border-r border-brand-primaryBorder dark:border-gray-700 
+        transition-all duration-500 ease-in-out transform shadow-2xl ${!isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         }`}
       aria-label="Sidebar"
     >
       <div className="flex flex-col h-full px-3 pb-4">
         <ul className="flex-1 overflow-y-auto space-y-2 font-medium">
-          <li className="h-12"></li>
+          <li className="h-12" />
           {showMap && (
             <li>
               <SidebarItem

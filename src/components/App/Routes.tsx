@@ -12,12 +12,10 @@ import AdminSettings from "./AdminSettings";
 import AddShop from "./AddEditShop";
 import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
-import MapSidebar from "../Sidebar/MapSidebar";
 
 function MainRoutes() {
   return (
     <>
-      <MapSidebar />
       <Routes>
         <Route path={ROUTES.HOME} element={<MapBox />} />
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

@@ -88,10 +88,12 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto md:p-4 lg:my-5 rounded-lg bg-background">
-      <div className="p-6 mx-auto bg-background pb-4 border-b border-secondary">
-        <h2 className="text-xl font-semibold text-dark mb-2">App Settings</h2>
-        <p className="text-dark mt-2 text-sm">
+    <div className="mt-10 max-w-3xl mx-auto md:p-4 lg:my-5 rounded-lg bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted">
+      <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark pb-4 border-b border-brand-secondary dark:border-brand-secondary">
+        <h2 className="text-xl font-semibold text-text-base dark:text-text-inverted mb-2">
+          App Settings
+        </h2>
+        <p className="mt-2 text-sm text-text-muted dark:text-text-inverted">
           Manage your profile and app settings below.
         </p>
       </div>
@@ -124,16 +126,19 @@ const UserProfile = () => {
           />
         </>
       ) : (
-        <p>Loading profile...</p>
+        <p className="text-text-base dark:text-text-inverted">Loading profile...</p>
       )}
 
       {!user?.emailVerified && (
         <div className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-dark text-sm font-medium">
+            <span className="text-sm font-medium text-text-base dark:text-text-inverted">
               Resend Verification:
             </span>
-            <button onClick={handleResendVerification}>
+            <button
+              onClick={handleResendVerification}
+              className="text-sm text-brand-primary hover:underline"
+            >
               Send Verification
             </button>
           </div>
@@ -141,7 +146,7 @@ const UserProfile = () => {
       )}
 
       {validationErrors.length > 0 && (
-        <ul className="text-red-500">
+        <ul className="text-red-500 dark:text-red-400 p-4">
           {validationErrors.map((err, idx) => (
             <li key={idx}>{err}</li>
           ))}

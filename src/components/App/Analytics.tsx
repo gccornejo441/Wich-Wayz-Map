@@ -19,38 +19,52 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen text-text-base dark:text-text-inverted">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 mt-10">
+    <div className="min-h-screen bg-surface-light dark:bg-surface-dark p-6 mt-10">
       <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-text-base dark:text-text-inverted">
           Wich Wayz Analytics
         </h1>
-        <p className="text-gray-600">
+        <p className="text-text-muted dark:text-text-inverted/70">
           Explore shop distribution by state and category
         </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Shops by State</h2>
+        <div className="bg-surface-muted dark:bg-surface-darker p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-text-base dark:text-text-inverted">
+            Shops by State
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={shopStateData}>
-              <XAxis dataKey="state" />
-              <YAxis />
-              <Tooltip />
+              <XAxis
+                dataKey="state"
+                stroke="#888"
+                tick={{ fill: "currentColor" }}
+              />
+              <YAxis stroke="#888" tick={{ fill: "currentColor" }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1F2937",
+                  border: "none",
+                  color: "#fff",
+                }}
+              />
               <Bar dataKey="shop_count" fill="#0088FE" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Shops by Category</h2>
+        <div className="bg-surface-muted dark:bg-surface-darker p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-text-base dark:text-text-inverted">
+            Shops by Category
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -70,7 +84,13 @@ const Analytics = () => {
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1F2937",
+                  border: "none",
+                  color: "#fff",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

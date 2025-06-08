@@ -143,10 +143,14 @@ const MapBox = () => {
       mapRef.current = null;
     }
 
+    const isDarkMode = document.documentElement.classList.contains("dark");
+
     mapboxgl.accessToken = mapboxAccessToken;
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: isDarkMode
+        ? "mapbox://styles/mapbox/navigation-night-v1"
+        : "mapbox://styles/mapbox/streets-v12",
       center: position,
       zoom: mapZoom,
     });
@@ -173,12 +177,32 @@ const MapBox = () => {
     }
   }, [center]);
 
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains("dark");
+      if (mapRef.current) {
+        mapRef.current.setStyle(
+          isDark
+            ? "mapbox://styles/mapbox/navigation-night-v1"
+            : "mapbox://styles/mapbox/streets-v12",
+        );
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => () => clearMarkers(), []);
 
   return (
     <div>
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white bg-opacity-75 z-50">
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white dark:bg-black bg-opacity-75 z-50">
           <FaSpinner className="animate-spin text-primary text-4xl" />
         </div>
       )}

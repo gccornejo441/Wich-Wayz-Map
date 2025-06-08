@@ -68,7 +68,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   };
 
   return (
-    <div className="w-full h-fit rounded-lg overflow-hidden shadow-sm bg-lightGray p-2">
+    <div className="w-full h-fit rounded-lg overflow-hidden shadow-sm bg-lightGray dark:bg-surface-dark p-2">
       {coords ? (
         <>
           <Map
@@ -93,7 +93,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
               <div className="text-xl cursor-pointer">📍</div>
             </Marker>
           </Map>
-          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-dark">
+          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-base dark:text-text-inverted">
             <span>
               Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
               {coords.longitude.toFixed(5)}
@@ -101,14 +101,14 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             <button
               onClick={copyToClipboard}
               aria-label="Copy coordinates to clipboard"
-              className="text-dark hover:text-primary transition"
+              className="hover:text-primary transition"
             >
               <HiClipboard className="w-5 h-5" />
             </button>
           </div>
         </>
       ) : (
-        <div className="flex items-center justify-center h-64 text-sm text-dark italic px-2 text-center">
+        <div className="flex items-center justify-center h-64 text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
           Type an address or drag the pin to set the location.
         </div>
       )}

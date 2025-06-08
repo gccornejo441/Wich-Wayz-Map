@@ -74,7 +74,7 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
           isOpen
             ? "opacity-100 scale-100 translate-y-0"
             : "opacity-0 scale-95 translate-y-4"
-        } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 rounded-lg shadow-sm bg-primary`}
+        } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 dark:border-gray-700 rounded-lg shadow-sm bg-brand-primary dark:bg-surface-darker`}
       >
         <ul className="text-sm text-white">
           <li>
@@ -88,12 +88,7 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
           </li>
           <li>
             <DialItem
-              onClick={() =>
-                navigator.clipboard
-                  .writeText(window.location.href)
-                  .then(() => alert("Link copied to clipboard!"))
-                  .catch(() => alert("Failed to copy link. Please try again."))
-              }
+              onClick={handleCopyLink}
               icon={<HiShare className="w-5 h-5 text-white" />}
               text="Copy Link"
             />
@@ -128,7 +123,7 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
         onClick={toggleMenu}
         aria-controls="speed-dial-menu-dropdown"
         aria-expanded={isOpen}
-        className="flex items-center justify-center ml-auto text-white bg-primary rounded-full w-14 h-14 focus:ring-4 focus:ring-primary/50 focus:outline-none"
+        className="flex items-center justify-center ml-auto text-white bg-brand-primary dark:bg-surface-darker rounded-full w-14 h-14 focus:ring-4 focus:ring-primary/50 focus:outline-none"
       >
         <HiOutlineDotsHorizontal className="w-6 h-6" aria-hidden="true" />
         <span className="sr-only">Open actions menu</span>
@@ -136,18 +131,18 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-96 p-6">
+          <div className="bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted rounded-lg shadow-lg w-96 p-6">
             <h2 className="text-lg font-semibold mb-4">Share this App</h2>
             <p className="text-sm mb-4">Copy the link below to share:</p>
-            <div className="flex items-center justify-between border rounded p-2 mb-4">
+            <div className="flex items-center justify-between border rounded p-2 mb-4 dark:border-gray-700">
               <span className="truncate">{shareableLink}</span>
-              <button onClick={handleCopyLink} className="ml-2 text-primary">
+              <button onClick={handleCopyLink} className="ml-2 text-primary dark:text-brand-secondary">
                 <HiClipboardCopy className="w-5 h-5" />
               </button>
             </div>
             <button
               onClick={() => setIsModalOpen(false)}
-              className="w-full py-2 text-white bg-primary rounded"
+              className="w-full py-2 text-white bg-brand-primary dark:bg-surface-darker rounded"
             >
               Close
             </button>

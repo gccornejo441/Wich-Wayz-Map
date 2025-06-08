@@ -5,21 +5,41 @@
 @tailwind utilities;
 
 @layer utilities {
+  /* Base (Light Mode) Scrollbar */
+  :root {
+    --scrollbar-track: theme("colors.surface.muted");
+    --scrollbar-thumb: theme("colors.brand.secondary");
+    --scrollbar-thumb-hover: theme("colors.brand.primary");
+    --scrollbar-thumb-border: theme("colors.surface.muted");
+  }
+
+  /* Dark Mode Scrollbar Overrides */
+  :root.dark {
+    --scrollbar-track: theme("colors.surface.darker");
+    --scrollbar-thumb: theme("colors.brand.secondary");
+    --scrollbar-thumb-hover: theme("colors.brand.primary");
+    --scrollbar-thumb-border: theme("colors.surface.darker");
+  }
+
+  /* Scrollbar Styles Using CSS Vars */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
+
   ::-webkit-scrollbar-track {
-    background: theme("colors.lightGray");
+    background: var(--scrollbar-track);
     border-radius: theme("borderRadius.xl");
   }
+
   ::-webkit-scrollbar-thumb {
-    background: theme("colors.secondary");
+    background: var(--scrollbar-thumb);
     border-radius: theme("borderRadius.lg");
-    border: 3px solid theme("colors.lightGray");
+    border: 3px solid var(--scrollbar-thumb-border);
   }
+
   ::-webkit-scrollbar-thumb:hover {
-    background: theme("colors.primary");
+    background: var(--scrollbar-thumb-hover);
   }
 }
 

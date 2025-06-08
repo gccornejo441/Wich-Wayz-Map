@@ -65,21 +65,22 @@ const ShopForm = ({
         placeholder="Enter shop website URL"
       />
 
+      {/* Phone Input */}
       <InputField name="phone" label="Phone" errors={errors}>
         <InputMask
           mask="(___) ___-____"
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full p-2 border rounded-lg bg-white text-dark ${
-            errors.phone ? "border-red-500" : "border-secondary"
+          className={`w-full p-2 rounded-lg bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted ${
+            errors.phone ? "border-red-500" : "border border-secondary"
           }`}
         />
       </InputField>
 
       {/* Categories */}
       <div>
-        <label className="block mb-2 text-sm font-medium text-dark">
+        <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
           Select Categories
         </label>
         <Select
@@ -106,8 +107,22 @@ const ShopForm = ({
             menuPortal: (base) => ({ ...base, zIndex: 1050 }),
             control: (base, state) => ({
               ...base,
-              boxShadow: state.isFocused ? "none" : base.boxShadow,
-              borderColor: state.isFocused ? "gray" : base.borderColor,
+              backgroundColor: "var(--tw-bg-opacity)",
+              boxShadow: state.isFocused ? "0 0 0 1px var(--tw-shadow-color)" : base.boxShadow,
+              borderColor: state.isFocused ? "#888" : base.borderColor,
+              color: "inherit",
+            }),
+            menu: (base) => ({
+              ...base,
+              backgroundColor: "var(--tw-bg-opacity)",
+              color: "inherit",
+            }),
+            option: (base, state) => ({
+              ...base,
+              backgroundColor: state.isFocused
+                ? "rgba(0,0,0,0.1)"
+                : "transparent",
+              color: "inherit",
             }),
           }}
           isClearable
@@ -128,6 +143,7 @@ const ShopForm = ({
         onChange={(e) => onAddressChange(e.target.value)}
       />
 
+      {/* Buttons */}
       <div className="flex space-x-4">
         <button
           type="button"
@@ -141,16 +157,18 @@ const ShopForm = ({
         <button
           type="button"
           onClick={handledManualEntry}
-          className="w-full px-4 py-2 text-primary bg-white border border-primary rounded-lg hover:bg-gray-100"
+          className="w-full px-4 py-2 border border-primary text-primary bg-white dark:bg-surface-dark dark:text-text-inverted rounded-lg hover:bg-gray-100 dark:hover:bg-surface-muted"
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
       </div>
 
+      {/* Manual Fields */}
       {isManualEntry && (
         <ManualAddressFields register={register} errors={errors} />
       )}
 
+      {/* Submit */}
       <button
         type="submit"
         className={`w-full px-4 py-2 rounded-lg text-white ${

@@ -17,7 +17,7 @@ const VoteButtons = ({
     <button
       onClick={() => handleVote(true)}
       title={isMember ? "I like this!" : "Only members can vote"}
-      className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
+      className={`px-3 py-1 dark:bg-surface-dark dark:border dark:border-gray-700 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
         isMember ? "bg-primary" : "bg-primary/50 cursor-not-allowed"
       }`}
       disabled={!isMember || userVote === "up"}
@@ -27,7 +27,7 @@ const VoteButtons = ({
     <button
       onClick={() => handleVote(false)}
       title={isMember ? "I don't like this." : "Only members can vote"}
-      className={`px-3 py-1 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
+      className={`px-3 py-1 dark:bg-surface-dark dark:border dark:border-gray-700 text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
         isMember ? "bg-primary" : "bg-primary/50 cursor-not-allowed"
       }`}
       disabled={!isMember || userVote === "down"}

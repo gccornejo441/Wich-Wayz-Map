@@ -43,7 +43,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       : "Address not available";
 
     return (
-      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg hover:bg-white/20 text-white">
+      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-white/10">
         <span className="font-medium">{suggestion.name}</span>
         <span className="text-sm truncate md:ml-2">{address}</span>
       </div>
@@ -97,10 +97,11 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   return (
     <div className="relative w-full flex items-center gap-2">
+      {/* Filter Button */}
       <div className="relative hidden" data-filter-button>
         <button
           onClick={() => setFilterOpen((o) => !o)}
-          className="flex items-center px-3 py-2 bg-secondary text-accent dark:bg-white/10 dark:text-white rounded-lg shadow hover:bg-yellow-400 dark:hover:bg-white/20 transition"
+          className="flex items-center px-3 py-2 bg-brand-secondary text-gray-800 dark:bg-white/10 dark:text-white rounded-lg shadow hover:bg-yellow-400 dark:hover:bg-white/20 transition"
         >
           <HiFilter className="w-5 h-5 mr-1" />
           <span className="text-sm font-semibold hidden sm:inline">Filter</span>
@@ -113,10 +114,12 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
         />
       </div>
 
+      {/* Search Input with Autosuggest */}
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-          <HiSearch className="w-5 h-5 text-secondary dark:text-white" aria-hidden="true" />
+          <HiSearch className="w-5 h-5 text-text-muted dark:text-text-inverted" aria-hidden="true" />
         </div>
+
         <Autosuggest
           suggestions={suggestions}
           onSuggestionsFetchRequested={onSuggestionsFetchRequested}
@@ -127,15 +130,15 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
           inputProps={{
             ...inputProps,
             className:
-              "w-full p-2 pl-10 text-sm text-accent dark:text-white bg-background dark:bg-dark border border-lightGray dark:border-gray-700 rounded-lg shadow-card focus:ring-2 focus:ring-primary focus:border-primary dark:focus:ring-0 dark:focus:border-gray-600 focus:outline-none font-sans",
+              "w-full p-2 pl-10 text-sm text-text-base dark:text-text-inverted bg-surface-light dark:bg-surface-dark border border-surface-muted dark:border-gray-700 rounded-lg shadow-card focus:ring-2 focus:ring-brand-primary focus:outline-none font-sans",
           }}
           theme={{
             container: "relative",
             suggestionsContainer:
-              "absolute z-10 mt-2 w-full bg-background dark:bg-dark rounded-lg shadow-card",
+              "absolute z-10 mt-2 w-full bg-surface-light dark:bg-surface-dark rounded-lg shadow-card",
             suggestion:
-              "cursor-pointer px-3 py-2 text-accent dark:text-white bg-white dark:bg-transparent hover:bg-primary dark:hover:bg-white/20 hover:text-white",
-            suggestionHighlighted: "bg-white dark:bg-transparent",
+              "cursor-pointer px-3 py-2 text-text-base dark:text-text-inverted hover:bg-brand-primary dark:hover:bg-white/10 hover:text-white",
+            suggestionHighlighted: "bg-brand-primary dark:bg-white/10",
           }}
         />
       </div>
