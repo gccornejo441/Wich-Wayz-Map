@@ -49,7 +49,7 @@ const SidebarFooter = () => {
           Terms of Service
         </Link>
       </div>
-      <div className="hidden mt-2 text-xs text-white/70">
+      <div className="mt-2 text-xs text-white/70">
         <ThemeToggle />
       </div>
     </div>

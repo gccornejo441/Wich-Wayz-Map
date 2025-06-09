@@ -59,7 +59,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   return (
     <nav
       ref={navRef}
-      className="absolute top-0 left-0 right-0 z-50 transition-colors duration-500"
+      className="fixed top-0 left-0 right-0 z-50 h-16 transition-colors duration-500"
     >
       <div className="w-full bg-brand-primary dark:bg-surface-darker text-white dark:text-text-inverted py-1 px-4 transition-colors duration-500">
         <div className="flex items-center justify-between w-full">
@@ -99,7 +99,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                     <span className="block font-semibold text-base text-accent dark:text-brand-secondary">
                       {userMetadata?.username}
                     </span>
-                    <span className="block truncate text-sm text-white dark:text-gray-400">
+                    <span className="block truncate text-sm text-text-base dark:text-text-inverted">
                       {userMetadata?.email}
                     </span>
                   </Dropdown.Header>

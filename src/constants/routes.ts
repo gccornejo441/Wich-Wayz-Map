@@ -75,6 +75,8 @@ export const useRouteCheck = (routes: Routes) => {
   const isHomePage = location.pathname === ROUTES.HOME;
   const isAccountProfile = location.pathname === ROUTES.ACCOUNT.PROFILE;
   const isAddShopPage = location.pathname === ROUTES.SHOPS.ADD;
+  const isSignInPage = location.pathname === ROUTES.ACCOUNT.SIGN_IN;
+
   const isPrivacyOrTOS =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
     location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE ||
@@ -87,6 +89,6 @@ export const useRouteCheck = (routes: Routes) => {
     showAddShop: isHomePage,
     showUserProfile: isHomePage,
     showMap:
-      (!isHomePage && isAccountProfile) || isPrivacyOrTOS || isAddShopPage,
+      (!isHomePage && isAccountProfile) || isPrivacyOrTOS || isAddShopPage || isSignInPage,
   };
 };

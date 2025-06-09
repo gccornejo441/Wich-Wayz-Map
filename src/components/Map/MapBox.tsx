@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import mapboxgl, { Map } from "mapbox-gl";
 import { useShops } from "../../context/shopContext";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
-import { FaSpinner } from "react-icons/fa";
+import { GiSandwich } from "react-icons/gi";
 
 const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128]; // NYC
 type Coordinates = [number, number];
@@ -23,6 +23,19 @@ export interface ShopGeoJsonProperties {
   website?: string;
   imageUrl?: string;
 }
+
+const loadingMessages = [
+  "Stacking the Sandwich...",
+  "Toasting the Bread...",
+  "Adding the Pickles...",
+  "Wrapping Your Order...",
+  "Cooking Up Something Tasty...",
+  "Finding the Perfect Bite...",
+  "Crafting Your Sammie...",
+  "Grilling to Perfection...",
+  "Prepping Your Layers...",
+  "Serving It Up Fresh...",
+];
 
 const MapBox = () => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -43,6 +56,12 @@ const MapBox = () => {
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
   };
+
+  const loadingCaption = useMemo(() => {
+    const index = Math.floor(Math.random() * loadingMessages.length);
+    return loadingMessages[index];
+  }, []);
+
 
   const createGeoJsonData = (): GeoJSON.FeatureCollection<
     GeoJSON.Point,
@@ -202,11 +221,13 @@ const MapBox = () => {
   return (
     <div>
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white dark:bg-black bg-opacity-75 z-50">
-          <FaSpinner className="animate-spin text-primary text-4xl" />
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
+          <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
+          <span className="text-brand-primary dark:text-brand-secondary text-md font-semibold">
+            {loadingCaption}
+          </span>
         </div>
       )}
-
       <div
         ref={mapContainerRef}
         style={{

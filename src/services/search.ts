@@ -39,11 +39,6 @@ export const SearchShops = async (
           categoryIds.includes(id)
         );
 
-        console.log(`Checking shop: ${shop.name}`);
-        console.log(`→ Shop categories: ${JSON.stringify(shopCategoryIds)}`);
-        console.log(`→ Filtered categoryIds: ${JSON.stringify(categoryIds)}`);
-        console.log(`→ Match: ${hasMatchingCategory}`);
-
         if (!hasMatchingCategory) return false;
       }
 

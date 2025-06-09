@@ -32,13 +32,13 @@ const AvatarUploader = ({
   return (
     <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted pb-4 border-b border-brand-secondary dark:border-brand-secondary">
       <h2 className="text-xl font-semibold mb-2">Public avatar</h2>
-      <p className="text-sm text-text-muted dark:text-gray-400 mb-4">
+      <p className="text-sm text-text-muted dark:text-text-inverted mb-4">
         Choose an avatar from our collection or update your avatar at{" "}
         <a
           href="https://gravatar.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-brand-primary hover:underline"
+          className="text-brand-primary dark:text-brand-secondary hover:underline"
         >
           gravatar.com
         </a>

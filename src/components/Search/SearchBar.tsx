@@ -130,7 +130,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
           inputProps={{
             ...inputProps,
             className:
-              "w-full p-2 pl-10 text-sm text-text-base dark:text-text-inverted bg-surface-light dark:bg-surface-dark border border-surface-muted dark:border-gray-700 rounded-lg shadow-card focus:ring-2 focus:ring-brand-primary focus:outline-none font-sans",
+              "w-full p-2 pl-10 text-sm text-text-base dark:text-text-inverted bg-surface-light dark:bg-surface-dark border border-surface-muted dark:border-gray-700 rounded-lg shadow-card focus: focus:border-0 focus:ring-brand-primary font-sans",
           }}
           theme={{
             container: "relative",

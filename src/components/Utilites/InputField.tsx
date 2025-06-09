@@ -19,6 +19,12 @@ interface InputFieldProps<T extends FieldValues> {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
+// Base class for input fields
+// This can be used to apply consistent styles across all input fields
+// and can be extended or modified as needed.
+const inputBaseClass =
+  "w-full text-dark dark:text-white text-md border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out";
+
 function InputField<T extends FieldValues>({
   name,
   label,
@@ -56,15 +62,12 @@ function InputField<T extends FieldValues>({
             registered?.onChange(e);
             onChange?.(e);
           }}
-          className={`w-full p-2 border rounded-lg 
-    bg-background dark:bg-surface-dark 
-    text-text-base dark:text-text-inverted 
-    placeholder:text-text-muted dark:placeholder:text-text-muted 
-    ${errors[name]
-              ? "border-red-500 dark:border-red-500"
-              : "border-secondary dark:border-gray-700"
+          className={`${inputBaseClass} placeholder:text-text-muted dark:placeholder:text-text-muted ${errors[name]
+            ? "border-red-500 dark:border-red-500"
+            : "border-brand-primary dark:border-gray-600"
             }`}
         />
+
       )}
 
       {errorMessage && (

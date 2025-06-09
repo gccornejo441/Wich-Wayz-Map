@@ -89,13 +89,13 @@ const SignIn = () => {
   };
 
   return (
-    <div className="bg-lightGray dark:bg-surface-dark font-sans min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen font-sans flex items-center justify-center px-4 bg-surface-light dark:bg-surface-dark">
       <div className="max-w-md w-full">
         <div className="p-6 rounded-xl bg-white dark:bg-surface-darker shadow-lg">
           <Link to="/" className="block">
             <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-15 w-60 mx-auto" />
           </Link>
-          <h2 className="text-accent dark:text-white text-center text-2xl font-poppins font-bold">Sign in</h2>
+          <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold">Sign in</h2>
           <form className="mt-8 space-y-4" onSubmit={handleLogin}>
             <div>
               <label className="text-dark dark:text-white text-sm mb-2 block">Email</label>
@@ -105,7 +105,8 @@ const SignIn = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full text-dark dark:text-white text-sm border border-lightGray dark:border-gray-600 px-4 py-3 bg-white dark:bg-surface-dark rounded-md focus:outline-none focus:ring focus:ring-secondary"
+                  className="w-full text-dark dark:text-white text-sm border-2 border-brand-primary dark:border-gray-600 px-4 py-3 bg-white dark:bg-surface-dark focus:border-brand-primary rounded-md focus:outline-none focus:ring focus:ring-brand-primary"
+
                   placeholder="Enter your email"
                 />
               </div>
@@ -118,25 +119,25 @@ const SignIn = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-dark dark:text-white text-sm border border-lightGray dark:border-gray-600 px-4 py-3 bg-white dark:bg-surface-dark rounded-md focus:outline-none focus:ring focus:ring-secondary"
+                  className="w-full text-dark dark:text-white text-sm border-2 border-brand-primary dark:border-gray-600 px-4 py-3 bg-white dark:bg-surface-dark focus:border-brand-primary rounded-md focus:outline-none focus:ring focus:ring-brand-primary"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
-                  className="absolute right-4 text-dark dark:text-white focus:outline-none"
+                  className="absolute right-4 text-brand-primary dark:text-white focus:outline-none"
                   onClick={() => setPasswordVisible(!passwordVisible)}
                 >
                   {passwordVisible ? (
-                    <HiEyeOff className="text-primary" />
+                    <HiEyeOff />
                   ) : (
-                    <HiEye className="text-primary" />
+                    <HiEye />
                   )}
                 </button>
               </div>
             </div>
 
-            {error && <p className="text-primary mb-4 text-sm">{error}</p>}
-            {message && <p className="text-secondary mb-4 text-sm">{message}</p>}
+            {error && <p className="text-brand-primary mb-4 text-sm">{error}</p>}
+            {message && <p className="text-brand-primary mb-4 text-sm">{message}</p>}
 
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center">
@@ -148,12 +149,12 @@ const SignIn = () => {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-primary focus:ring-secondary border-accent rounded"
                 />
-                <label htmlFor="remember-me" className="ml-3 text-sm text-dark dark:text-white">
+                <label htmlFor="remember-me" className="ml-3 text-sm text-text-base dark:text-white">
                   Remember me
                 </label>
               </div>
               <div className="text-sm">
-                <button type="button" onClick={handleResetPassword} className="text-primary dark:text-white hover:underline font-semibold">
+                <button type="button" onClick={handleResetPassword} className="text-text-base dark:text-white hover:underline ">
                   Forgot your password?
                 </button>
               </div>
@@ -162,7 +163,7 @@ const SignIn = () => {
             <div className="!mt-8">
               <button
                 type="submit"
-                className="w-full py-3 px-4 text-sm tracking-wide rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none"
+                className="w-full py-3 px-4 text-sm tracking-wide rounded-lg bg-brand-primary text-text-inverted hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-150"
               >
                 Sign in
               </button>
@@ -172,9 +173,9 @@ const SignIn = () => {
               <GoogleButton disabled={isLoading} handleClick={handleGoogleSignIn} title="Sign in with Google" />
             </div>
 
-            <p className="text-dark dark:text-white text-sm !mt-8 text-center">
+            <p className="text-text-base dark:text-white text-sm !mt-8 text-center">
               Don't have an account?
-              <Link to={ROUTES.ACCOUNT.REGISTER} className="text-primary hover:underline ml-1 font-semibold">
+              <Link to={ROUTES.ACCOUNT.REGISTER} className="text-text-base dark:text-text-inverted hover:underline ml-1 font-semibold">
                 Register here
               </Link>
             </p>

@@ -1,5 +1,5 @@
+import { FiLoader } from "react-icons/fi";
 import { Callback } from "../../types/dataTypes";
-import { GiSandwich } from "react-icons/gi";
 
 interface GoogleButtonProps {
   handleClick: Callback;
@@ -20,7 +20,7 @@ const GoogleButton = ({
       type="button"
       className={`gsi-material-button ${
         disabled ? "cursor-not-allowed bg-gray-300" : "bg-white"
-      } flex items-center justify-center border border-gray-400 rounded px-4 py-2`}
+      } flex items-center justify-center  rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-150`}
       onClick={handleClick}
       disabled={disabled}
       style={{ width: 400 }}
@@ -55,13 +55,13 @@ const GoogleButton = ({
         </div>
         {disabled ? (
           <span className="gsi-material-button-loading flex items-center gap-2">
-            <GiSandwich className="animate-spin h-5 w-5 text-primary" />
-            <span className="text-primary font-semibold">
-              Making Sandwiches...
+            <FiLoader className="animate-spin h-5 w-5 text-brand-primary" />
+            <span className="text-brand-primary text-md font-semibold">
+              Authenticating...
             </span>
           </span>
         ) : (
-          <span className="gsi-material-button-contents font-medium text-gray-700">
+          <span className="gsi-material-button-contents text-md font-medium text-gray-700">
             {title}
           </span>
         )}

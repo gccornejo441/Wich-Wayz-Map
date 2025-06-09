@@ -1,10 +1,15 @@
-import Select from "react-select";
-import { Category } from "@/services/categoryService";
+import Select, {
+  MultiValue,
+  StylesConfig,
+  GroupBase,
+} from "react-select";
+
 import { useAddShopForm } from "@/hooks/useAddShopForm";
 import InputField from "../Utilites/InputField";
 import ManualAddressFields from "../Utilites/ManualAddressFields";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { InputMask } from "@react-input/mask";
+import { useEffect, useState } from "react";
 
 type ShopFormProps = {
   initialData?: Partial<AddAShopPayload>;
@@ -12,6 +17,73 @@ type ShopFormProps = {
   address: string;
   onAddressChange: (value: string) => void;
 };
+
+interface CategoryOption {
+  value: number;
+  label: string;
+}
+
+
+const getCustomSelectStyles = (
+  isDark: boolean
+): StylesConfig<CategoryOption, true> => ({
+  menuPortal: (base) => ({ ...base, zIndex: 1050 }),
+  control: (base, state) => ({
+    ...base,
+    backgroundColor: isDark ? "#1E1E2F" : "#FFFFFF",
+    color: isDark ? "#FFFFFF" : "#000000",
+    borderColor: state.isFocused || isDark ? "#4b5563" : "#DA291C",
+    borderWidth: state.isFocused ? "1px" : "2px",
+    boxShadow: state.isFocused ? "0 0 0 1px #4b5563" : base.boxShadow,
+    padding: "0.2rem",
+    "&:hover": {
+      borderColor: "#4b5563",
+    },
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: isDark ? "#FFFFFF" : "#4b5563",
+  }),
+  input: (base) => ({
+    ...base,
+    color: isDark ? "#FFFFFF" : "#4b5563",
+    borderColor: isDark ? "#4b5563" : base.borderColor,
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: isDark ? "#1E1E2F" : "#FFFFFF",
+    color: isDark ? "#FFFFFF" : "#4b5563",
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused
+      ? isDark
+        ? "#2A2A3C"
+        : "#F3F4F6"
+      : "transparent",
+    color: isDark ? "#FFFFFF" : "#4b5563",
+    cursor: "pointer",
+  }),
+  multiValue: (base) => ({
+    ...base,
+    backgroundColor: isDark ? "#2A2A3C" : "#E5E7EB",
+  }),
+  multiValueLabel: (base) => ({
+    ...base,
+    color: isDark ? "#FFFFFF" : "#4b5563",
+  }),
+  multiValueRemove: (base) => ({
+    ...base,
+    color: isDark ? "#F87171" : "#DC2626",
+
+    ":hover": {
+      backgroundColor: isDark ? "#7F1D1D" : "#FECACA",
+      color: isDark ? "#FECACA" : "#7F1D1D",
+    },
+  }),
+});
+
+
 
 const ShopForm = ({
   initialData,
@@ -33,10 +105,40 @@ const ShopForm = ({
     setSelectedCategories,
   } = useAddShopForm(initialData, mode);
 
+  const [isDark, setIsDark] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  // Effect to observe changes in the document's class list for dark mode
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Convert categories to options for react-select
+  const categoryOptions: CategoryOption[] = categories.map((cat) => ({
+    value: cat.id!,
+    label: cat.category_name,
+  }));
+
+  // Filter selected options based on selectedCategories
+  const selectedOptions: CategoryOption[] = categoryOptions.filter((opt) =>
+    selectedCategories.includes(opt.value)
+  );
+
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="p-4 space-y-4 max-h-[75vh] overflow-y-auto"
+      className="p-4 space-y-4 overflow-y-auto"
     >
       {/* Shop Name */}
       <InputField
@@ -72,9 +174,8 @@ const ShopForm = ({
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full p-2 rounded-lg bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted ${
-            errors.phone ? "border-red-500" : "border border-secondary"
-          }`}
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-gray-600 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
+            }`}
         />
       </InputField>
 
@@ -83,53 +184,24 @@ const ShopForm = ({
         <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
           Select Categories
         </label>
-        <Select
+        <Select<CategoryOption, true, GroupBase<CategoryOption>>
           placeholder="Search"
           isMulti
-          value={categories
-            .filter((cat: Category) => selectedCategories.includes(cat.id!))
-            .map((cat: Category) => ({
-              value: cat.id,
-              label: cat.category_name,
-            }))}
-          options={categories.map((category: Category) => ({
-            value: category.id,
-            label: category.category_name,
-          }))}
-          onChange={(selectedOptions) => {
-            const ids = selectedOptions
-              ? selectedOptions.map((option) => option.value as number)
-              : [];
-            setSelectedCategories(ids);
+          value={selectedOptions}
+          options={categoryOptions}
+          onChange={(
+            selected: MultiValue<CategoryOption>,
+          ) => {
+            setSelectedCategories(selected.map((opt) => opt.value));
           }}
-          menuPortalTarget={document.body}
-          styles={{
-            menuPortal: (base) => ({ ...base, zIndex: 1050 }),
-            control: (base, state) => ({
-              ...base,
-              backgroundColor: "var(--tw-bg-opacity)",
-              boxShadow: state.isFocused ? "0 0 0 1px var(--tw-shadow-color)" : base.boxShadow,
-              borderColor: state.isFocused ? "#888" : base.borderColor,
-              color: "inherit",
-            }),
-            menu: (base) => ({
-              ...base,
-              backgroundColor: "var(--tw-bg-opacity)",
-              color: "inherit",
-            }),
-            option: (base, state) => ({
-              ...base,
-              backgroundColor: state.isFocused
-                ? "rgba(0,0,0,0.1)"
-                : "transparent",
-              color: "inherit",
-            }),
-          }}
+          styles={getCustomSelectStyles(isDark)}
+          menuPortalTarget={typeof window !== "undefined" ? document.body : null}
           isClearable
           isSearchable
           className="react-select-container"
           classNamePrefix="react-select"
         />
+
       </div>
 
       {/* Address */}
@@ -148,7 +220,7 @@ const ShopForm = ({
         <button
           type="button"
           onClick={prefillAddressFields}
-          className="w-full px-4 py-2 rounded-lg bg-primary text-white hover:bg-secondary"
+          className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
           title="Click to prefill the address details"
         >
           Prefill Address
@@ -157,7 +229,7 @@ const ShopForm = ({
         <button
           type="button"
           onClick={handledManualEntry}
-          className="w-full px-4 py-2 border border-primary text-primary bg-white dark:bg-surface-dark dark:text-text-inverted rounded-lg hover:bg-gray-100 dark:hover:bg-surface-muted"
+          className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
@@ -171,11 +243,10 @@ const ShopForm = ({
       {/* Submit */}
       <button
         type="submit"
-        className={`w-full px-4 py-2 rounded-lg text-white ${
-          !isAddressValid || !!errors.shopName || !!errors.address
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-primary hover:bg-secondary"
-        }`}
+        className={`w-full px-4 py-2 rounded-lg text-white ${!isAddressValid || !!errors.shopName || !!errors.address
+            ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
+            : "bg-brand-primary hover:bg-secondary"
+          }`}
         disabled={!isAddressValid || !!errors.shopName || !!errors.address}
       >
         {mode === "edit" ? "Update Location" : "Submit Location"}

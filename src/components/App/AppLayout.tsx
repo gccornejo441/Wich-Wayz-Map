@@ -52,7 +52,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [isSidebarOpen]);
 
   return (
-    <div className="relative min-h-screen bg-lightGray dark:bg-surface-dark transition-colors duration-500">
+    <div className="relative min-h-screen bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
       <div className="flex flex-col">
         <div ref={sidebarRef}>
           <NavBar
@@ -65,7 +65,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
           <MapSidebar />
         </div>
       </div>
-      <div className="relative z-10 flex items-center justify-center min-h-screen">
+      <div className="relative z-10 flex items-center justify-center">
         <div className="container mx-auto md:px-4 md:py-6">{children}</div>
       </div>
       {currentModal === "updateShop" && <UpdateShop />}
