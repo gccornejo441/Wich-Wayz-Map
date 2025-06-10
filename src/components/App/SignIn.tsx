@@ -5,6 +5,7 @@ import Logo from "../Logo/Logo";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import { ROUTES } from "../../constants/routes";
 import GoogleButton from "../Utilites/GoogleButton";
+import { Checkbox, Label } from "flowbite-react";
 
 const SignIn = () => {
   const { login, resetPassword, user, signInWithGoogle } = useAuth();
@@ -124,7 +125,7 @@ const SignIn = () => {
                 />
                 <button
                   type="button"
-                  className="absolute right-4 text-brand-primary dark:text-white focus:outline-none"
+                  className="absolute right-4 text-brand-primary dark:text-text-muted focus:outline-none"
                   onClick={() => setPasswordVisible(!passwordVisible)}
                 >
                   {passwordVisible ? (
@@ -136,22 +137,24 @@ const SignIn = () => {
               </div>
             </div>
 
-            {error && <p className="text-brand-primary mb-4 text-sm">{error}</p>}
-            {message && <p className="text-brand-primary mb-4 text-sm">{message}</p>}
+            {error && <p className="text-brand-primary dark:text-brand-secondary mb-4 text-sm">{error}</p>}
+            {message && <p className="text-brand-primary dark:text-brand- mb-4 text-sm">{message}</p>}
 
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center">
-                <input
+              <div className="flex items-center gap-2">
+                <Checkbox
                   id="remember-me"
                   name="remember-me"
-                  type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-secondary border-accent rounded"
+                  className="accent-brand-primary dark:border-text-muted dark:bg-transparent checked:text-brand-primary checked:bg-brand-primary focus:ring-brand-primary"
                 />
-                <label htmlFor="remember-me" className="ml-3 text-sm text-text-base dark:text-white">
+                <Label
+                  htmlFor="remember-me"
+                  className="text-sm text-text-base dark:text-white"
+                >
                   Remember me
-                </label>
+                </Label>
               </div>
               <div className="text-sm">
                 <button type="button" onClick={handleResetPassword} className="text-text-base dark:text-white hover:underline ">
