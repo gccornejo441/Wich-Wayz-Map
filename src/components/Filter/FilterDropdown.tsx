@@ -9,23 +9,22 @@ interface FilterDropdownProps {
   navRef?: React.RefObject<HTMLElement>;
   onFilterChange: (filters: ShopFilters) => void;
 }
-
 export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
   base: "flex flex-col",
   tablist: {
     base: "flex text-center",
     variant: {
-      default: "flex-wrap border-b border-lightGray",
+      default: "flex-wrap border-b border-surface-muted dark:border-surface-dark",
     },
     tabitem: {
-      base: "flex items-center justify-center rounded-t-lg p-4 text-sm font-medium first:ml-0 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400",
+      base: "flex items-center justify-center rounded-t-lg p-4 text-sm font-medium first:ml-0 focus:outline-none disabled:cursor-not-allowed disabled:text-text-muted",
       icon: "mr-2 h-5 w-5",
       variant: {
         default: {
-          base: "rounded-t-lg border-b-2 border-transparent text-accent hover:bg-lightGray hover:text-primary",
+          base: "rounded-t-lg border-b-2 border-transparent text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-surface-darker hover:text-text-base dark:hover:text-text-inverted",
           active: {
-            on: "bg-white text-primary border-b-2 border-primary",
-            off: "text-accent hover:bg-lightGray hover:text-primary",
+            on: "bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted border-b-2 border-brand-primary dark:border-white",
+            off: "text-text-base dark:text-text-muted hover:bg-surface-muted dark:hover:bg-surface-darker hover:text-text-base dark:hover:text-text-inverted",
           },
         },
       },
@@ -38,6 +37,7 @@ export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
     },
   },
 };
+
 
 export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownProps) {
   const [top, setTop] = useState(0);
@@ -66,7 +66,7 @@ export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownP
 
   return (
     <div
-      className="fixed left-0 z-40 shadow-md w-screen bg-lightGray transition-all duration-300 max-h-[20rem] md:max-h-full overflow-y-auto border-t border-lightGray"
+      className="fixed left-0 z-40 w-screen md:max-h-full overflow-y-auto border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
       style={{ top }}
     >
       <div className="mx-auto w-full max-w-screen-xl px-4">
@@ -86,7 +86,7 @@ export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownP
         <div className="flex justify-end pb-4 gap-3">
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 text-sm px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all duration-200"
+            className="flex items-center gap-2 text-sm px-4 py-2 text-text-inverted rounded-lg bg-brand-primary hover:bg-brand-primaryHover dark:border-none"
           >
             <HiRefresh className="w-4 h-4" />
             Reset
@@ -94,7 +94,7 @@ export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownP
 
           <button
             onClick={() => onFilterChange(filters)}
-            className="text-sm px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+            className="flex items-center gap-2 text-sm px-4 py-2 text-text-inverted rounded-lg bg-brand-primary hover:bg-brand-primaryHover dark:border-none"
           >
             Apply Filters
           </button>

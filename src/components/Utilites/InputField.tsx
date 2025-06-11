@@ -64,7 +64,7 @@ function InputField<T extends FieldValues>({
           }}
           className={`${inputBaseClass} placeholder:text-text-muted dark:placeholder:text-text-muted ${errors[name]
             ? "border-red-500 dark:border-red-500"
-            : "border-brand-primary dark:border-gray-600"
+            : "border-brand-primary dark:border-text-muted"
             }`}
         />
 

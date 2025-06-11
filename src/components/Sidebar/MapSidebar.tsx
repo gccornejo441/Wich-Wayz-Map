@@ -146,7 +146,7 @@ const MapSidebar = () => {
                       });
                     }}
                     title="Edit this shop"
-                    className="text-accent hover:text-primary transition-colors"
+                    className="text-accent hover:text-primary dark:text-brand-secondary dark:hover:text-brand-secondaryHover transition-colors"
                   >
                     <FiEdit size={20} />
                   </button>

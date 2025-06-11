@@ -23,7 +23,6 @@ interface CategoryOption {
   label: string;
 }
 
-
 const getCustomSelectStyles = (
   isDark: boolean
 ): StylesConfig<CategoryOption, true> => ({
@@ -83,7 +82,29 @@ const getCustomSelectStyles = (
   }),
 });
 
-
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <svg
+    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    ></circle>
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    ></path>
+  </svg>
+);
 
 const ShopForm = ({
   initialData,
@@ -108,6 +129,8 @@ const ShopForm = ({
   const [isDark, setIsDark] = useState(
     document.documentElement.classList.contains("dark")
   );
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Effect to observe changes in the document's class list for dark mode
   useEffect(() => {
@@ -134,10 +157,21 @@ const ShopForm = ({
     selectedCategories.includes(opt.value)
   );
 
+  // Wrapper for onSubmit to handle loading state
+const handleFormSubmit = async (data: AddAShopPayload) => {
+    setIsSubmitting(true);
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(handleFormSubmit)}
       className="p-4 space-y-4 overflow-y-auto"
     >
       {/* Shop Name */}
@@ -174,8 +208,9 @@ const ShopForm = ({
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-gray-600 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
-            }`}
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-gray-600 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+            errors.phone ? "border-red-500 dark:border-red-500" : ""
+          }`}
         />
       </InputField>
 
@@ -189,9 +224,7 @@ const ShopForm = ({
           isMulti
           value={selectedOptions}
           options={categoryOptions}
-          onChange={(
-            selected: MultiValue<CategoryOption>,
-          ) => {
+          onChange={(selected: MultiValue<CategoryOption>) => {
             setSelectedCategories(selected.map((opt) => opt.value));
           }}
           styles={getCustomSelectStyles(isDark)}
@@ -201,7 +234,6 @@ const ShopForm = ({
           className="react-select-container"
           classNamePrefix="react-select"
         />
-
       </div>
 
       {/* Address */}
@@ -220,7 +252,10 @@ const ShopForm = ({
         <button
           type="button"
           onClick={prefillAddressFields}
-          className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
+          disabled={isSubmitting}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           title="Click to prefill the address details"
         >
           Prefill Address
@@ -229,7 +264,10 @@ const ShopForm = ({
         <button
           type="button"
           onClick={handledManualEntry}
-          className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
+          disabled={isSubmitting}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
@@ -243,13 +281,29 @@ const ShopForm = ({
       {/* Submit */}
       <button
         type="submit"
-        className={`w-full px-4 py-2 rounded-lg text-white ${!isAddressValid || !!errors.shopName || !!errors.address
+        disabled={
+          !isAddressValid ||
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
+        }
+        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${
+          !isAddressValid ||
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
             ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
             : "bg-brand-primary hover:bg-secondary"
-          }`}
-        disabled={!isAddressValid || !!errors.shopName || !!errors.address}
+        }`}
       >
-        {mode === "edit" ? "Update Location" : "Submit Location"}
+        {isSubmitting ? (
+          <>
+            <LoadingSpinner />
+            {mode === "edit" ? "Updating..." : "Submitting..."}
+          </>
+        ) : (
+          <>{mode === "edit" ? "Update Location" : "Submit Location"}</>
+        )}
       </button>
     </form>
   );

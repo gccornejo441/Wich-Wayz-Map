@@ -1,65 +1,52 @@
-import { Checkbox } from "flowbite-react";
-import "./CustomCheckbox.css";
-
-interface CustomCheckboxProps {
+interface CheckboxProps {
   id: string;
   label: string;
   checked: boolean;
-  onChange: (checked: boolean) => void;
+  onChange: (v: boolean) => void;
   description?: string;
   disabled?: boolean;
 }
 
-const CustomCheckbox = ({
+const SimpleCheckbox = ({
   id,
   label,
   checked,
   onChange,
   description,
   disabled = false,
-}: CustomCheckboxProps) => {
-  return (
-    <label htmlFor={id} className="flex items-center gap-2 cursor-pointer">
-      <div className="relative">
-        <Checkbox
-          id={id}
-          name={id}
-          checked={checked}
-          disabled={disabled}
-          aria-disabled={disabled}
-          aria-describedby={description ? `${id}-desc` : undefined}
-          onChange={(e) => onChange(e.target.checked)}
-          className="peer sr-only"
-        />
-        <div
-          className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-all duration-200
-            ${checked ? "bg-primary animate-checkbox-bounce border-primary" : "border-gray-400"}
-            ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          <svg
-            className={`w-5 h-5 text-white transform transition-all duration-200 ${
-              checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
-            }`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-      </div>
-      <span className="text-sm text-accent">
-        {label}
-        {description && (
-          <span id={`${id}-desc`} className="sr-only">
-            {description}
-          </span>
-        )}
-      </span>
-    </label>
-  );
-};
+}: CheckboxProps) => (
+  <label
+    htmlFor={id}
+    className={`inline-flex items-center gap-2 ${
+      disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+    }`}
+  >
+    <input
+      id={id}
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      aria-describedby={description ? `${id}-desc` : undefined}
+      onChange={(e) => onChange(e.target.checked)}
+      className={`
+        appearance-none h-5 w-5 rounded-md border-2 focus:ring-0 
+        transition-colors duration-200 ease-in-out text-2xl
+        border-brand-primaryBorder dark:border-brand-secondaryBorder
+        bg-transparent
+        checked:bg-brand-primary checked:border-brand-primary
+        dark:checked:bg-brand-primary dark:checked:border-brand-primary
+      `}
+    />
 
-export default CustomCheckbox;
+    <span className="text-sm text-text-base dark:text-text-inverted">
+      {label}
+      {description && (
+        <span id={`${id}-desc`} className="sr-only">
+          {description}
+        </span>
+      )}
+    </span>
+  </label>
+);
+
+export default SimpleCheckbox;

@@ -31,8 +31,11 @@ module.exports = {
       colors: {
         brand: {
           primary: "#DA291C", // red
-          primaryBorder: "#5a110c", // dark red
+          primaryBorder: "#5A110C", // dark red
+          primaryHover: "#5A110C", // dark red
           secondary: "#FFC72C", // yellow
+          secondaryBorder: "#E4B226", // yellow dark
+          secondaryHover: "#CfA223" // yellow dark
         },
         surface: {
           light: "#FFFFFF", // for light backgrounds

@@ -55,8 +55,8 @@ const GoogleButton = ({
         </div>
         {disabled ? (
           <span className="gsi-material-button-loading flex items-center gap-2">
-            <FiLoader className="animate-spin h-5 w-5 text-brand-primary" />
-            <span className="text-brand-primary text-md font-semibold">
+            <FiLoader className="animate-spin h-5 w-5 text-brand-secondary" />
+            <span className="text-brand-secondary text-md font-semibold">
               Authenticating...
             </span>
           </span>

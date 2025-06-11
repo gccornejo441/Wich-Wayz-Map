@@ -1,31 +1,17 @@
 import { useEffect, useState } from "react";
 import { ShopFilters } from "@/types/shopFilter";
 import CustomCheckbox from "../Form/CustomCheckbox";
-import { HiSortDescending, HiLocationMarker } from "react-icons/hi";
+import { HiSortDescending } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
-import { TextInput } from "flowbite-react";
 import "./Filter.css";
 import { CategoryWithShopCount, getCategoriesWithShopCount } from "@/services/getCategoriesWithShopCount";
+import InputField from "../Utilites/InputField";
 
 interface Props {
   value: ShopFilters;
   onChange: (filters: ShopFilters) => void;
   section?: "general" | "categories";
 }
-
-const textInputTheme = {
-  field: {
-    input: {
-      colors: {
-        gray:
-          "border-lightGray bg-gray-50 text-gray-900 placeholder-gray-500 " +
-          "focus:border-primary focus:ring-primary " +
-          "dark:border-gray-600 dark:bg-gray-700 dark:text-white " +
-          "dark:placeholder-gray-400 dark:focus:border-primary dark:focus:ring-primary",
-      },
-    },
-  },
-};
 
 export default function FilterForm({ value, onChange, section = "general" }: Props) {
   const [filters, setFilters] = useState<ShopFilters>(value);
@@ -60,18 +46,18 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
   };
 
   return (
-    <div className="mx-auto p-2 rounded-xl space-y-6 text-accent animate-fade-in-up duration-500 ease-out">
+    <div className="mx-auto p-2 rounded-xl space-y-2 text-text-base dark:text-text-inverted animate-fade-in-up duration-500 ease-out">
       {section === "categories" && (
         <>
-          <h2 className="font-bold text-primary uppercase tracking-wide text-sm">Categories</h2>
-          <p className="text-xs text-gray-500 mb-2">Pick all sandwich styles that apply.</p>
+          <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Categories</h2>
+          <p className="text-xs text-text-muted dark:text-text-inverted mb-2">Pick all sandwich styles that apply.</p>
 
           {loading ? (
             <div className="flex justify-center py-6">
-              <FaSpinner className="animate-spin text-primary w-6 h-6" />
+              <FaSpinner className="animate-spin text-text-inverted w-6 h-6" />
             </div>
           ) : (
-            <div className="max-h-[300px] overflow-y-auto pr-1 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="max-h-[300px] overflow-y-auto p-2 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {categories.map((cat) => (
                 <CustomCheckbox
                   key={cat.id}
@@ -89,38 +75,41 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
       {section === "general" && (
         <>
           <div>
-            <h2 className="font-bold text-primary uppercase tracking-wide text-sm">Filter by Location</h2>
-            <p className="text-xs text-gray-500 mb-3">Enter a city, state, or country to narrow your search.</p>
+            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Filter by Location</h2>
+            <p className="text-xs text-text-muted dark:text-text-inverted mb-3">Enter a city, state, or country to narrow your search.</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="relative">
-                <HiLocationMarker className="absolute left-3 top-2.5 text-gray-400 w-4 h-4 z-10" />
-                <TextInput
-                  theme={textInputTheme}
-                  className="pl-10 text-sm rounded-lg shadow-sm"
+                <InputField
+                  name="city"
+                  label=""
                   placeholder="City"
                   value={filters.city ?? ""}
                   onChange={(e) => update("city", e.target.value)}
+                  errors={{}}
                 />
               </div>
-              <TextInput
-                theme={textInputTheme}
-                className="text-sm rounded-lg shadow-sm"
+              <InputField
+                name="state"
+                label=""
                 placeholder="State"
                 value={filters.state ?? ""}
                 onChange={(e) => update("state", e.target.value)}
+                errors={{}}
               />
-              <TextInput
-                theme={textInputTheme}
-                className="sm:col-span-2 text-sm rounded-lg shadow-sm"
+
+              <InputField
+                name="country"
+                label=""
                 placeholder="Country"
                 value={filters.country ?? ""}
                 onChange={(e) => update("country", e.target.value)}
+                errors={{}}
               />
             </div>
           </div>
 
-          <div className="pt-0 border-t border-lightGray space-y-4">
-            <h2 className="font-bold text-primary uppercase tracking-wide text-sm">Additional Options</h2>
+          <div className="pt-4 border-t border-surface-muted dark:border-gray-700 space-y-4">
+            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Additional Options</h2>
 
             <div className="flex items-center">
               <CustomCheckbox
@@ -132,11 +121,11 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-primary mb-1 uppercase">Sort Results</label>
+              <label className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase">Sort Results</label>
               <div className="relative">
-                <HiSortDescending className="absolute left-3 top-2.5 text-gray-400 w-4 h-4 z-10" />
+                <HiSortDescending className="absolute left-3 top-3 text-text-muted w-5 h-5 z-10" />
                 <select
-                  className="h-10 pl-10 pr-4 w-full text-sm rounded-lg border border-lightGray bg-gray-50 shadow-sm focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none"
+                  className="h-10 pl-10 pr-4 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
                   value={filters.sort ?? ""}
                   onChange={(e) => update("sort", e.target.value as ShopFilters["sort"])}
                 >
@@ -145,7 +134,7 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
                   <option value="votes">Most Upvoted</option>
                 </select>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Choose how you'd like the results ordered.</p>
+              <p className="text-xs text-text-muted dark:text-text-inverted mt-1">Choose how you'd like the results ordered.</p>
             </div>
           </div>
         </>
