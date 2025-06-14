@@ -26,7 +26,7 @@ const AddEditShop = () => {
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-2">
           <div className="w-full">
             <ShopForm
               initialData={initialData}
@@ -35,7 +35,7 @@ const AddEditShop = () => {
               mode={initialData ? "edit" : "add"}
             />
           </div>
-          <div className="w-full pl-4 border-t lg:border-t-0 lg:border-l border-lightGray dark:border-surface-light">
+          <div className="w-full pl-6 pt-6 md:pt-0 border-t lg:border-t-0 lg:border-l border-lightGray dark:border-surface-light">
             <MapPreview address={address} onAddressUpdate={setAddress} />
           </div>
         </div>
