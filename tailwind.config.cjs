@@ -20,10 +20,20 @@ module.exports = {
           "50%": { transform: "scale(1.2)", opacity: 1 },
           "100%": { transform: "scale(1)", opacity: 1 },
         },
+        fadeIn: {
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
+        },
+        slideUp: {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 0.5s ease-out both",
         "check-bounce": "check-bounce 0.5s ease-out both",
+        fadeIn: "fadeIn 0.3s ease-out",
+        slideUp: "slideUp 0.3s ease-out",
       },
       transitionProperty: {
         sidebar: "background-color, color, border-color",
@@ -35,7 +45,7 @@ module.exports = {
           primaryHover: "#5A110C", // dark red
           secondary: "#FFC72C", // yellow
           secondaryBorder: "#E4B226", // yellow dark
-          secondaryHover: "#CfA223" // yellow dark
+          secondaryHover: "#CfA223", // yellow dark
         },
         surface: {
           light: "#FFFFFF", // for light backgrounds

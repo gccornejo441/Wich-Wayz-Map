@@ -163,3 +163,15 @@
   background-color: #303030;
   opacity: 8%;
 }
+
+
+@layer components {
+  .mapboxPopup .mapboxgl-popup-content {
+    @apply bg-surface-light text-text-base shadow-card rounded-xl font-sans leading-snug ring-1 ring-surface-muted;
+  }
+
+  .mapboxPopup .mapboxgl-popup-tip {
+    border-top-color: theme("colors.surface.light") !important;
+  }
+
+}

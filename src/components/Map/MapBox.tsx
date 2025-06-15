@@ -113,6 +113,11 @@ const MapBox = () => {
     geojson.features.forEach((feature, index, array) => {
       const { coordinates } = feature.geometry;
       const { shopName, address } = feature.properties;
+      const popup = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: false,
+        className: "mapboxPopup"
+      });
 
       const el = document.createElement("div");
       el.className = "custom-marker";
@@ -120,20 +125,27 @@ const MapBox = () => {
       el.style.cssText =
         "width:30px;height:40px;background:url('/sandwich-pin-v2.svg') center/cover no-repeat;cursor:pointer;";
 
+      el.addEventListener("mouseenter", () => {
+        popup
+          .setLngLat(coordinates as [number, number])
+          .setHTML(`
+  <div class="bg-surface-light dark:bg-surface-dark text-sm  rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
+    <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
+    <p class="text-text-base dark:text-text-inverted">${address}</p>
+  </div>
+`)
+          .addTo(map);
+      });
+
+      el.addEventListener("mouseleave", () => {
+        popup.remove();
+      });
+
       el.addEventListener("click", () => {
         openSidebar(feature.properties, position);
       });
 
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat(coordinates as [number, number])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div style="font-family:Arial;padding:6px;max-width:240px;">
-            <h2 style="margin:0 0 6px;font-size:18px;color:#DA291C;">${shopName}</h2>
-            <p style="margin:0;font-size:14px;color:#555;">${address}</p>
-          </div>`),
-        )
-        .addTo(map);
+      const marker = new mapboxgl.Marker(el).setLngLat(coordinates as [number, number]).addTo(map);
 
       markersRef.current.push(marker);
 

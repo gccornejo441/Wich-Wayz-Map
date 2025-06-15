@@ -31,7 +31,7 @@ const getCustomSelectStyles = (
     ...base,
     backgroundColor: isDark ? "#1E1E2F" : "#FFFFFF",
     color: isDark ? "#FFFFFF" : "#000000",
-    borderColor: state.isFocused || isDark ? "#4b5563" : "#DA291C",
+    borderColor: state.isFocused || isDark ? "#9CA3AF" : "#DA291C",
     borderWidth: state.isFocused ? "1px" : "2px",
     boxShadow: state.isFocused ? "0 0 0 1px #4b5563" : base.boxShadow,
     padding: "0.2rem",
@@ -208,7 +208,7 @@ const handleFormSubmit = async (data: AddAShopPayload) => {
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-gray-600 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
             errors.phone ? "border-red-500 dark:border-red-500" : ""
           }`}
         />

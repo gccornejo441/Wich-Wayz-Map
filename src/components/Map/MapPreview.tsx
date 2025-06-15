@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Map, {
   Marker,
   NavigationControl,
   FullscreenControl,
   MarkerDragEvent,
+  MapRef,
 } from "react-map-gl";
 import { HiClipboard } from "react-icons/hi";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -25,14 +26,38 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   onAddressUpdate,
 }) => {
   const [coords, setCoords] = useState<Coordinates | null>(null);
+  const [mapStyle, setMapStyle] = useState(
+    document.documentElement.classList.contains("dark")
+      ? "mapbox://styles/mapbox/navigation-night-v1"
+      : "mapbox://styles/mapbox/streets-v12"
+  );
+  const mapRef = useRef<MapRef | null>(null);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains("dark");
+      const style = isDark
+        ? "mapbox://styles/mapbox/navigation-night-v1"
+        : "mapbox://styles/mapbox/streets-v12";
+      setMapStyle(style);
+      mapRef.current?.getMap().setStyle(style);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!address) return;
     const timeout = setTimeout(() => {
       fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          address,
-        )}.json?access_token=${MAPBOX_TOKEN}`,
+          address
+        )}.json?access_token=${MAPBOX_TOKEN}`
       )
         .then((r) => r.json())
         .then((json) => {
@@ -51,7 +76,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     setCoords(newCoords);
 
     fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`,
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`
     )
       .then((r) => r.json())
       .then((json) => {
@@ -68,31 +93,34 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   };
 
   return (
-    <div className="w-full h-fit rounded-lg overflow-hidden shadow-sm bg-lightGray dark:bg-surface-dark p-2">
+    <div className="w-full h-full rounded-lg overflow-hidden shadow-sm bg-lightGray dark:bg-surface-dark p-2 flex flex-col">
       {coords ? (
         <>
-          <Map
-            mapboxAccessToken={MAPBOX_TOKEN}
-            initialViewState={{
-              longitude: coords.longitude,
-              latitude: coords.latitude,
-              zoom: 14,
-            }}
-            mapStyle="mapbox://styles/mapbox/streets-v11"
-            style={{ width: "100%", height: "256px" }}
-          >
-            <NavigationControl position="top-right" />
-            <FullscreenControl position="bottom-right" />
-            <Marker
-              longitude={coords.longitude}
-              latitude={coords.latitude}
-              draggable
-              onDragEnd={handleDragEnd}
-              anchor="bottom"
+          <div className="flex-1 relative">
+            <Map
+              ref={mapRef}
+              mapboxAccessToken={MAPBOX_TOKEN}
+              initialViewState={{
+                longitude: coords.longitude,
+                latitude: coords.latitude,
+                zoom: 14,
+              }}
+              mapStyle={mapStyle}
+              style={{ width: "100%", height: "100%" }}
             >
-              <div className="text-xl cursor-pointer">📍</div>
-            </Marker>
-          </Map>
+              <NavigationControl position="top-right" />
+              <FullscreenControl position="bottom-right" />
+              <Marker
+                longitude={coords.longitude}
+                latitude={coords.latitude}
+                draggable
+                onDragEnd={handleDragEnd}
+                anchor="bottom"
+              >
+                <div className="text-xl cursor-pointer">📍</div>
+              </Marker>
+            </Map>
+          </div>
           <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-base dark:text-text-inverted">
             <span>
               Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
