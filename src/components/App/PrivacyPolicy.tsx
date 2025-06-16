@@ -3,15 +3,16 @@ const PrivacyPolicy = () => {
     <main role="main">
       <div id="inner-content">
         <article className="max-w-2xl mx-auto py-8 md:py-12 px-4 lg:px-0 lg:pb-32">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl leading-none mb-6 lg:mb-8 text-primary">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl leading-none mb-6 lg:mb-8 text-primary dark:text-brand-secondary">
             Privacy Policy
           </h1>
-          <div className="mb-2 text-gray-400 flex justify-between">
+
+          <div className="mb-2 text-gray-400 dark:text-gray-500 flex justify-between">
             <time dateTime="2024-05-20T10:22:26.309Z">
               Last updated on November 29, 2024
             </time>
           </div>
-          <section className="prose lg:prose-xl text-gray-900 pt-5 prose-h1:text-red prose-h2:text-red prose-h3:text-red prose-strong:text-red">
+          <section className="prose lg:prose-xl text-gray-900 dark:text-text-inverted dark:prose-invert pt-5 prose-h1:text-red prose-h2:text-red prose-h3:text-red prose-strong:text-red">
             <p>
               This Privacy Notice for Wich Wayz Map ("we," "us," or "our"),
               describes how and why we might access, collect, store, use, and/or
