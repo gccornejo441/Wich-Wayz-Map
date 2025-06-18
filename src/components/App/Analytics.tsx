@@ -8,14 +8,22 @@ import {
   PieChart,
   Pie,
   Cell,
+  CartesianGrid,
 } from "recharts";
 
 import useShopAnalytics from "@/hooks/useShopAnalytics";
+import { useTheme } from "@/hooks/useTheme";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
 
 const Analytics = () => {
   const { shopStateData, shopCategoryData, loading } = useShopAnalytics();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const axisColor = isDark ? "#fff" : "#333";
+  const gridColor = isDark ? "#555" : "#ccc";
+  const tooltipBg = isDark ? "#1F2937" : "#fff";
+  const tooltipText = isDark ? "#fff" : "#333";
 
   if (loading) {
     return (
@@ -43,22 +51,27 @@ const Analytics = () => {
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={shopStateData}>
+              <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
               <XAxis
                 dataKey="state"
-                stroke="#888"
-                tick={{ fill: "currentColor" }}
+                stroke={axisColor}
+                tick={{ fill: axisColor }}
               />
-              <YAxis stroke="#888" tick={{ fill: "currentColor" }} />
+              <YAxis
+                stroke={axisColor}
+                tick={{ fill: axisColor }}
+              />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1F2937",
+                  backgroundColor: tooltipBg,
                   border: "none",
-                  color: "#fff",
+                  color: tooltipText,
                 }}
               />
               <Bar dataKey="shop_count" fill="#0088FE" />
             </BarChart>
           </ResponsiveContainer>
+
         </div>
 
         <div className="bg-surface-muted dark:bg-surface-darker p-6 rounded-lg shadow-md">
@@ -84,11 +97,11 @@ const Analytics = () => {
                   />
                 ))}
               </Pie>
-              <Tooltip
+                <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1F2937",
+                  backgroundColor: tooltipBg,
                   border: "none",
-                  color: "#fff",
+                  color: tooltipText,
                 }}
               />
             </PieChart>
