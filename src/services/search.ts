@@ -65,7 +65,5 @@ export const SearchShops = async (
   const results = query.trim()
     ? fuse.search(query).map((r) => ({ shop: r.item }))
     : shops.map((s) => ({ shop: s }));
-
-  console.log("Filtered results count:", results.length);
   return results;
 };

@@ -51,7 +51,6 @@ export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
   const localStorageCategories = readCategoriesFromLocalStorage();
 
   if (JSON.stringify(dbCategories) !== JSON.stringify(localStorageCategories)) {
-    console.log("Local storage is outdated. Updating from database...");
     writeCategoriesToLocalStorage(dbCategories);
   }
 };
@@ -85,7 +84,6 @@ export const addCategoryIfNotExists = async (
   if (!categoryExistsInLocalStorage) {
     categories.push({ category_name: categoryName, description });
     writeCategoriesToLocalStorage(categories);
-    console.log("Category added to local storage successfully!");
   }
 };
 
