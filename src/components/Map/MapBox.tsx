@@ -129,12 +129,11 @@ const MapBox = () => {
         popup
           .setLngLat(coordinates as [number, number])
           .setHTML(`
-  <div class="bg-surface-light dark:bg-surface-dark text-sm  rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
-    <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-    <p class="text-text-base dark:text-text-inverted">${address}</p>
-  </div>
-`)
-          .addTo(map);
+              <div class="bg-surface-light dark:bg-surface-dark text-sm  rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
+                <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
+                <p class="text-text-base dark:text-text-inverted">${address}</p>
+              </div>
+            `).addTo(map);
       });
 
       el.addEventListener("mouseleave", () => {
@@ -177,6 +176,7 @@ const MapBox = () => {
     const isDarkMode = document.documentElement.classList.contains("dark");
 
     mapboxgl.accessToken = mapboxAccessToken;
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: isDarkMode
@@ -229,6 +229,28 @@ const MapBox = () => {
   }, []);
 
   useEffect(() => () => clearMarkers(), []);
+
+  useEffect(() => {
+    const handleLocateUser = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords: Coordinates = [pos.coords.longitude, pos.coords.latitude];
+            setPosition(coords); 
+            mapRef.current?.flyTo({ center: coords, zoom: 16, essential: true });
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+          }
+        );
+      } else {
+        console.warn("Geolocation not supported by this browser.");
+      }
+    };
+
+    window.addEventListener("locateUser", handleLocateUser);
+    return () => window.removeEventListener("locateUser", handleLocateUser);
+  }, []);
 
   return (
     <div>
