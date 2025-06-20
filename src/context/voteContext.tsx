@@ -102,7 +102,6 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
           downvote: !isUpvote,
         };
         await InsertVote(newVote);
-        console.log(`Vote successfully submitted for shopId ${shopId}`);
       } catch (error) {
         console.error(`Error submitting vote for shopId ${shopId}:`, error);
         throw new Error("Failed to submit vote.");

@@ -6,7 +6,7 @@ import { useMap as useMapContext } from "../../context/mapContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { GiSandwich } from "react-icons/gi";
 
-const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128]; // NYC
+const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128];
 type Coordinates = [number, number];
 
 export interface ShopGeoJsonProperties {
@@ -61,7 +61,6 @@ const MapBox = () => {
     const index = Math.floor(Math.random() * loadingMessages.length);
     return loadingMessages[index];
   }, []);
-
 
   const createGeoJsonData = (): GeoJSON.FeatureCollection<
     GeoJSON.Point,
@@ -129,22 +128,23 @@ const MapBox = () => {
         popup
           .setLngLat(coordinates as [number, number])
           .setHTML(`
-              <div class="bg-surface-light dark:bg-surface-dark text-sm  rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
-                <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-                <p class="text-text-base dark:text-text-inverted">${address}</p>
-              </div>
-            `).addTo(map);
+            <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
+              <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
+              <p class="text-text-base dark:text-text-inverted">${address}</p>
+            </div>
+          `)
+          .addTo(map);
       });
 
-      el.addEventListener("mouseleave", () => {
-        popup.remove();
-      });
+      el.addEventListener("mouseleave", () => popup.remove());
 
       el.addEventListener("click", () => {
         openSidebar(feature.properties, position);
       });
 
-      const marker = new mapboxgl.Marker(el).setLngLat(coordinates as [number, number]).addTo(map);
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat(coordinates as [number, number])
+        .addTo(map);
 
       markersRef.current.push(marker);
 
@@ -154,17 +154,30 @@ const MapBox = () => {
     });
   };
 
+  // Resolve initial position and listen for "locateUser" event
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setPosition([pos.coords.longitude, pos.coords.latitude]),
-        () => setPosition(DEFAULT_POSITION),
-      );
-    } else {
-      setPosition(DEFAULT_POSITION);
-    }
+    const resolvePosition = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setPosition([pos.coords.longitude, pos.coords.latitude]),
+          () => setPosition(DEFAULT_POSITION),
+        );
+      } else {
+        setPosition(DEFAULT_POSITION);
+      }
+    };
+
+    resolvePosition();
+
+    const locateUserListener = () => resolvePosition();
+    window.addEventListener("locateUser", locateUserListener);
+
+    return () => {
+      window.removeEventListener("locateUser", locateUserListener);
+    };
   }, []);
 
+  // Initialize map once position is available
   useEffect(() => {
     if (!position || !mapContainerRef.current) return;
 
@@ -176,7 +189,6 @@ const MapBox = () => {
     const isDarkMode = document.documentElement.classList.contains("dark");
 
     mapboxgl.accessToken = mapboxAccessToken;
-
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: isDarkMode
@@ -194,20 +206,21 @@ const MapBox = () => {
     });
 
     mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
   }, [position, mapboxAccessToken, mapZoom]);
 
+  // Re-render markers when displayed shops update
   useEffect(() => {
     if (mapLoaded && mapRef.current) {
       renderCustomMarkers(mapRef.current);
     }
   }, [displayedShops, mapLoaded]);
 
-  useEffect(() => {
-    if (mapRef.current && center) {
-      mapRef.current.flyTo({ center, zoom: 16, essential: true });
-    }
-  }, [center]);
-
+  // Handle dark mode theme changes and center fly-to behavior
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const isDark = document.documentElement.classList.contains("dark");
@@ -228,28 +241,15 @@ const MapBox = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => () => clearMarkers(), []);
-
   useEffect(() => {
-    const handleLocateUser = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const coords: Coordinates = [pos.coords.longitude, pos.coords.latitude];
-            setPosition(coords); 
-            mapRef.current?.flyTo({ center: coords, zoom: 16, essential: true });
-          },
-          (err) => {
-            console.error("Geolocation error:", err);
-          }
-        );
-      } else {
-        console.warn("Geolocation not supported by this browser.");
-      }
-    };
+    if (mapRef.current && center) {
+      mapRef.current.flyTo({ center, zoom: 16, essential: true });
+    }
+  }, [center]);
 
-    window.addEventListener("locateUser", handleLocateUser);
-    return () => window.removeEventListener("locateUser", handleLocateUser);
+  // Cleanup markers on unmount
+  useEffect(() => {
+    return () => clearMarkers();
   }, []);
 
   return (
@@ -272,7 +272,6 @@ const MapBox = () => {
           left: 0,
         }}
       />
-
       <SpeedDial
         onLocateUser={() => {
           window.dispatchEvent(new Event("locateUser"));
