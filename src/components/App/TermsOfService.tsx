@@ -1,15 +1,17 @@
 const TearmsOfService = () => {
   return (
-    <main>
-      <article className="max-w-2xl mx-auto py-8 md:py-12 px-4 lg:px-0 lg:pb-32">
-        <div className="grow">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl leading-none mb-6 lg:mb-8 text-primary">
+    <main role="main">
+      <div id="inner-content">
+        <article className="max-w-2xl mx-auto py-8 md:py-12 px-4 lg:px-0 lg:pb-32">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl leading-none mb-6 lg:mb-8 text-primary dark:text-brand-secondary">
             Terms of Service
           </h1>
-          <div className="prose prose-lg prose-blue text-gray-700">
-            <p>
-              <em>Last updated December 06, 2024</em>
-            </p>
+          <div className="mb-2 text-gray-400 dark:text-gray-500 flex justify-between">
+            <time dateTime="2024-05-20T10:22:26.309Z">
+              Last updated on November 29, 2024
+            </time>
+          </div>
+          <section className="prose lg:prose-xl text-gray-900 dark:text-text-inverted dark:prose-invert pt-5 prose-h1:text-red prose-h2:text-red prose-h3:text-red prose-strong:text-red">
             <p>Thank you for using Wich Wayz!</p>
             <p>
               These Terms of Use, in conjunction with our Privacy Notice,
@@ -600,9 +602,9 @@ const TearmsOfService = () => {
               further information regarding use of Wich Wayz, please contact us
               at wich.wayz.map@gmail.com.
             </p>
-          </div>
-        </div>
-      </article>
+          </section>
+        </article>
+      </div>
     </main>
   );
 };
