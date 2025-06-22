@@ -1,12 +1,11 @@
 const PrivacyPolicy = () => {
   return (
-    <main role="main">
+    <main role="main" className="mt-8">
       <div id="inner-content">
         <article className="max-w-2xl mx-auto py-8 md:py-12 px-4 lg:px-0 lg:pb-32">
           <h1 className="text-3xl md:text-5xl lg:text-6xl leading-none mb-6 lg:mb-8 text-primary dark:text-brand-secondary">
             Privacy Policy
           </h1>
-
           <div className="mb-2 text-gray-400 dark:text-gray-500 flex justify-between">
             <time dateTime="2024-05-20T10:22:26.309Z">
               Last updated on November 29, 2024
