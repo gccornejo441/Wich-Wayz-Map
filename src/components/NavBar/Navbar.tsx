@@ -91,7 +91,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   />
                 </div>
               }
-              className="rounded-lg shadow-lg bg-white dark:bg-surface-dark border border-surface-muted dark:border-gray-700 text-sm"
+              className="rounded-lg shadow-lg bg-white dark:bg-surface-darker border border-surface-muted dark:border-gray-700 text-sm"
             >
               {isAuthenticated ? (
                 <>
