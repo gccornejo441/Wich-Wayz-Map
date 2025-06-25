@@ -91,7 +91,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   />
                 </div>
               }
-              className="rounded-lg shadow-lg bg-white dark:bg-surface-darker border border-surface-muted dark:border-gray-700 text-sm"
+              className="p-1 rounded-lg shadow-lg bg-white dark:bg-surface-darker border border-surface-muted dark:border-gray-700 text-sm"
             >
               {isAuthenticated ? (
                 <>
@@ -109,7 +109,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                       <Dropdown.Item
                         icon={HiUserAdd}
                         onClick={handleSignup}
-                        className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
+                        className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
                       >
                         Become a Club Member
                       </Dropdown.Item>
@@ -120,7 +120,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                     <Dropdown.Item
                       icon={HiKey}
                       onClick={handleAdminSettings}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
+                      className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
                     >
                       Admin Settings
                     </Dropdown.Item>
@@ -128,7 +128,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   <Dropdown.Item
                     icon={HiLogout}
                     onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
                   >
                     Sign Out
                   </Dropdown.Item>
@@ -138,14 +138,14 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
                   <Dropdown.Item
                     icon={HiLogin}
                     onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
                   >
                     Sign In
                   </Dropdown.Item>
                   <Dropdown.Item
                     icon={HiUserAdd}
                     onClick={handleSignup}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary dark:hover:bg-brand-primary rounded-lg transition duration-300 ease-in-out"
+                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
                   >
                     Register
                   </Dropdown.Item>
