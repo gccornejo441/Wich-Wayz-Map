@@ -16,7 +16,7 @@ interface FilteredShop {
 }
 
 export const filterShops = async (
-  filters: ShopFilters
+  filters: ShopFilters,
 ): Promise<FilteredShop[]> => {
   const where: string[] = [];
   const args: (string | number)[] = [];
@@ -78,7 +78,9 @@ export const filterShops = async (
     "JOIN locations ON shops.id_location = locations.id",
     "JOIN users ON shops.created_by = users.id",
     joinVotes ? "LEFT JOIN votes ON shops.id = votes.shop_id" : "",
-    joinCategories ? "LEFT JOIN shop_categories ON shops.id = shop_categories.shop_id" : "",
+    joinCategories
+      ? "LEFT JOIN shop_categories ON shops.id = shop_categories.shop_id"
+      : "",
   ];
 
   const groupBy = "GROUP BY shops.id";

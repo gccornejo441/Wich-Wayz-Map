@@ -36,13 +36,15 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
 
   const displayedShops = useMemo(
     () => (filtered.length ? filtered : shops),
-    [filtered, shops]
+    [filtered, shops],
   );
 
   useEffect(() => {
     const load = async () => {
       try {
-        const navEntry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+        const navEntry = performance.getEntriesByType(
+          "navigation",
+        )[0] as PerformanceNavigationTiming;
         const isFreshLoad = navEntry?.type === "reload";
 
         if (isFreshLoad) {
@@ -59,7 +61,9 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         const cachedLocations = await getCachedData(LOCATIONS_STORE);
 
         const [{ rows }] = await Promise.all([
-          executeQuery<{ count: number }>("SELECT COUNT(*) AS count FROM locations"),
+          executeQuery<{ count: number }>(
+            "SELECT COUNT(*) AS count FROM locations",
+          ),
         ]);
         const dbLocationCount = rows[0]?.count ?? 0;
 

@@ -14,7 +14,11 @@ interface AppLayoutProps {
 const AppLayout = ({ children }: AppLayoutProps) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { currentModal } = useModal();
-  const { shopListOpen, closeShopList, sidebarOpen: mapSidebarOpen } = useShopSidebar();
+  const {
+    shopListOpen,
+    closeShopList,
+    sidebarOpen: mapSidebarOpen,
+  } = useShopSidebar();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);

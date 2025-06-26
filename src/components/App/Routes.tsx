@@ -29,7 +29,10 @@ function MainRoutes() {
         <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
         <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />
         <Route path={ROUTES.ACCOUNT.PROFILE} element={<UserProfile />} />
-        <Route path={ROUTES.ACCOUNT.ADMIN_SETTINGS} element={<AdminSettings />} />
+        <Route
+          path={ROUTES.ACCOUNT.ADMIN_SETTINGS}
+          element={<AdminSettings />}
+        />
         <Route path={ROUTES.PAYMENT.SUCCESS} element={<PaymentSuccess />} />
         <Route path={ROUTES.USER_LEADERBOARD} element={<UserLeaderboard />} />
       </Routes>

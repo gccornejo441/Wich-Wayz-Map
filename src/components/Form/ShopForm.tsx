@@ -1,8 +1,4 @@
-import Select, {
-  MultiValue,
-  StylesConfig,
-  GroupBase,
-} from "react-select";
+import Select, { MultiValue, StylesConfig, GroupBase } from "react-select";
 
 import { useAddShopForm } from "@/hooks/useAddShopForm";
 import InputField from "../Utilites/InputField";
@@ -24,7 +20,7 @@ interface CategoryOption {
 }
 
 const getCustomSelectStyles = (
-  isDark: boolean
+  isDark: boolean,
 ): StylesConfig<CategoryOption, true> => ({
   menuPortal: (base) => ({ ...base, zIndex: 1050 }),
   control: (base, state) => ({
@@ -127,7 +123,7 @@ const ShopForm = ({
   } = useAddShopForm(initialData, mode);
 
   const [isDark, setIsDark] = useState(
-    document.documentElement.classList.contains("dark")
+    document.documentElement.classList.contains("dark"),
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,16 +150,16 @@ const ShopForm = ({
 
   // Filter selected options based on selectedCategories
   const selectedOptions: CategoryOption[] = categoryOptions.filter((opt) =>
-    selectedCategories.includes(opt.value)
+    selectedCategories.includes(opt.value),
   );
 
   // Wrapper for onSubmit to handle loading state
-const handleFormSubmit = async (data: AddAShopPayload) => {
+  const handleFormSubmit = async (data: AddAShopPayload) => {
     setIsSubmitting(true);
     try {
       await onSubmit(data);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -228,7 +224,9 @@ const handleFormSubmit = async (data: AddAShopPayload) => {
             setSelectedCategories(selected.map((opt) => opt.value));
           }}
           styles={getCustomSelectStyles(isDark)}
-          menuPortalTarget={typeof window !== "undefined" ? document.body : null}
+          menuPortalTarget={
+            typeof window !== "undefined" ? document.body : null
+          }
           isClearable
           isSearchable
           className="react-select-container"

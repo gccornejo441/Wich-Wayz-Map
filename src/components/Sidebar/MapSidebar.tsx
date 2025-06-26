@@ -27,13 +27,15 @@ const getVoteMessage = (upvotes: number, downvotes: number) => {
 };
 
 const MapSidebar = () => {
-  const { selectedShop, position, sidebarOpen, closeSidebar } = useShopSidebar();
+  const { selectedShop, position, sidebarOpen, closeSidebar } =
+    useShopSidebar();
   const { openSignupModal } = useModal();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
   const { isAuthenticated, user } = useAuth();
-  const { votes, addVote, getVotesForShop, submitVote, loadingVotes } = useVote();
+  const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
+    useVote();
 
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
@@ -45,7 +47,7 @@ const MapSidebar = () => {
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
       getVotesForShop(selectedShop.shopId).catch((error) =>
-        console.error("Failed to fetch votes:", error)
+        console.error("Failed to fetch votes:", error),
       );
       hasFetchedVotes.current = true;
     }
@@ -102,15 +104,16 @@ const MapSidebar = () => {
   };
 
   const googleMapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${selectedShop?.shopName} ${selectedShop?.address}`
+    `${selectedShop?.shopName} ${selectedShop?.address}`,
   )}`;
 
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] h-[calc(100vh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         <div className="flex justify-end p-5">
@@ -223,7 +226,7 @@ const MapSidebar = () => {
                 )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
-                  "no website available" && (
+                    "no website available" && (
                     <a
                       href={selectedShop.website}
                       target="_blank"
@@ -315,7 +318,7 @@ const MapSidebar = () => {
               onClick={() =>
                 window.open(
                   `https://www.google.com/maps/dir/?api=1&destination=${selectedShop?.address}`,
-                  "_blank"
+                  "_blank",
                 )
               }
             >

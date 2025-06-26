@@ -67,39 +67,40 @@ const MapBox = () => {
     ShopGeoJsonProperties
   > => ({
     type: "FeatureCollection",
-    features: displayedShops.flatMap((shop) =>
-      shop.locations?.map((location) => ({
-        type: "Feature",
-        properties: {
-          shopId: shop.id ?? 1,
-          shopName: shop.name,
-          description: shop.description || "No description available",
-          address: [
-            location.street_address || "Address not available",
-            location.street_address_second || null,
-            location.postal_code || "",
-            location.city || "",
-            location.state || "",
-          ]
-            .filter(Boolean)
-            .join(", "),
-          createdBy: shop.created_by_username || "admin",
-          categories:
-            shop.categories?.map((c) => c.category_name).join(", ") ||
-            "No categories available",
-          usersAvatarId: shop.users_avatar_id,
-          locationOpen:
-            location.location_open === undefined
-              ? undefined
-              : Number(location.location_open) === 1,
-          website: location.website || "No website available",
-          phone: location.phone || "No phone number available",
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [location.longitude, location.latitude] as Coordinates,
-        },
-      })) || [],
+    features: displayedShops.flatMap(
+      (shop) =>
+        shop.locations?.map((location) => ({
+          type: "Feature",
+          properties: {
+            shopId: shop.id ?? 1,
+            shopName: shop.name,
+            description: shop.description || "No description available",
+            address: [
+              location.street_address || "Address not available",
+              location.street_address_second || null,
+              location.postal_code || "",
+              location.city || "",
+              location.state || "",
+            ]
+              .filter(Boolean)
+              .join(", "),
+            createdBy: shop.created_by_username || "admin",
+            categories:
+              shop.categories?.map((c) => c.category_name).join(", ") ||
+              "No categories available",
+            usersAvatarId: shop.users_avatar_id,
+            locationOpen:
+              location.location_open === undefined
+                ? undefined
+                : Number(location.location_open) === 1,
+            website: location.website || "No website available",
+            phone: location.phone || "No phone number available",
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [location.longitude, location.latitude] as Coordinates,
+          },
+        })) || [],
     ),
   });
 
@@ -115,7 +116,7 @@ const MapBox = () => {
       const popup = new mapboxgl.Popup({
         offset: 25,
         closeButton: false,
-        className: "mapboxPopup"
+        className: "mapboxPopup",
       });
 
       const el = document.createElement("div");
@@ -127,12 +128,14 @@ const MapBox = () => {
       el.addEventListener("mouseenter", () => {
         popup
           .setLngLat(coordinates as [number, number])
-          .setHTML(`
+          .setHTML(
+            `
             <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
               <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
               <p class="text-text-base dark:text-text-inverted">${address}</p>
             </div>
-          `)
+          `,
+          )
           .addTo(map);
       });
 

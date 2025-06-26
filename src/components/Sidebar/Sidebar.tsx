@@ -46,18 +46,20 @@ export const SidebarItem = ({
 
   const content = (
     <div
-      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${disabled
+      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${
+        disabled
           ? "bg-white/10 cursor-not-allowed"
           : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
-        }`}
+      }`}
       onClick={handleClick}
     >
       <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
         {icon}
       </span>
       <span
-        className={`text-md font-light text-white dark:text-text-inverted ${disabled ? "opacity-50" : ""
-          }`}
+        className={`text-md font-light text-white dark:text-text-inverted ${
+          disabled ? "opacity-50" : ""
+        }`}
       >
         {text}
       </span>
@@ -71,7 +73,12 @@ export const SidebarItem = ({
 
   if (linkTo) {
     return external ? (
-      <a href={linkTo} target="_blank" rel="noopener noreferrer" className="w-full">
+      <a
+        href={linkTo}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full"
+      >
         {content}
       </a>
     ) : (
@@ -83,7 +90,6 @@ export const SidebarItem = ({
 
   return <div className="w-full">{content}</div>;
 };
-
 
 const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
@@ -98,7 +104,8 @@ const Sidebar = ({ isOpen, onToggleSidebar }: SidebarProps) => {
         bg-brand-primary dark:bg-surface-darker 
         text-white dark:text-text-inverted 
         dark:border-r dark:border-gray-700 
-        transition-all duration-500 ease-in-out transform shadow-2xl ${!isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+        transition-all duration-500 ease-in-out transform shadow-2xl ${
+          !isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         }`}
       aria-label="Sidebar"
     >

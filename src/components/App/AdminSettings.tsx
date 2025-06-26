@@ -49,7 +49,9 @@ const AdminPage = () => {
       ) : (
         <div className="p-4">
           {users.length === 0 ? (
-            <p className="text-text-base dark:text-text-inverted">No users found.</p>
+            <p className="text-text-base dark:text-text-inverted">
+              No users found.
+            </p>
           ) : (
             <UserTable
               users={users}

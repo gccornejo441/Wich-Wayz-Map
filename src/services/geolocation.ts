@@ -25,14 +25,13 @@ interface ParsedAddress {
   components: AddressComponents;
 }
 
-
 /**
  * Get the coordinates and address details for a given address.
  * @param address The address to lookup.
  * @returns The parsed address details, or null if not found.
  */
 async function GetCoordinatesAndAddressDetails(
-  address: string
+  address: string,
 ): Promise<ParsedAddress | null> {
   try {
     const { data } = await axios.get(
@@ -44,7 +43,7 @@ async function GetCoordinatesAndAddressDetails(
           addressdetails: 1,
           limit: 1,
         },
-      }
+      },
     );
 
     if (Array.isArray(data) && data.length > 0) {
@@ -82,7 +81,7 @@ const MapBoxLocationLookup = async (
     country?: string;
     language?: string;
     limit?: number;
-  } = {}
+  } = {},
 ): Promise<ParsedAddress | null> => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
@@ -116,7 +115,7 @@ const MapBoxLocationLookup = async (
 
     const { data } = await axios.get(
       "https://api.mapbox.com/search/geocode/v6/forward",
-      { params }
+      { params },
     );
 
     if (data?.features?.length > 0) {

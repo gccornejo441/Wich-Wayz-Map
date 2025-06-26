@@ -29,7 +29,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   const [mapStyle, setMapStyle] = useState(
     document.documentElement.classList.contains("dark")
       ? "mapbox://styles/mapbox/navigation-night-v1"
-      : "mapbox://styles/mapbox/streets-v12"
+      : "mapbox://styles/mapbox/streets-v12",
   );
   const mapRef = useRef<MapRef | null>(null);
 
@@ -56,8 +56,8 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     const timeout = setTimeout(() => {
       fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          address
-        )}.json?access_token=${MAPBOX_TOKEN}`
+          address,
+        )}.json?access_token=${MAPBOX_TOKEN}`,
       )
         .then((r) => r.json())
         .then((json) => {
@@ -76,7 +76,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     setCoords(newCoords);
 
     fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`,
     )
       .then((r) => r.json())
       .then((json) => {

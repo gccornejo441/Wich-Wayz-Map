@@ -11,7 +11,7 @@ import {
 export const SearchShops = async (
   query: string,
   filters?: ShopFilters,
-  updateCache: boolean = false
+  updateCache: boolean = false,
 ): Promise<{ shop: IndexedDBShop }[]> => {
   let shops: IndexedDBShop[] = await getCachedData(SHOPS_STORE);
 
@@ -36,7 +36,7 @@ export const SearchShops = async (
       if (categoryIds && categoryIds.length > 0) {
         const shopCategoryIds = shop.categories.map((cat) => cat.id);
         const hasMatchingCategory = shopCategoryIds.some((id) =>
-          categoryIds.includes(id)
+          categoryIds.includes(id),
         );
 
         if (!hasMatchingCategory) return false;

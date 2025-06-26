@@ -57,10 +57,7 @@ const Analytics = () => {
                 stroke={axisColor}
                 tick={{ fill: axisColor }}
               />
-              <YAxis
-                stroke={axisColor}
-                tick={{ fill: axisColor }}
-              />
+              <YAxis stroke={axisColor} tick={{ fill: axisColor }} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: tooltipBg,
@@ -71,7 +68,6 @@ const Analytics = () => {
               <Bar dataKey="shop_count" fill="#0088FE" />
             </BarChart>
           </ResponsiveContainer>
-
         </div>
 
         <div className="bg-surface-muted dark:bg-surface-darker p-6 rounded-lg shadow-md">
@@ -97,7 +93,7 @@ const Analytics = () => {
                   />
                 ))}
               </Pie>
-                <Tooltip
+              <Tooltip
                 contentStyle={{
                   backgroundColor: tooltipBg,
                   border: "none",

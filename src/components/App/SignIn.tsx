@@ -94,12 +94,19 @@ const SignIn = () => {
       <div className="max-w-md w-full">
         <div className="p-6 rounded-xl bg-white dark:bg-surface-darker shadow-lg">
           <Link to="/" className="block">
-            <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-15 w-60 mx-auto" />
+            <Logo
+              imageSource="/Wich-Wayz-Logo.svg"
+              className="h-15 w-60 mx-auto"
+            />
           </Link>
-          <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold">Sign in</h2>
+          <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold">
+            Sign in
+          </h2>
           <form className="mt-8 space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="text-dark dark:text-white text-sm mb-2 block">Email</label>
+              <label className="text-dark dark:text-white text-sm mb-2 block">
+                Email
+              </label>
               <div className="relative flex items-center">
                 <input
                   type="email"
@@ -107,13 +114,14 @@ const SignIn = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full text-dark dark:text-white text-sm border-2 border-brand-primary dark:border-gray-600 px-4 py-3 bg-white dark:bg-surface-dark focus:border-brand-primary rounded-md focus:outline-none focus:ring focus:ring-brand-primary"
-
                   placeholder="Enter your email"
                 />
               </div>
             </div>
             <div>
-              <label className="text-dark dark:text-white text-sm mb-2 block">Password</label>
+              <label className="text-dark dark:text-white text-sm mb-2 block">
+                Password
+              </label>
               <div className="relative flex items-center">
                 <input
                   type={passwordVisible ? "text" : "password"}
@@ -128,17 +136,21 @@ const SignIn = () => {
                   className="absolute right-4 text-brand-primary dark:text-text-muted focus:outline-none"
                   onClick={() => setPasswordVisible(!passwordVisible)}
                 >
-                  {passwordVisible ? (
-                    <HiEyeOff />
-                  ) : (
-                    <HiEye />
-                  )}
+                  {passwordVisible ? <HiEyeOff /> : <HiEye />}
                 </button>
               </div>
             </div>
 
-            {error && <p className="text-brand-primary dark:text-brand-secondary mb-4 text-sm">{error}</p>}
-            {message && <p className="text-brand-primary dark:text-brand- mb-4 text-sm">{message}</p>}
+            {error && (
+              <p className="text-brand-primary dark:text-brand-secondary mb-4 text-sm">
+                {error}
+              </p>
+            )}
+            {message && (
+              <p className="text-brand-primary dark:text-brand- mb-4 text-sm">
+                {message}
+              </p>
+            )}
 
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-2">
@@ -157,7 +169,11 @@ const SignIn = () => {
                 </Label>
               </div>
               <div className="text-sm">
-                <button type="button" onClick={handleResetPassword} className="text-text-base dark:text-white hover:underline ">
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  className="text-text-base dark:text-white hover:underline "
+                >
                   Forgot your password?
                 </button>
               </div>
@@ -173,12 +189,19 @@ const SignIn = () => {
             </div>
 
             <div className="!mt-4">
-              <GoogleButton disabled={isLoading} handleClick={handleGoogleSignIn} title="Sign in with Google" />
+              <GoogleButton
+                disabled={isLoading}
+                handleClick={handleGoogleSignIn}
+                title="Sign in with Google"
+              />
             </div>
 
             <p className="text-text-base dark:text-white text-sm !mt-8 text-center">
               Don't have an account?
-              <Link to={ROUTES.ACCOUNT.REGISTER} className="text-text-base dark:text-text-inverted hover:underline ml-1 font-semibold">
+              <Link
+                to={ROUTES.ACCOUNT.REGISTER}
+                className="text-text-base dark:text-text-inverted hover:underline ml-1 font-semibold"
+              >
                 Register here
               </Link>
             </p>

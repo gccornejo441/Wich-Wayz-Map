@@ -14,7 +14,8 @@ export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
   tablist: {
     base: "flex text-center",
     variant: {
-      default: "flex-wrap border-b border-surface-muted dark:border-surface-dark",
+      default:
+        "flex-wrap border-b border-surface-muted dark:border-surface-dark",
     },
     tabitem: {
       base: "flex items-center justify-center rounded-t-lg p-4 text-sm font-medium first:ml-0 focus:outline-none disabled:cursor-not-allowed disabled:text-text-muted",
@@ -38,8 +39,11 @@ export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
   },
 };
 
-
-export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownProps) {
+export function FilterDropdown({
+  open,
+  navRef,
+  onFilterChange,
+}: FilterDropdownProps) {
   const [top, setTop] = useState(0);
   const [filters, setFilters] = useState<ShopFilters>({});
   const [tab, setTab] = useState("general");
@@ -75,11 +79,27 @@ export function FilterDropdown({ open, navRef, onFilterChange }: FilterDropdownP
           theme={tabsTheme}
           onActiveTabChange={(i) => setTab(i === 0 ? "general" : "categories")}
         >
-          <TabItem active={tab === "general"} title="General" icon={HiAdjustments}>
-            <FilterForm section="general" value={filters} onChange={setFilters} />
+          <TabItem
+            active={tab === "general"}
+            title="General"
+            icon={HiAdjustments}
+          >
+            <FilterForm
+              section="general"
+              value={filters}
+              onChange={setFilters}
+            />
           </TabItem>
-          <TabItem active={tab === "categories"} title="Categories" icon={HiClipboardList}>
-            <FilterForm section="categories" value={filters} onChange={setFilters} />
+          <TabItem
+            active={tab === "categories"}
+            title="Categories"
+            icon={HiClipboardList}
+          >
+            <FilterForm
+              section="categories"
+              value={filters}
+              onChange={setFilters}
+            />
           </TabItem>
         </Tabs>
 

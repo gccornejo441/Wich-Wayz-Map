@@ -84,7 +84,7 @@ const AddEditShop = () => {
           <div
             onClick={(e) => e.stopPropagation()}
             className="bg-white dark:bg-surface-dark border border-lightGray dark:border-surface-light rounded-2xl overflow-hidden shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col animate-slideUp relative"
-            tabIndex={-1} 
+            tabIndex={-1}
             ref={(el) => el?.focus()}
           >
             {/* Close button */}
@@ -115,8 +115,6 @@ const AddEditShop = () => {
                 Use This Location
               </button>
             </div>
-
-
           </div>
         </div>
       )}

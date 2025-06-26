@@ -136,7 +136,10 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
             <p className="text-sm mb-4">Copy the link below to share:</p>
             <div className="flex items-center justify-between border rounded p-2 mb-4 dark:border-gray-700">
               <span className="truncate">{shareableLink}</span>
-              <button onClick={handleCopyLink} className="ml-2 text-primary dark:text-brand-secondary">
+              <button
+                onClick={handleCopyLink}
+                className="ml-2 text-primary dark:text-brand-secondary"
+              >
                 <HiClipboardCopy className="w-5 h-5" />
               </button>
             </div>

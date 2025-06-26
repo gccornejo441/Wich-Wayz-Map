@@ -21,7 +21,7 @@ export const SavedShopsProvider = ({ children }: { children: ReactNode }) => {
 
   const saveShop = (shop: Shop) => {
     setSavedShops((prev) =>
-      prev.some((s) => s.id === shop.id) ? prev : [...prev, shop]
+      prev.some((s) => s.id === shop.id) ? prev : [...prev, shop],
     );
   };
 

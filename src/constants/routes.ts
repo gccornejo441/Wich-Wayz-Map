@@ -61,13 +61,13 @@ export const useRouteCheck = (routes: Routes) => {
       } else if (typeof value === "object") {
         acc.push(
           ...Object.values(value).filter(
-            (v): v is string => typeof v === "string"
-          )
+            (v): v is string => typeof v === "string",
+          ),
         );
       }
       return acc;
     },
-    []
+    [],
   );
 
   const isPathValid = flattenedRoutes.includes(location.pathname);
@@ -89,6 +89,9 @@ export const useRouteCheck = (routes: Routes) => {
     showAddShop: isHomePage,
     showUserProfile: isHomePage,
     showMap:
-      (!isHomePage && isAccountProfile) || isPrivacyOrTOS || isAddShopPage || isSignInPage,
+      (!isHomePage && isAccountProfile) ||
+      isPrivacyOrTOS ||
+      isAddShopPage ||
+      isSignInPage,
   };
 };

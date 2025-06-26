@@ -126,7 +126,9 @@ const UserProfile = () => {
           />
         </>
       ) : (
-        <p className="text-text-base dark:text-text-inverted">Loading profile...</p>
+        <p className="text-text-base dark:text-text-inverted">
+          Loading profile...
+        </p>
       )}
 
       {!user?.emailVerified && (

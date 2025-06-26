@@ -23,10 +23,16 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
   const { applyFilters } = useShops();
 
-  const fetchSuggestions = async (value: string, filtersOverride?: ShopFilters) => {
+  const fetchSuggestions = async (
+    value: string,
+    filtersOverride?: ShopFilters,
+  ) => {
     const appliedFilters = filtersOverride ?? filters;
-    const results = await SearchShops(value, { ...appliedFilters, search: value });
-    setSuggestions(results.map(r => r.shop));
+    const results = await SearchShops(value, {
+      ...appliedFilters,
+      search: value,
+    });
+    setSuggestions(results.map((r) => r.shop));
   };
 
   const onSuggestionsFetchRequested = ({ value }: { value: string }) =>
@@ -52,7 +58,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   const handleSuggestionSelected = (
     _: React.FormEvent,
-    { suggestion }: { suggestion: IndexedDBShop }
+    { suggestion }: { suggestion: IndexedDBShop },
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
@@ -69,14 +75,14 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     value: search,
     onChange: (
       _: React.FormEvent<HTMLElement>,
-      { newValue }: { newValue: string }
+      { newValue }: { newValue: string },
     ) => setSearch(newValue),
   };
 
   const handleFilterChange = async (updatedFilters: ShopFilters) => {
     setFilters(updatedFilters);
     const results = await SearchShops(search, { ...updatedFilters, search });
-    const shops = results.map(r => r.shop);
+    const shops = results.map((r) => r.shop);
     await applyFilters(shops);
     setSuggestions(shops);
 
@@ -117,7 +123,10 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       {/* Search Input with Autosuggest */}
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
-          <HiSearch className="w-5 h-5 text-text-muted dark:text-text-inverted" aria-hidden="true" />
+          <HiSearch
+            className="w-5 h-5 text-text-muted dark:text-text-inverted"
+            aria-hidden="true"
+          />
         </div>
 
         <Autosuggest

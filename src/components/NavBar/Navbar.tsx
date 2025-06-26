@@ -40,7 +40,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
       try {
         const paymentLink = await createPaymentLink(
           userMetadata?.id,
-          userMetadata?.email
+          userMetadata?.email,
         );
         window.location.href = paymentLink;
       } catch (error) {
@@ -170,4 +170,3 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
 };
 
 export default NavBar;
-

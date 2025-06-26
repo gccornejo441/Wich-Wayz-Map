@@ -4,7 +4,10 @@ import CustomCheckbox from "../Form/CustomCheckbox";
 import { HiSortDescending } from "react-icons/hi";
 import { FaSpinner } from "react-icons/fa";
 import "./Filter.css";
-import { CategoryWithShopCount, getCategoriesWithShopCount } from "@/services/getCategoriesWithShopCount";
+import {
+  CategoryWithShopCount,
+  getCategoriesWithShopCount,
+} from "@/services/getCategoriesWithShopCount";
 import InputField from "../Utilites/InputField";
 
 interface Props {
@@ -13,7 +16,11 @@ interface Props {
   section?: "general" | "categories";
 }
 
-export default function FilterForm({ value, onChange, section = "general" }: Props) {
+export default function FilterForm({
+  value,
+  onChange,
+  section = "general",
+}: Props) {
   const [filters, setFilters] = useState<ShopFilters>(value);
   const [categories, setCategories] = useState<CategoryWithShopCount[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,8 +56,12 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
     <div className="mx-auto p-2 rounded-xl space-y-2 text-text-base dark:text-text-inverted animate-fade-in-up duration-500 ease-out">
       {section === "categories" && (
         <>
-          <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Categories</h2>
-          <p className="text-xs text-text-muted dark:text-text-inverted mb-2">Pick all sandwich styles that apply.</p>
+          <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">
+            Categories
+          </h2>
+          <p className="text-xs text-text-muted dark:text-text-inverted mb-2">
+            Pick all sandwich styles that apply.
+          </p>
 
           {loading ? (
             <div className="flex justify-center py-6">
@@ -75,8 +86,12 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
       {section === "general" && (
         <>
           <div>
-            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Filter by Location</h2>
-            <p className="text-xs text-text-muted dark:text-text-inverted mb-3">Enter a city, state, or country to narrow your search.</p>
+            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">
+              Filter by Location
+            </h2>
+            <p className="text-xs text-text-muted dark:text-text-inverted mb-3">
+              Enter a city, state, or country to narrow your search.
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="relative">
                 <InputField
@@ -109,7 +124,9 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
           </div>
 
           <div className="pt-4 border-t border-surface-muted dark:border-gray-700 space-y-4">
-            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">Additional Options</h2>
+            <h2 className="font-bold text-text-base dark:text-text-inverted uppercase tracking-wide text-sm">
+              Additional Options
+            </h2>
 
             <div className="flex items-center">
               <CustomCheckbox
@@ -121,20 +138,26 @@ export default function FilterForm({ value, onChange, section = "general" }: Pro
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase">Sort Results</label>
+              <label className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase">
+                Sort Results
+              </label>
               <div className="relative">
                 <HiSortDescending className="absolute left-3 top-3 text-text-muted w-5 h-5 z-10" />
                 <select
                   className="h-10 pl-10 pr-4 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
                   value={filters.sort ?? ""}
-                  onChange={(e) => update("sort", e.target.value as ShopFilters["sort"])}
+                  onChange={(e) =>
+                    update("sort", e.target.value as ShopFilters["sort"])
+                  }
                 >
                   <option value="">Default</option>
                   <option value="recent">Newest</option>
                   <option value="votes">Most Upvoted</option>
                 </select>
               </div>
-              <p className="text-xs text-text-muted dark:text-text-inverted mt-1">Choose how you'd like the results ordered.</p>
+              <p className="text-xs text-text-muted dark:text-text-inverted mt-1">
+                Choose how you'd like the results ordered.
+              </p>
             </div>
           </div>
         </>
