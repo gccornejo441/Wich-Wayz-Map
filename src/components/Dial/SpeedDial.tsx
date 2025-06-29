@@ -70,10 +70,11 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
   return (
     <div className="fixed bottom-6 right-3 z-50 group">
       <div
-        className={`flex flex-col justify-end px-1 ${isOpen
-          ? "opacity-100 scale-100 translate-y-0"
-          : "opacity-0 scale-95 translate-y-4"
-          } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 dark:border-gray-700 rounded-lg shadow-sm bg-brand-primary dark:bg-surface-darker`}
+        className={`flex flex-col justify-end px-1 ${
+          isOpen
+            ? "opacity-100 scale-100 translate-y-0"
+            : "opacity-0 scale-95 translate-y-4"
+        } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 dark:border-gray-700 rounded-lg shadow-sm bg-brand-primary dark:bg-surface-darker`}
       >
         <ul className="text-sm text-white">
           <li>
