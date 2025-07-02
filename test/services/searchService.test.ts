@@ -1,12 +1,19 @@
-import { describe, it, expect, beforeEach, vi, Mock } from "vitest";
+import { describe, it, expect, beforeEach, vi, MockedFunction } from "vitest";
 import { SearchShops } from "../../src/services/search";
-import { getCachedShops } from "../../src/services/mapService";
+import { getCachedData } from "../../src/services/indexedDB";
 import { IndexedDBShop } from "../../src/services/indexedDB";
 
-// Mock the getCachedShops function
-vi.mock("../../src/services/mapService", () => ({
-  getCachedShops: vi.fn(),
-}));
+// Partial mock to only override getCachedData
+vi.mock("../../src/services/indexedDB", async () => {
+  const actual = await vi.importActual<typeof import("../../src/services/indexedDB")>(
+    "../../src/services/indexedDB"
+  );
+
+  return {
+    ...actual,
+    getCachedData: vi.fn(),
+  };
+});
 
 describe("SearchShops", () => {
   const mockShops: IndexedDBShop[] = [
@@ -43,7 +50,7 @@ describe("SearchShops", () => {
   ];
 
   beforeEach(() => {
-    (getCachedShops as Mock).mockResolvedValue(mockShops);
+    (getCachedData as MockedFunction<typeof getCachedData>).mockResolvedValue(mockShops);
   });
 
   it("should return shops that match the query", async () => {
