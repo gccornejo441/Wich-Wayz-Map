@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import SearchBar from "../../src/components/Search/SearchBar";
 import { SearchShops } from "../../src/services/search";
 import { useMap } from "../../src/context/mapContext";
+import { ToastProvider } from "../../src/context/toastContext";
+import { ShopsProvider } from "../../src/context/shopContext";
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -31,14 +33,23 @@ describe("SearchBar", () => {
     vi.clearAllMocks();
   });
 
+  const renderWithProviders = () =>
+    render(
+      <ShopsProvider>
+        <ToastProvider>
+          <SearchBar />
+        </ToastProvider>
+      </ShopsProvider>
+    );
+
   it("renders the search bar", () => {
-    render(<SearchBar />);
+    renderWithProviders();
     const inputElement = screen.getByPlaceholderText("Search shops");
     expect(inputElement).toBeInTheDocument();
   });
 
   it("renders the search icon", () => {
-    render(<SearchBar />);
+    renderWithProviders();
     const searchIcon = screen.getByRole("img", { hidden: true });
     expect(searchIcon).toBeInTheDocument();
   });
@@ -65,22 +76,21 @@ describe("SearchBar", () => {
 
     (SearchShops as jest.Mock).mockResolvedValue(mockSuggestions);
 
-    render(<SearchBar />);
+    renderWithProviders();
 
     const input = screen.getByPlaceholderText("Search shops");
-
-    userEvent.type(input, "Shop");
+    await userEvent.type(input, "Shop");
 
     await waitFor(() => {
       expect(SearchShops).toHaveBeenCalledWith("Shop");
       expect(screen.getByRole("combobox")).toHaveAttribute(
         "aria-expanded",
-        "true",
+        "true"
       );
     });
 
     const suggestions = await screen.findAllByText(
-      /Molinari Delicatessen|Mr Mustache/,
+      /Molinari Delicatessen|Mr Mustache/
     );
     expect(suggestions).toHaveLength(2);
   });
@@ -99,11 +109,13 @@ describe("SearchBar", () => {
     ];
     (SearchShops as jest.Mock).mockResolvedValue(mockSuggestions);
 
-    render(<SearchBar />);
+    renderWithProviders();
     const input = screen.getByPlaceholderText("Search shops");
-    userEvent.type(input, "Molinari");
+    await userEvent.type(input, "Molinari");
 
-    await waitFor(() => expect(SearchShops).toHaveBeenCalledWith("Molinari"));
+    await waitFor(() =>
+      expect(SearchShops).toHaveBeenCalledWith("Molinari")
+    );
 
     const combobox = screen.getByRole("combobox");
     expect(combobox).toHaveAttribute("aria-expanded", "true");
