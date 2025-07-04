@@ -8,12 +8,18 @@ import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
+// Mock services
 vi.mock("../../src/services/search", () => ({
   SearchShops: vi.fn(),
 }));
 
 vi.mock("../../src/context/mapContext", () => ({
   useMap: vi.fn(),
+}));
+
+vi.mock("../../src/services/indexedDB", () => ({
+  getCachedData: vi.fn().mockResolvedValue([]),
+  saveData: vi.fn(),
 }));
 
 describe("SearchBar", () => {
@@ -50,7 +56,7 @@ describe("SearchBar", () => {
 
   it("renders the search icon", () => {
     renderWithProviders();
-    const searchIcon = screen.getByRole("img", { hidden: true });
+    const searchIcon = screen.getByTestId("search-icon");
     expect(searchIcon).toBeInTheDocument();
   });
 
@@ -82,7 +88,7 @@ describe("SearchBar", () => {
     await userEvent.type(input, "Shop");
 
     await waitFor(() => {
-      expect(SearchShops).toHaveBeenCalledWith("Shop");
+      expect(SearchShops).toHaveBeenCalledWith({ search: "Shop" });
       expect(screen.getByRole("combobox")).toHaveAttribute(
         "aria-expanded",
         "true"
@@ -110,11 +116,12 @@ describe("SearchBar", () => {
     (SearchShops as jest.Mock).mockResolvedValue(mockSuggestions);
 
     renderWithProviders();
+
     const input = screen.getByPlaceholderText("Search shops");
     await userEvent.type(input, "Molinari");
 
     await waitFor(() =>
-      expect(SearchShops).toHaveBeenCalledWith("Molinari")
+      expect(SearchShops).toHaveBeenCalledWith({ search: "Molinari" })
     );
 
     const combobox = screen.getByRole("combobox");

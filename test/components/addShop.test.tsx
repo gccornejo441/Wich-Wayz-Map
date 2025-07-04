@@ -1,53 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import AddShop from "../../src/components/App/AddEditShop";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import AddShop from "@/components/Modal/AddShop";
+
+const mockNavigate = vi.fn();
 
 vi.mock("react-router-dom", () => ({
-  useNavigate: () => vi.fn(),
-}));
-vi.mock("../../src/context/shopContext", () => ({
-  useShops: () => ({
-    setShops: vi.fn(),
-    setLocations: vi.fn(),
-  }),
-}));
-vi.mock("../../src/context/toastContext", () => ({
-  useToast: () => ({
-    addToast: vi.fn(),
-  }),
-}));
-vi.mock("../../src/context/authContext", () => ({
-  useAuth: () => ({
-    logout: vi.fn(),
-  }),
-}));
-vi.mock("../../src/services/submitLocationShop", () => ({
-  handleLocationSubmit: vi.fn().mockResolvedValue(true),
-}));
-vi.mock("../../src/services/geolocation", () => ({
-  GetCoordinatesAndAddressDetails: vi.fn(),
-  MapBoxLocationLookup: vi.fn(),
+  useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../src/services/categoryService", () => ({
-  GetCategories: vi.fn().mockResolvedValue([
-    { id: 1, category_name: "Category A" },
-    { id: 2, category_name: "Category B" },
-  ]),
-}));
-
-vi.mock("../../src/services/submitLocationShop", () => ({
-  handleLocationSubmit: vi.fn().mockResolvedValue(true),
-}));
-
-describe("AddShop Component (Single Location)", () => {
+describe("AddShop Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders a single location by default", () => {
+  it("renders the Add Shop form and back button", () => {
     render(<AddShop />);
-    expect(screen.getByText("Add A Sandwich Shop")).toBeInTheDocument();
+    expect(screen.getByText("Back to Map")).toBeInTheDocument();
+    expect(screen.getByTitle("Add Shop Form")).toBeInTheDocument();
+  });
+
+  it("calls navigate('/') when 'Back to Map' button is clicked", () => {
+    render(<AddShop />);
+    const backButton = screen.getByText("Back to Map");
+    fireEvent.click(backButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 });
