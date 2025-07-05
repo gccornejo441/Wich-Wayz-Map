@@ -45,7 +45,7 @@ describe("SearchBar", () => {
         <ToastProvider>
           <SearchBar />
         </ToastProvider>
-      </ShopsProvider>
+      </ShopsProvider>,
     );
 
   it("renders the search bar", () => {
@@ -91,12 +91,12 @@ describe("SearchBar", () => {
       expect(SearchShops).toHaveBeenCalledWith({ search: "Shop" });
       expect(screen.getByRole("combobox")).toHaveAttribute(
         "aria-expanded",
-        "true"
+        "true",
       );
     });
 
     const suggestions = await screen.findAllByText(
-      /Molinari Delicatessen|Mr Mustache/
+      /Molinari Delicatessen|Mr Mustache/,
     );
     expect(suggestions).toHaveLength(2);
   });
@@ -121,7 +121,7 @@ describe("SearchBar", () => {
     await userEvent.type(input, "Molinari");
 
     await waitFor(() =>
-      expect(SearchShops).toHaveBeenCalledWith({ search: "Molinari" })
+      expect(SearchShops).toHaveBeenCalledWith({ search: "Molinari" }),
     );
 
     const combobox = screen.getByRole("combobox");

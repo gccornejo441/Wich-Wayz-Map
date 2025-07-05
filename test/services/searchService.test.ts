@@ -5,9 +5,9 @@ import { IndexedDBShop } from "../../src/services/indexedDB";
 
 // Partial mock to only override getCachedData
 vi.mock("../../src/services/indexedDB", async () => {
-  const actual = await vi.importActual<typeof import("../../src/services/indexedDB")>(
-    "../../src/services/indexedDB"
-  );
+  const actual = await vi.importActual<
+    typeof import("../../src/services/indexedDB")
+  >("../../src/services/indexedDB");
 
   return {
     ...actual,
@@ -50,7 +50,9 @@ describe("SearchShops", () => {
   ];
 
   beforeEach(() => {
-    (getCachedData as MockedFunction<typeof getCachedData>).mockResolvedValue(mockShops);
+    (getCachedData as MockedFunction<typeof getCachedData>).mockResolvedValue(
+      mockShops,
+    );
   });
 
   it("should return shops that match the query", async () => {
