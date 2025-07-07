@@ -18,9 +18,9 @@ vi.mock("../../src/context/mapContext", () => ({
 }));
 
 vi.mock("../../src/context/shopContext", async () => {
-  const actual = await vi.importActual<typeof import("../../src/context/shopContext")>(
-    "../../src/context/shopContext"
-  );
+  const actual = await vi.importActual<
+    typeof import("../../src/context/shopContext")
+  >("../../src/context/shopContext");
   return {
     ...actual,
     useShops: vi.fn(() => ({
@@ -30,9 +30,9 @@ vi.mock("../../src/context/shopContext", async () => {
 });
 
 vi.mock("../../src/context/toastContext", async () => {
-  const actual = await vi.importActual<typeof import("../../src/context/toastContext")>(
-    "../../src/context/toastContext"
-  );
+  const actual = await vi.importActual<
+    typeof import("../../src/context/toastContext")
+  >("../../src/context/toastContext");
   return {
     ...actual,
     useToast: vi.fn(() => ({
@@ -71,7 +71,7 @@ describe("SearchBar", () => {
         <ToastProvider>
           <SearchBar />
         </ToastProvider>
-      </ShopsProvider>
+      </ShopsProvider>,
     );
 
   it("renders the search bar input", () => {
@@ -87,7 +87,12 @@ describe("SearchBar", () => {
           id: 1,
           name: "Molinari Delicatessen",
           locations: [
-            { street_address: "373 Columbus Ave", city: "San Francisco", latitude: 37.8, longitude: -122.4 },
+            {
+              street_address: "373 Columbus Ave",
+              city: "San Francisco",
+              latitude: 37.8,
+              longitude: -122.4,
+            },
           ],
         },
       },
@@ -96,7 +101,12 @@ describe("SearchBar", () => {
           id: 2,
           name: "Mr Mustache",
           locations: [
-            { street_address: "Flower Street", city: "Pasadena", latitude: 34.1, longitude: -118.1 },
+            {
+              street_address: "Flower Street",
+              city: "Pasadena",
+              latitude: 34.1,
+              longitude: -118.1,
+            },
           ],
         },
       },
@@ -113,7 +123,9 @@ describe("SearchBar", () => {
       expect(SearchShops).toHaveBeenCalledWith("Shop", expect.any(Object));
     });
 
-    expect(await screen.findByText("Molinari Delicatessen")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Molinari Delicatessen"),
+    ).toBeInTheDocument();
     expect(await screen.findByText("Mr Mustache")).toBeInTheDocument();
   });
 
@@ -124,7 +136,12 @@ describe("SearchBar", () => {
           id: 1,
           name: "Molinari Delicatessen",
           locations: [
-            { street_address: "373 Columbus Ave", city: "San Francisco", latitude: 37.8, longitude: -122.4 },
+            {
+              street_address: "373 Columbus Ave",
+              city: "San Francisco",
+              latitude: 37.8,
+              longitude: -122.4,
+            },
           ],
         },
       },
@@ -138,7 +155,7 @@ describe("SearchBar", () => {
     await userEvent.type(input, "Molinari");
 
     await waitFor(() =>
-      expect(SearchShops).toHaveBeenCalledWith("Molinari", expect.any(Object))
+      expect(SearchShops).toHaveBeenCalledWith("Molinari", expect.any(Object)),
     );
 
     const suggestion = await screen.findByText("Molinari Delicatessen");
