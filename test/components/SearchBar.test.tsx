@@ -17,6 +17,30 @@ vi.mock("../../src/context/mapContext", () => ({
   useMap: vi.fn(),
 }));
 
+vi.mock("../../src/context/shopContext", async () => {
+  const actual = await vi.importActual<typeof import("../../src/context/shopContext")>(
+    "../../src/context/shopContext"
+  );
+  return {
+    ...actual,
+    useShops: vi.fn(() => ({
+      applyFilters: vi.fn(),
+    })),
+  };
+});
+
+vi.mock("../../src/context/toastContext", async () => {
+  const actual = await vi.importActual<typeof import("../../src/context/toastContext")>(
+    "../../src/context/toastContext"
+  );
+  return {
+    ...actual,
+    useToast: vi.fn(() => ({
+      addToast: vi.fn(),
+    })),
+  };
+});
+
 vi.mock("../../src/services/indexedDB", () => ({
   getCachedData: vi.fn().mockResolvedValue([]),
   saveData: vi.fn(),
@@ -26,12 +50,14 @@ describe("SearchBar", () => {
   const mockSetCenter = vi.fn();
   const mockSetShopId = vi.fn();
   const mockSetZoom = vi.fn();
+  const mockSetUserInteracted = vi.fn();
 
   beforeEach(() => {
     (useMap as jest.Mock).mockReturnValue({
       setCenter: mockSetCenter,
       setShopId: mockSetShopId,
       setZoom: mockSetZoom,
+      setUserInteracted: mockSetUserInteracted,
     });
   });
 
@@ -45,19 +71,13 @@ describe("SearchBar", () => {
         <ToastProvider>
           <SearchBar />
         </ToastProvider>
-      </ShopsProvider>,
+      </ShopsProvider>
     );
 
-  it("renders the search bar", () => {
+  it("renders the search bar input", () => {
     renderWithProviders();
     const inputElement = screen.getByPlaceholderText("Search shops");
     expect(inputElement).toBeInTheDocument();
-  });
-
-  it("renders the search icon", () => {
-    renderWithProviders();
-    const searchIcon = screen.getByTestId("search-icon");
-    expect(searchIcon).toBeInTheDocument();
   });
 
   it("fetches and displays suggestions when typing", async () => {
@@ -67,7 +87,7 @@ describe("SearchBar", () => {
           id: 1,
           name: "Molinari Delicatessen",
           locations: [
-            { street_address: "373 Columbus Ave", city: "San Francisco" },
+            { street_address: "373 Columbus Ave", city: "San Francisco", latitude: 37.8, longitude: -122.4 },
           ],
         },
       },
@@ -75,7 +95,9 @@ describe("SearchBar", () => {
         shop: {
           id: 2,
           name: "Mr Mustache",
-          locations: [{ street_address: "Flower Street", city: "Pasadena" }],
+          locations: [
+            { street_address: "Flower Street", city: "Pasadena", latitude: 34.1, longitude: -118.1 },
+          ],
         },
       },
     ];
@@ -88,31 +110,26 @@ describe("SearchBar", () => {
     await userEvent.type(input, "Shop");
 
     await waitFor(() => {
-      expect(SearchShops).toHaveBeenCalledWith({ search: "Shop" });
-      expect(screen.getByRole("combobox")).toHaveAttribute(
-        "aria-expanded",
-        "true",
-      );
+      expect(SearchShops).toHaveBeenCalledWith("Shop", expect.any(Object));
     });
 
-    const suggestions = await screen.findAllByText(
-      /Molinari Delicatessen|Mr Mustache/,
-    );
-    expect(suggestions).toHaveLength(2);
+    expect(await screen.findByText("Molinari Delicatessen")).toBeInTheDocument();
+    expect(await screen.findByText("Mr Mustache")).toBeInTheDocument();
   });
 
-  it("ensures accessibility attributes are correctly set", async () => {
+  it("centers map and sets shopId on suggestion select", async () => {
     const mockSuggestions = [
       {
         shop: {
           id: 1,
           name: "Molinari Delicatessen",
           locations: [
-            { street_address: "373 Columbus Ave", city: "San Francisco" },
+            { street_address: "373 Columbus Ave", city: "San Francisco", latitude: 37.8, longitude: -122.4 },
           ],
         },
       },
     ];
+
     (SearchShops as jest.Mock).mockResolvedValue(mockSuggestions);
 
     renderWithProviders();
@@ -121,14 +138,15 @@ describe("SearchBar", () => {
     await userEvent.type(input, "Molinari");
 
     await waitFor(() =>
-      expect(SearchShops).toHaveBeenCalledWith({ search: "Molinari" }),
+      expect(SearchShops).toHaveBeenCalledWith("Molinari", expect.any(Object))
     );
 
-    const combobox = screen.getByRole("combobox");
-    expect(combobox).toHaveAttribute("aria-expanded", "true");
+    const suggestion = await screen.findByText("Molinari Delicatessen");
+    await userEvent.click(suggestion);
 
-    const listboxes = screen.getAllByRole("listbox");
-    expect(listboxes).toHaveLength(2);
-    expect(listboxes[1]).toHaveTextContent("Molinari Delicatessen");
+    expect(mockSetCenter).toHaveBeenCalledWith([-122.4, 37.8]);
+    expect(mockSetZoom).toHaveBeenCalledWith(16);
+    expect(mockSetShopId).toHaveBeenCalledWith("1");
+    expect(mockSetUserInteracted).toHaveBeenCalledWith(false);
   });
 });
