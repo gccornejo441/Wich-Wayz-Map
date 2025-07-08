@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { HiCheckCircle, HiXCircle } from "react-icons/hi";
+
 type ToastType = "success" | "error";
 
 interface Toast {
@@ -36,15 +37,17 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex items-center p-4 rounded shadow-lg bg-white text-gray-800 text-sm border-l-4 ${
-              toast.type === "success" ? "border-green-500" : "border-red-500"
-            }`}
+            className={`flex items-center p-4 rounded shadow-lg border-l-4 text-sm transition-all duration-300
+              bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100
+              ${
+                toast.type === "success" ? "border-green-500" : "border-red-500"
+              }`}
           >
             <div className="mr-3">
               {toast.type === "success" ? (
-                <HiCheckCircle className="text-green-500 w-6 h-6" />
+                <HiCheckCircle className="text-green-500" />
               ) : (
-                <HiXCircle className="text-red-500 w-6 h-6" />
+                <HiXCircle className="text-red-500" />
               )}
             </div>
             <span>{toast.message}</span>
