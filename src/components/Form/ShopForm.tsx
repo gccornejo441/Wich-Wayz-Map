@@ -6,8 +6,8 @@ import ManualAddressFields from "../Utilites/ManualAddressFields";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { InputMask } from "@react-input/mask";
 import { useEffect, useState } from "react";
-// import AddCategoryModal from "../Modal/AddCategoryModal";
-// import { addCategoryIfNotExists, GetCategories } from "@/services/categoryService";
+import AddCategoryModal from "../Modal/AddCategoryModal";
+import { addCategoryIfNotExists, GetCategories } from "@/services/categoryService";
 
 type ShopFormProps = {
   initialData?: Partial<AddAShopPayload>;
@@ -129,7 +129,7 @@ const ShopForm = ({
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Effect to observe changes in the document's class list for dark mode
   useEffect(() => {
@@ -303,7 +303,7 @@ const ShopForm = ({
         )}
       </button>
 
-      {/* <AddCategoryModal
+      <AddCategoryModal
         isOpen={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
         onSubmit={async (name, desc) => {
@@ -319,7 +319,7 @@ const ShopForm = ({
             }
           }
         }}
-      /> */}
+      />
     </form>
   );
 };
