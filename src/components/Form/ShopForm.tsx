@@ -220,33 +220,34 @@ const ShopForm = ({
         <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
           Select Categories
         </label>
-        <Select<CategoryOption, true, GroupBase<CategoryOption>>
-          placeholder="Search"
-          isMulti
-          value={selectedOptions}
-          options={categoryOptions}
-          onChange={(selected: MultiValue<CategoryOption>) => {
-            setSelectedCategories(selected.map((opt) => opt.value));
-          }}
-          styles={getCustomSelectStyles(isDark)}
-          menuPortalTarget={
-            typeof window !== "undefined" ? document.body : null
-          }
-          isClearable
-          isSearchable
-          className="react-select-container"
-          classNamePrefix="react-select"
-        />
+        <div className="flex items-start gap-2">
+        
+          <div className="flex-1">
+            <Select<CategoryOption, true, GroupBase<CategoryOption>>
+              placeholder="Search"
+              isMulti
+              value={selectedOptions}
+              options={categoryOptions}
+              onChange={(selected: MultiValue<CategoryOption>) => {
+                setSelectedCategories(selected.map((opt) => opt.value));
+              }}
+              styles={getCustomSelectStyles(isDark)}
+              menuPortalTarget={typeof window !== "undefined" ? document.body : null}
+              isClearable
+              isSearchable
+              className="react-select-container"
+              classNamePrefix="react-select"
+            />
+          </div>
+            <button
+            type="button"
+            onClick={() => setShowCategoryModal(true)}
+            className="h-[38px] px-3 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors duration-200 ease-in-out whitespace-nowrap"
+          >
+            + Category
+          </button>
+        </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setShowCategoryModal(true)}
-        className="mt-2 text-sm text-blue-600 hover:underline"
-      >
-        + Add New Category
-      </button>
-
 
       {/* Address */}
       <InputField
@@ -298,11 +299,11 @@ const ShopForm = ({
           isSubmitting
         }
         className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
-            !!errors.shopName ||
-            !!errors.address ||
-            isSubmitting
-            ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
-            : "bg-brand-primary hover:bg-secondary"
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
+          ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
+          : "bg-brand-primary hover:bg-secondary"
           }`}
       >
         {isSubmitting ? (
