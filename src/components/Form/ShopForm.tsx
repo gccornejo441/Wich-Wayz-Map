@@ -220,8 +220,7 @@ const ShopForm = ({
         <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
           Select Categories
         </label>
-        <div className="flex items-start gap-2">
-        
+        <div className="flex items-center gap-2">
           <div className="flex-1">
             <Select<CategoryOption, true, GroupBase<CategoryOption>>
               placeholder="Search"
@@ -239,12 +238,13 @@ const ShopForm = ({
               classNamePrefix="react-select"
             />
           </div>
-            <button
+          <button
             type="button"
             onClick={() => setShowCategoryModal(true)}
-            className="h-[38px] px-3 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors duration-200 ease-in-out whitespace-nowrap"
+            className="h-[45px] px-4 rounded-md bg-brand-primary text-white hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors duration-200 ease-in-out flex items-center gap-2 whitespace-nowrap"
           >
-            + Category
+            Add
+            Category
           </button>
         </div>
       </div>
