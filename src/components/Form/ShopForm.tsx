@@ -123,6 +123,7 @@ const ShopForm = ({
     prefillAddressFields,
     isAddressValid,
     categories,
+    setCategories,
     selectedCategories,
     setSelectedCategories,
   } = useAddShopForm(initialData, mode);
@@ -169,6 +170,11 @@ const ShopForm = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const refreshCategories = async () => {
+    const updatedCategories = await GetCategories();
+    setCategories(updatedCategories);
   };
 
   return (
@@ -322,8 +328,20 @@ const ShopForm = ({
         onSubmit={async (name, desc) => {
           try {
             await addCategoryIfNotExists(name, desc);
-            await GetCategories();
-            setSelectedCategories((prev) => [...prev]);
+            await refreshCategories();
+
+            const updated = await GetCategories();
+            const newCategory = updated.find(
+              (cat) => cat.category_name === name
+            );
+
+            const newCategoryId = newCategory?.id;
+
+            if (typeof newCategoryId === "number") {
+              setSelectedCategories((prev) => [...prev, newCategoryId]);
+            }
+
+            setShowCategoryModal(false);
           } catch (err) {
             if (err instanceof Error) {
               alert(err.message);

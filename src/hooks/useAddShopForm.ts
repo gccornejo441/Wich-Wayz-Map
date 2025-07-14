@@ -19,7 +19,7 @@ type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
 
 export const useAddShopForm = (
   initialData?: ShopInitialData,
-  mode: "add" | "edit" = "add",
+  mode: "add" | "edit" = "add"
 ) => {
   const { setShops, setLocations, updateShopInContext } = useShops();
   const { addToast } = useToast();
@@ -103,7 +103,7 @@ export const useAddShopForm = (
 
         const matchedIds = categories
           .filter((cat) =>
-            categoryNames.includes(cat.category_name.toLowerCase()),
+            categoryNames.includes(cat.category_name.toLowerCase())
           )
           .map((cat) => cat.id!);
 
@@ -142,7 +142,7 @@ export const useAddShopForm = (
       setIsAddressValid(false);
       addToast(
         "Please enter a valid address or complete the manual form.",
-        "error",
+        "error"
       );
       return;
     }
@@ -161,17 +161,15 @@ export const useAddShopForm = (
           "address_first",
           addressDetails.components.street ||
             addressDetails.components.road ||
-            "",
+            ""
         );
         setValue(
           "address_second",
-          addressDetails.components.secondary_address || "",
+          addressDetails.components.secondary_address || ""
         );
         setValue(
           "city",
-          addressDetails.components.city ||
-            addressDetails.components.town ||
-            "",
+          addressDetails.components.city || addressDetails.components.town || ""
         );
         setValue("state", addressDetails.components.state || "");
         setValue("postcode", addressDetails.components.postcode || "");
@@ -196,7 +194,7 @@ export const useAddShopForm = (
     if (!isAddressValid) {
       addToast(
         "Please prefill and validate the address before submitting.",
-        "error",
+        "error"
       );
       return;
     }
@@ -230,7 +228,7 @@ export const useAddShopForm = (
       setLocations,
       addToast,
       logout,
-      navigate,
+      navigate
     );
 
     if (success) {
@@ -248,6 +246,7 @@ export const useAddShopForm = (
     prefillAddressFields,
     isAddressValid,
     categories,
+    setCategories,
     selectedCategories,
     setSelectedCategories,
   };
