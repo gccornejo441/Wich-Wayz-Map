@@ -9,6 +9,7 @@ interface ModalWrapperProps {
   className?: string;
   onClose?: Callback;
   showCloseButton?: boolean;
+  isVisible?: boolean;
 }
 
 const ModalWrapper = ({
@@ -19,6 +20,7 @@ const ModalWrapper = ({
   className = "",
   onClose,
   showCloseButton = true,
+  isVisible = true,
 }: ModalWrapperProps) => {
   const sizeClasses = {
     small: "max-w-sm",
@@ -27,9 +29,13 @@ const ModalWrapper = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 
+        transition-opacity duration-300 ${isVisible ? "animate-fadeIn" : "animate-fadeOut"}`}
+    >
       <div
-        className={`relative w-full ${sizeClasses[size]} max-h-full rounded-lg shadow-card ${className}`}
+        className={`relative w-full ${sizeClasses[size]} max-h-full rounded-lg shadow-card transform transition-all duration-300 ease-out 
+          ${isVisible ? "animate-modalEnter" : "animate-modalExit"} ${className}`}
         style={{ overflow: "visible" }}
       >
         {showCloseButton && onClose && (

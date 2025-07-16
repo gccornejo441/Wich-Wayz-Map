@@ -24,9 +24,21 @@ module.exports = {
           "0%": { opacity: 0 },
           "100%": { opacity: 1 },
         },
+        fadeOut: {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
         slideUp: {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" },
+        },
+        modalEnter: {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        modalExit: {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "100%": { opacity: "0", transform: "scale(0.95)" },
         },
       },
       animation: {
@@ -34,6 +46,9 @@ module.exports = {
         "check-bounce": "check-bounce 0.5s ease-out both",
         fadeIn: "fadeIn 0.3s ease-out",
         slideUp: "slideUp 0.3s ease-out",
+        modalEnter: "modalEnter 0.3s ease-out forwards",
+        modalExit: "modalExit 0.3s ease-in forwards",
+        fadeOut: "fadeOut 0.3s ease-in forwards",
       },
       transitionProperty: {
         sidebar: "background-color, color, border-color",
