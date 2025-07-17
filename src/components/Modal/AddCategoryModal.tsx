@@ -23,7 +23,7 @@ export default function AddCategoryModal({
       setTimeout(() => setIsVisible(true), 10);
     } else {
       setIsVisible(false);
-      setTimeout(() => setIsMounted(false), 300); 
+      setTimeout(() => setIsMounted(false), 300);
     }
   }, [isOpen]);
 
