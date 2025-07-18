@@ -314,7 +314,7 @@ const MapSidebar = () => {
         <div className="px-5 py-5">
           <div className="flex flex-col space-y-3">
             <button
-              className="w-full dark:hover:bg-surface-darker dark:border dark:border-gray-700 dark:shadow-none bg-primary hover:bg-primaryBorder text-white py-2 rounded-lg text-center shadow-md transition-colors"
+              className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
               onClick={() =>
                 window.open(
                   `https://www.google.com/maps/dir/?api=1&destination=${selectedShop?.address}`,
@@ -325,7 +325,7 @@ const MapSidebar = () => {
               Get Directions
             </button>
             <button
-              className="w-full dark:hover:bg-surface-darker dark:border dark:border-gray-700 dark:shadow-none bg-primary hover:bg-primaryBorder text-white py-2 rounded-lg text-center shadow-md transition-colors"
+              className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
               onClick={closeSidebar}
             >
               Close Sidebar
