@@ -1,6 +1,6 @@
 # Wich‑Wayz‑Map
 
-**Wich‑Wayz‑Map** is a full‑stack web application for discovering, rating and managing sandwich shops.  It combines an interactive Mapbox map with a database‑driven backend, allowing users to search for shops, view details, vote on them and (for members) submit new locations.  The project is built with **React**, **TypeScript**, **Mapbox GL JS**, **Turso** (hosted SQLite) and **Stripe** for membership payments.
+**Wich‑Wayz‑Map** is a full‑stack web application for discovering, rating and managing sandwich shops. It combines an interactive Mapbox map with a database‑driven backend, allowing users to search for shops, view details, vote on them and (for members) submit new locations. The project is built with **React**, **TypeScript**, **Mapbox GL JS**, **Turso** (hosted SQLite) and **Stripe** for membership payments.
 
 ## Table of contents
 
@@ -53,7 +53,7 @@
 
 - **Node.js** ≥ 18.x and **npm** (or `pnpm`/`yarn`) installed.
 - A **Mapbox** account to obtain an access token.
-- A **Turso** database.  You will need the database URL and an auth token.
+- A **Turso** database. You will need the database URL and an auth token.
 - A **Stripe** account to set up checkout sessions and webhooks.
 
 ### Installation
@@ -65,7 +65,7 @@
    cd Wich-Wayz-Map
    ```
 
-2. Install dependencies.  Use your preferred package manager:
+2. Install dependencies. Use your preferred package manager:
 
    ```bash
    # using npm
@@ -75,6 +75,7 @@
    pnpm install
 
    # or using yarn
+   ```
 
 ### Running the app
 
@@ -88,11 +89,11 @@ pnpm dev
 yarn dev
 ```
 
-This command launches the frontend and API routes, typically at `http://localhost:5173` (for Vite) or `http://localhost:3000` (for Next.js) depending on your configuration.  When the server is running, open the URL in a browser to see the map.  The application will connect to Turso and fetch shops; if the database is empty you can start by adding shops via the “Add shop” UI (requires membership).
+This command launches the frontend and API routes, typically at `http://localhost:5173` (for Vite) or `http://localhost:3000` (for Next.js) depending on your configuration. When the server is running, open the URL in a browser to see the map. The application will connect to Turso and fetch shops; if the database is empty you can start by adding shops via the “Add shop” UI (requires membership).
 
 ### Testing
 
-Unit tests are written using **Vitest/Jest** and live in the `test/` directory.  To run them:
+Unit tests are written using **Vitest/Jest** and live in the `test/` directory. To run them:
 
 ```bash
 npm test
@@ -102,7 +103,7 @@ pnpm test
 yarn test
 ```
 
-Additional tests for APIs and end‑to‑end scenarios are recommended (e.g., using Playwright or Cypress).  Continuous integration workflows can be configured in `.github/workflows/` to run tests and linting on pull requests.
+Additional tests for APIs and end‑to‑end scenarios are recommended (e.g., using Playwright or Cypress). Continuous integration workflows can be configured in `.github/workflows/` to run tests and linting on pull requests.
 
 ## Project structure
 
@@ -127,10 +128,10 @@ The key directories/files include:
 
 ## Contributing
 
-Contributions are welcome!  To get started:
+Contributions are welcome! To get started:
 
 1. Fork this repository and create a new branch for your feature or bug fix.
-2. Ensure your code follows the existing style (consider setting up ESLint/Prettier).  Run `npm run lint` if a script is provided.
+2. Ensure your code follows the existing style (consider setting up ESLint/Prettier). Run `npm run lint` if a script is provided.
 3. Write unit tests for your changes where possible and run `npm test` to make sure they pass.
 4. Commit your changes and open a pull request with a clear description of what you’ve done.
 5. A maintainer will review your PR and may ask for adjustments before merging.
@@ -143,4 +144,4 @@ MIT
 
 ---
 
-*Happy mapping and enjoy exploring the wonderful world of sandwiches!*
+_Happy mapping and enjoy exploring the wonderful world of sandwiches!_
