@@ -6,6 +6,7 @@ const AddShop = () => {
   const handleBackClick = () => {
     navigate("/");
   };
+
   return (
     <div className="bg-white w-full p-6 md:p-10">
       <div className="flex justify-between items-center my-5">
@@ -20,11 +21,11 @@ const AddShop = () => {
       <div className="rounded-xl overflow-hidden border border-lightGray">
         <iframe
           src="https://docs.google.com/forms/d/e/1FAIpQLSd-DZWQQWXQOalk7zB2NhJg39ULd4qRttmw4W636Ekv4pVClw/viewform?embedded=true"
-          className="w-full h-[80vh] bg-lightGray border-0 shadow-card"
-          frameBorder={0}
-          marginHeight={0}
-          marginWidth={0}
           title="Add Shop Form"
+          className="w-full h-[80vh] bg-lightGray border-0 shadow-card"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          sandbox="allow-forms allow-scripts allow-same-origin"
         >
           Loading…
         </iframe>
