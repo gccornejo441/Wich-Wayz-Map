@@ -9,6 +9,7 @@ import { VoteProvider } from "./context/voteContext";
 import { UserLeaderboardProvider } from "./context/userLeaderboardContext";
 import { ShopSidebarProvider } from "./context/ShopSidebarContext";
 import { SavedShopsProvider } from "./context/useSavedShop";
+import { SidebarProvider } from "./context/sidebarContext";
 
 function App() {
   return (
@@ -20,11 +21,13 @@ function App() {
               <UserLeaderboardProvider>
                 <ShopSidebarProvider>
                   <SavedShopsProvider>
-                    <AppLayout>
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Routes />
-                      </Suspense>
-                    </AppLayout>
+                    <SidebarProvider>
+                      <AppLayout>
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <Routes />
+                        </Suspense>
+                      </AppLayout>
+                    </SidebarProvider>
                   </SavedShopsProvider>
                 </ShopSidebarProvider>
               </UserLeaderboardProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import NavBar from "../NavBar/Navbar";
 import { useModal } from "../../context/modalContext";
@@ -6,13 +6,13 @@ import UpdateShop from "../Modal/UpdateShop";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import ShopListSidebar from "../Sidebar/ShopListSidebar";
 import MapSidebar from "../Sidebar/MapSidebar";
+import { useSidebar } from "@/context/sidebarContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const AppLayout = ({ children }: AppLayoutProps) => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { currentModal } = useModal();
   const {
     shopListOpen,
@@ -20,20 +20,22 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     sidebarOpen: mapSidebarOpen,
   } = useShopSidebar();
 
+  const { isOpen: isSidebarOpen, closeSidebar, toggleSidebar } = useSidebar();
+
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-  const closeSidebar = () => setSidebarOpen(false);
-
+  // Close sidebar when ShopList is opened
   useEffect(() => {
     if (shopListOpen) closeSidebar();
-  }, [shopListOpen]);
+  }, [shopListOpen, closeSidebar]);
 
+  // Close ShopList if Sidebar is opened
   useEffect(() => {
     if (isSidebarOpen && shopListOpen) closeShopList();
   }, [isSidebarOpen, shopListOpen, closeShopList]);
 
+  // Close Sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -53,7 +55,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, closeSidebar]);
 
   return (
     <div className="relative min-h-screen bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
@@ -64,7 +66,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
             searchBar={!isSidebarOpen && !mapSidebarOpen}
             navRef={navRef}
           />
-          <Sidebar isOpen={!isSidebarOpen} onToggleSidebar={toggleSidebar} />
+          <Sidebar />
           <ShopListSidebar isOpen={shopListOpen} />
           <MapSidebar />
         </div>
