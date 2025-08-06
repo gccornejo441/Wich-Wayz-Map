@@ -5,9 +5,10 @@ import "@testing-library/jest-dom";
 const mockNavigate = vi.fn();
 
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>(
-    "react-router-dom"
-  );
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom",
+    );
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -48,7 +49,7 @@ describe("AddEditShop", () => {
     render(
       <MemoryRouter>
         <AddEditShop />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("To Map")).toBeInTheDocument();
@@ -60,7 +61,7 @@ describe("AddEditShop", () => {
     render(
       <MemoryRouter>
         <AddEditShop />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByText("To Map"));
@@ -75,7 +76,7 @@ describe("AddEditShop", () => {
     render(
       <MemoryRouter>
         <AddEditShop />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Edit Test Shop")).toBeInTheDocument();
