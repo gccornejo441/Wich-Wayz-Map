@@ -10,8 +10,19 @@ import { titleCase } from "title-case";
 export function toTitleCase(str: string): string {
   return str
     .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) =>
+      word
+        .split(/([-'’])/g)
+        .map((part) =>
+          /[-'’]/.test(part)
+            ? part
+            : part.charAt(0).toUpperCase() + part.slice(1),
+        )
+        .join(""),
+    )
     .join(" ");
 }
 
