@@ -92,7 +92,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       addToast(`Showing ${shops.length} filtered shop(s).`, "success");
     }
 
-    const firstLoc = shops[0].locations?.[0];
+    const firstLoc = shops[0]?.locations?.[0];
     if (firstLoc) {
       setCenter([firstLoc.longitude, firstLoc.latitude]);
       setZoom(13);
