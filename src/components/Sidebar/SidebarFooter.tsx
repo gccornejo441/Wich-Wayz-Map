@@ -3,55 +3,73 @@ import { ROUTES } from "../../constants/routes";
 import { useToast } from "../../context/toastContext";
 import ThemeToggle from "../Utilites/ThemeToggle";
 
+const CONTACT_EMAIL = "wich.wayz.map@gmail.com";
+
+const linkBaseClasses =
+  "text-xs text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-sm";
+
 const SidebarFooter = () => {
   const { addToast } = useToast();
 
-  const handleContactUsClick = () => {
-    const email = "wich.wayz.map@gmail.com";
-    navigator.clipboard
-      .writeText(email)
-      .then(() => {
-        addToast("Email copied to clipboard!", "success");
-      })
-      .catch(() => {
-        addToast("Failed to copy email.", "error");
-      });
+  const handleContactUsClick = async () => {
+    if (!navigator.clipboard?.writeText) {
+      addToast(`Email: ${CONTACT_EMAIL}`, "info");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+      addToast("Email copied to clipboard!", "success");
+    } catch {
+      addToast("Failed to copy email. Email: " + CONTACT_EMAIL, "error");
+    }
   };
 
   return (
-    <div className="px-4 mt-8 border-t border-white/20 pt-4">
-      <p className="text-xs text-white">© 2025 Wich Wayz?</p>
-      <div className="flex flex-wrap text-xs text-white/70 mt-2 space-x-4">
+    <div className="mt-auto border-t border-white/15 px-4 py-4 text-xs text-white/70">
+      <div className="flex items-center justify-between gap-2">
+        <p>© 2025 Wich Wayz?</p>
+        <div className="shrink-0">
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <nav
+        aria-label="Sidebar footer links"
+        className="mt-3 flex flex-wrap gap-x-4 gap-y-1"
+      >
         <a
           href="https://en.wikipedia.org/wiki/Sandwich"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-white transition"
+          className={linkBaseClasses}
         >
           About
         </a>
+
         <button
+          type="button"
           onClick={handleContactUsClick}
-          className="hover:text-white transition"
+          className={linkBaseClasses}
+          aria-label="Copy contact email to clipboard"
         >
           Contact Us
         </button>
+
         <Link
           to={ROUTES.LEGAL.PRIVACY_POLICY}
-          className="hover:text-white transition"
+          className={linkBaseClasses}
         >
           Privacy Policy
         </Link>
+
         <Link
           to={ROUTES.LEGAL.TERMS_OF_SERVICE}
-          className="hover:text-white transition"
+          className={linkBaseClasses}
         >
           Terms of Service
         </Link>
-      </div>
-      <div className="mt-2 text-xs text-white/70">
-        <ThemeToggle />
-      </div>
+      </nav>
     </div>
   );
 };
