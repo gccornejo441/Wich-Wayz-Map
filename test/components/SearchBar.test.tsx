@@ -9,12 +9,18 @@ import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
 // Mock services
+const mockAddToast = vi.fn();
+
 vi.mock("../../src/services/search", () => ({
   SearchShops: vi.fn(),
 }));
 
 vi.mock("../../src/context/mapContext", () => ({
   useMap: vi.fn(),
+}));
+
+vi.mock("../../src/services/apiClient", () => ({
+  executeQuery: vi.fn().mockResolvedValue({ rows: [] }),
 }));
 
 vi.mock("../../src/context/shopContext", async () => {
@@ -36,7 +42,7 @@ vi.mock("../../src/context/toastContext", async () => {
   return {
     ...actual,
     useToast: vi.fn(() => ({
-      addToast: vi.fn(),
+      addToast: mockAddToast,
     })),
   };
 });
@@ -44,6 +50,15 @@ vi.mock("../../src/context/toastContext", async () => {
 vi.mock("../../src/services/indexedDB", () => ({
   getCachedData: vi.fn().mockResolvedValue([]),
   saveData: vi.fn(),
+  cacheData: vi.fn(),
+  SHOPS_STORE: "SHOPS_STORE",
+  LOCATIONS_STORE: "LOCATIONS_STORE",
+}));
+
+vi.mock("../../src/components/Filter/FilterDropdown", () => ({
+  FilterDropdown: ({ onFilterChange }: { onFilterChange: (filters: any) => void }) => (
+    <button onClick={() => onFilterChange({})}>Apply Filters</button>
+  ),
 }));
 
 describe("SearchBar", () => {
@@ -127,6 +142,22 @@ describe("SearchBar", () => {
       await screen.findByText("Molinari Delicatessen"),
     ).toBeInTheDocument();
     expect(await screen.findByText("Mr Mustache")).toBeInTheDocument();
+  });
+
+  it("shows error toast when no shops match filters", async () => {
+    (SearchShops as jest.Mock).mockResolvedValue([]);
+
+    renderWithProviders();
+
+    const filterButton = screen.getByText("Apply Filters");
+    await userEvent.click(filterButton);
+
+    await waitFor(() =>
+      expect(mockAddToast).toHaveBeenCalledWith(
+        "No shops found matching your filters.",
+        "error",
+      ),
+    );
   });
 
   it("centers map and sets shopId on suggestion select", async () => {
