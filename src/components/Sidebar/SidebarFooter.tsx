@@ -28,7 +28,7 @@ const SidebarFooter = () => {
   return (
     <div className="mt-auto border-t border-white/15 px-4 py-4 text-xs text-white/70">
       <div className="flex items-center justify-between gap-2">
-        <p>© 2025 Wich Wayz?</p>
+        <p>© 2026 Wich Wayz?</p>
         <div className="shrink-0">
           <ThemeToggle />
         </div>
