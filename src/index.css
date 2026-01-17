@@ -12,6 +12,20 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
+  /* Prevent mobile pull-to-refresh / overscroll bounce */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overscroll-behavior-y: none;
+  }
+
+  /* Ensure the map area doesn't trigger page scrolling/refresh */
+  .map-container {
+    overscroll-behavior: none;
+    touch-action: none;
+  }
 }
 
 @layer utilities {
