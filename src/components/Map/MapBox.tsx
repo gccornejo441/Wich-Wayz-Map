@@ -10,6 +10,7 @@ const DEFAULT_POSITION: [number, number] = [-74.006, 40.7128];
 type Coordinates = [number, number];
 
 export interface ShopGeoJsonProperties {
+  featureId?: string;
   shopId: number;
   shopName: string;
   address: string;
@@ -101,6 +102,49 @@ const MapBox = () => {
     return loadingMessages[index];
   }, []);
 
+  // Helper to parse Mapbox properties into typed ShopGeoJsonProperties
+  const toShopProps = useCallback(
+    (raw: Record<string, unknown>): ShopGeoJsonProperties => {
+      // Parse shopId to number
+      const shopId =
+        typeof raw.shopId === "string"
+          ? parseInt(raw.shopId, 10)
+          : Number(raw.shopId);
+
+      // Parse locationOpen to boolean | undefined
+      let locationOpen: boolean | undefined;
+      if (raw.locationOpen !== undefined && raw.locationOpen !== null) {
+        const val = String(raw.locationOpen).toLowerCase();
+        if (val === "true" || val === "1") {
+          locationOpen = true;
+        } else if (val === "false" || val === "0") {
+          locationOpen = false;
+        }
+      }
+
+      return {
+        featureId: raw.featureId ? String(raw.featureId) : undefined,
+        shopId: isNaN(shopId) ? 0 : shopId,
+        shopName: String(raw.shopName || ""),
+        address: String(raw.address || ""),
+        description: raw.description ? String(raw.description) : undefined,
+        createdBy: String(raw.createdBy || ""),
+        categories: raw.categories ? String(raw.categories) : undefined,
+        usersAvatarId: raw.usersAvatarId
+          ? String(raw.usersAvatarId)
+          : undefined,
+        usersAvatarEmail: raw.usersAvatarEmail
+          ? String(raw.usersAvatarEmail)
+          : undefined,
+        locationOpen,
+        phone: raw.phone ? String(raw.phone) : undefined,
+        website: raw.website ? String(raw.website) : undefined,
+        imageUrl: raw.imageUrl ? String(raw.imageUrl) : undefined,
+      };
+    },
+    [],
+  );
+
   // Create GeoJSON with stable feature IDs
   const createGeoJsonData = useCallback((): GeoJSON.FeatureCollection<
     GeoJSON.Point,
@@ -117,6 +161,7 @@ const MapBox = () => {
             type: "Feature" as const,
             id: featureId,
             properties: {
+              featureId,
               shopId: shop.id ?? 1,
               shopName: shop.name,
               description: shop.description || "No description available",
@@ -220,13 +265,14 @@ const MapBox = () => {
     (map: MapboxMap) => {
       const geojson = createGeoJsonData();
 
-      // Add source with clustering
+      // Add source with clustering and promote featureId
       map.addSource("shops", {
         type: "geojson",
         data: geojson,
         cluster: true,
         clusterMaxZoom: 14,
         clusterRadius: 50,
+        promoteId: "featureId",
       });
 
       // Cluster circles
@@ -311,9 +357,9 @@ const MapBox = () => {
         if (!e.features || !e.features.length) return;
 
         const feature = e.features[0];
-        const featureId = feature.id as string;
-        const properties =
-          feature.properties as unknown as ShopGeoJsonProperties;
+        const rawProperties = feature.properties as Record<string, unknown>;
+        const properties = toShopProps(rawProperties);
+        const featureId = properties.featureId || String(feature.id || "");
         const geometry = feature.geometry;
 
         if (geometry.type !== "Point") return;
@@ -348,13 +394,13 @@ const MapBox = () => {
           if (!e.features || !e.features.length) return;
 
           const feature = e.features[0];
-          const featureId = feature.id as string;
+          const rawProperties = feature.properties as Record<string, unknown>;
+          const properties = toShopProps(rawProperties);
+          const featureId = properties.featureId || String(feature.id || "");
 
           // Don't show hover popup if feature is selected
           if (selectedFeatureIdRef.current === featureId) return;
 
-          const properties =
-            feature.properties as unknown as ShopGeoJsonProperties;
           const geometry = feature.geometry;
 
           if (geometry.type === "Point") {
@@ -402,6 +448,7 @@ const MapBox = () => {
       showPopup,
       setSelectedFeatureIdSynced,
       openSidebar,
+      toShopProps,
     ],
   );
 
