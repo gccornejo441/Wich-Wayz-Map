@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import mapboxgl, { Map } from "mapbox-gl";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import mapboxgl, { Map as MapboxMap } from "mapbox-gl";
 import { useShops } from "../../context/shopContext";
 import SpeedDial from "../Dial/SpeedDial";
 import { useMap as useMapContext } from "../../context/mapContext";
@@ -37,40 +37,131 @@ const loadingMessages = [
   "Serving It Up Fresh...",
 ];
 
+const useMediaQuery = (query: string): boolean => {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+
+    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    }
+
+    mql.addListener(onChange);
+    return () => mql.removeListener(onChange);
+  }, [query]);
+
+  return matches;
+};
+
 const MapBox = () => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<Map | null>(null);
+  const mapRef = useRef<MapboxMap | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const navigationControlRef = useRef<mapboxgl.NavigationControl | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [position, setPosition] = useState<Coordinates | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+
+  const selectedMarkerIdRef = useRef<string | null>(null);
+  const positionRef = useRef<Coordinates | null>(null);
 
   const { displayedShops } = useShops();
   const { zoom, center } = useMapContext();
   const { openSidebar } = useShopSidebar();
   const mapZoom = zoom ?? 13;
 
-  const clearMarkers = () => {
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-  };
+  const isCoarsePointer = useMediaQuery("(pointer: coarse)");
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+  const setSelectedMarkerIdSynced = useCallback((id: string | null) => {
+    selectedMarkerIdRef.current = id;
+    setSelectedMarkerId(id);
+  }, []);
+
+  useEffect(() => {
+    selectedMarkerIdRef.current = selectedMarkerId;
+  }, [selectedMarkerId]);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const loadingCaption = useMemo(() => {
     const index = Math.floor(Math.random() * loadingMessages.length);
     return loadingMessages[index];
   }, []);
 
-  const createGeoJsonData = (): GeoJSON.FeatureCollection<
+  const clearMarkers = useCallback(() => {
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+  }, []);
+
+  const ensurePopup = useCallback(() => {
+    if (popupRef.current) popupRef.current.remove();
+
+    popupRef.current = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false,
+      closeOnClick: false,
+      closeOnMove: false,
+      maxWidth: isMobile ? "280px" : "320px",
+      anchor: "bottom",
+      className: "mapboxPopup",
+    });
+  }, [isMobile]);
+
+  const closePopup = useCallback(() => {
+    if (popupRef.current) popupRef.current.remove();
+  }, []);
+
+  const showPopup = useCallback(
+    (coords: Coordinates, props: ShopGeoJsonProperties) => {
+      const map = mapRef.current;
+      const popup = popupRef.current;
+      if (!map || !popup) return;
+
+      const popupHTML = `
+        <div style="pointer-events:none;" class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
+          <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary">${props.shopName}</h2>
+          <p class="text-text-base dark:text-text-inverted">${props.address}</p>
+        </div>
+      `;
+
+      popup.setLngLat(coords).setHTML(popupHTML).addTo(map);
+    },
+    [],
+  );
+
+  const updateNavigationControl = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (navigationControlRef.current) {
+      map.removeControl(navigationControlRef.current);
+      navigationControlRef.current = null;
+    }
+
+    const control = new mapboxgl.NavigationControl();
+    map.addControl(control, isMobile ? "top-right" : "bottom-left");
+    navigationControlRef.current = control;
+  }, [isMobile]);
+
+  const createGeoJsonData = useCallback((): GeoJSON.FeatureCollection<
     GeoJSON.Point,
     ShopGeoJsonProperties
-  > => ({
-    type: "FeatureCollection",
-    features: displayedShops.flatMap(
+  > => {
+    const features = displayedShops.flatMap(
       (shop) =>
         shop.locations?.map((location) => ({
-          type: "Feature",
+          type: "Feature" as const,
           properties: {
             shopId: shop.id ?? 1,
             shopName: shop.name,
@@ -97,77 +188,126 @@ const MapBox = () => {
             phone: location.phone || "No phone number available",
           },
           geometry: {
-            type: "Point",
+            type: "Point" as const,
             coordinates: [location.longitude, location.latitude] as Coordinates,
           },
         })) || [],
-    ),
-  });
+    );
 
-  const renderCustomMarkers = (map: Map) => {
-    setLoading(true);
-    clearMarkers();
+    return { type: "FeatureCollection", features };
+  }, [displayedShops]);
 
-    const geojson = createGeoJsonData();
+  const renderCustomMarkers = useCallback(
+    (map: MapboxMap) => {
+      setLoading(true);
+      clearMarkers();
+      closePopup();
+      setSelectedMarkerIdSynced(null);
 
-    geojson.features.forEach((feature, index, array) => {
-      const { coordinates } = feature.geometry;
-      const { shopName, address } = feature.properties;
-      const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: false,
-        className: "mapboxPopup",
-      });
+      const geojson = createGeoJsonData();
 
-      const el = document.createElement("div");
-      el.className = "custom-marker";
-      el.title = shopName;
-      el.style.cssText =
-        "width:30px;height:40px;background:url('/sandwich-pin-v2.svg') center/cover no-repeat;cursor:pointer;";
-
-      el.addEventListener("mouseenter", () => {
-        popup
-          .setLngLat(coordinates as [number, number])
-          .setHTML(
-            `
-            <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
-              <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-              <p class="text-text-base dark:text-text-inverted">${address}</p>
-            </div>
-          `,
-          )
-          .addTo(map);
-      });
-
-      el.addEventListener("mouseleave", () => popup.remove());
-
-      el.addEventListener("click", () => {
-        openSidebar(feature.properties, position);
-      });
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat(coordinates as [number, number])
-        .addTo(map);
-
-      markersRef.current.push(marker);
-
-      if (index === array.length - 1) {
-        setTimeout(() => setLoading(false), 400);
+      if (geojson.features.length === 0) {
+        setLoading(false);
+        return;
       }
-    });
-  };
 
-  // Resolve initial position and listen for "locateUser" event
+      geojson.features.forEach((feature, index, array) => {
+        const coordinates = feature.geometry.coordinates as Coordinates;
+        const props = feature.properties;
+        const markerId = `marker-${props.shopId}-${coordinates[0]}-${coordinates[1]}`;
+
+        const el = document.createElement("div");
+        el.className = "custom-marker";
+        el.title = props.shopName;
+
+        const hitW = isMobile || isCoarsePointer ? 44 : 30;
+        const hitH = isMobile || isCoarsePointer ? 44 : 40;
+
+        el.style.cssText = `
+          width:${hitW}px;
+          height:${hitH}px;
+          cursor:pointer;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          position:relative;
+          touch-action:manipulation;
+        `;
+
+        const iconEl = document.createElement("div");
+        iconEl.style.cssText = `
+          width:30px;
+          height:40px;
+          background:url('/sandwich-pin-v2.svg') center/cover no-repeat;
+          pointer-events:none;
+        `;
+        el.appendChild(iconEl);
+
+        if (!isCoarsePointer) {
+          el.addEventListener("mouseenter", () => {
+            if (selectedMarkerIdRef.current === markerId) return;
+            showPopup(coordinates, props);
+          });
+
+          el.addEventListener("mouseleave", () => {
+            if (selectedMarkerIdRef.current === markerId) return;
+            closePopup();
+          });
+        }
+
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (isCoarsePointer) {
+            if (selectedMarkerIdRef.current === markerId) {
+              closePopup();
+              setSelectedMarkerIdSynced(null);
+              openSidebar(props, positionRef.current);
+              return;
+            }
+
+            setSelectedMarkerIdSynced(markerId);
+            showPopup(coordinates, props);
+            return;
+          }
+
+          closePopup();
+          setSelectedMarkerIdSynced(null);
+          openSidebar(props, positionRef.current);
+        });
+
+        const marker = new mapboxgl.Marker(el).setLngLat(coordinates).addTo(map);
+        markersRef.current.push(marker);
+
+        if (index === array.length - 1) {
+          setTimeout(() => setLoading(false), 200);
+        }
+      });
+    },
+    [
+      clearMarkers,
+      closePopup,
+      createGeoJsonData,
+      isCoarsePointer,
+      isMobile,
+      openSidebar,
+      setSelectedMarkerIdSynced,
+      showPopup,
+    ],
+  );
+
   useEffect(() => {
     const resolvePosition = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => setPosition([pos.coords.longitude, pos.coords.latitude]),
-          () => setPosition(DEFAULT_POSITION),
-        );
-      } else {
+      if (!navigator.geolocation) {
         setPosition(DEFAULT_POSITION);
+        return;
       }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setPosition([pos.coords.longitude, pos.coords.latitude]),
+        () => setPosition(DEFAULT_POSITION),
+      );
     };
 
     resolvePosition();
@@ -180,7 +320,6 @@ const MapBox = () => {
     };
   }, []);
 
-  // Initialize map once position is available
   useEffect(() => {
     if (!position || !mapContainerRef.current) return;
 
@@ -192,6 +331,7 @@ const MapBox = () => {
     const isDarkMode = document.documentElement.classList.contains("dark");
 
     mapboxgl.accessToken = mapboxAccessToken;
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: isDarkMode
@@ -199,31 +339,62 @@ const MapBox = () => {
         : "mapbox://styles/mapbox/streets-v12",
       center: position,
       zoom: mapZoom,
-    });
-
-    map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
-
-    map.on("load", () => {
-      renderCustomMarkers(map);
-      setMapLoaded(true);
+      dragRotate: false,
+      pitchWithRotate: false,
+      touchPitch: false,
+      touchZoomRotate: true,
     });
 
     mapRef.current = map;
 
+    ensurePopup();
+
+    map.on("load", () => {
+      updateNavigationControl();
+
+      map.on("click", () => {
+        closePopup();
+        setSelectedMarkerIdSynced(null);
+      });
+
+      renderCustomMarkers(map);
+      setMapLoaded(true);
+    });
+
     return () => {
+      closePopup();
+
+      if (navigationControlRef.current) {
+        map.removeControl(navigationControlRef.current);
+        navigationControlRef.current = null;
+      }
+
       map.remove();
       mapRef.current = null;
     };
-  }, [position, mapboxAccessToken, mapZoom]);
+  }, [
+    closePopup,
+    ensurePopup,
+    mapboxAccessToken,
+    mapZoom,
+    position,
+    renderCustomMarkers,
+    setSelectedMarkerIdSynced,
+    updateNavigationControl,
+  ]);
 
-  // Re-render markers when displayed shops update
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    ensurePopup();
+    updateNavigationControl();
+  }, [ensurePopup, isMobile, mapLoaded, updateNavigationControl]);
+
   useEffect(() => {
     if (mapLoaded && mapRef.current) {
       renderCustomMarkers(mapRef.current);
     }
-  }, [displayedShops, mapLoaded]);
+  }, [displayedShops, mapLoaded, renderCustomMarkers]);
 
-  // Handle dark mode theme changes and center fly-to behavior
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const isDark = document.documentElement.classList.contains("dark");
@@ -250,10 +421,9 @@ const MapBox = () => {
     }
   }, [center]);
 
-  // Cleanup markers on unmount
   useEffect(() => {
     return () => clearMarkers();
-  }, []);
+  }, [clearMarkers]);
 
   return (
     <div>
