@@ -40,6 +40,10 @@ const loadingMessages = [
 const MapBox = () => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRootRef = useRef<HTMLDivElement | null>(null);
+  const leftGuardRef = useRef<HTMLDivElement | null>(null);
+  const rightGuardRef = useRef<HTMLDivElement | null>(null);
+
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
@@ -110,9 +114,15 @@ const MapBox = () => {
 
     const geojson = createGeoJsonData();
 
+    if (geojson.features.length === 0) {
+      setLoading(false);
+      return;
+    }
+
     geojson.features.forEach((feature, index, array) => {
       const { coordinates } = feature.geometry;
       const { shopName, address } = feature.properties;
+
       const popup = new mapboxgl.Popup({
         offset: 25,
         closeButton: false,
@@ -122,8 +132,14 @@ const MapBox = () => {
       const el = document.createElement("div");
       el.className = "custom-marker";
       el.title = shopName;
+
       el.style.cssText =
-        "width:30px;height:40px;background:url('/sandwich-pin-v2.svg') center/cover no-repeat;cursor:pointer;";
+        "width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;";
+
+      const iconEl = document.createElement("div");
+      iconEl.style.cssText =
+        "width:30px;height:40px;background:url('/sandwich-pin-v2.svg') center/cover no-repeat;pointer-events:none;";
+      el.appendChild(iconEl);
 
       el.addEventListener("mouseenter", () => {
         popup
@@ -141,8 +157,29 @@ const MapBox = () => {
 
       el.addEventListener("mouseleave", () => popup.remove());
 
-      el.addEventListener("click", () => {
+      let startX = 0;
+      let startY = 0;
+      let moved = false;
+
+      el.addEventListener("pointerdown", (e) => {
+        startX = e.clientX;
+        startY = e.clientY;
+        moved = false;
+      });
+
+      el.addEventListener("pointermove", (e) => {
+        const dx = Math.abs(e.clientX - startX);
+        const dy = Math.abs(e.clientY - startY);
+        if (dx + dy > 8) moved = true;
+      });
+
+      el.addEventListener("pointerup", () => {
+        if (moved) return;
         openSidebar(feature.properties, position);
+      });
+
+      el.addEventListener("pointercancel", () => {
+        moved = true;
       });
 
       const marker = new mapboxgl.Marker(el)
@@ -152,12 +189,47 @@ const MapBox = () => {
       markersRef.current.push(marker);
 
       if (index === array.length - 1) {
-        setTimeout(() => setLoading(false), 400);
+        setTimeout(() => setLoading(false), 200);
       }
     });
   };
 
-  // Resolve initial position and listen for "locateUser" event
+  useEffect(() => {
+    document.documentElement.classList.add("map-gesture-lock");
+    document.body.classList.add("map-gesture-lock");
+
+    return () => {
+      document.documentElement.classList.remove("map-gesture-lock");
+      document.body.classList.remove("map-gesture-lock");
+    };
+  }, []);
+
+  useEffect(() => {
+    const attachGuard = (el: HTMLDivElement | null) => {
+      if (!el) return () => {};
+
+      const handler = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+
+      el.addEventListener("touchstart", handler, { passive: false });
+      el.addEventListener("touchmove", handler, { passive: false });
+
+      return () => {
+        el.removeEventListener("touchstart", handler);
+        el.removeEventListener("touchmove", handler);
+      };
+    };
+
+    const detachLeft = attachGuard(leftGuardRef.current);
+    const detachRight = attachGuard(rightGuardRef.current);
+
+    return () => {
+      detachLeft();
+      detachRight();
+    };
+  }, []);
+
   useEffect(() => {
     const resolvePosition = () => {
       if (navigator.geolocation) {
@@ -180,7 +252,6 @@ const MapBox = () => {
     };
   }, []);
 
-  // Initialize map once position is available
   useEffect(() => {
     if (!position || !mapContainerRef.current) return;
 
@@ -199,7 +270,14 @@ const MapBox = () => {
         : "mapbox://styles/mapbox/streets-v12",
       center: position,
       zoom: mapZoom,
+      dragRotate: false,
+      pitchWithRotate: false,
+      touchPitch: false,
+      touchZoomRotate: true,
     });
+
+    map.getCanvasContainer().style.touchAction = "none";
+    map.getCanvas().style.touchAction = "none";
 
     map.addControl(new mapboxgl.NavigationControl(), "bottom-left");
 
@@ -216,14 +294,12 @@ const MapBox = () => {
     };
   }, [position, mapboxAccessToken, mapZoom]);
 
-  // Re-render markers when displayed shops update
   useEffect(() => {
     if (mapLoaded && mapRef.current) {
       renderCustomMarkers(mapRef.current);
     }
   }, [displayedShops, mapLoaded]);
 
-  // Handle dark mode theme changes and center fly-to behavior
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const isDark = document.documentElement.classList.contains("dark");
@@ -250,13 +326,12 @@ const MapBox = () => {
     }
   }, [center]);
 
-  // Cleanup markers on unmount
   useEffect(() => {
     return () => clearMarkers();
   }, []);
 
   return (
-    <div>
+    <div ref={mapRootRef} className="map-gesture-root">
       {loading && (
         <div className="absolute top-0 left-0 w-[100vw] h-[100dvh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
           <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
@@ -265,6 +340,7 @@ const MapBox = () => {
           </span>
         </div>
       )}
+
       <div
         ref={mapContainerRef}
         style={{
@@ -273,8 +349,13 @@ const MapBox = () => {
           position: "absolute",
           top: 0,
           left: 0,
+          touchAction: "none",
         }}
       />
+
+      <div ref={leftGuardRef} className="map-edge-guard left" />
+      <div ref={rightGuardRef} className="map-edge-guard right" />
+
       <SpeedDial
         onLocateUser={() => {
           window.dispatchEvent(new Event("locateUser"));
