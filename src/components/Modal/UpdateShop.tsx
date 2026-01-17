@@ -124,7 +124,7 @@ const UpdateShop = () => {
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="p-4 space-y-4 max-h-[75vh] overflow-y-auto"
+          className="p-4 space-y-4 max-h-[75dvh] overflow-y-auto"
         >
           <div>
             <label className="block mb-2 text-sm font-medium text-dark">

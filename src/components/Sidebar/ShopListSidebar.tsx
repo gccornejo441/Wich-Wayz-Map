@@ -13,7 +13,7 @@ const SavedShopSidebar = ({ isOpen }: SidebarProps) => {
 
   return (
     <aside
-      className={`fixed top-8 left-0 z-30 w-64 h-screen bg-primary dark:bg-dark border-primary border-r dark:border-gray-700 transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
+      className={`fixed top-8 left-0 z-30 w-64 h-[100dvh] bg-primary dark:bg-dark border-primary border-r dark:border-gray-700 transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
         isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
       }`}
       aria-label="Shop List Sidebar"
@@ -51,7 +51,7 @@ const SavedShopSidebar = ({ isOpen }: SidebarProps) => {
 
         {/* Content */}
         {activeTab === "Lists" && (
-          <div className="mt-4 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] pr-2 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
+          <div className="mt-4 space-y-2 overflow-y-auto max-h-[calc(100dvh-200px)] pr-2 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
             {savedShops.length === 0 ? (
               <p className="text-xs text-white/80 dark:text-gray-300 px-4">
                 No shops saved yet.

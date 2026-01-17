@@ -3,7 +3,7 @@ import { HiHome } from "react-icons/hi";
 
 const NotFound = () => {
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-background font-sans text-dark">
+    <div className="flex flex-col items-center justify-center h-[100dvh] bg-background font-sans text-dark">
       <div className="text-primary text-5xl font-bold">Lost in the Sauce?</div>
       <h1 className="text-3xl font-semibold mt-4">Sandwich Not Found</h1>
       <Link to="/" className="mt-8">

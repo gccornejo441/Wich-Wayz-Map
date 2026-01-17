@@ -52,7 +52,7 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-lightGray font-sans min-h-screen flex items-center justify-center px-4">
+    <div className="bg-lightGray font-sans min-h-[100dvh] flex items-center justify-center px-4">
       <div className="max-w-md w-full p-8 bg-background rounded-xl shadow-card">
         <Link to="/" className="block">
           <Logo

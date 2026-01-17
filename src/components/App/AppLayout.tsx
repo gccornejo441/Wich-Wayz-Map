@@ -58,7 +58,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   }, [isSidebarOpen, closeSidebar]);
 
   return (
-    <div className="relative min-h-screen bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
+    <div className="relative min-h-[100dvh] bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
       <div className="flex flex-col">
         <div ref={sidebarRef}>
           <NavBar

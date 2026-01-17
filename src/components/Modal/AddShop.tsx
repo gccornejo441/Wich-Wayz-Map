@@ -22,7 +22,7 @@ const AddShop = () => {
         <iframe
           src="https://docs.google.com/forms/d/e/1FAIpQLSd-DZWQQWXQOalk7zB2NhJg39ULd4qRttmw4W636Ekv4pVClw/viewform?embedded=true"
           title="Add Shop Form"
-          className="w-full h-[80vh] bg-lightGray border-0 shadow-card"
+          className="w-full h-[80dvh] bg-lightGray border-0 shadow-card"
           loading="lazy"
           referrerPolicy="no-referrer"
           sandbox="allow-forms allow-scripts allow-same-origin"

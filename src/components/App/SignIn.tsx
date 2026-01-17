@@ -90,7 +90,7 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans flex items-center justify-center px-4 bg-surface-light dark:bg-surface-dark">
+    <div className="min-h-[100dvh] font-sans flex items-center justify-center px-4 bg-surface-light dark:bg-surface-dark">
       <div className="max-w-md w-full">
         <div className="p-6 rounded-xl bg-white dark:bg-surface-darker shadow-lg">
           <Link to="/" className="block">

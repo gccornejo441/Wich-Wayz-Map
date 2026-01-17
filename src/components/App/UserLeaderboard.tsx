@@ -75,7 +75,7 @@ const UserLeaderboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins text-center">
+      <div className="min-h-[100dvh] bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins text-center">
         <h1 className="text-4xl font-extrabold text-text-base dark:text-text-inverted">
           Loading leaderboard...
         </h1>
@@ -85,7 +85,7 @@ const UserLeaderboard = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins text-center">
+      <div className="min-h-[100dvh] bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins text-center">
         <h1 className="text-4xl font-extrabold text-text-base dark:text-red-400">
           Error: {error}
         </h1>
@@ -94,7 +94,7 @@ const UserLeaderboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins">
+    <div className="min-h-[100dvh] bg-surface-light dark:bg-surface-dark p-6 mt-10 font-poppins">
       <header className="mb-8 text-center">
         <h1 className="text-3xl md:text-4xl font-extrabold text-text-base dark:text-text-inverted">
           Wich Wayz?

@@ -28,7 +28,7 @@ const AddEditShop = () => {
   }, [isMapModalOpen]);
 
   return (
-    <div className="min-h-screen pt-16 md:pt-10 flex items-center justify-center dark:bg-surface-dark px-4">
+    <div className="min-h-[100dvh] pt-16 md:pt-10 flex items-center justify-center dark:bg-surface-dark px-4">
       <div className="w-full max-w-6xl bg-white dark:bg-surface-darker p-6 rounded-xl shadow-md space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-secondary pb-4">

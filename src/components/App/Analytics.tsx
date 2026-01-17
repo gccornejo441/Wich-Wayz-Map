@@ -27,14 +27,14 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-text-base dark:text-text-inverted">
+      <div className="flex justify-center items-center h-[100dvh] text-text-base dark:text-text-inverted">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-light dark:bg-surface-dark p-6 mt-10">
+    <div className="min-h-[100dvh] bg-surface-light dark:bg-surface-dark p-6 mt-10">
       <header className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-text-base dark:text-text-inverted">
           Wich Wayz Analytics

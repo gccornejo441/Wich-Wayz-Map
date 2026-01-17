@@ -258,7 +258,7 @@ const MapBox = () => {
   return (
     <div>
       {loading && (
-        <div className="absolute top-0 left-0 w-[100vw] h-[100vh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
+        <div className="absolute top-0 left-0 w-[100vw] h-[100dvh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
           <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
           <span className="text-brand-primary dark:text-brand-secondary text-md font-semibold">
             {loadingCaption}
@@ -268,7 +268,7 @@ const MapBox = () => {
       <div
         ref={mapContainerRef}
         style={{
-          height: "100vh",
+          height: "100dvh",
           width: "100vw",
           position: "absolute",
           top: 0,
