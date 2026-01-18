@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import AppLayout from "./components/App/AppLayout";
 import { BrowserRouter as Router } from "react-router-dom";
-import Routes from "./components/App/Routes";
+import MainRoutes from "./components/App/Routes";
 import { ModalProvider } from "./context/modalContext";
 import { MapProvider } from "./context/mapContext";
 import { ToastProvider } from "./context/toastContext";
@@ -22,11 +21,9 @@ function App() {
                 <ShopSidebarProvider>
                   <SavedShopsProvider>
                     <SidebarProvider>
-                      <AppLayout>
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <Routes />
-                        </Suspense>
-                      </AppLayout>
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <MainRoutes />
+                      </Suspense>
                     </SidebarProvider>
                   </SavedShopsProvider>
                 </ShopSidebarProvider>

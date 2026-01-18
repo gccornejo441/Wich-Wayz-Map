@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 import NavBar from "../NavBar/Navbar";
 import { useModal } from "../../context/modalContext";
@@ -9,10 +10,10 @@ import MapSidebar from "../Sidebar/MapSidebar";
 import { useSidebar } from "@/context/sidebarContext";
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  fullBleed?: boolean;
 }
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   const { currentModal } = useModal();
   const {
     shopListOpen,
@@ -25,17 +26,14 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  // Close sidebar when ShopList is opened
   useEffect(() => {
     if (shopListOpen) closeSidebar();
   }, [shopListOpen, closeSidebar]);
 
-  // Close ShopList if Sidebar is opened
   useEffect(() => {
     if (isSidebarOpen && shopListOpen) closeShopList();
   }, [isSidebarOpen, shopListOpen, closeShopList]);
 
-  // Close Sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -59,21 +57,29 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div className="relative min-h-[100dvh] bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
-      <div className="flex flex-col">
-        <div ref={sidebarRef}>
-          <NavBar
-            onToggleSidebar={toggleSidebar}
-            searchBar={!isSidebarOpen && !mapSidebarOpen}
-            navRef={navRef}
-          />
-          <Sidebar />
-          <ShopListSidebar isOpen={shopListOpen} />
-          <MapSidebar />
-        </div>
+      <div ref={sidebarRef} className="relative z-20">
+        <NavBar
+          onToggleSidebar={toggleSidebar}
+          searchBar={!isSidebarOpen && !mapSidebarOpen}
+          navRef={navRef}
+        />
+        <Sidebar />
+        <ShopListSidebar isOpen={shopListOpen} />
+        <MapSidebar />
       </div>
-      <div className="relative z-10 flex items-center justify-center">
-        <div className="container mx-auto md:px-4 md:py-6">{children}</div>
-      </div>
+
+      {fullBleed ? (
+        <main className="absolute inset-0 z-0">
+          <Outlet />
+        </main>
+      ) : (
+        <main className="relative z-10 flex items-center justify-center">
+          <div className="container mx-auto w-full md:px-4 md:py-6">
+            <Outlet />
+          </div>
+        </main>
+      )}
+
       {currentModal === "updateShop" && <UpdateShop />}
     </div>
   );

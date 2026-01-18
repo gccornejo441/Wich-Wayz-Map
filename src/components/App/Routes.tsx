@@ -12,15 +12,22 @@ import AdminSettings from "./AdminSettings";
 import AddShop from "./AddEditShop";
 import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
+import AppLayout from "./AppLayout";
 
 function MainRoutes() {
   return (
-    <>
-      <Routes>
+    <Routes>
+      <Route element={<AppLayout fullBleed />}>
         <Route path={ROUTES.HOME} element={<MapBox />} />
+      </Route>
+
+      <Route element={<AppLayout />}>
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
         <Route path={ROUTES.SHOPS.ADD} element={<AddShop />} />
-        <Route path={ROUTES.LEGAL.PRIVACY_POLICY} element={<PrivacyPolicy />} />
+        <Route
+          path={ROUTES.LEGAL.PRIVACY_POLICY}
+          element={<PrivacyPolicy />}
+        />
         <Route
           path={ROUTES.LEGAL.TERMS_OF_SERVICE}
           element={<TearmsOfService />}
@@ -35,8 +42,9 @@ function MainRoutes() {
         />
         <Route path={ROUTES.PAYMENT.SUCCESS} element={<PaymentSuccess />} />
         <Route path={ROUTES.USER_LEADERBOARD} element={<UserLeaderboard />} />
-      </Routes>
-    </>
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 }
 

@@ -38,13 +38,20 @@ const MapBox = () => {
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+    console.log("Mapbox token present:", Boolean(token), token?.slice(0, 8));
+
+    mapboxgl.accessToken = token;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
+    });
+
+    map.on("error", (e) => {
+      console.error("Mapbox error:", e.error);
     });
 
     mapRef.current = map;
@@ -55,7 +62,11 @@ const MapBox = () => {
     };
   }, []);
 
-  return <div ref={mapContainerRef} className="map-container" />;
+  return (
+    <div style={{ position: "relative", width: "100vw", height: "100dvh" }}>
+      <div ref={mapContainerRef} style={{ position: "absolute", inset: 0 }} />
+    </div>
+  );
 };
 
 export default MapBox;
