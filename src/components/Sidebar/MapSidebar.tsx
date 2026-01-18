@@ -111,9 +111,8 @@ const MapSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         <div className="flex justify-end p-5">
@@ -177,8 +176,8 @@ const MapSidebar = () => {
                   <ul className="flex flex-wrap gap-2">
                     {selectedShop.categories
                       .split(",")
-                      .map((category) => category.trim())
-                      .map((category, index) => {
+                      .map((category: string) => category.trim())
+                      .map((category: string, index: number) => {
                         const isHidden = !showAllCategories && index >= 3;
                         return (
                           <li key={index} className={isHidden ? "hidden" : ""}>
@@ -226,7 +225,7 @@ const MapSidebar = () => {
                 )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
-                    "no website available" && (
+                  "no website available" && (
                     <a
                       href={selectedShop.website}
                       target="_blank"
