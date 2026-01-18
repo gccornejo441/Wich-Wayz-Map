@@ -40,9 +40,7 @@ const MapBox = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const userPositionRef = useRef<Coordinates | null>(null);
-  const openSidebarRef = useRef<
-    (p: ShopGeoJsonProperties, pos: Coordinates | null) => void
-  >(() => {});
+  const openSidebarRef = useRef<(p: ShopGeoJsonProperties, pos: Coordinates | null) => void>(() => {});
 
   const { displayedShops } = useShops();
   const { openSidebar } = useShopSidebar();
@@ -54,10 +52,7 @@ const MapBox = () => {
   const geojson = useMemo<
     GeoJSON.FeatureCollection<GeoJSON.Point, ShopGeoJsonProperties>
   >(() => {
-    const features: GeoJSON.Feature<
-      GeoJSON.Point,
-      ShopGeoJsonProperties
-    >[] = [];
+    const features: GeoJSON.Feature<GeoJSON.Point, ShopGeoJsonProperties>[] = [];
 
     for (const shop of displayedShops) {
       const locations = shop.locations ?? [];
@@ -107,7 +102,10 @@ const MapBox = () => {
       }
     }
 
-    return { type: "FeatureCollection", features };
+    return {
+      type: "FeatureCollection",
+      features,
+    };
   }, [displayedShops]);
 
   useEffect(() => {
@@ -128,135 +126,6 @@ const MapBox = () => {
     map.on("error", (e) => {
       console.error("Mapbox error:", e.error);
     });
-
-    const ensureSandwichPinImage = async () => {
-      if (map.hasImage("sandwich-pin")) return true;
-
-      return await new Promise<boolean>((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            if (!map.hasImage("sandwich-pin")) {
-              map.addImage("sandwich-pin", img, { pixelRatio: 2 });
-            }
-            resolve(true);
-          } catch (err) {
-            console.error("addImage failed:", err);
-            resolve(false);
-          }
-        };
-
-        img.onerror = (err) => {
-          console.error("Failed to load pin image:", err);
-          resolve(false);
-        };
-
-        img.src = "/sandwich-pin-v2.svg";
-      });
-    };
-
-    const addUnclusteredSymbolLayer = () => {
-      if (map.getLayer("unclustered-point")) return;
-
-      map.addLayer({
-        id: "unclustered-point",
-        type: "symbol",
-        source: "shops",
-        filter: ["!", ["has", "point_count"]],
-        layout: {
-          "icon-image": "sandwich-pin",
-          "icon-size": 1.0,
-          "icon-allow-overlap": true,
-          "icon-ignore-placement": true,
-          "icon-anchor": "bottom",
-        },
-      });
-    };
-
-    const addUnclusteredCircleFallback = () => {
-      if (map.getLayer("unclustered-point")) return;
-
-      map.addLayer({
-        id: "unclustered-point",
-        type: "circle",
-        source: "shops",
-        filter: ["!", ["has", "point_count"]],
-        paint: {
-          "circle-radius": 7,
-          "circle-opacity": 0.9,
-          "circle-stroke-width": 2,
-          "circle-stroke-opacity": 0.95,
-        },
-      });
-    };
-
-    const wireHandlers = () => {
-      map.on("click", "clusters", (e) => {
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: ["clusters"],
-        });
-
-        const feature = features[0];
-        if (!feature) return;
-
-        const clusterIdRaw = feature.properties?.cluster_id;
-        if (clusterIdRaw === undefined || clusterIdRaw === null) return;
-
-        const clusterId = Number(clusterIdRaw);
-        if (!Number.isFinite(clusterId)) return;
-
-        const source = map.getSource("shops") as mapboxgl.GeoJSONSource;
-
-        source.getClusterExpansionZoom(clusterId, (err2, zoom) => {
-          if (err2) return;
-          if (typeof zoom !== "number") return;
-
-          const coords = (feature.geometry as GeoJSON.Point).coordinates as [
-            number,
-            number,
-          ];
-
-          map.easeTo({ center: coords, zoom });
-        });
-      });
-
-      map.on("click", "unclustered-point", (e) => {
-        const f = e.features?.[0] as mapboxgl.MapboxGeoJSONFeature | undefined;
-        if (!f) return;
-
-        const coords = (f.geometry as GeoJSON.Point).coordinates as [
-          number,
-          number,
-        ];
-        const props = f.properties as unknown as ShopGeoJsonProperties;
-
-        if (!coords || coords.length !== 2) return;
-        if (!props) return;
-
-        const clickLng = e.lngLat.lng;
-        const adjusted: [number, number] = [coords[0], coords[1]];
-        while (Math.abs(clickLng - adjusted[0]) > 180) {
-          adjusted[0] += clickLng > adjusted[0] ? 360 : -360;
-        }
-
-        openSidebarRef.current(props, userPositionRef.current);
-
-        new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
-          .setLngLat(adjusted)
-          .setHTML(
-            `<div style="max-width:260px;">
-              <div style="font-weight:700;font-size:14px;line-height:1.2;">${props.shopName ?? ""}</div>
-              <div style="font-size:12px;opacity:0.9;margin-top:6px;">${props.address ?? ""}</div>
-            </div>`,
-          )
-          .addTo(map);
-      });
-
-      map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
-      map.on("mouseenter", "unclustered-point", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "unclustered-point", () => (map.getCanvas().style.cursor = ""));
-    };
 
     map.on("load", () => {
       if (!map.getSource("shops")) {
@@ -297,13 +166,111 @@ const MapBox = () => {
         });
       }
 
-      void (async () => {
-        const ok = await ensureSandwichPinImage();
-        if (ok) addUnclusteredSymbolLayer();
-        else addUnclusteredCircleFallback();
+      const ensureUnclusteredLayer = () => {
+        if (map.getLayer("unclustered-point")) return;
 
-        wireHandlers();
-      })();
+        map.addLayer({
+          id: "unclustered-point",
+          type: "symbol",
+          source: "shops",
+          filter: ["!", ["has", "point_count"]],
+          layout: {
+            "icon-image": "sandwich-pin",
+            "icon-size": 0.9,
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true,
+            "icon-anchor": "bottom",
+          },
+        });
+      };
+
+      if (!map.hasImage("sandwich-pin")) {
+        map.loadImage("/sandwich-pin-v2.svg", (err, image) => {
+          if (err || !image) {
+            console.error("Failed to load sandwich pin:", err);
+            return;
+          }
+
+          if (!map.hasImage("sandwich-pin")) {
+            map.addImage("sandwich-pin", image);
+          }
+
+          ensureUnclusteredLayer();
+        });
+      } else {
+        ensureUnclusteredLayer();
+      }
+
+      map.on("click", "clusters", (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        const feature = features[0];
+        if (!feature) return;
+
+        const clusterIdRaw = feature.properties?.cluster_id;
+        if (clusterIdRaw === undefined || clusterIdRaw === null) return;
+
+        const clusterId = Number(clusterIdRaw);
+        if (!Number.isFinite(clusterId)) return;
+
+        const source = map.getSource("shops") as mapboxgl.GeoJSONSource;
+
+        source.getClusterExpansionZoom(clusterId, (err2, zoom) => {
+          if (err2) return;
+          if (typeof zoom !== "number") return;
+
+          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+
+          map.easeTo({
+            center: coords,
+            zoom,
+          });
+        });
+      });
+
+      map.on("click", "unclustered-point", (e) => {
+        const f = e.features?.[0] as mapboxgl.MapboxGeoJSONFeature | undefined;
+        if (!f) return;
+
+        const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+        const props = f.properties as unknown as ShopGeoJsonProperties;
+
+        if (!coords || coords.length !== 2) return;
+        if (!props) return;
+
+        const clickLng = e.lngLat.lng;
+        const adjusted: [number, number] = [coords[0], coords[1]];
+        while (Math.abs(clickLng - adjusted[0]) > 180) {
+          adjusted[0] += clickLng > adjusted[0] ? 360 : -360;
+        }
+
+        openSidebarRef.current(props, userPositionRef.current);
+
+        new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+          .setLngLat(adjusted)
+          .setHTML(
+            `<div style="max-width:260px;">
+              <div style="font-weight:700;font-size:14px;line-height:1.2;">${props.shopName ?? ""}</div>
+              <div style="font-size:12px;opacity:0.9;margin-top:6px;">${props.address ?? ""}</div>
+            </div>`,
+          )
+          .addTo(map);
+      });
+
+      map.on("mouseenter", "clusters", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "clusters", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
+      map.on("mouseenter", "unclustered-point", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+
+      map.on("mouseleave", "unclustered-point", () => {
+        map.getCanvas().style.cursor = "";
+      });
     });
 
     mapRef.current = map;
@@ -339,12 +306,20 @@ const MapBox = () => {
           const center: Coordinates = [pos.coords.longitude, pos.coords.latitude];
           userPositionRef.current = center;
 
-          map.flyTo({ center, zoom: 14, essential: true });
+          map.flyTo({
+            center,
+            zoom: 14,
+            essential: true,
+          });
         },
         (err) => {
           console.error("Geolocation error:", err);
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 30000,
+        },
       );
     };
 
