@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import mapboxgl, { Map, GeoJSONSource } from "mapbox-gl";
+import mapboxgl, { GeoJSONSource, Map } from "mapbox-gl";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useShops } from "@/context/shopContext";
+import { useShopSidebar } from "@/context/ShopSidebarContext";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 
@@ -58,6 +59,15 @@ const isNumber = (v: unknown): v is number =>
 const getString = (v: unknown): string | undefined =>
   typeof v === "string" ? v : undefined;
 
+const toNumber = (v: unknown): number | undefined => {
+  if (isNumber(v)) return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  return undefined;
+};
+
 const getLngLat = (loc: Location): { lng: number; lat: number } | null => {
   const maybeLng =
     (loc as unknown as { longitude?: unknown; lng?: unknown }).longitude ??
@@ -89,14 +99,51 @@ const getCategoriesString = (shop: ShopWithUser): string => {
   return "";
 };
 
+const stopMapClick = (e: mapboxgl.MapMouseEvent) => {
+  e.preventDefault();
+  const oe = e.originalEvent as Event | undefined;
+  if (oe) {
+    oe.preventDefault();
+    oe.stopPropagation();
+  }
+};
+
 const MapBox = () => {
   const { displayedShops } = useShops();
+  const { openSidebar } = useShopSidebar();
+
+  const openSidebarRef = useRef(openSidebar);
+  useEffect(() => {
+    openSidebarRef.current = openSidebar;
+  }, [openSidebar]);
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
+
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(
+    null,
+  );
+  const userPositionRef = useRef<[number, number] | null>(null);
+  useEffect(() => {
+    userPositionRef.current = userPosition;
+  }, [userPosition]);
+
+  useEffect(() => {
+    const fallback: [number, number] = INITIAL_CENTER;
+
+    if (!navigator.geolocation) {
+      setUserPosition(fallback);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPosition([pos.coords.longitude, pos.coords.latitude]),
+      () => setUserPosition(fallback),
+    );
+  }, []);
 
   const shopGeoJson: ShopFeatureCollection = useMemo(() => {
     const features: ShopFeature[] = [];
@@ -137,12 +184,42 @@ const MapBox = () => {
 
         const locAny = loc as unknown as {
           address?: unknown;
+          street_address?: unknown;
+          street_address_second?: unknown;
           city?: unknown;
           state?: unknown;
           postalCode?: unknown;
           postal_code?: unknown;
           country?: unknown;
+          website?: unknown;
+          phone?: unknown;
         };
+
+        const address =
+          getString(locAny.address) ??
+          [
+            getString(locAny.street_address),
+            getString(locAny.street_address_second),
+            getString(locAny.postal_code) ?? getString(locAny.postalCode),
+            getString(locAny.city),
+            getString(locAny.state),
+          ]
+            .filter((x): x is string => typeof x === "string" && x.length > 0)
+            .join(", ");
+
+        const phone = getString(shopAny.phone) ?? getString(locAny.phone);
+
+        const website =
+          getString(shopAny.website) ??
+          getString(shopAny.websiteUrl) ??
+          getString(shopAny.website_url) ??
+          getString(locAny.website);
+
+        const website_url =
+          getString(shopAny.website_url) ??
+          getString(shopAny.websiteUrl) ??
+          getString(shopAny.website) ??
+          getString(locAny.website);
 
         const props: ShopGeoJsonProperties = {
           shopId: shop.id,
@@ -151,12 +228,14 @@ const MapBox = () => {
 
           imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
           description:
-            getString(shopAny.description) ?? getString(shopAny.shop_description),
+            getString(shopAny.description) ??
+            getString(shopAny.shop_description),
 
           usersAvatarEmail:
             getString(shopAny.usersAvatarEmail) ?? getString(shopAny.user_email),
           usersAvatarId:
-            getString(shopAny.usersAvatarId) ?? getString(shopAny.user_avatar_id),
+            getString(shopAny.usersAvatarId) ??
+            getString(shopAny.user_avatar_id),
 
           createdBy: getString(shopAny.createdBy) ?? getString(shopAny.created_by),
 
@@ -164,30 +243,23 @@ const MapBox = () => {
 
           categoryIds:
             Array.isArray(shopAny.categoryIds) &&
-            shopAny.categoryIds.every((x) => typeof x === "number")
+              shopAny.categoryIds.every((x) => typeof x === "number")
               ? shopAny.categoryIds
               : Array.isArray(shopAny.category_ids) &&
-                  shopAny.category_ids.every((x) => typeof x === "number")
+                shopAny.category_ids.every((x) => typeof x === "number")
                 ? shopAny.category_ids
                 : undefined,
 
-          address: getString(locAny.address),
+          address: address || undefined,
           city: getString(locAny.city),
           state: getString(locAny.state),
-          postalCode: getString(locAny.postalCode) ?? getString(locAny.postal_code),
+          postalCode:
+            getString(locAny.postalCode) ?? getString(locAny.postal_code),
           country: getString(locAny.country),
 
-          phone: getString(shopAny.phone),
-
-          website:
-            getString(shopAny.website) ??
-            getString(shopAny.websiteUrl) ??
-            getString(shopAny.website_url),
-
-          website_url:
-            getString(shopAny.website_url) ??
-            getString(shopAny.websiteUrl) ??
-            getString(shopAny.website),
+          phone,
+          website,
+          website_url,
 
           latitude: ll.lat,
           longitude: ll.lng,
@@ -204,18 +276,22 @@ const MapBox = () => {
     return { type: "FeatureCollection", features };
   }, [displayedShops]);
 
+  const shopGeoJsonRef = useRef<ShopFeatureCollection>({
+    type: "FeatureCollection",
+    features: [],
+  });
+
   useEffect(() => {
-    if (mapRef.current) return;
+    shopGeoJsonRef.current = shopGeoJson;
+  }, [shopGeoJson]);
+
+  useEffect(() => {
     if (!mapContainerRef.current) return;
+    if (mapRef.current) return;
 
-    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as
-      | string
-      | undefined;
-
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string | undefined;
     if (!token) {
-      throw new Error(
-        "Missing VITE_MAPBOX_ACCESS_TOKEN in environment variables.",
-      );
+      throw new Error("Missing VITE_MAPBOX_ACCESS_TOKEN in environment variables.");
     }
 
     mapboxgl.accessToken = token;
@@ -235,12 +311,10 @@ const MapBox = () => {
       setZoom(map.getZoom());
     };
 
-    map.on("move", onMove);
-
-    map.on("load", () => {
+    const onLoad = () => {
       map.addSource(SOURCE_ID, {
         type: "geojson",
-        data: shopGeoJson,
+        data: shopGeoJsonRef.current,
         cluster: true,
         clusterMaxZoom: 14,
         clusterRadius: 50,
@@ -281,12 +355,13 @@ const MapBox = () => {
       });
 
       map.on("click", CLUSTERS_LAYER_ID, (e) => {
+        stopMapClick(e);
+
         const feature = e.features?.[0];
         if (!feature) return;
 
         const props = feature.properties as unknown as { cluster_id?: unknown };
         const clusterId = props.cluster_id;
-
         if (!isNumber(clusterId)) return;
 
         const src = map.getSource(SOURCE_ID) as GeoJSONSource & {
@@ -311,21 +386,66 @@ const MapBox = () => {
         });
       });
 
+      map.on("click", UNCLUSTERED_LAYER_ID, (e) => {
+        stopMapClick(e);
+
+        const feature = e.features?.[0];
+        if (!feature) return;
+
+        const raw = (feature.properties ?? {}) as unknown as Record<string, unknown>;
+
+        const shopId = toNumber(raw.shopId);
+        if (!shopId) return;
+
+        const props: ShopGeoJsonProperties = {
+          ...(raw as unknown as ShopGeoJsonProperties),
+          shopId,
+          shopName: getString(raw.shopName) ?? "",
+          categories: getString(raw.categories) ?? "",
+          address: getString(raw.address),
+          phone: getString(raw.phone),
+          website: getString(raw.website),
+          website_url: getString(raw.website_url),
+          city: getString(raw.city),
+          state: getString(raw.state),
+          postalCode: getString(raw.postalCode),
+          country: getString(raw.country),
+          imageUrl: getString(raw.imageUrl),
+          description: getString(raw.description),
+          usersAvatarEmail: getString(raw.usersAvatarEmail),
+          usersAvatarId: getString(raw.usersAvatarId),
+          createdBy: getString(raw.createdBy),
+        };
+
+        openSidebarRef.current(props, userPositionRef.current);
+      });
+
       map.on("mouseenter", CLUSTERS_LAYER_ID, () => {
         map.getCanvas().style.cursor = "pointer";
       });
-
       map.on("mouseleave", CLUSTERS_LAYER_ID, () => {
         map.getCanvas().style.cursor = "";
       });
-    });
+
+      map.on("mouseenter", UNCLUSTERED_LAYER_ID, () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", UNCLUSTERED_LAYER_ID, () => {
+        map.getCanvas().style.cursor = "";
+      });
+    };
+
+    map.on("move", onMove);
+    map.on("load", onLoad);
 
     return () => {
+      map.off("load", onLoad);
       map.off("move", onMove);
+
       map.remove();
       mapRef.current = null;
     };
-  }, [shopGeoJson]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
