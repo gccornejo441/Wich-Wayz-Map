@@ -14,62 +14,20 @@
   }
 
   html,
-  body {
-    height: 100%;
-  }
-
-  /* Prevent mobile pull-to-refresh / overscroll bounce */
-  html,
   body,
   #root {
     height: 100%;
-    overscroll-behavior: none;
+    margin: 0;
   }
 
-  /* Map view gesture lock (toggle via adding class to html/body) */
-  html.map-gesture-lock,
-  body.map-gesture-lock {
-    overscroll-behavior: none;
-  }
-
-  body.map-gesture-lock {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  /* Map root should establish positioning context */
-  .map-gesture-root {
-    position: relative;
-    width: 100vw;
-    height: 100dvh;
-    overscroll-behavior: none;
-  }
-
-  /* Ensure the map area doesn't trigger page scrolling/refresh */
+  /*
+    Minimal Mapbox container styling (Mapbox "display a map" baseline):
+    - full-viewport container
+    - no gesture locking / edge guards / touch-action overrides
+  */
   .map-container {
-    overscroll-behavior: none;
-  }
-
-  /* Edge swipe guards: do NOT intercept touches (let map handle gestures) */
-  .map-edge-guard {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 18px;
-    z-index: 5;
-    background: transparent;
-    pointer-events: none;
-    touch-action: none;
-  }
-
-  .map-edge-guard.left {
-    left: 0;
-  }
-
-  .map-edge-guard.right {
-    right: 0;
+    inset: 0;
   }
 }
 
