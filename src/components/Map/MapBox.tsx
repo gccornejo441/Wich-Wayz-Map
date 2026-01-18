@@ -6,6 +6,37 @@ import "mapbox-gl/dist/mapbox-gl.css";
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
 
+export type ShopGeoJsonProperties = {
+  shopId: number;
+  shopName: string;
+
+  imageUrl?: string;
+  description?: string;
+
+  categories: string;
+
+  usersAvatarEmail?: string;
+  usersAvatarId?: string;
+
+  createdBy?: string;
+
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+
+  latitude?: number;
+  longitude?: number;
+
+  website?: string;
+  phone?: string;
+
+  votes?: number;
+
+  [key: string]: unknown;
+};
+
 const MapBox = () => {
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
