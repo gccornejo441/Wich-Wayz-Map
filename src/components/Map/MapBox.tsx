@@ -134,7 +134,7 @@ const MapBox = () => {
       el.title = shopName;
 
       el.style.cssText =
-        "width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;";
+        "width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;";
 
       const iconEl = document.createElement("div");
       iconEl.style.cssText =
@@ -201,32 +201,6 @@ const MapBox = () => {
     return () => {
       document.documentElement.classList.remove("map-gesture-lock");
       document.body.classList.remove("map-gesture-lock");
-    };
-  }, []);
-
-  useEffect(() => {
-    const attachGuard = (el: HTMLDivElement | null) => {
-      if (!el) return () => {};
-
-      const handler = (e: TouchEvent) => {
-        e.preventDefault();
-      };
-
-      el.addEventListener("touchstart", handler, { passive: false });
-      el.addEventListener("touchmove", handler, { passive: false });
-
-      return () => {
-        el.removeEventListener("touchstart", handler);
-        el.removeEventListener("touchmove", handler);
-      };
-    };
-
-    const detachLeft = attachGuard(leftGuardRef.current);
-    const detachRight = attachGuard(rightGuardRef.current);
-
-    return () => {
-      detachLeft();
-      detachRight();
     };
   }, []);
 
@@ -349,7 +323,6 @@ const MapBox = () => {
           position: "absolute",
           top: 0,
           left: 0,
-          touchAction: "none",
         }}
       />
 

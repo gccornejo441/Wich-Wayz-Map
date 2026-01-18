@@ -23,7 +23,7 @@
   body,
   #root {
     height: 100%;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
   }
 
   /* Map view gesture lock (toggle via adding class to html/body) */
@@ -37,21 +37,22 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    touch-action: none;
   }
 
+  /* Map root should establish positioning context */
   .map-gesture-root {
+    position: relative;
+    width: 100vw;
+    height: 100dvh;
     overscroll-behavior: none;
-    touch-action: none;
   }
 
   /* Ensure the map area doesn't trigger page scrolling/refresh */
   .map-container {
     overscroll-behavior: none;
-    touch-action: none;
   }
 
-  /* Edge swipe guards to reduce iOS back/forward gesture stealing */
+  /* Edge swipe guards: do NOT intercept touches (let map handle gestures) */
   .map-edge-guard {
     position: absolute;
     top: 0;
@@ -59,6 +60,7 @@
     width: 18px;
     z-index: 5;
     background: transparent;
+    pointer-events: none;
     touch-action: none;
   }
 
