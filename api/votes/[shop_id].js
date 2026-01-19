@@ -57,8 +57,8 @@ export default async function getVotesForShop(req, res) {
 
     const voteResponse = {
       shop_id: parsedShopId,
-      upvotes: Number(row[0]) || 0,
-      downvotes: Number(row[1]) || 0,
+      upvotes: Number(row.upvotes) || 0,
+      downvotes: Number(row.downvotes) || 0,
     };
 
     res.status(200).json(voteResponse);

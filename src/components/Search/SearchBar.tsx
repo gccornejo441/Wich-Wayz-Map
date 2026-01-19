@@ -4,10 +4,12 @@ import { HiFilter, HiSearch } from "react-icons/hi";
 import { SearchShops } from "../../services/search";
 import { useMap } from "../../context/mapContext";
 import { useShops } from "@/context/shopContext";
+import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { IndexedDBShop } from "@/services/indexedDB";
 import { FilterDropdown } from "../Filter/FilterDropdown";
 import { ShopFilters } from "@/types/shopFilter";
 import { useToast } from "@/context/toastContext";
+import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 
 interface SearchBarProps {
   navRef?: React.RefObject<HTMLElement>;
@@ -22,6 +24,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const { addToast } = useToast();
   const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
   const { applyFilters } = useShops();
+  const { openSidebar } = useShopSidebar();
 
   const fetchSuggestions = async (
     value: string,
@@ -62,6 +65,29 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   ) => {
     const location = suggestion.locations?.[0];
     if (location) {
+      // Transform IndexedDBShop to ShopGeoJsonProperties
+      const shopProps: ShopGeoJsonProperties = {
+        shopId: suggestion.id,
+        shopName: suggestion.name,
+        description: suggestion.description,
+        categories: suggestion.categories
+          .map((cat) => cat.category_name)
+          .join(","),
+        categoryIds: suggestion.categories.map((cat) => cat.id),
+        createdBy: suggestion.created_by_username,
+        address: location.street_address,
+        city: location.city,
+        state: location.state,
+        postalCode: location.postal_code,
+        country: location.country,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
+
+      // Open the sidebar with the shop data
+      openSidebar(shopProps, null);
+
+      // Keep existing mapContext calls for potential future use
       setCenter([location.longitude, location.latitude]);
       setZoom(16);
       setShopId(suggestion.id.toString());
@@ -92,11 +118,35 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       addToast(`Showing ${shops.length} filtered shop(s).`, "success");
     }
 
-    const firstLoc = shops[0].locations?.[0];
-    if (firstLoc) {
+    const firstShop = shops[0];
+    const firstLoc = firstShop?.locations?.[0];
+    if (firstShop && firstLoc) {
+      // Transform IndexedDBShop to ShopGeoJsonProperties
+      const shopProps: ShopGeoJsonProperties = {
+        shopId: firstShop.id,
+        shopName: firstShop.name,
+        description: firstShop.description,
+        categories: firstShop.categories
+          .map((cat) => cat.category_name)
+          .join(","),
+        categoryIds: firstShop.categories.map((cat) => cat.id),
+        createdBy: firstShop.created_by_username,
+        address: firstLoc.street_address,
+        city: firstLoc.city,
+        state: firstLoc.state,
+        postalCode: firstLoc.postal_code,
+        country: firstLoc.country,
+        latitude: firstLoc.latitude,
+        longitude: firstLoc.longitude,
+      };
+
+      // Open the sidebar with the shop data
+      openSidebar(shopProps, null);
+
+      // Keep existing mapContext calls for potential future use
       setCenter([firstLoc.longitude, firstLoc.latitude]);
       setZoom(13);
-      setShopId(shops[0].id.toString());
+      setShopId(firstShop.id.toString());
       setUserInteracted(false);
     }
   };

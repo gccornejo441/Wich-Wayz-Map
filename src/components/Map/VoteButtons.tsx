@@ -12,8 +12,13 @@ const VoteButtons = ({
   handleVote,
   upvotes,
   downvotes,
-}: VoteButtonsProps) => (
-  <div className="flex justify-around mt-4">
+}: VoteButtonsProps) => {
+  // Ensure votes are always valid numbers
+  const safeUpvotes = typeof upvotes === 'number' && !isNaN(upvotes) ? upvotes : 0;
+  const safeDownvotes = typeof downvotes === 'number' && !isNaN(downvotes) ? downvotes : 0;
+
+  return (
+    <div className="flex justify-around mt-4">
       <button
         onClick={() => handleVote(true)}
         title={isMember ? "I like this!" : "Only members can vote"}
@@ -22,7 +27,7 @@ const VoteButtons = ({
         }`}
         disabled={!isMember || userVote === "up"}
       >
-        👍 {upvotes}
+        👍 {safeUpvotes}
       </button>
       <button
         onClick={() => handleVote(false)}
@@ -32,9 +37,10 @@ const VoteButtons = ({
         }`}
         disabled={!isMember || userVote === "down"}
       >
-        👎 {downvotes}
+        👎 {safeDownvotes}
       </button>
     </div>
-);
+  );
+};
 
 export default VoteButtons;
