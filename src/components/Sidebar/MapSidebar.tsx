@@ -37,6 +37,8 @@ const MapSidebar = () => {
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
 
+ 
+
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -161,7 +163,7 @@ const MapSidebar = () => {
                 </p>
               )}
 
-              {selectedShop.locationOpen !== false && (
+              {selectedShop.locationOpen == false && (
                 <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
                   This location is permanently closed.
                 </span>

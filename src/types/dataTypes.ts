@@ -109,3 +109,61 @@ export interface VoteContextData {
   submitVote: (shopId: number, isUpvote: boolean) => Promise<void>;
   loadingVotes: boolean;
 }
+
+/**
+ * Extended Shop type that includes all possible field name variations
+ * from database queries and transformations
+ */
+export type ShopDataVariants = {
+  // Image fields
+  image_url?: string;
+  imageUrl?: string;
+  
+  // Description fields
+  shop_description?: string;
+  description?: string;
+  
+  // User/Creator fields
+  usersAvatarEmail?: string;
+  user_email?: string;
+  usersAvatarId?: string;
+  user_avatar_id?: string;
+  createdBy?: string;
+  created_by?: string | number;
+  
+  // Voting
+  votes?: number;
+  
+  // Categories
+  categoryIds?: number[];
+  category_ids?: number[];
+  
+  // Contact
+  phone?: string;
+  
+  // Website fields
+  website?: string;
+  website_url?: string;
+  websiteUrl?: string;
+};
+
+/**
+ * Extended Location type that includes all possible field name variations
+ */
+export type LocationDataVariants = {
+  // Address fields
+  address?: string;
+  street_address?: string;
+  street_address_second?: string;
+  
+  // Location details
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  postal_code?: string;
+  country?: string;
+  
+  // Contact
+  website?: string;
+  phone?: string;
+};

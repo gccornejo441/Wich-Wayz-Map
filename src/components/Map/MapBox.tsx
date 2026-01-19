@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { GeoJSONSource, Map } from "mapbox-gl";
+import { GiSandwich } from "react-icons/gi";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -7,9 +8,23 @@ import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
+import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
+
+const loadingMessages = [
+  "Stacking the Sandwich...",
+  "Toasting the Bread...",
+  "Adding the Pickles...",
+  "Wrapping Your Order...",
+  "Cooking Up Something Tasty...",
+  "Finding the Perfect Bite...",
+  "Crafting Your Sammie...",
+  "Grilling to Perfection...",
+  "Prepping Your Layers...",
+  "Serving It Up Fresh...",
+];
 
 export type ShopGeoJsonProperties = {
   shopId: number;
@@ -53,6 +68,11 @@ const CLUSTERS_LAYER_ID = "shops-clusters";
 const CLUSTER_COUNT_LAYER_ID = "shops-cluster-count";
 const UNCLUSTERED_LAYER_ID = "shops-unclustered";
 
+const CLUSTER_COLOR = "#DA291C";
+const CLUSTER_TEXT_COLOR = "#FFFFFF";
+const POINT_COLOR = "#DA291C";
+const POINT_STROKE_COLOR = "#5A110C";
+
 const isNumber = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
 
@@ -68,31 +88,31 @@ const toNumber = (v: unknown): number | undefined => {
   return undefined;
 };
 
-const getLngLat = (loc: Location): { lng: number; lat: number } | null => {
-  const maybeLng =
-    (loc as unknown as { longitude?: unknown; lng?: unknown }).longitude ??
-    (loc as unknown as { lng?: unknown }).lng;
+const useLatest = <T,>(value: T) => {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
+};
 
-  const maybeLat =
-    (loc as unknown as { latitude?: unknown; lat?: unknown }).latitude ??
-    (loc as unknown as { lat?: unknown }).lat;
+const getLngLat = (loc: Location): { lng: number; lat: number } | null => {
+  const maybeLng = loc.longitude;
+  const maybeLat = loc.latitude;
 
   if (!isNumber(maybeLng) || !isNumber(maybeLat)) return null;
   return { lng: maybeLng, lat: maybeLat };
 };
 
 const getShopName = (shop: ShopWithUser): string => {
-  const s = shop as unknown as { shop_name?: unknown; name?: unknown };
-  if (typeof s.shop_name === "string" && s.shop_name.length) return s.shop_name;
-  if (typeof s.name === "string" && s.name.length) return s.name;
+  if (typeof shop.name === "string" && shop.name.length) return shop.name;
   return "";
 };
 
 const getCategoriesString = (shop: ShopWithUser): string => {
-  const s = shop as unknown as { categories?: unknown };
-  if (typeof s.categories === "string") return s.categories;
-  if (Array.isArray(s.categories)) {
-    return s.categories
+  if (Array.isArray(shop.categories)) {
+    return shop.categories
+      .map((cat) => cat.category_name)
       .filter((x): x is string => typeof x === "string")
       .join(",");
   }
@@ -101,10 +121,237 @@ const getCategoriesString = (shop: ShopWithUser): string => {
 
 const stopMapClick = (e: mapboxgl.MapMouseEvent) => {
   e.preventDefault();
-  const oe = e.originalEvent as Event | undefined;
+  const oe = e.originalEvent;
   if (oe) {
     oe.preventDefault();
     oe.stopPropagation();
+    if ('stopImmediatePropagation' in oe && typeof oe.stopImmediatePropagation === 'function') {
+      oe.stopImmediatePropagation();
+    }
+  }
+};
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const buildPopupHtml = (props: ShopGeoJsonProperties) => {
+  const shopName = escapeHtml(props.shopName ?? "");
+  const address = escapeHtml(props.address ?? "");
+  return `
+    <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
+      <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
+      <p class="text-text-base dark:text-text-inverted">${address}</p>
+    </div>
+  `;
+};
+
+const buildAddress = (locAny: LocationDataVariants): string | undefined => {
+  const direct = getString(locAny.address);
+  if (direct && direct.trim().length) return direct;
+
+  const parts = [
+    getString(locAny.street_address),
+    getString(locAny.street_address_second),
+    getString(locAny.postal_code) ?? getString(locAny.postalCode),
+    getString(locAny.city),
+    getString(locAny.state),
+  ].filter((x): x is string => typeof x === "string" && x.length > 0);
+
+  const joined = parts.join(", ");
+  return joined.length ? joined : undefined;
+};
+
+const pickWebsite = (
+  shopAny: ShopDataVariants,
+  locAny: LocationDataVariants,
+): string | undefined =>
+  getString(shopAny.website) ??
+  getString(shopAny.websiteUrl) ??
+  getString(shopAny.website_url) ??
+  getString(locAny.website);
+
+const pickWebsiteUrl = (
+  shopAny: ShopDataVariants,
+  locAny: LocationDataVariants,
+): string | undefined =>
+  getString(shopAny.website_url) ??
+  getString(shopAny.websiteUrl) ??
+  getString(shopAny.website) ??
+  getString(locAny.website);
+
+const pickPhone = (
+  shopAny: ShopDataVariants,
+  locAny: LocationDataVariants,
+): string | undefined => getString(shopAny.phone) ?? getString(locAny.phone);
+
+const buildShopPropsFromShopAndLocation = (
+  shop: ShopWithUser,
+  loc: Location,
+  ll: { lng: number; lat: number },
+): ShopGeoJsonProperties | null => {
+  if (typeof shop.id !== "number") return null;
+
+  const shopAny = shop as unknown as ShopDataVariants;
+  const locAny = loc as unknown as LocationDataVariants;
+
+  const categoryIds =
+    Array.isArray(shopAny.categoryIds) &&
+    shopAny.categoryIds.every((x) => typeof x === "number")
+      ? shopAny.categoryIds
+      : Array.isArray(shopAny.category_ids) &&
+          shopAny.category_ids.every((x) => typeof x === "number")
+        ? shopAny.category_ids
+        : undefined;
+
+  const address = buildAddress(locAny);
+
+  const phone = pickPhone(shopAny, locAny);
+  const website = pickWebsite(shopAny, locAny);
+  const website_url = pickWebsiteUrl(shopAny, locAny);
+
+  return {
+    shopId: shop.id,
+    shopName: getShopName(shop),
+    categories: getCategoriesString(shop),
+
+    imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
+    description: getString(shopAny.description) ?? getString(shopAny.shop_description),
+
+    usersAvatarEmail: getString(shopAny.usersAvatarEmail) ?? getString(shopAny.user_email),
+    usersAvatarId: getString(shopAny.usersAvatarId) ?? getString(shopAny.user_avatar_id),
+
+    createdBy: getString(shopAny.createdBy) ?? getString(shopAny.created_by),
+
+    votes: isNumber(shopAny.votes) ? shopAny.votes : undefined,
+    categoryIds,
+
+    address,
+    city: getString(locAny.city),
+    state: getString(locAny.state),
+    postalCode: getString(locAny.postalCode) ?? getString(locAny.postal_code),
+    country: getString(locAny.country),
+
+    phone,
+    website,
+    website_url,
+
+    latitude: ll.lat,
+    longitude: ll.lng,
+  };
+};
+
+const buildShopGeoJson = (displayedShops: ShopWithUser[]): ShopFeatureCollection => {
+  const features: ShopFeature[] = [];
+
+  for (const shop of displayedShops) {
+    if (typeof shop.id !== "number") continue;
+
+    const locs = shop.locations ?? [];
+    for (const loc of locs) {
+      const ll = getLngLat(loc);
+      if (!ll) continue;
+
+      const props = buildShopPropsFromShopAndLocation(shop, loc, ll);
+      if (!props) continue;
+
+      features.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [ll.lng, ll.lat] },
+        properties: props,
+      });
+    }
+  }
+
+  return { type: "FeatureCollection", features };
+};
+
+const coercePropsFromFeatureProperties = (
+  raw: Record<string, unknown>,
+): ShopGeoJsonProperties | null => {
+  const shopId = toNumber(raw.shopId);
+  if (!shopId) return null;
+
+  return {
+    ...(raw as unknown as ShopGeoJsonProperties),
+    shopId,
+    shopName: getString(raw.shopName) ?? "",
+    categories: getString(raw.categories) ?? "",
+    address: getString(raw.address),
+    phone: getString(raw.phone),
+    website: getString(raw.website),
+    website_url: getString(raw.website_url),
+    city: getString(raw.city),
+    state: getString(raw.state),
+    postalCode: getString(raw.postalCode),
+    country: getString(raw.country),
+    imageUrl: getString(raw.imageUrl),
+    description: getString(raw.description),
+    usersAvatarEmail: getString(raw.usersAvatarEmail),
+    usersAvatarId: getString(raw.usersAvatarId),
+    createdBy: getString(raw.createdBy),
+  };
+};
+
+const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
+  if (!map.getSource(SOURCE_ID)) {
+    map.addSource(SOURCE_ID, {
+      type: "geojson",
+      data,
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
+    });
+  }
+
+  if (!map.getLayer(CLUSTERS_LAYER_ID)) {
+    map.addLayer({
+      id: CLUSTERS_LAYER_ID,
+      type: "circle",
+      source: SOURCE_ID,
+      filter: ["has", "point_count"],
+      paint: {
+        "circle-color": CLUSTER_COLOR,
+        "circle-radius": ["step", ["get", "point_count"], 16, 25, 22, 50, 28],
+        "circle-opacity": 0.85,
+      },
+    });
+  }
+
+  if (!map.getLayer(CLUSTER_COUNT_LAYER_ID)) {
+    map.addLayer({
+      id: CLUSTER_COUNT_LAYER_ID,
+      type: "symbol",
+      source: SOURCE_ID,
+      filter: ["has", "point_count"],
+      layout: {
+        "text-field": "{point_count_abbreviated}",
+        "text-size": 12,
+      },
+      paint: {
+        "text-color": CLUSTER_TEXT_COLOR,
+      },
+    });
+  }
+
+  if (!map.getLayer(UNCLUSTERED_LAYER_ID)) {
+    map.addLayer({
+      id: UNCLUSTERED_LAYER_ID,
+      type: "circle",
+      source: SOURCE_ID,
+      filter: ["!", ["has", "point_count"]],
+      paint: {
+        "circle-color": POINT_COLOR,
+        "circle-stroke-color": POINT_STROKE_COLOR,
+        "circle-radius": 8,
+        "circle-stroke-width": 2,
+        "circle-opacity": 0.9,
+      },
+    });
   }
 };
 
@@ -112,24 +359,23 @@ const MapBox = () => {
   const { displayedShops } = useShops();
   const { openSidebar } = useShopSidebar();
 
-  const openSidebarRef = useRef(openSidebar);
-  useEffect(() => {
-    openSidebarRef.current = openSidebar;
-  }, [openSidebar]);
-
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(
-    null,
-  );
-  const userPositionRef = useRef<[number, number] | null>(null);
-  useEffect(() => {
-    userPositionRef.current = userPosition;
-  }, [userPosition]);
+  const [loading, setLoading] = useState(true);
+  const loadingCaption = useMemo(() => {
+    const index = Math.floor(Math.random() * loadingMessages.length);
+    return loadingMessages[index];
+  }, []);
+
+  const openSidebarRef = useLatest(openSidebar);
+  const userPositionRef = useLatest(userPosition);
+
+  const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
 
   useEffect(() => {
     const fallback: [number, number] = INITIAL_CENTER;
@@ -146,144 +392,10 @@ const MapBox = () => {
   }, []);
 
   const shopGeoJson: ShopFeatureCollection = useMemo(() => {
-    const features: ShopFeature[] = [];
-
-    for (const shop of displayedShops) {
-      if (typeof shop.id !== "number") continue;
-
-      const locs = shop.locations ?? [];
-      for (const loc of locs) {
-        const ll = getLngLat(loc);
-        if (!ll) continue;
-
-        const shopAny = shop as unknown as {
-          image_url?: unknown;
-          imageUrl?: unknown;
-          shop_description?: unknown;
-          description?: unknown;
-
-          usersAvatarEmail?: unknown;
-          user_email?: unknown;
-          usersAvatarId?: unknown;
-          user_avatar_id?: unknown;
-
-          createdBy?: unknown;
-          created_by?: unknown;
-
-          votes?: unknown;
-
-          categoryIds?: unknown;
-          category_ids?: unknown;
-
-          phone?: unknown;
-
-          website?: unknown;
-          website_url?: unknown;
-          websiteUrl?: unknown;
-        };
-
-        const locAny = loc as unknown as {
-          address?: unknown;
-          street_address?: unknown;
-          street_address_second?: unknown;
-          city?: unknown;
-          state?: unknown;
-          postalCode?: unknown;
-          postal_code?: unknown;
-          country?: unknown;
-          website?: unknown;
-          phone?: unknown;
-        };
-
-        const address =
-          getString(locAny.address) ??
-          [
-            getString(locAny.street_address),
-            getString(locAny.street_address_second),
-            getString(locAny.postal_code) ?? getString(locAny.postalCode),
-            getString(locAny.city),
-            getString(locAny.state),
-          ]
-            .filter((x): x is string => typeof x === "string" && x.length > 0)
-            .join(", ");
-
-        const phone = getString(shopAny.phone) ?? getString(locAny.phone);
-
-        const website =
-          getString(shopAny.website) ??
-          getString(shopAny.websiteUrl) ??
-          getString(shopAny.website_url) ??
-          getString(locAny.website);
-
-        const website_url =
-          getString(shopAny.website_url) ??
-          getString(shopAny.websiteUrl) ??
-          getString(shopAny.website) ??
-          getString(locAny.website);
-
-        const props: ShopGeoJsonProperties = {
-          shopId: shop.id,
-          shopName: getShopName(shop),
-          categories: getCategoriesString(shop),
-
-          imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
-          description:
-            getString(shopAny.description) ??
-            getString(shopAny.shop_description),
-
-          usersAvatarEmail:
-            getString(shopAny.usersAvatarEmail) ?? getString(shopAny.user_email),
-          usersAvatarId:
-            getString(shopAny.usersAvatarId) ??
-            getString(shopAny.user_avatar_id),
-
-          createdBy: getString(shopAny.createdBy) ?? getString(shopAny.created_by),
-
-          votes: isNumber(shopAny.votes) ? shopAny.votes : undefined,
-
-          categoryIds:
-            Array.isArray(shopAny.categoryIds) &&
-              shopAny.categoryIds.every((x) => typeof x === "number")
-              ? shopAny.categoryIds
-              : Array.isArray(shopAny.category_ids) &&
-                shopAny.category_ids.every((x) => typeof x === "number")
-                ? shopAny.category_ids
-                : undefined,
-
-          address: address || undefined,
-          city: getString(locAny.city),
-          state: getString(locAny.state),
-          postalCode:
-            getString(locAny.postalCode) ?? getString(locAny.postal_code),
-          country: getString(locAny.country),
-
-          phone,
-          website,
-          website_url,
-
-          latitude: ll.lat,
-          longitude: ll.lng,
-        };
-
-        features.push({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [ll.lng, ll.lat] },
-          properties: props,
-        });
-      }
-    }
-
-    return { type: "FeatureCollection", features };
+    return buildShopGeoJson(displayedShops);
   }, [displayedShops]);
 
-  const shopGeoJsonRef = useRef<ShopFeatureCollection>({
-    type: "FeatureCollection",
-    features: [],
-  });
-
-  useEffect(() => {
-    shopGeoJsonRef.current = shopGeoJson;
-  }, [shopGeoJson]);
+  const shopGeoJsonRef = useLatest(shopGeoJson);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -311,48 +423,13 @@ const MapBox = () => {
       setZoom(map.getZoom());
     };
 
+    const closeHoverPopup = () => {
+      hoverPopupRef.current?.remove();
+      hoverPopupRef.current = null;
+    };
+
     const onLoad = () => {
-      map.addSource(SOURCE_ID, {
-        type: "geojson",
-        data: shopGeoJsonRef.current,
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
-      });
-
-      map.addLayer({
-        id: CLUSTERS_LAYER_ID,
-        type: "circle",
-        source: SOURCE_ID,
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-radius": ["step", ["get", "point_count"], 16, 25, 22, 50, 28],
-          "circle-opacity": 0.85,
-        },
-      });
-
-      map.addLayer({
-        id: CLUSTER_COUNT_LAYER_ID,
-        type: "symbol",
-        source: SOURCE_ID,
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": "{point_count_abbreviated}",
-          "text-size": 12,
-        },
-      });
-
-      map.addLayer({
-        id: UNCLUSTERED_LAYER_ID,
-        type: "circle",
-        source: SOURCE_ID,
-        filter: ["!", ["has", "point_count"]],
-        paint: {
-          "circle-radius": 8,
-          "circle-stroke-width": 2,
-          "circle-opacity": 0.9,
-        },
-      });
+      ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
 
       map.on("click", CLUSTERS_LAYER_ID, (e) => {
         stopMapClick(e);
@@ -360,22 +437,22 @@ const MapBox = () => {
         const feature = e.features?.[0];
         if (!feature) return;
 
-        const props = feature.properties as unknown as { cluster_id?: unknown };
-        const clusterId = props.cluster_id;
+        const props = feature.properties as Record<string, unknown> | undefined;
+        const clusterId = props?.cluster_id;
         if (!isNumber(clusterId)) return;
 
-        const src = map.getSource(SOURCE_ID) as GeoJSONSource & {
+        const src = map.getSource(SOURCE_ID) as GeoJSONSource;
+        if (!src || !('getClusterExpansionZoom' in src)) return;
+
+        (src as GeoJSONSource & {
           getClusterExpansionZoom: (
             id: number,
-            cb: (err: unknown, zoom: number) => void,
+            cb: (err: Error | null, zoom: number) => void,
           ) => void;
-        };
-
-        src.getClusterExpansionZoom(clusterId, (err, nextZoom) => {
+        }).getClusterExpansionZoom(clusterId, (err, nextZoom) => {
           if (err) return;
 
-          const coords = (feature.geometry as GeoJSON.Point)
-            .coordinates as [number, number];
+          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
 
           const safeZoom =
             typeof nextZoom === "number" && Number.isFinite(nextZoom)
@@ -392,32 +469,41 @@ const MapBox = () => {
         const feature = e.features?.[0];
         if (!feature) return;
 
-        const raw = (feature.properties ?? {}) as unknown as Record<string, unknown>;
+        const raw = (feature.properties ?? {}) as Record<string, unknown>;
+        const props = coercePropsFromFeatureProperties(raw);
+        if (!props) return;
 
-        const shopId = toNumber(raw.shopId);
-        if (!shopId) return;
-
-        const props: ShopGeoJsonProperties = {
-          ...(raw as unknown as ShopGeoJsonProperties),
-          shopId,
-          shopName: getString(raw.shopName) ?? "",
-          categories: getString(raw.categories) ?? "",
-          address: getString(raw.address),
-          phone: getString(raw.phone),
-          website: getString(raw.website),
-          website_url: getString(raw.website_url),
-          city: getString(raw.city),
-          state: getString(raw.state),
-          postalCode: getString(raw.postalCode),
-          country: getString(raw.country),
-          imageUrl: getString(raw.imageUrl),
-          description: getString(raw.description),
-          usersAvatarEmail: getString(raw.usersAvatarEmail),
-          usersAvatarId: getString(raw.usersAvatarId),
-          createdBy: getString(raw.createdBy),
-        };
-
+        closeHoverPopup();
         openSidebarRef.current(props, userPositionRef.current);
+      });
+
+      map.on("mouseenter", UNCLUSTERED_LAYER_ID, (e) => {
+        map.getCanvas().style.cursor = "pointer";
+
+        const feature = e.features?.[0];
+        if (!feature) return;
+
+        const raw = (feature.properties ?? {}) as Record<string, unknown>;
+        const props = coercePropsFromFeatureProperties(raw);
+        if (!props) return;
+
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+
+        closeHoverPopup();
+        hoverPopupRef.current = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: false,
+          closeOnClick: false,
+          className: "mapboxPopup",
+        })
+          .setLngLat(coords)
+          .setHTML(buildPopupHtml(props))
+          .addTo(map);
+      });
+
+      map.on("mouseleave", UNCLUSTERED_LAYER_ID, () => {
+        map.getCanvas().style.cursor = "";
+        closeHoverPopup();
       });
 
       map.on("mouseenter", CLUSTERS_LAYER_ID, () => {
@@ -427,25 +513,20 @@ const MapBox = () => {
         map.getCanvas().style.cursor = "";
       });
 
-      map.on("mouseenter", UNCLUSTERED_LAYER_ID, () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", UNCLUSTERED_LAYER_ID, () => {
-        map.getCanvas().style.cursor = "";
-      });
+      setTimeout(() => setLoading(false), 150);
     };
 
     map.on("move", onMove);
     map.on("load", onLoad);
 
     return () => {
+      closeHoverPopup();
       map.off("load", onLoad);
       map.off("move", onMove);
-
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [openSidebarRef, shopGeoJsonRef, userPositionRef]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -454,11 +535,31 @@ const MapBox = () => {
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;
 
+    if (shopGeoJson.features.length === 0) {
+      src.setData(shopGeoJson);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     src.setData(shopGeoJson);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setLoading(false));
+    });
   }, [shopGeoJson]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
+      {loading && (
+        <div className="absolute top-0 left-0 w-[100vw] h-[100dvh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
+          <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
+          <span className="text-brand-primary dark:text-brand-secondary text-md font-semibold">
+            {loadingCaption}
+          </span>
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -473,8 +574,8 @@ const MapBox = () => {
           lineHeight: 1.3,
         }}
       >
-        Longitude: {center[0].toFixed(4)} | Latitude: {center[1].toFixed(4)} |
-        Zoom: {zoom.toFixed(2)} | Shops: {shopGeoJson.features.length}
+        Longitude: {center[0].toFixed(4)} | Latitude: {center[1].toFixed(4)} | Zoom:{" "}
+        {zoom.toFixed(2)} | Shops: {shopGeoJson.features.length}
       </div>
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
