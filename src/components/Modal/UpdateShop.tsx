@@ -2,17 +2,15 @@ import { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Select from "react-select";
-import { updateShopCategories } from "../../services/apiClient";
+import { apiRequest } from "@services/apiClient";
 import ModalWrapper from "./ModalWrapper";
-import { updateShopSchema } from "../../constants/validators";
+import { updateShopSchema } from "@constants/validators";
 import { UpdateShopPayload } from "../../types/dataTypes";
-import { useModal } from "../../context/modalContext";
-import { useToast } from "../../context/toastContext";
-import {
-  updateShopInfo,
-  useUpdateShopCategories,
-} from "@/services/updateLocationShop";
-import { Category, GetCategories } from "@/services/categoryService";
+import { useModal } from "@context/modalContext";
+import { useToast } from "@context/toastContext";
+import { useUpdateShopCategories } from "@/services/updateLocationShop";
+import { GetCategories } from "@/services/categoryService";
+import { Category } from "@models/Category";
 
 const UpdateShop = () => {
   const { currentModal, updateShopData, closeModal } = useModal();
@@ -65,13 +63,14 @@ const UpdateShop = () => {
   const onSubmit: SubmitHandler<UpdateShopPayload> = async (data) => {
     setIsSaving(true);
     try {
-      const updates: Record<string, string | number | null> = {
-        name: data.name,
-        description: data.description || null,
-      };
-      await updateShopInfo(shopId, updates);
-
-      await updateShopCategories(shopId, data.categoryIds || []);
+      await apiRequest(`/shops/${shopId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          shopName: data.name,
+          shop_description: data.description || null,
+          categoryIds: data.categoryIds || [],
+        }),
+      });
 
       const updatedCategories = data.categoryIds
         ?.map((id) => {
@@ -133,9 +132,8 @@ const UpdateShop = () => {
             <input
               type="text"
               {...register("name")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${
-                errors.name ? "border-red-500" : "border-secondary"
-              }`}
+              className={`w-full p-2 border rounded-lg bg-white text-dark ${errors.name ? "border-red-500" : "border-secondary"
+                }`}
             />
             {errors.name && (
               <p className="text-red-500 text-sm">{errors.name.message}</p>
@@ -149,9 +147,8 @@ const UpdateShop = () => {
             <input
               type="text"
               {...register("description")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${
-                errors.description ? "border-red-500" : "border-secondary"
-              }`}
+              className={`w-full p-2 border rounded-lg bg-white text-dark ${errors.description ? "border-red-500" : "border-secondary"
+                }`}
             />
             {errors.description && (
               <p className="text-red-500 text-sm">
@@ -190,11 +187,10 @@ const UpdateShop = () => {
 
           <button
             type="submit"
-            className={`w-full px-4 py-2 rounded-lg text-white ${
-              isSaving
+            className={`w-full px-4 py-2 rounded-lg text-white ${isSaving
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-primary hover:bg-secondary"
-            }`}
+              }`}
             disabled={isSaving}
           >
             {isSaving ? "Saving..." : "Save Changes"}

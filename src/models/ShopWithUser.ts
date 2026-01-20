@@ -1,6 +1,6 @@
 import { Shop } from "./Shop";
 import { Location } from "./Location";
-import { Category } from "@/services/categoryService";
+import { Category } from "@models/Category";
 
 export interface ShopWithUser extends Shop {
   created_by_username?: string;

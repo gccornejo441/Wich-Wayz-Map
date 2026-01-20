@@ -6,7 +6,8 @@ import { useShops } from "@context/shopContext";
 import { useToast } from "@context/toastContext";
 import { useAuth } from "@context/authContext";
 import { handleLocationSubmit } from "@/services/submitLocationShop";
-import { GetCategories, Category } from "@/services/categoryService";
+import { GetCategories } from "@/services/categoryService";
+import { Category } from "@models/Category";
 import {
   GetCoordinatesAndAddressDetails,
   MapBoxLocationLookup,

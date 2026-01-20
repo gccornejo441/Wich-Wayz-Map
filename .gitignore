@@ -28,6 +28,9 @@ dist-ssr
 *.sw?
 
 .env
+.env.*
+.vercel/
+
 server/target
 server/sandwich.db
 server/.env
@@ -38,15 +41,22 @@ server/wichway.db
 server/wichway.db-shm
 server/wichway.db-wal
 
+# Database files
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/backups/
+data/*.dump.sql
+
+# TypeScript build info
+*.tsbuildinfo
+
 # APP NOTES
 sandwich_list.txt
 wichwayz-ec2-scripts.txt
 sandwich_list.json
-.vercel
 
 coverage
-.vercel
-.env*.local
 
 .continuerules
 .crush.json

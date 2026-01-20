@@ -77,19 +77,26 @@
    # or using yarn
    ```
 
-### Running the app
+### Environment variables
 
-To start the development server:
+Copy `.env.sample` to `.env` and set the values for your environment. For local development the key entries are:
 
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+DATABASE_URL=file:./data/wich-wayz-map.db
+DATABASE_AUTH_TOKEN=
 ```
 
-This command launches the frontend and API routes, typically at `http://localhost:5173` (for Vite) or `http://localhost:3000` (for Next.js) depending on your configuration. When the server is running, open the URL in a browser to see the map. The application will connect to Turso and fetch shops; if the database is empty you can start by adding shops via the “Add shop” UI (requires membership).
+The frontend no longer reads `VITE_TURSO_*` for database access; database credentials are only consumed by the server when `DATABASE_URL` points at Turso.
+
+### Running the app
+
+To start the frontend together with the `/api` routes against the local SQLite database, use:
+
+```bash
+vercel dev
+```
+
+This runs the Vercel functions in a Node runtime (so they can read `DATABASE_URL`) and also starts the Vite dev server on port 3100. `npm run dev` only serves the frontend and will not execute the API routes.
 
 ### Testing
 

@@ -1,18 +1,4 @@
-import { createClient } from "@libsql/client/web";
-
-const TURSO_URL = process.env.TURSO_URL;
-const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
-
-if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
-  throw new Error(
-    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set",
-  );
-}
-
-export const tursoClient = createClient({
-  url: TURSO_URL,
-  authToken: TURSO_AUTH_TOKEN,
-});
+import { executeQuery } from "../lib/db.js";
 
 export default async function getVotesForShop(req, res) {
   const { shop_id } = req.query;
@@ -37,12 +23,7 @@ export default async function getVotesForShop(req, res) {
     `;
 
   try {
-    const result = await tursoClient.execute({
-      sql: query,
-      args: [parsedShopId],
-    });
-
-    const rows = result.rows;
+    const rows = await executeQuery(query, [parsedShopId]);
 
     if (rows.length === 0) {
       res.status(200).json({

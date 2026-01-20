@@ -167,3 +167,21 @@ export type LocationDataVariants = {
   website?: string;
   phone?: string;
 };
+
+export interface AddCommentPayload {
+  shopId: number;
+  userId: number;
+  body: string;
+}
+
+export interface CommentResponse {
+  id: number;
+  shopId: number;
+  userId: number;
+  body: string;
+  dateCreated: string;
+  dateModified?: string | null;
+  userName?: string | null;
+  userAvatar?: string | null;
+  userEmail?: string | null;
+}

@@ -1,5 +1,4 @@
-import { executeQuery } from "./apiClient";
-import bcrypt from "bcryptjs";
+import { apiRequest } from "./apiClient";
 import { SignJWT, decodeJwt, jwtVerify } from "jose";
 import { UserMetadata } from "../context/authContext";
 
@@ -151,15 +150,9 @@ export const resetPassword = async (
   }
 
   try {
-    // Update the hashed password in the database where the verification token matches
-    const query = `UPDATE users SET hashed_password = $hashed_password WHERE verification_token = $tokenFromEmail`;
-
-    // Hash the password
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    await executeQuery(query, {
-      hashed_password: hashedPassword,
-      tokenFromEmail,
+    await apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ tokenFromEmail, password }),
     });
 
     return { success: true, message: "Password reset successful." };

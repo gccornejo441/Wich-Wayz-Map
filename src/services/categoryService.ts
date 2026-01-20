@@ -1,37 +1,27 @@
-import { executeQuery, insertData } from "./apiClient";
-
-export interface Category {
-  id?: number;
-  category_name: string;
-  description?: string;
-}
+import { apiRequest, getAllCategories as fetchCategoriesApi } from "./apiClient";
+import { Category } from "@models/Category";
 
 export const checkCategoryExistsInDatabase = async (
   categoryName: string,
 ): Promise<boolean> => {
-  const checkQuery =
-    "SELECT COUNT(*) as count FROM categories WHERE category_name = ?";
-  const { rows: existing } = await executeQuery<{ count: number }>(checkQuery, [
-    categoryName,
-  ]);
-  return existing[0].count > 0;
+  const result = await apiRequest<{ exists: boolean }>(
+    `/categories/exists?name=${encodeURIComponent(categoryName)}`,
+  );
+  return result.exists;
 };
 
 export const addCategoryToDatabase = async (
   categoryName: string,
   description: string,
 ): Promise<void> => {
-  await insertData(
-    "categories",
-    ["category_name", "description"],
-    [categoryName, description],
-  );
+  await apiRequest("/categories", {
+    method: "POST",
+    body: JSON.stringify({ categoryName, description }),
+  });
 };
 
 export const fetchCategoriesFromDatabase = async (): Promise<Category[]> => {
-  const query = "SELECT id, category_name, description FROM categories";
-  const { rows } = await executeQuery<Category>(query);
-  return rows;
+  return apiRequest<Category[]>("/categories");
 };
 
 export const readCategoriesFromLocalStorage = (): Category[] => {
@@ -98,7 +88,7 @@ export const GetCategories = async (): Promise<Category[]> => {
   let categories = readCategoriesFromLocalStorage() as Category[];
 
   if (categories.length === 0) {
-    categories = (await fetchCategoriesFromDatabase()) as Category[];
+    categories = (await fetchCategoriesApi()) as Category[];
     writeCategoriesToLocalStorage(categories);
   }
 
