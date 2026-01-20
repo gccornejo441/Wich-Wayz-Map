@@ -35,12 +35,10 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:3100",
-        changeOrigin: true,
-      },
-    },
+    port: 3100,
+    // Note: API proxy removed. API endpoints are serverless functions.
+    // For full-stack development with working API endpoints, use: vercel dev
+    // For frontend-only development (no API): npm run dev
   },
   test: {
     include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
