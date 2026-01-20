@@ -1,6 +1,6 @@
 import { readdir } from "fs/promises";
-import { join, sep, posix } from "path";
-import { fileURLToPath } from "url";
+import { join, sep } from "path";
+import { pathToFileURL } from "url";
 
 /**
  * Catch-all API router for Vercel serverless functions.
@@ -53,7 +53,10 @@ async function buildRouteMap() {
   if (routeCache && !isDev) return routeCache;
 
   const routes = [];
+  // Use process.cwd() for reliable path resolution in serverless environments
   const serverApiDir = join(process.cwd(), "server", "api");
+
+  const isDebug = process.env.DEBUG_API_ROUTER === "1";
 
   async function scan(dir, prefix = "") {
     let entries;
@@ -95,7 +98,7 @@ async function buildRouteMap() {
 
         routes.push({
           pattern: normalizedPattern,
-          filePath: fullPath,
+          filePath: fullPath, // Keep native path for file operations
           segments: normalizedPattern.split("/").filter(Boolean),
         });
       }
@@ -117,6 +120,16 @@ async function buildRouteMap() {
 
     return a.pattern.localeCompare(b.pattern);
   });
+
+  if (isDebug) {
+    console.error("[API Router] Built route map:", {
+      totalRoutes: routes.length,
+      routes: routes.map((r) => ({
+        pattern: r.pattern,
+        segments: r.segments,
+      })),
+    });
+  }
 
   routeCache = routes;
   return routes;
@@ -153,6 +166,8 @@ function matchRoute(routes, pathSegments) {
 }
 
 export default async function handler(req, res) {
+  const isDebug = process.env.DEBUG_API_ROUTER === "1";
+
   try {
     // Parse body if needed
     await parseBody(req);
@@ -161,43 +176,50 @@ export default async function handler(req, res) {
     const pathArray = req.query.path || [];
     const requestPath = Array.isArray(pathArray) ? pathArray : [pathArray];
 
-    console.error("[API Router] Request path:", requestPath);
-    console.error("[API Router] Request method:", req.method);
+    if (isDebug) {
+      console.error("[API Router] Request path:", requestPath);
+      console.error("[API Router] Request method:", req.method);
+    }
 
     // Build and match routes
     const routes = await buildRouteMap();
 
-    console.error(
-      "[API Router] Available routes:",
-      routes.map((r) => ({
-        pattern: r.pattern,
-        segments: r.segments,
-        file: r.filePath.split(sep).slice(-3).join("/"),
-      })),
-    );
+    if (isDebug) {
+      console.error(
+        "[API Router] Available routes:",
+        routes.map((r) => ({
+          pattern: r.pattern,
+          segments: r.segments,
+        })),
+      );
+    }
 
     const match = matchRoute(routes, requestPath);
 
     if (!match) {
-      console.error("[API Router] No match found for:", requestPath);
-      console.error(
-        "[API Router] Tried matching against",
-        routes.length,
-        "routes",
-      );
+      if (isDebug) {
+        console.error("[API Router] No match found for:", requestPath);
+        console.error(
+          "[API Router] Tried matching against",
+          routes.length,
+          "routes",
+        );
+      }
       return res.status(404).json({
         error: "Not Found",
         path: "/api/" + requestPath.join("/"),
-        availableRoutes: routes.map((r) => r.pattern).slice(0, 10),
+        routesCount: routes.length,
       });
     }
 
-    console.error(
-      "[API Router] Matched route:",
-      match.route.pattern,
-      "->",
-      match.route.filePath,
-    );
+    if (isDebug) {
+      console.error(
+        "[API Router] Matched route:",
+        match.route.pattern,
+        "->",
+        match.route.filePath,
+      );
+    }
 
     // Set params on request for handler compatibility
     req.params = match.params;
@@ -205,8 +227,28 @@ export default async function handler(req, res) {
     // Merge params into query for backward compatibility
     req.query = { ...req.query, ...match.params };
 
-    // Dynamically import and execute the handler
-    const handlerModule = await import(match.route.filePath);
+    // Dynamically import and execute the handler using pathToFileURL for reliability
+    let handlerModule;
+    try {
+      const fileUrl = pathToFileURL(match.route.filePath).href;
+
+      if (isDebug) {
+        console.error("[API Router] Importing handler from:", fileUrl);
+      }
+
+      handlerModule = await import(fileUrl);
+    } catch (importError) {
+      console.error(
+        `Failed to import handler at ${match.route.filePath}:`,
+        importError,
+      );
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: "Failed to load handler module",
+        details: importError.message,
+      });
+    }
+
     const handlerFn = handlerModule.default;
 
     if (typeof handlerFn !== "function") {
