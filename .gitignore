@@ -50,3 +50,19 @@ coverage
 
 .continuerules
 .crush.json
+data/wich-wayz-map.db
+data/wich-wayz-map.db-shm
+data/wich-wayz-map.db-wal
+data/wich-wayz-map.dump.sql
+data/wich-wayz-map.rebuild.db
+data/backups/wich-wayz-map_2026-01-19_101055.db
+data/backups/wich-wayz-map_2026-01-19_101055.sql
+data/backups/wich-wayz-map_2026-01-19_102041.db
+data/backups/wich-wayz-map_2026-01-19_102041.schema.sql
+data/backups/wich-wayz-map_2026-01-19_102041.sql
+data/backups/wich-wayz-map_2026-01-19_102057.db
+data/backups/wich-wayz-map_2026-01-19_102057.schema.sql
+data/backups/wich-wayz-map_2026-01-19_102057.sql
+data/backups/wich-wayz-map_2026-01-19_102127.db
+data/backups/wich-wayz-map_2026-01-19_102127.schema.sql
+data/backups/wich-wayz-map_2026-01-19_102127.sql
