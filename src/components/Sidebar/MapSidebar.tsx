@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useAuth } from "@/context/authContext";
 import { useVote } from "@/context/voteContext";
@@ -19,11 +19,54 @@ import { HiExternalLink } from "react-icons/hi";
 import { useToast } from "@/context/toastContext";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
+import { getCommentsForShop, createComment } from "@services/commentService";
+import { Comment } from "@models/Comment";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   if (upvotes > downvotes) return "Highly rated by sandwich fans!";
   if (upvotes < downvotes) return "Poorly rated by sandwich fans!";
   return "Mixed reviews from sandwich fans.";
+};
+
+const formatRelativeTime = (value: string | number | Date) => {
+  const date = new Date(value);
+  const time = date.getTime();
+  if (Number.isNaN(time)) return "";
+
+  const diffMs = Date.now() - time;
+  const seconds = Math.floor(diffMs / 1000);
+
+  if (seconds < 30) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}w ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
+};
+
+const isRecentDate = (value: string | number | Date, days = 7) => {
+  const date = new Date(value);
+  const time = date.getTime();
+  if (Number.isNaN(time)) return false;
+  const diffDays = (Date.now() - time) / (1000 * 60 * 60 * 24);
+  return diffDays <= days;
+};
+
+const makePreview = (text: string, maxChars = 220) => {
+  const normalized = text.trim();
+  if (normalized.length <= maxChars)
+    return { preview: normalized, truncated: false };
+  return {
+    preview: `${normalized.slice(0, maxChars).trimEnd()}…`,
+    truncated: true,
+  };
 };
 
 const MapSidebar = () => {
@@ -33,18 +76,25 @@ const MapSidebar = () => {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, userMetadata } = useAuth();
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
 
  
-
+ 
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
   const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
@@ -54,6 +104,27 @@ const MapSidebar = () => {
       hasFetchedVotes.current = true;
     }
   }, [selectedShop, getVotesForShop]);
+
+  useEffect(() => {
+    const loadComments = async () => {
+      if (!selectedShop?.shopId) {
+        setComments([]);
+        return;
+      }
+      setCommentsLoading(true);
+      try {
+        const shopComments = await getCommentsForShop(selectedShop.shopId);
+        setComments(shopComments);
+      } catch (error) {
+        console.error("Failed to fetch comments:", error);
+        addToast("Could not load comments.", "error");
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+
+    loadComments();
+  }, [selectedShop, addToast]);
 
   useEffect(() => {
     if (selectedShop && votes && selectedShop.shopId in votes) {
@@ -74,6 +145,42 @@ const MapSidebar = () => {
     if (isDifferentVote) {
       addVote(selectedShop.shopId, isUpvote);
       await submitVote(selectedShop.shopId, isUpvote);
+    }
+  };
+
+  const toggleCommentExpanded = (id: string) => {
+    setExpandedComments((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!isMember) {
+      openSignupModal();
+      return;
+    }
+    if (!selectedShop?.shopId || !userMetadata) return;
+
+    const trimmed = commentBody.trim();
+    if (!trimmed) {
+      addToast("Please enter a comment before submitting.", "error");
+      return;
+    }
+
+    setSubmittingComment(true);
+    try {
+      const created = await createComment({
+        shopId: selectedShop.shopId,
+        userId: userMetadata.id,
+        body: trimmed,
+      });
+      setComments((prev) => [created, ...prev]);
+      setCommentBody("");
+      addToast("Comment added!", "success");
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+      addToast("Could not post comment.", "error");
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -303,6 +410,216 @@ const MapSidebar = () => {
                     </span>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between my-2">
+                  <h5 className="text-sm font-semibold text-text-muted dark:text-text-inverted">
+                    Comments
+                  </h5>
+                  <span className="text-xs text-text-muted dark:text-text-inverted">
+                    {comments.length}{" "}
+                    {comments.length === 1 ? "comment" : "comments"}
+                  </span>
+                </div>
+
+                <div className="bg-surface-muted dark:bg-surface-dark p-3 rounded-lg space-y-3 border border-surface-dark/10 dark:border-surface-muted/20">
+                  {commentsLoading ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center text-primary">
+                        <GiSandwich className="animate-spin text-xl mr-2" />
+                        Loading comments...
+                      </div>
+
+                      <div className="space-y-3">
+                        {[0, 1, 2].map((i) => (
+                          <div
+                            key={i}
+                            className="rounded-xl bg-surface-light dark:bg-surface-darker border border-surface-dark/10 dark:border-surface-muted/20 p-3 animate-pulse"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="h-9 w-9 rounded-full bg-surface-muted dark:bg-surface-dark" />
+                              <div className="flex-1 space-y-2">
+                                <div className="h-3 w-40 rounded bg-surface-muted dark:bg-surface-dark" />
+                                <div className="h-3 w-full rounded bg-surface-muted dark:bg-surface-dark" />
+                                <div className="h-3 w-3/4 rounded bg-surface-muted dark:bg-surface-dark" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        {comments.length === 0 ? (
+                          <div className="rounded-xl bg-surface-light dark:bg-surface-darker border border-surface-dark/10 dark:border-surface-muted/20 p-3">
+                            <p className="text-sm text-text-muted dark:text-text-inverted">
+                              Be the first to leave a comment.
+                            </p>
+                          </div>
+                        ) : (
+                          comments.map((comment) => {
+                            const body = comment.body ?? "";
+                            const { preview, truncated } = makePreview(
+                              body,
+                              240,
+                            );
+                            const expanded =
+                              !!expandedComments[String(comment.id)];
+                            const showNew = isRecentDate(
+                              comment.dateCreated,
+                              7,
+                            );
+
+                            const avatarId =
+                              comment.userAvatar || "default";
+                            const avatarEmail =
+                              comment.userEmail || "guest@example.com";
+                            const displayName =
+                              comment.userName || "Sandwich Fan";
+
+                            return (
+                              <div
+                                key={comment.id}
+                                className="rounded-xl bg-surface-light dark:bg-surface-darker border border-surface-dark/10 dark:border-surface-muted/20 shadow-sm"
+                              >
+                                <div className="flex items-start gap-3 p-3">
+                                  {avatarId ? (
+                                    <UserAvatar
+                                      avatarId={avatarId}
+                                      userEmail={avatarEmail}
+                                      size="sm"
+                                    />
+                                  ) : (
+                                    <div className="h-9 w-9 rounded-full bg-surface-muted dark:bg-surface-dark flex items-center justify-center text-primary">
+                                      <FiUser size={16} />
+                                    </div>
+                                  )}
+
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                                        {displayName}
+                                      </span>
+
+                                      {showNew && (
+                                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-brand-secondary text-black">
+                                          New
+                                        </span>
+                                      )}
+
+                                      <span className="text-xs text-text-muted dark:text-text-inverted">
+                                        {formatRelativeTime(
+                                          comment.dateCreated,
+                                        )}
+                                      </span>
+                                    </div>
+
+                                    <p className="mt-1 text-sm text-text-base dark:text-text-inverted leading-relaxed whitespace-pre-wrap break-words">
+                                      {expanded || !truncated ? body : preview}
+                                    </p>
+
+                                    {truncated && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleCommentExpanded(
+                                            String(comment.id),
+                                          )
+                                        }
+                                        className="mt-2 text-xs text-primary underline"
+                                      >
+                                        {expanded ? "Show less" : "More"}
+                                      </button>
+                                    )}
+
+                                    <div className="mt-2 flex items-center gap-2">
+                                      <span
+                                        className="text-[11px] text-text-muted dark:text-text-inverted"
+                                        title={new Date(
+                                          comment.dateCreated,
+                                        ).toLocaleString()}
+                                      >
+                                        {new Date(
+                                          comment.dateCreated,
+                                        ).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-surface-dark/10 dark:border-surface-muted/20">
+                        {isMember ? (
+                          <form
+                            onSubmit={handleCommentSubmit}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-text-muted dark:text-text-inverted">
+                                Share your experience
+                              </span>
+                              <span className="text-xs text-text-muted dark:text-text-inverted">
+                                {commentBody.length}/5000
+                              </span>
+                            </div>
+
+                            <textarea
+                              value={commentBody}
+                              onChange={(event) =>
+                                setCommentBody(event.target.value)
+                              }
+                              placeholder="What should other sandwich fans know?"
+                              maxLength={5000}
+                              className="w-full rounded-xl border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                              rows={3}
+                            />
+
+                            <div className="flex justify-end">
+                              <button
+                                type="submit"
+                                disabled={
+                                  submittingComment ||
+                                  commentBody.trim().length === 0
+                                }
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                                  submittingComment ||
+                                  commentBody.trim().length === 0
+                                    ? "bg-surface-dark text-text-muted cursor-not-allowed"
+                                    : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base"
+                                }`}
+                              >
+                                {submittingComment ? "Posting..." : "Post Comment"}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="flex items-center justify-between bg-surface-light dark:bg-surface-darker p-3 rounded-xl border border-surface-dark/10 dark:border-surface-muted/20">
+                            <div>
+                              <p className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                                Join the community
+                              </p>
+                              <p className="text-xs text-text-muted dark:text-text-inverted">
+                                Sign up to leave a comment and vote on shops.
+                              </p>
+                            </div>
+                            <button
+                              onClick={openSignupModal}
+                              className="px-3 py-2 rounded-xl bg-brand-secondary text-black text-sm font-semibold hover:bg-brand-secondary/80"
+                            >
+                              Sign up
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           ) : (

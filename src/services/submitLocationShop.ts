@@ -7,7 +7,7 @@ import { cleanString } from "@/utils/stringUtils";
 import { Shop } from "@/models/Shop";
 import { Location } from "@/models/Location";
 import { GetShops } from "./shopService";
-import { submitLocationWithShop } from "./shopLocation";
+import { apiRequest } from "./apiClient";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -40,11 +40,10 @@ export async function handleLocationSubmit(
 
     const payload = createLocationShopPayload(addAShopPayload, userId);
 
-    const { location, shop } = await submitLocationWithShop(payload);
-
-    if (!location || !shop) {
-      throw new Error("Invalid response from server. Missing processed data.");
-    }
+    await apiRequest("/add-new-shop", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
@@ -85,8 +84,6 @@ export function createLocationShopPayload(
     throw new Error("User ID (modifiedBy) is required to create a shop.");
   }
 
-  const currentDate = new Date().toISOString();
-
   const cleanedShopName = cleanString(addAShopPayload.shopName, "title");
   const cleanedDescription = cleanString(
     addAShopPayload.shop_description || "No description provided",
@@ -116,25 +113,22 @@ export function createLocationShopPayload(
     : cleanedAddress;
 
   const location = {
-    street_address: streetAddress,
-    street_address_second: cleanedAddressSecond,
-    postal_code: addAShopPayload.postcode?.trim() || "",
+    house_number: cleanedHouseNumber || "",
+    address_first: cleanedAddressFirst || streetAddress || "",
+    address_second: cleanedAddressSecond || "",
+    postcode: addAShopPayload.postcode?.trim() || "",
     city: cleanedCity,
     state: cleanedState,
     country: cleanedCountry,
     latitude: addAShopPayload.latitude,
     longitude: addAShopPayload.longitude,
-    modified_by: modifiedBy,
-    date_created: currentDate,
-    date_modified: currentDate,
   };
 
-  const shop = {
-    name: cleanedShopName,
-    description: cleanedDescription,
-    modified_by: modifiedBy,
-    created_by: modifiedBy,
+  return {
+    shopName: cleanedShopName,
+    shop_description: cleanedDescription,
+    userId: modifiedBy,
+    ...location,
+    selectedCategoryIds: addAShopPayload.categoryIds ?? [],
   };
-
-  return { location, shop, categoryIds: addAShopPayload.categoryIds };
 }

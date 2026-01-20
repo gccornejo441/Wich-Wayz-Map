@@ -1,4 +1,4 @@
-import { executeQuery } from "./apiClient";
+import { apiRequest } from "./apiClient";
 
 export interface CategoryWithShopCount {
   id: number;
@@ -13,17 +13,8 @@ export interface CategoryWithShopCount {
 export const getCategoriesWithShopCount = async (): Promise<
   CategoryWithShopCount[]
 > => {
-  const query = `
-    SELECT 
-      c.id,
-      c.category_name AS name,
-      COUNT(sc.shop_id) AS shopCount
-    FROM categories c
-    LEFT JOIN shop_categories sc ON c.id = sc.category_id
-    GROUP BY c.id
-    ORDER BY shopCount DESC;
-  `;
-
-  const { rows } = await executeQuery<CategoryWithShopCount>(query);
+  const rows = await apiRequest<CategoryWithShopCount[]>(
+    "/categories/with-count",
+  );
   return rows;
 };

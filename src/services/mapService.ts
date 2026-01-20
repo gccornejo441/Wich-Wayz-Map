@@ -1,4 +1,4 @@
-import { executeQuery } from "./apiClient";
+import { apiRequest } from "./apiClient";
 import {
   FILTERED_SHOPS_STORE,
   IndexedDBShop,
@@ -6,6 +6,7 @@ import {
   LOCATIONS_STORE,
   SHOPS_STORE,
 } from "./indexedDB";
+import { Location } from "@models/Location";
 
 export interface ShopCountByState {
   state: string;
@@ -21,31 +22,14 @@ export interface ShopCountByCategory {
  * Retrieves the number of shops per state from the database.
  */
 export const getShopsPerState = async (): Promise<ShopCountByState[]> => {
-  const query = `
-    SELECT l.state, COUNT(*) as shop_count
-    FROM shops s
-    JOIN shop_locations sl ON s.id = sl.shop_id
-    JOIN locations l ON sl.location_id = l.id
-    GROUP BY l.state
-    ORDER BY shop_count DESC
-  `;
-  const { rows } = await executeQuery<ShopCountByState>(query);
-  return rows;
+  return apiRequest<ShopCountByState[]>("/analytics/shops-per-state");
 };
 
 /**
  * Retrieves the number of shops per category from the database.
  */
 export const getShopsPerCategory = async (): Promise<ShopCountByCategory[]> => {
-  const query = `
-    SELECT c.category_name as category, COUNT(*) as shop_count
-    FROM shops s
-    JOIN shop_categories sc ON s.id = sc.shop_id
-    JOIN categories c ON sc.category_id = c.id
-    GROUP BY c.category_name
-  `;
-  const { rows } = await executeQuery<ShopCountByCategory>(query);
-  return rows;
+  return apiRequest<ShopCountByCategory[]>("/analytics/shops-per-category");
 };
 
 /**

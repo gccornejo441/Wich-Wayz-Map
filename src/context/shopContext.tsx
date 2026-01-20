@@ -6,7 +6,7 @@ import {
   SHOPS_STORE,
   LOCATIONS_STORE,
 } from "@/services/indexedDB";
-import { executeQuery } from "@/services/apiClient";
+import { getLocationCount } from "@/services/apiClient";
 import { Location } from "@models/Location";
 import { ShopWithUser } from "@models/ShopWithUser";
 import { GetShops } from "@/services/shopService";
@@ -60,12 +60,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         const cachedShops = await getCachedData(SHOPS_STORE);
         const cachedLocations = await getCachedData(LOCATIONS_STORE);
 
-        const [{ rows }] = await Promise.all([
-          executeQuery<{ count: number }>(
-            "SELECT COUNT(*) AS count FROM locations",
-          ),
-        ]);
-        const dbLocationCount = rows[0]?.count ?? 0;
+        const dbLocationCount = await getLocationCount();
 
         const cacheIsValid =
           cachedShops.length &&

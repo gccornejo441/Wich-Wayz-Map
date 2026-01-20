@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useToast } from "../../context/toastContext";
-import { getAllCategories } from "../../services/apiClient";
-import { Category } from "@/services/categoryService";
+import { useToast } from "@context/toastContext";
+import { getAllCategories } from "@services/apiClient";
+import { Category } from "@models/Category";
 
 const CategoriesList = () => {
   const [categories, setCategories] = useState<Category[]>([]);

@@ -4,7 +4,7 @@ import { useAuth } from "../../context/authContext";
 import { resendVerification } from "../../services/firebase";
 import AvatarUploader from "../Profile/AvatarUploader";
 import Account from "../Profile/Account";
-import { updateData } from "../../services/apiClient";
+import { updateUserProfile } from "@services/apiClient";
 import { userProfileSchema } from "../../constants/validators";
 import { useToast } from "../../context/toastContext";
 import * as yup from "yup";
@@ -45,14 +45,7 @@ const UserProfile = () => {
         avatar: validatedData.avatar ?? null,
       };
 
-      if (!userMetadata.firebaseUid) {
-        addToast("Firebase UID is missing. Cannot update profile.", "error");
-        return;
-      }
-
-      await updateData("users", updates, "firebase_uid = ?", [
-        userMetadata.firebaseUid,
-      ]);
+      await updateUserProfile(userMetadata.id, updates);
 
       setUserMetadata({
         ...userMetadata,

@@ -1,18 +1,4 @@
-import { createClient } from "@libsql/client/web";
-
-const TURSO_URL = process.env.TURSO_URL;
-const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
-
-if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
-  throw new Error(
-    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set",
-  );
-}
-
-export const tursoClient = createClient({
-  url: TURSO_URL,
-  authToken: TURSO_AUTH_TOKEN,
-});
+import { executeQuery } from "./lib/db.js";
 
 /**
  * Handles POST requests to submit a user's vote on a shop.
@@ -37,7 +23,7 @@ export default async function submitVote(req, res) {
   const params = [vote.shop_id, vote.user_id, vote.upvote, vote.downvote];
 
   try {
-    await tursoClient.execute({ sql: query, args: params });
+    await executeQuery(query, params);
     res.status(200).json("Vote submitted successfully");
   } catch (err) {
     if (err.message.includes("UNIQUE constraint failed")) {

@@ -5,36 +5,16 @@ import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
 import { createLocationShopPayload } from "../../src/services/submitLocationShop";
 import { GetShops } from "../../src/services/shopService";
-import { submitLocationWithShop } from "../../src/services/shopLocation";
 
 vi.mock("../../src/services/security");
-vi.mock("../../src/services/shopLocation");
 vi.mock("../../src/services/indexedDB");
 vi.mock("../../src/services/shopService");
+vi.mock("../../src/services/apiClient");
 
 describe("handleLocationSubmit", () => {
   it("should submit location and shop successfully", async () => {
     const mockUser = { sub: "123", membershipStatus: "member" };
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-
-    const mockPayload = {
-      location: {
-        id: 1,
-        postal_code: "12345",
-        latitude: 40.7128,
-        longitude: -74.006,
-        street_address: "123 Main St",
-        city: "New York",
-        state: "NY",
-        country: "USA",
-      },
-      shop: {
-        id: 2,
-        name: "Test Shop",
-        created_by: 123,
-      },
-    };
-    vi.mocked(submitLocationWithShop).mockResolvedValue(mockPayload);
 
     const mockShops = [
       {
@@ -113,26 +93,19 @@ describe("createLocationShopPayload", () => {
     const result = createLocationShopPayload(validPayload, modifiedBy);
 
     expect(result).toEqual({
-      location: {
-        street_address: "123 Main St",
-        street_address_second: "Apt 4b",
-        postal_code: "12345",
-        city: "Test City",
-        state: "Ts",
-        country: "Test Country",
-        latitude: 40.7128,
-        longitude: -74.006,
-        modified_by: modifiedBy,
-        date_created: expect.any(String),
-        date_modified: expect.any(String),
-      },
-      shop: {
-        name: "Test Shop",
-        description: "A test shop description",
-        modified_by: modifiedBy,
-        created_by: modifiedBy,
-      },
-      categoryIds: [1, 2, 3],
+      shopName: "Test Shop",
+      shop_description: "A test shop description",
+      userId: modifiedBy,
+      house_number: "123",
+      address_first: "Main St",
+      address_second: "Apt 4b",
+      postcode: "12345",
+      city: "Test City",
+      state: "Ts",
+      country: "Test Country",
+      latitude: 40.7128,
+      longitude: -74.006,
+      selectedCategoryIds: [1, 2, 3],
     });
   });
 
@@ -160,26 +133,19 @@ describe("createLocationShopPayload", () => {
     );
 
     expect(result).toEqual({
-      location: {
-        street_address: "",
-        street_address_second: "",
-        postal_code: "",
-        city: "Unknown City",
-        state: "Unknown State",
-        country: "Unknown Country",
-        latitude: 0,
-        longitude: 0,
-        modified_by: modifiedBy,
-        date_created: expect.any(String),
-        date_modified: expect.any(String),
-      },
-      shop: {
-        name: "Shop Without Address",
-        description: "No description provided",
-        modified_by: modifiedBy,
-        created_by: modifiedBy,
-      },
-      categoryIds: [],
+      shopName: "Shop Without Address",
+      shop_description: "No description provided",
+      userId: modifiedBy,
+      house_number: "",
+      address_first: "",
+      address_second: "",
+      postcode: "",
+      city: "Unknown City",
+      state: "Unknown State",
+      country: "Unknown Country",
+      latitude: 0,
+      longitude: 0,
+      selectedCategoryIds: [],
     });
   });
 
@@ -206,8 +172,8 @@ describe("createLocationShopPayload", () => {
       modifiedBy,
     );
 
-    expect(result.shop.name).toBe("Test Shop");
-    expect(result.shop.description).toBe("This is a test description");
+    expect(result.shopName).toBe("Test Shop");
+    expect(result.shop_description).toBe("This is a test description");
   });
 });
 
@@ -236,8 +202,8 @@ describe("createLocationShopPayload - Edge Cases", () => {
       modifiedBy,
     );
 
-    expect(result.shop.name).toBe("");
-    expect(result.shop.description).toBe("No description provided");
+    expect(result.shopName).toBe("");
+    expect(result.shop_description).toBe("No description provided");
   });
 
   it("should handle special characters in shopName and shop_description", () => {
@@ -262,8 +228,8 @@ describe("createLocationShopPayload - Edge Cases", () => {
       modifiedBy,
     );
 
-    expect(result.shop.name).toBe("T3st! Sh@p#123");
-    expect(result.shop.description).toBe(
+    expect(result.shopName).toBe("T3st! Sh@p#123");
+    expect(result.shop_description).toBe(
       "Th!s sh@p descr1ption has #peci@l ch@racters.",
     );
   });
@@ -287,8 +253,8 @@ describe("createLocationShopPayload - Edge Cases", () => {
 
     const result = createLocationShopPayload(payloadWithNumbers, modifiedBy);
 
-    expect(result.shop.name).toBe("Shop 1234");
-    expect(result.shop.description).toBe("This shop was established in 2020.");
+    expect(result.shopName).toBe("Shop 1234");
+    expect(result.shop_description).toBe("This shop was established in 2020.");
   });
 
   it("should trim leading and trailing spaces in shopName and shop_description", () => {
@@ -310,8 +276,8 @@ describe("createLocationShopPayload - Edge Cases", () => {
 
     const result = createLocationShopPayload(payloadWithSpaces, modifiedBy);
 
-    expect(result.shop.name).toBe("Test Shop");
-    expect(result.shop.description).toBe(
+    expect(result.shopName).toBe("Test Shop");
+    expect(result.shop_description).toBe(
       "This is a test description with spaces.",
     );
   });
@@ -335,7 +301,7 @@ describe("createLocationShopPayload - Edge Cases", () => {
 
     const result = createLocationShopPayload(payloadWithMixedCase, modifiedBy);
 
-    expect(result.shop.name).toBe("Test Shop");
-    expect(result.shop.description).toBe("This is a test description.");
+    expect(result.shopName).toBe("Test Shop");
+    expect(result.shop_description).toBe("This is a test description.");
   });
 });

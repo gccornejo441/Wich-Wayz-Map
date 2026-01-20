@@ -1,19 +1,5 @@
-import { createClient } from "@libsql/client/web";
 import Stripe from "stripe";
-
-const TURSO_URL = process.env.VITE_TURSO_URL;
-const TURSO_AUTH_TOKEN = process.env.VITE_TURSO_AUTH_TOKEN;
-
-if (!TURSO_URL || !TURSO_AUTH_TOKEN) {
-  throw new Error(
-    "Environment variables TURSO_API_KEY and TURSO_DATABASE_URL must be set",
-  );
-}
-
-export const tursoClient = createClient({
-  url: TURSO_URL,
-  authToken: TURSO_AUTH_TOKEN,
-});
+import { executeQuery } from "./lib/db.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2024-11-20.acacia",
@@ -25,6 +11,7 @@ export const config = {
   api: {
     bodyParser: false,
   },
+  runtime: "nodejs",
 };
 
 /**
@@ -41,10 +28,7 @@ const updateMembershipStatus = async (userId, status) => {
     WHERE id = $userId
   `;
   try {
-    await tursoClient.execute({
-      sql: query,
-      args: { status, userId },
-    });
+    await executeQuery(query, { status, userId });
     console.log(`Membership status updated successfully for user ${userId}`);
   } catch (error) {
     console.error(

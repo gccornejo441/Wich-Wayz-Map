@@ -1,7 +1,7 @@
 import { useShops } from "@/context/shopContext";
-import { updateData } from "./apiClient";
 import { cacheData, getCachedData } from "./indexedDB";
 import { Shop } from "@/models/Shop";
+import { Location } from "@models/Location";
 
 /**
  * Updates local state and caches locations.
@@ -30,16 +30,6 @@ export function updateShops(
     return updatedShops;
   });
 }
-
-/**
- * Updates a shop's basic information in the database.
- */
-export const updateShopInfo = async (
-  shopId: number,
-  updates: Record<string, string | number | null>,
-): Promise<void> => {
-  await updateData("shops", updates, "id = ?", [shopId]);
-};
 
 /**
  * Custom hook to update shop categories in local state and IndexedDB cache.
