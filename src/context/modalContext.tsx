@@ -38,7 +38,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   const [loginMode, setLoginMode] = useState(true);
   const [currentModal, setCurrentModal] = useState<
     "login" | "signup" | "updateShop" | null
-  >("login");
+  >(null);
   const [isSearchModalOpen, setSearchModalOpen] = useState(false);
   const [updateShopData, setUpdateShopData] =
     useState<UpdateShopModalProps | null>(null);

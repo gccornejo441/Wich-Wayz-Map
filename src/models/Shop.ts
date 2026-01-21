@@ -8,4 +8,6 @@ export interface Shop {
   date_modified?: string | null;
   id_location?: number;
   address?: string | null;
+  latitude?: number;
+  longitude?: number;
 }

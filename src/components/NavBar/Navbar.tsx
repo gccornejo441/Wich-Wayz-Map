@@ -26,13 +26,15 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
   const { shopListOpen } = useShopSidebar();
-  const { openLoginModal, openSignupModal } = useModal();
+  const { openLoginModal, openSignupModal, currentModal } = useModal();
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
       logout();
       addToast("You have been logged out successfully.", "success");
     } else {
+      console.log("currentModal before opening:", currentModal);
+      addToast("Sign in to continue.", "info");
       openLoginModal();
     }
   };

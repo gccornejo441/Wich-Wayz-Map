@@ -6,8 +6,9 @@ import { ROUTES } from "../constants/routes";
 import { cleanString } from "@/utils/stringUtils";
 import { Shop } from "@/models/Shop";
 import { Location } from "@/models/Location";
-import { GetShops } from "./shopService";
+import { GetShops, fetchShopById } from "./shopService";
 import { apiRequest } from "./apiClient";
+import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -19,6 +20,7 @@ export async function handleLocationSubmit(
   addToast: (message: string, type: "success" | "error") => void,
   logout: () => Promise<void>,
   navigate: (path: string) => void,
+  selectShop?: (shop: ShopGeoJsonProperties) => void,
 ): Promise<boolean> {
   try {
     const currentUser = await getCurrentUser(logout);
@@ -40,10 +42,13 @@ export async function handleLocationSubmit(
 
     const payload = createLocationShopPayload(addAShopPayload, userId);
 
-    await apiRequest("/add-new-shop", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const response = await apiRequest<{ shopId: number; locationId: number }>(
+      "/add-new-shop",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
@@ -57,6 +62,18 @@ export async function handleLocationSubmit(
     cacheData("locations", fetchedLocations);
 
     addToast("Location and shop submitted successfully!", "success");
+
+    // Fetch and select the newly created shop if selectShop callback provided
+    if (selectShop && response.shopId) {
+      try {
+        const newShop = await fetchShopById(response.shopId);
+        selectShop(newShop);
+      } catch (error) {
+        console.error("Failed to fetch newly created shop:", error);
+        // Don't throw - shop was created successfully, just couldn't open sidebar
+      }
+    }
+
     return true;
   } catch (error) {
     if (axios.isAxiosError(error)) {

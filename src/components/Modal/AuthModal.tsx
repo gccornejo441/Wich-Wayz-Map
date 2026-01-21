@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/authContext";
 import { useModal } from "@/context/modalContext";
+import { useToast } from "@/context/toastContext";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { registerSchema } from "@/constants/validators";
@@ -19,6 +20,7 @@ const AuthModal = () => {
     resetPassword,
     signInWithGoogle,
   } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   // Shared state
@@ -57,6 +59,9 @@ const AuthModal = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLoading) return;
+
     setError(null);
     setMessage(null);
 
@@ -65,13 +70,19 @@ const AuthModal = () => {
       return;
     }
 
-    const response = await login(email, password, rememberMe);
-    if (!response.success) {
-      setError(response.message);
-    } else {
-      setMessage("Login successful!");
-      handleClose();
-      navigate("/");
+    setIsLoading(true);
+
+    try {
+      const response = await login(email, password, rememberMe);
+      if (!response.success) {
+        setError(response.message);
+      } else {
+        addToast("Signed in successfully!", "success");
+        handleClose();
+        navigate("/");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,7 +124,7 @@ const AuthModal = () => {
       if (!response.success) {
         setError(response.message);
       } else {
-        setMessage("Google sign-in successful!");
+        addToast("Signed in successfully!", "success");
         handleClose();
         navigate("/");
       }

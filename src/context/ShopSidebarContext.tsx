@@ -1,5 +1,5 @@
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, useEffect } from "react";
 
 type Coordinates = [number, number];
 
@@ -18,6 +18,7 @@ interface ShopSidebarContextProps {
   savedShops: ShopGeoJsonProperties[];
   addSavedShop: (shop: ShopGeoJsonProperties) => void;
   removeSavedShop: (shopId: number | string) => void;
+  selectShop: (shop: ShopGeoJsonProperties) => void;
 }
 
 const ShopSidebarContext = createContext<ShopSidebarContextProps | undefined>(
@@ -39,6 +40,21 @@ export const ShopSidebarProvider = ({
   const openShopList = () => setShopListOpen(true);
   const closeShopList = () => setShopListOpen(false);
 
+  // Derive position from selectedShop coordinates when available
+  useEffect(() => {
+    if (selectedShop) {
+      const { longitude, latitude } = selectedShop;
+      if (
+        typeof longitude === "number" &&
+        typeof latitude === "number" &&
+        Number.isFinite(longitude) &&
+        Number.isFinite(latitude)
+      ) {
+        setPosition([longitude, latitude]);
+      }
+    }
+  }, [selectedShop]);
+
   const openSidebar = (
     shop: ShopGeoJsonProperties,
     pos?: Coordinates | null,
@@ -51,6 +67,15 @@ export const ShopSidebarProvider = ({
   const closeSidebar = () => {
     setSelectedShop(null);
     setSidebarOpen(false);
+  };
+
+  /**
+   * Select a shop and open the sidebar.
+   * Automatically derives position from shop coordinates.
+   */
+  const selectShop = (shop: ShopGeoJsonProperties) => {
+    setSelectedShop(shop);
+    setSidebarOpen(true);
   };
 
   const addSavedShop = (shop: ShopGeoJsonProperties) => {
@@ -78,6 +103,7 @@ export const ShopSidebarProvider = ({
         savedShops,
         addSavedShop,
         removeSavedShop,
+        selectShop,
       }}
     >
       {children}

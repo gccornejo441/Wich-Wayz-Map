@@ -267,14 +267,59 @@ const MapSidebar = () => {
     }
   };
 
-  const handleShareLocation = () => {
+  const handleShareLocation = async () => {
     try {
-      if (!position) {
+      let latitude: number | undefined;
+      let longitude: number | undefined;
+
+      // Primary: Use selectedShop coordinates
+      if (
+        selectedShop?.latitude !== undefined &&
+        selectedShop?.longitude !== undefined &&
+        Number.isFinite(selectedShop.latitude) &&
+        Number.isFinite(selectedShop.longitude)
+      ) {
+        latitude = selectedShop.latitude;
+        longitude = selectedShop.longitude;
+      }
+      // Fallback: Use position from context
+      else if (position) {
+        const [lng, lat] = position;
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          longitude = lng;
+          latitude = lat;
+        }
+      }
+      // Last-chance: Try to fetch shop by ID
+      else if (selectedShop?.shopId) {
+        try {
+          const { fetchShopById } = await import("@services/shopService");
+          const shopData = await fetchShopById(selectedShop.shopId);
+          if (
+            shopData.latitude !== undefined &&
+            shopData.longitude !== undefined &&
+            Number.isFinite(shopData.latitude) &&
+            Number.isFinite(shopData.longitude)
+          ) {
+            latitude = shopData.latitude;
+            longitude = shopData.longitude;
+          }
+        } catch (error) {
+          console.error("Failed to fetch shop coordinates:", error);
+        }
+      }
+
+      // Validate we have valid coordinates
+      if (
+        latitude === undefined ||
+        longitude === undefined ||
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
         addToast("Location data is missing.", "error");
         return;
       }
 
-      const [longitude, latitude] = position;
       const baseUrl = window.location.origin;
       const params = new URLSearchParams();
 
@@ -286,7 +331,7 @@ const MapSidebar = () => {
       }
 
       const shareableLink = `${baseUrl}?${params.toString()}`;
-      navigator.clipboard.writeText(shareableLink);
+      await navigator.clipboard.writeText(shareableLink);
 
       addToast("Location link copied to clipboard!", "success");
     } catch (error) {
@@ -599,11 +644,13 @@ const MapSidebar = () => {
                     <div className="space-y-3">
                       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                         {comments.length === 0 ? (
-                          <div className="rounded-xl bg-surface-light dark:bg-surface-darker border border-surface-dark/10 dark:border-surface-muted/20 p-3">
-                            <p className="text-sm text-text-muted dark:text-text-inverted">
-                              Be the first to leave a comment.
-                            </p>
-                          </div>
+                          <p className="text-xs text-text-muted dark:text-text-inverted/70 flex items-center gap-1.5 py-1">
+                            <FiAlertCircle
+                              size={14}
+                              className="flex-shrink-0"
+                            />
+                            Be the first to leave a comment.
+                          </p>
                         ) : (
                           comments.map((comment) => {
                             const body = comment.body ?? "";
@@ -818,11 +865,7 @@ const MapSidebar = () => {
                                 submittingComment ||
                                 commentBody.trim().length === 0
                               }
-                              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${submittingComment ||
-                                  commentBody.trim().length === 0
-                                  ? "bg-surface-dark text-text-muted cursor-not-allowed"
-                                  : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base"
-                                }`}
+                              className="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors disabled:opacity-50 disabled:bg-brand-primary/40 dark:disabled:bg-brand-primary/30 disabled:cursor-not-allowed"
                             >
                               {submittingComment
                                 ? "Posting..."
