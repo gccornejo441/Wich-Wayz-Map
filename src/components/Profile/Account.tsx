@@ -8,7 +8,6 @@ export interface AccountProps {
   lastName: string;
   setLastName: (value: string) => void;
   username: string;
-  setUsername: (value: string) => void;
   handleUpdateProfile: Callback;
 }
 
@@ -18,7 +17,6 @@ const Account = ({
   lastName,
   setLastName,
   username,
-  setUsername,
   email,
   handleUpdateProfile,
 }: AccountProps) => {
@@ -30,33 +28,34 @@ const Account = ({
           <label className="text-sm">First Name</label>
           <input
             type="text"
-            value={firstName}
+            value={firstName || ""}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setFirstName(e.target.value)
             }
-            className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted"
+            placeholder="Enter your first name"
+            className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
           />
         </div>
         <div className="flex flex-col">
           <label className="text-sm">Last Name</label>
           <input
             type="text"
-            value={lastName}
+            value={lastName || ""}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setLastName(e.target.value)
             }
-            className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted"
+            placeholder="Enter your last name"
+            className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
           />
         </div>
         <div className="flex flex-col">
           <label className="text-sm">Username</label>
           <input
             type="text"
-            value={username}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setUsername(e.target.value)
-            }
-            className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted"
+            value={username || ""}
+            readOnly
+            className="px-2 py-1 bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-brand-secondary dark:border-gray-600 rounded-lg cursor-not-allowed focus:outline-none"
+            title="Username cannot be changed"
           />
         </div>
         <div className="flex flex-col relative">

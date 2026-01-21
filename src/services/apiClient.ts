@@ -34,7 +34,9 @@ export const apiRequest = async <T>(
       if (data?.message) {
         message = data.message;
       }
-    } catch {}
+    } catch (parseError) {
+      console.error("Failed to parse error response", parseError);
+    }
 
     const error: ApiError = new Error(message);
     error.status = response.status;

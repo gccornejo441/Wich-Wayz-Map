@@ -12,6 +12,7 @@ import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
 import { Callback } from "../../types/dataTypes";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
+import { useModal } from "../../context/modalContext";
 
 interface NavBarProps {
   searchBar: boolean;
@@ -25,13 +26,14 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
   const { shopListOpen } = useShopSidebar();
+  const { openLoginModal, openSignupModal } = useModal();
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
       logout();
       addToast("You have been logged out successfully.", "success");
     } else {
-      navigate(ROUTES.ACCOUNT.SIGN_IN);
+      openLoginModal();
     }
   };
 
@@ -48,7 +50,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
         console.error("Error creating payment link:", error);
       }
     } else {
-      navigate(ROUTES.ACCOUNT.REGISTER);
+      openSignupModal();
     }
   };
 

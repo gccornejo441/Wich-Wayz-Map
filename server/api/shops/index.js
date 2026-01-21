@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   try {
     const rows = await executeQuery(`
-      SELECT 
+      SELECT
         s.id AS shop_id,
         s.name AS shop_name,
         s.description,
@@ -24,6 +24,7 @@ export default async function handler(req, res) {
         s.created_by,
         u.username AS created_by_username,
         u.avatar AS users_avatar_id,
+        u.email AS users_avatar_email,
         s.date_created,
         s.date_modified,
         s.id_location,
@@ -62,6 +63,7 @@ export default async function handler(req, res) {
           created_by: row.created_by,
           created_by_username: row.created_by_username || "admin",
           users_avatar_id: row.users_avatar_id || undefined,
+          users_avatar_email: row.users_avatar_email || undefined,
           date_created: row.date_created,
           date_modified: row.date_modified || undefined,
           locations: [],

@@ -8,6 +8,8 @@ interface ModalContextProps {
   onSearchModal: Callback;
   openLoginModal: Callback;
   openSignupModal: Callback;
+  switchToLogin: Callback;
+  switchToSignup: Callback;
   isSearchModalOpen: boolean;
   closeModal: Callback;
   openUpdateShopModal: (data: UpdateShopModalProps) => void;
@@ -53,6 +55,16 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     setLoginModalOpen(true);
   };
 
+  const switchToLogin = () => {
+    setCurrentModal("login");
+    setLoginMode(true);
+  };
+
+  const switchToSignup = () => {
+    setCurrentModal("signup");
+    setLoginMode(false);
+  };
+
   const openUpdateShopModal = (data: UpdateShopModalProps) => {
     setCurrentModal("updateShop");
     setUpdateShopData(data);
@@ -78,6 +90,8 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         currentModal,
         openLoginModal,
         openSignupModal,
+        switchToLogin,
+        switchToSignup,
         onSearchModal,
         openUpdateShopModal,
         updateShopData,

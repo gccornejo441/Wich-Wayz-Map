@@ -134,6 +134,9 @@ const ShopForm = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState(
+    initialData?.website_url || "https://",
+  );
 
   // Effect to observe changes in the document's class list for dark mode
   useEffect(() => {
@@ -200,14 +203,54 @@ const ShopForm = ({
         placeholder="Enter shop description"
       />
 
-      {/* Website URL */}
-      <InputField
-        name="website_url"
-        label="Website URL"
-        register={register}
-        errors={errors}
-        placeholder="Enter shop website URL"
-      />
+      {/* Website URL with HTTPS enforcement */}
+      <div>
+        <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
+          Website URL
+        </label>
+        <input
+          type="text"
+          value={websiteUrl}
+          {...register("website_url")}
+          onChange={(e) => {
+            let value = e.target.value;
+            // Ensure it always starts with https://
+            if (!value.startsWith("https://")) {
+              value = "https://";
+            }
+            setWebsiteUrl(value);
+          }}
+          onKeyDown={(e) => {
+            // Prevent backspace/delete if cursor is within the https:// prefix
+            const input = e.currentTarget;
+            const cursorPos = input.selectionStart || 0;
+            if (
+              cursorPos <= 8 &&
+              (e.key === "Backspace" || e.key === "Delete")
+            ) {
+              e.preventDefault();
+            }
+          }}
+          onSelect={(e) => {
+            // Prevent selection of the https:// prefix
+            const input = e.currentTarget;
+            const start = input.selectionStart || 0;
+            if (start < 8) {
+              input.setSelectionRange(8, input.selectionEnd || 8);
+            }
+          }}
+          placeholder="https://example.com"
+          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
+              ? "border-red-500 dark:border-red-500"
+              : "border-brand-primary dark:border-text-muted"
+            }`}
+        />
+        {errors.website_url && (
+          <p className="mt-1 text-sm text-red-500 dark:text-red-400">
+            {errors.website_url.message}
+          </p>
+        )}
+      </div>
 
       {/* Phone Input */}
       <InputField name="phone" label="Phone" errors={errors}>
@@ -216,9 +259,8 @@ const ShopForm = ({
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
-            errors.phone ? "border-red-500 dark:border-red-500" : ""
-          }`}
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
+            }`}
         />
       </InputField>
 
@@ -241,6 +283,8 @@ const ShopForm = ({
               menuPortalTarget={
                 typeof window !== "undefined" ? document.body : null
               }
+              menuPosition="fixed"
+              menuPlacement="auto"
               isClearable
               isSearchable
               className="react-select-container"
@@ -274,9 +318,8 @@ const ShopForm = ({
           type="button"
           onClick={prefillAddressFields}
           disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           title="Click to prefill the address details"
         >
           Prefill Address
@@ -286,9 +329,8 @@ const ShopForm = ({
           type="button"
           onClick={handledManualEntry}
           disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
-            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
@@ -308,14 +350,13 @@ const ShopForm = ({
           !!errors.address ||
           isSubmitting
         }
-        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${
-          !isAddressValid ||
-          !!errors.shopName ||
-          !!errors.address ||
-          isSubmitting
+        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
+            !!errors.shopName ||
+            !!errors.address ||
+            isSubmitting
             ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
             : "bg-brand-primary hover:bg-secondary"
-        }`}
+          }`}
       >
         {isSubmitting ? (
           <>

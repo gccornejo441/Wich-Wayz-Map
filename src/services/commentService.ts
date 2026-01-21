@@ -50,3 +50,25 @@ export const createComment = async (
 
   return mapComment(response.data as Record<string, unknown>);
 };
+
+export const updateComment = async (
+  commentId: number,
+  userId: number,
+  body: string,
+): Promise<Comment> => {
+  const response = await client.put(`/comments/${commentId}`, {
+    user_id: userId,
+    body,
+  });
+
+  return mapComment(response.data as Record<string, unknown>);
+};
+
+export const deleteComment = async (
+  commentId: number,
+  userId: number,
+): Promise<void> => {
+  await client.delete(`/comments/${commentId}`, {
+    data: { user_id: userId },
+  });
+};

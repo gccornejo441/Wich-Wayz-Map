@@ -10,22 +10,39 @@ import {
   FiUser,
   FiShare2,
   FiEdit,
+  FiTrash2,
+  FiX,
+  FiCheck,
+  FiAlertCircle,
 } from "react-icons/fi";
 import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
 import { GiSandwich } from "react-icons/gi";
-import { useModal } from "@/context/modalContext";
 import { HiExternalLink } from "react-icons/hi";
 import { useToast } from "@/context/toastContext";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
-import { getCommentsForShop, createComment } from "@services/commentService";
+import {
+  getCommentsForShop,
+  createComment,
+  updateComment,
+  deleteComment,
+} from "@services/commentService";
 import { Comment } from "@models/Comment";
+import { useModal } from "@/context/modalContext";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
-  if (upvotes > downvotes) return "Highly rated by sandwich fans!";
-  if (upvotes < downvotes) return "Poorly rated by sandwich fans!";
-  return "Mixed reviews from sandwich fans.";
+  const totalVotes = upvotes + downvotes;
+
+  // No votes yet
+  if (totalVotes === 0) {
+    return "No ratings yet.";
+  }
+
+  // Has votes
+  if (upvotes > downvotes) return "Mostly positive";
+  if (upvotes < downvotes) return "Mostly negative";
+  return "Mixed reviews";
 };
 
 const formatRelativeTime = (value: string | number | Date) => {
@@ -72,19 +89,18 @@ const makePreview = (text: string, maxChars = 220) => {
 const MapSidebar = () => {
   const { selectedShop, position, sidebarOpen, closeSidebar } =
     useShopSidebar();
-  const { openSignupModal } = useModal();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const { openSignupModal } = useModal();
 
   const { isAuthenticated, user, userMetadata } = useAuth();
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
 
- 
- 
   const isMember = isAuthenticated && user?.emailVerified;
   const hasFetchedVotes = useRef(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
   const [userVote, setUserVote] = useState<"up" | "down" | null>(null);
@@ -95,6 +111,12 @@ const MapSidebar = () => {
   const [expandedComments, setExpandedComments] = useState<
     Record<string, boolean>
   >({});
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentBody, setEditingCommentBody] = useState("");
+  const [updatingComment, setUpdatingComment] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
@@ -140,7 +162,11 @@ const MapSidebar = () => {
   }, [votes, selectedShop]);
 
   const handleVote = async (isUpvote: boolean) => {
-    if (!isMember || !selectedShop) return;
+    if (!isMember) {
+      openSignupModal();
+      return;
+    }
+    if (!selectedShop) return;
     const isDifferentVote = userVote !== (isUpvote ? "up" : "down");
     if (isDifferentVote) {
       addVote(selectedShop.shopId, isUpvote);
@@ -184,6 +210,63 @@ const MapSidebar = () => {
     }
   };
 
+  const handleEditComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentBody(comment.body);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentBody("");
+  };
+
+  const handleUpdateComment = async (commentId: number) => {
+    if (!userMetadata) return;
+
+    const trimmed = editingCommentBody.trim();
+    if (!trimmed) {
+      addToast("Comment cannot be empty.", "error");
+      return;
+    }
+
+    setUpdatingComment(true);
+    try {
+      const updated = await updateComment(commentId, userMetadata.id, trimmed);
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? updated : c)),
+      );
+      setEditingCommentId(null);
+      setEditingCommentBody("");
+      addToast("Comment updated!", "success");
+    } catch (error) {
+      console.error("Failed to update comment:", error);
+      addToast("Could not update comment.", "error");
+    } finally {
+      setUpdatingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!userMetadata) return;
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this comment?",
+    );
+    if (!confirmDelete) return;
+
+    setDeletingCommentId(commentId);
+    try {
+      await deleteComment(commentId, userMetadata.id);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      addToast("Comment deleted!", "success");
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+      addToast("Could not delete comment.", "error");
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const handleShareLocation = () => {
     try {
       if (!position) {
@@ -218,16 +301,48 @@ const MapSidebar = () => {
 
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
+  // Helper: Sanitize phone number for tel: link
+  const sanitizePhone = (phone: string): string => {
+    return phone.replace(/[\s\-()]/g, "");
+  };
+
+  // Helper: Normalize website URL
+  const normalizeWebsiteUrl = (url: string): string => {
+    const trimmed = url.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  };
+
+  // Parse categories safely
+  const parsedCategories = selectedShop?.categories
+    ? selectedShop.categories
+      .split(",")
+      .map((cat) => cat.trim())
+      .filter((cat) => cat.length > 0)
+    : [];
+
+  const hiddenCategoryCount =
+    parsedCategories.length > 3 ? parsedCategories.length - 3 : 0;
+
+  // Check if description needs truncation
+  const descriptionPreview = selectedShop?.description
+    ? makePreview(selectedShop.description, 180)
+    : null;
+
   return (
     <aside
       className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
     >
       <div className="flex flex-col h-full">
-        <div className="flex justify-end p-5">
+        <div className="flex justify-end p-3">
           <button
             onClick={closeSidebar}
-            className=" dark:text-text-inverted text-accent hover:text-primary transition-colors"
+            aria-label="Close shop details"
+            title="Close shop details"
+            className="dark:text-text-inverted text-accent hover:text-primary transition-colors p-2 rounded-lg hover:bg-surface-muted dark:hover:bg-surface-darker focus:outline-none focus:ring-2 focus:ring-brand-secondary"
           >
             <FiArrowLeft size={24} />
           </button>
@@ -244,8 +359,9 @@ const MapSidebar = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between mt-4">
-                <h2 className="text-2xl font-semibold text-text-base dark:text-text-inverted">
+              {/* Header with shop name and edit button */}
+              <div className="flex items-start justify-between gap-3 mt-4">
+                <h2 className="text-2xl font-semibold text-text-base dark:text-text-inverted line-clamp-2 flex-1">
                   {selectedShop.shopName}
                 </h2>
                 {isMember && (
@@ -256,102 +372,134 @@ const MapSidebar = () => {
                         state: { initialData: selectedShop },
                       });
                     }}
+                    aria-label="Edit shop"
                     title="Edit this shop"
-                    className="text-accent hover:text-primary dark:text-brand-secondary dark:hover:text-brand-secondaryHover transition-colors"
+                    className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] p-2 text-accent hover:text-primary dark:text-brand-secondary dark:hover:text-brand-secondaryHover bg-surface-muted dark:bg-surface-dark rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                   >
                     <FiEdit size={20} />
                   </button>
                 )}
               </div>
 
+              {/* Description with read more/less */}
               {selectedShop.description && (
-                <p className="mt-2 text-sm text-text-muted dark:text-text-inverted">
-                  {selectedShop.description}
-                </p>
-              )}
-
-              {selectedShop.locationOpen == false && (
-                <span className="block bg-red-600 text-white text-xs font-bold rounded px-2 py-1 mt-2">
-                  This location is permanently closed.
-                </span>
-              )}
-              <div className="flex items-center mt-2 text-text-base dark:text-text-inverted">
-                <FiMapPin size={20} className="mr-2 text-primary" />
-                <span>{selectedShop.address}</span>
-              </div>
-
-              {selectedShop.categories && (
                 <div className="mt-2">
-                  <ul className="flex flex-wrap gap-2">
-                    {selectedShop.categories
-                      .split(",")
-                      .map((category: string) => category.trim())
-                      .map((category: string, index: number) => {
-                        const isHidden = !showAllCategories && index >= 3;
-                        return (
-                          <li key={index} className={isHidden ? "hidden" : ""}>
-                            <span className="bg-brand-secondary text-black  px-3 py-1 rounded-full text-xs font-semibold">
-                              {category}
-                            </span>
-                          </li>
-                        );
-                      })}
-                  </ul>
-                  {selectedShop.categories.split(",").length > 3 && (
+                  <p
+                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${!showFullDescription && descriptionPreview?.truncated ? "line-clamp-3" : ""}`}
+                  >
+                    {showFullDescription || !descriptionPreview?.truncated
+                      ? selectedShop.description
+                      : descriptionPreview.preview}
+                  </p>
+                  {descriptionPreview?.truncated && (
                     <button
-                      onClick={() => setShowAllCategories((prev) => !prev)}
-                      className="mt-2 text-xs text-primary underline"
+                      onClick={() => setShowFullDescription((prev) => !prev)}
+                      className="mt-1 text-xs text-primary hover:text-primary/80 underline focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-1 rounded"
                     >
-                      {showAllCategories ? "Show less" : "Show more"}
+                      {showFullDescription ? "Show less" : "Read more"}
                     </button>
                   )}
                 </div>
               )}
 
+              {/* Permanently closed banner */}
+              {selectedShop.locationOpen == false && (
+                <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <FiAlertCircle
+                    className="flex-shrink-0 text-red-600 dark:text-red-400"
+                    size={16}
+                  />
+                  <span className="text-xs font-semibold text-red-700 dark:text-red-300">
+                    This location is permanently closed.
+                  </span>
+                </div>
+              )}
+
+              {/* Address row - clickable */}
+              <button
+                onClick={() => window.open(googleMapsSearchUrl, "_blank")}
+                aria-label="View address in Google Maps"
+                className="flex items-start gap-2 mt-3 w-full text-left text-text-base dark:text-text-inverted hover:text-primary dark:hover:text-brand-secondary transition-colors p-2 -ml-2 rounded-lg hover:bg-surface-muted dark:hover:bg-surface-darker focus:outline-none focus:ring-2 focus:ring-brand-secondary group"
+              >
+                <FiMapPin
+                  size={20}
+                  className="flex-shrink-0 text-primary group-hover:text-primary mt-0.5"
+                />
+                <span className="text-sm break-words">
+                  {selectedShop.address}
+                </span>
+              </button>
+
+              {/* Categories with improved labels */}
+              {parsedCategories.length > 0 && (
+                <div className="mt-3">
+                  <ul className="flex flex-wrap gap-2">
+                    {parsedCategories.map((category, index) => {
+                      const isHidden = !showAllCategories && index >= 3;
+                      return (
+                        <li key={category} className={isHidden ? "hidden" : ""}>
+                          <span className="bg-brand-secondary text-black px-3 py-1 rounded-full text-xs font-semibold">
+                            {category}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {hiddenCategoryCount > 0 && (
+                    <button
+                      onClick={() => setShowAllCategories((prev) => !prev)}
+                      className="mt-2 text-xs text-primary hover:text-primary/80 underline focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-1 rounded"
+                    >
+                      {showAllCategories
+                        ? "Show less"
+                        : `+${hiddenCategoryCount} more`}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Phone and Website */}
               <div className="mt-4 space-y-3">
                 {selectedShop.phone &&
                   selectedShop.phone !== "No phone number available" && (
                     <div className="flex items-center text-text-base dark:text-text-inverted">
-                      <FiPhone size={18} className="mr-2 text-primary" />
+                      <FiPhone
+                        size={18}
+                        className="mr-2 text-primary flex-shrink-0"
+                      />
                       <a
-                        href={`tel:${selectedShop.phone}`}
-                        className="hover:underline hover:text-primary"
+                        href={`tel:${sanitizePhone(selectedShop.phone)}`}
+                        className="hover:underline hover:text-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary rounded"
                       >
                         {selectedShop.phone}
                       </a>
                     </div>
                   )}
-                {selectedShop.usersAvatarEmail && (
-                  <div className="flex items-center text-text-base dark:text-text-inverted">
-                    <FiUser size={18} className="mr-2 text-primary" />
-                    <a
-                      href={`mailto:${selectedShop.usersAvatarEmail}`}
-                      className="hover:underline hover:text-primary"
-                    >
-                      {selectedShop.usersAvatarEmail}
-                    </a>
-                  </div>
-                )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
                   "no website available" && (
                     <a
-                      href={selectedShop.website}
+                      href={normalizeWebsiteUrl(selectedShop.website)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:underline hover:text-primary flex items-center text-text-base dark:text-text-inverted"
+                      className="hover:underline hover:text-primary flex items-center text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary rounded"
                     >
-                      <FiGlobe size={18} className="mr-2 text-primary" />
-                      Visit Website
+                      <FiGlobe
+                        size={18}
+                        className="mr-2 text-primary flex-shrink-0"
+                      />
+                      <span className="break-words">Visit Website</span>
                     </a>
                   )}
               </div>
 
-              <div className="mt-6 flex items-center space-x-3">
+              {/* Action buttons: Share and Open in Maps */}
+              <div className="mt-6 flex items-center gap-3">
                 <button
                   onClick={handleShareLocation}
-                  title="Share Shop"
-                  className="flex p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted"
+                  aria-label="Share shop"
+                  title="Share shop"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-dark dark:hover:bg-surface-darker transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                 >
                   <FiShare2 size={20} />
                 </button>
@@ -359,7 +507,9 @@ const MapSidebar = () => {
                   href={googleMapsSearchUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted"
+                  aria-label="Open in Google Maps"
+                  title="Open in Google Maps"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-dark dark:hover:bg-surface-darker transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                 >
                   <HiExternalLink size={20} />
                 </a>
@@ -367,34 +517,30 @@ const MapSidebar = () => {
 
               <div className="mt-6">
                 <h5 className="text-sm font-semibold text-text-muted dark:text-text-inverted my-2">
-                  Rating:
+                  Rating
                 </h5>
-                <div className="bg-surface-muted dark:bg-surface-dark p-1 rounded-lg">
-                  {!isMember && (
-                    <span
-                      onClick={openSignupModal}
-                      className="cursor-pointer bg-brand-secondary text-black text-xs font-bold rounded px-2 py-1"
-                    >
-                      Members Only
-                    </span>
-                  )}
+                <div className="bg-surface-muted dark:bg-surface-dark p-4 rounded-lg">
                   {loadingVotes ? (
-                    <div className="flex items-center justify-center text-primary mt-4">
+                    <div className="flex items-center justify-center text-primary py-4">
                       <GiSandwich className="animate-spin text-xl mr-2" />
                       Loading votes...
                     </div>
                   ) : (
-                    <VoteButtons
-                      isMember={isMember}
-                      userVote={userVote}
-                      handleVote={handleVote}
-                      upvotes={upvotes}
-                      downvotes={downvotes}
-                    />
+                    <>
+                      <VoteButtons
+                        isMember={isMember}
+                        userVote={userVote}
+                        handleVote={handleVote}
+                        upvotes={upvotes}
+                        downvotes={downvotes}
+                      />
+                      {displayMessage && (
+                        <p className="mt-4 text-center text-sm text-text-base dark:text-text-inverted">
+                          {displayMessage}
+                        </p>
+                      )}
+                    </>
                   )}
-                  <p className="mt-4 text-center italic text-text-base dark:text-text-inverted">
-                    {displayMessage}
-                  </p>
                 </div>
                 {selectedShop.createdBy && (
                   <div className="flex items-center mt-2 text-sm text-text-muted dark:text-text-inverted">
@@ -472,12 +618,16 @@ const MapSidebar = () => {
                               7,
                             );
 
-                            const avatarId =
-                              comment.userAvatar || "default";
+                            const avatarId = comment.userAvatar || "default";
                             const avatarEmail =
                               comment.userEmail || "guest@example.com";
                             const displayName =
                               comment.userName || "Sandwich Fan";
+
+                            const isOwnComment =
+                              userMetadata?.id === comment.userId;
+                            const isEditing = editingCommentId === comment.id;
+                            const isDeleting = deletingCommentId === comment.id;
 
                             return (
                               <div
@@ -514,27 +664,83 @@ const MapSidebar = () => {
                                           comment.dateCreated,
                                         )}
                                       </span>
+
+                                      {comment.dateModified &&
+                                        comment.dateModified !==
+                                        comment.dateCreated && (
+                                          <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
+                                            (edited)
+                                          </span>
+                                        )}
                                     </div>
 
-                                    <p className="mt-1 text-sm text-text-base dark:text-text-inverted leading-relaxed whitespace-pre-wrap break-words">
-                                      {expanded || !truncated ? body : preview}
-                                    </p>
+                                    {isEditing ? (
+                                      <div className="mt-2 space-y-2">
+                                        <textarea
+                                          value={editingCommentBody}
+                                          onChange={(e) =>
+                                            setEditingCommentBody(
+                                              e.target.value,
+                                            )
+                                          }
+                                          maxLength={5000}
+                                          className="w-full rounded-lg border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                                          rows={3}
+                                        />
+                                        <div className="flex gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleUpdateComment(comment.id)
+                                            }
+                                            disabled={
+                                              updatingComment ||
+                                              editingCommentBody.trim()
+                                                .length === 0
+                                            }
+                                            className="flex items-center gap-1 px-3 py-1 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:bg-brand-secondary hover:text-text-base transition-colors disabled:bg-surface-dark disabled:text-text-muted disabled:cursor-not-allowed"
+                                          >
+                                            <FiCheck size={14} />
+                                            {updatingComment
+                                              ? "Saving..."
+                                              : "Save"}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={handleCancelEdit}
+                                            disabled={updatingComment}
+                                            className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted text-sm font-semibold hover:bg-surface-dark dark:hover:bg-surface-darker transition-colors"
+                                          >
+                                            <FiX size={14} />
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <p className="mt-1 text-sm text-text-base dark:text-text-inverted leading-relaxed whitespace-pre-wrap break-words">
+                                          {expanded || !truncated
+                                            ? body
+                                            : preview}
+                                        </p>
 
-                                    {truncated && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          toggleCommentExpanded(
-                                            String(comment.id),
-                                          )
-                                        }
-                                        className="mt-2 text-xs text-primary underline"
-                                      >
-                                        {expanded ? "Show less" : "More"}
-                                      </button>
+                                        {truncated && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              toggleCommentExpanded(
+                                                String(comment.id),
+                                              )
+                                            }
+                                            className="mt-2 text-xs text-primary underline"
+                                          >
+                                            {expanded ? "Show less" : "More"}
+                                          </button>
+                                        )}
+                                      </>
                                     )}
 
-                                    <div className="mt-2 flex items-center gap-2">
+                                    <div className="mt-2 flex items-center gap-3">
                                       <span
                                         className="text-[11px] text-text-muted dark:text-text-inverted"
                                         title={new Date(
@@ -545,6 +751,32 @@ const MapSidebar = () => {
                                           comment.dateCreated,
                                         ).toLocaleDateString()}
                                       </span>
+
+                                      {isOwnComment && !isEditing && (
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleEditComment(comment)
+                                            }
+                                            className="text-text-muted dark:text-text-inverted hover:text-primary dark:hover:text-brand-secondary transition-colors"
+                                            title="Edit comment"
+                                          >
+                                            <FiEdit size={14} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleDeleteComment(comment.id)
+                                            }
+                                            disabled={isDeleting}
+                                            className="text-text-muted dark:text-text-inverted hover:text-red-600 dark:hover:text-red-500 transition-colors disabled:opacity-50"
+                                            title="Delete comment"
+                                          >
+                                            <FiTrash2 size={14} />
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -555,67 +787,49 @@ const MapSidebar = () => {
                       </div>
 
                       <div className="pt-3 border-t border-surface-dark/10 dark:border-surface-muted/20">
-                        {isMember ? (
-                          <form
-                            onSubmit={handleCommentSubmit}
-                            className="space-y-2"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs text-text-muted dark:text-text-inverted">
-                                Share your experience
-                              </span>
-                              <span className="text-xs text-text-muted dark:text-text-inverted">
-                                {commentBody.length}/5000
-                              </span>
-                            </div>
+                        <form
+                          onSubmit={handleCommentSubmit}
+                          className="space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-text-muted dark:text-text-inverted">
+                              Share your experience
+                            </span>
+                            <span className="text-xs text-text-muted dark:text-text-inverted">
+                              {commentBody.length}/5000
+                            </span>
+                          </div>
 
-                            <textarea
-                              value={commentBody}
-                              onChange={(event) =>
-                                setCommentBody(event.target.value)
-                              }
-                              placeholder="What should other sandwich fans know?"
-                              maxLength={5000}
-                              className="w-full rounded-xl border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
-                              rows={3}
-                            />
+                          <textarea
+                            value={commentBody}
+                            onChange={(event) =>
+                              setCommentBody(event.target.value)
+                            }
+                            placeholder="What should other sandwich fans know?"
+                            maxLength={5000}
+                            className="w-full rounded-xl border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                            rows={3}
+                          />
 
-                            <div className="flex justify-end">
-                              <button
-                                type="submit"
-                                disabled={
-                                  submittingComment ||
-                                  commentBody.trim().length === 0
-                                }
-                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                                  submittingComment ||
-                                  commentBody.trim().length === 0
-                                    ? "bg-surface-dark text-text-muted cursor-not-allowed"
-                                    : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base"
-                                }`}
-                              >
-                                {submittingComment ? "Posting..." : "Post Comment"}
-                              </button>
-                            </div>
-                          </form>
-                        ) : (
-                          <div className="flex items-center justify-between bg-surface-light dark:bg-surface-darker p-3 rounded-xl border border-surface-dark/10 dark:border-surface-muted/20">
-                            <div>
-                              <p className="text-sm font-semibold text-text-base dark:text-text-inverted">
-                                Join the community
-                              </p>
-                              <p className="text-xs text-text-muted dark:text-text-inverted">
-                                Sign up to leave a comment and vote on shops.
-                              </p>
-                            </div>
+                          <div className="flex justify-end">
                             <button
-                              onClick={openSignupModal}
-                              className="px-3 py-2 rounded-xl bg-brand-secondary text-black text-sm font-semibold hover:bg-brand-secondary/80"
+                              type="submit"
+                              disabled={
+                                submittingComment ||
+                                commentBody.trim().length === 0
+                              }
+                              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${submittingComment ||
+                                  commentBody.trim().length === 0
+                                  ? "bg-surface-dark text-text-muted cursor-not-allowed"
+                                  : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base"
+                                }`}
                             >
-                              Sign up
+                              {submittingComment
+                                ? "Posting..."
+                                : "Post Comment"}
                             </button>
                           </div>
-                        )}
+                        </form>
                       </div>
                     </div>
                   )}
@@ -629,26 +843,18 @@ const MapSidebar = () => {
           )}
         </div>
 
-        <div className="px-5 py-5">
-          <div className="flex flex-col space-y-3">
-            <button
-              className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
-              onClick={() =>
-                window.open(
-                  `https://www.google.com/maps/dir/?api=1&destination=${selectedShop?.address}`,
-                  "_blank",
-                )
-              }
-            >
-              Get Directions
-            </button>
-            <button
-              className="w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50"
-              onClick={closeSidebar}
-            >
-              Close Sidebar
-            </button>
-          </div>
+        <div className="px-5 py-4 border-t border-surface-dark/10 dark:border-surface-muted/20">
+          <button
+            className="w-full px-4 py-3 rounded-lg bg-brand-primary text-white font-semibold hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors"
+            onClick={() =>
+              window.open(
+                `https://www.google.com/maps/dir/?api=1&destination=${selectedShop?.address}`,
+                "_blank",
+              )
+            }
+          >
+            Get Directions
+          </button>
         </div>
       </div>
     </aside>

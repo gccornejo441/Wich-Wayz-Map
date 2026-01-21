@@ -118,29 +118,32 @@ export type ShopDataVariants = {
   // Image fields
   image_url?: string;
   imageUrl?: string;
-  
+
   // Description fields
   shop_description?: string;
   description?: string;
-  
+
   // User/Creator fields
   usersAvatarEmail?: string;
+  users_avatar_email?: string;
   user_email?: string;
   usersAvatarId?: string;
+  users_avatar_id?: string;
   user_avatar_id?: string;
   createdBy?: string;
   created_by?: string | number;
-  
+  created_by_username?: string;
+
   // Voting
   votes?: number;
-  
+
   // Categories
   categoryIds?: number[];
   category_ids?: number[];
-  
+
   // Contact
   phone?: string;
-  
+
   // Website fields
   website?: string;
   website_url?: string;
@@ -155,14 +158,14 @@ export type LocationDataVariants = {
   address?: string;
   street_address?: string;
   street_address_second?: string;
-  
+
   // Location details
   city?: string;
   state?: string;
   postalCode?: string;
   postal_code?: string;
   country?: string;
-  
+
   // Contact
   website?: string;
   phone?: string;

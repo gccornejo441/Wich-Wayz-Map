@@ -112,9 +112,6 @@ const UserProfile = () => {
               setUserMetadata({ ...userMetadata, lastName })
             }
             username={userMetadata.username || ""}
-            setUsername={(username) =>
-              setUserMetadata({ ...userMetadata, username })
-            }
             handleUpdateProfile={handleUpdateProfile}
           />
         </>

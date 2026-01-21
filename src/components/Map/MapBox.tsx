@@ -6,12 +6,16 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
+import { useTheme } from "@/hooks/useTheme";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
+
+const MAPBOX_STYLE_LIGHT = "mapbox://styles/mapbox/streets-v12";
+const MAPBOX_STYLE_DARK = "mapbox://styles/mapbox/navigation-night-v1";
 
 const loadingMessages = [
   "Stacking the Sandwich...",
@@ -125,7 +129,10 @@ const stopMapClick = (e: mapboxgl.MapMouseEvent) => {
   if (oe) {
     oe.preventDefault();
     oe.stopPropagation();
-    if ('stopImmediatePropagation' in oe && typeof oe.stopImmediatePropagation === 'function') {
+    if (
+      "stopImmediatePropagation" in oe &&
+      typeof oe.stopImmediatePropagation === "function"
+    ) {
       oe.stopImmediatePropagation();
     }
   }
@@ -201,10 +208,10 @@ const buildShopPropsFromShopAndLocation = (
 
   const categoryIds =
     Array.isArray(shopAny.categoryIds) &&
-    shopAny.categoryIds.every((x) => typeof x === "number")
+      shopAny.categoryIds.every((x) => typeof x === "number")
       ? shopAny.categoryIds
       : Array.isArray(shopAny.category_ids) &&
-          shopAny.category_ids.every((x) => typeof x === "number")
+        shopAny.category_ids.every((x) => typeof x === "number")
         ? shopAny.category_ids
         : undefined;
 
@@ -220,12 +227,22 @@ const buildShopPropsFromShopAndLocation = (
     categories: getCategoriesString(shop),
 
     imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
-    description: getString(shopAny.description) ?? getString(shopAny.shop_description),
+    description:
+      getString(shopAny.description) ?? getString(shopAny.shop_description),
 
-    usersAvatarEmail: getString(shopAny.usersAvatarEmail) ?? getString(shopAny.user_email),
-    usersAvatarId: getString(shopAny.usersAvatarId) ?? getString(shopAny.user_avatar_id),
+    usersAvatarEmail:
+      getString(shopAny.usersAvatarEmail) ??
+      getString(shopAny.users_avatar_email) ??
+      getString(shopAny.user_email),
+    usersAvatarId:
+      getString(shopAny.usersAvatarId) ??
+      getString(shopAny.users_avatar_id) ??
+      getString(shopAny.user_avatar_id),
 
-    createdBy: getString(shopAny.createdBy) ?? getString(shopAny.created_by),
+    createdBy:
+      getString(shopAny.createdBy) ??
+      getString(shopAny.created_by_username) ??
+      getString(shopAny.created_by),
 
     votes: isNumber(shopAny.votes) ? shopAny.votes : undefined,
     categoryIds,
@@ -245,7 +262,9 @@ const buildShopPropsFromShopAndLocation = (
   };
 };
 
-const buildShopGeoJson = (displayedShops: ShopWithUser[]): ShopFeatureCollection => {
+const buildShopGeoJson = (
+  displayedShops: ShopWithUser[],
+): ShopFeatureCollection => {
   const features: ShopFeature[] = [];
 
   for (const shop of displayedShops) {
@@ -358,13 +377,16 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
 const MapBox = () => {
   const { displayedShops } = useShops();
   const { openSidebar } = useShopSidebar();
+  const { theme } = useTheme();
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
   const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(
+    null,
+  );
 
   const [loading, setLoading] = useState(true);
   const loadingCaption = useMemo(() => {
@@ -376,6 +398,25 @@ const MapBox = () => {
   const userPositionRef = useLatest(userPosition);
 
   const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
+
+  // Monotonic sequence to prevent stale "idle" events from hiding the spinner prematurely.
+  // When shopGeoJson updates rapidly (filters/pagination), we increment this counter.
+  // Only the idle event matching the latest sequence will hide the loading state.
+  const loadingSeqRef = useRef(0);
+
+  /**
+   * Helper to hide loading spinner once Mapbox has finished rendering.
+   * Uses map.once("idle") to wait for all tiles, sources, and layers to complete.
+   * Sequence guard prevents stale events from hiding spinner after newer updates.
+   * This replaces timeout/RAF heuristics with deterministic event-based synchronization.
+   */
+  const hideLoadingWhenMapReady = (map: Map, expectedSeq: number) => {
+    map.once("idle", () => {
+      if (loadingSeqRef.current === expectedSeq) {
+        setLoading(false);
+      }
+    });
+  };
 
   useEffect(() => {
     const fallback: [number, number] = INITIAL_CENTER;
@@ -401,9 +442,13 @@ const MapBox = () => {
     if (!mapContainerRef.current) return;
     if (mapRef.current) return;
 
-    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string | undefined;
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as
+      | string
+      | undefined;
     if (!token) {
-      throw new Error("Missing VITE_MAPBOX_ACCESS_TOKEN in environment variables.");
+      throw new Error(
+        "Missing VITE_MAPBOX_ACCESS_TOKEN in environment variables.",
+      );
     }
 
     mapboxgl.accessToken = token;
@@ -412,7 +457,7 @@ const MapBox = () => {
       container: mapContainerRef.current,
       center: INITIAL_CENTER,
       zoom: INITIAL_ZOOM,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT,
     });
 
     mapRef.current = map;
@@ -431,6 +476,10 @@ const MapBox = () => {
     const onLoad = () => {
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
 
+      // Wait for Mapbox to finish rendering initial layers before hiding spinner
+      loadingSeqRef.current += 1;
+      hideLoadingWhenMapReady(map, loadingSeqRef.current);
+
       map.on("click", CLUSTERS_LAYER_ID, (e) => {
         stopMapClick(e);
 
@@ -442,17 +491,22 @@ const MapBox = () => {
         if (!isNumber(clusterId)) return;
 
         const src = map.getSource(SOURCE_ID) as GeoJSONSource;
-        if (!src || !('getClusterExpansionZoom' in src)) return;
+        if (!src || !("getClusterExpansionZoom" in src)) return;
 
-        (src as GeoJSONSource & {
-          getClusterExpansionZoom: (
-            id: number,
-            cb: (err: Error | null, zoom: number) => void,
-          ) => void;
-        }).getClusterExpansionZoom(clusterId, (err, nextZoom) => {
+        (
+          src as GeoJSONSource & {
+            getClusterExpansionZoom: (
+              id: number,
+              cb: (err: Error | null, zoom: number) => void,
+            ) => void;
+          }
+        ).getClusterExpansionZoom(clusterId, (err, nextZoom) => {
           if (err) return;
 
-          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+          const coords = (feature.geometry as GeoJSON.Point).coordinates as [
+            number,
+            number,
+          ];
 
           const safeZoom =
             typeof nextZoom === "number" && Number.isFinite(nextZoom)
@@ -487,7 +541,10 @@ const MapBox = () => {
         const props = coercePropsFromFeatureProperties(raw);
         if (!props) return;
 
-        const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+        const coords = (feature.geometry as GeoJSON.Point).coordinates as [
+          number,
+          number,
+        ];
 
         closeHoverPopup();
         hoverPopupRef.current = new mapboxgl.Popup({
@@ -512,8 +569,6 @@ const MapBox = () => {
       map.on("mouseleave", CLUSTERS_LAYER_ID, () => {
         map.getCanvas().style.cursor = "";
       });
-
-      setTimeout(() => setLoading(false), 150);
     };
 
     map.on("move", onMove);
@@ -526,7 +581,7 @@ const MapBox = () => {
       map.remove();
       mapRef.current = null;
     };
-  }, [openSidebarRef, shopGeoJsonRef, userPositionRef]);
+  }, [openSidebarRef, shopGeoJsonRef, userPositionRef, theme]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -535,19 +590,53 @@ const MapBox = () => {
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;
 
-    if (shopGeoJson.features.length === 0) {
-      src.setData(shopGeoJson);
-      setLoading(false);
-      return;
-    }
-
+    // Show spinner and update data
     setLoading(true);
     src.setData(shopGeoJson);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setLoading(false));
-    });
+    // Increment sequence and wait for Mapbox to finish rendering
+    loadingSeqRef.current += 1;
+    hideLoadingWhenMapReady(map, loadingSeqRef.current);
   }, [shopGeoJson]);
+
+  // Effect to update map style when theme changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    const newStyle = theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+    const currentStyle = map.getStyle();
+
+    // Only update if style actually changed
+    if (
+      currentStyle &&
+      currentStyle.sprite?.includes(theme === "dark" ? "streets" : "dark")
+    ) {
+      // Show loading indicator during style change
+      setLoading(true);
+
+      // Preserve current map state
+      const currentCenter = map.getCenter();
+      const currentZoom = map.getZoom();
+
+      // Set new style
+      map.setStyle(newStyle);
+
+      // Re-add layers and data after style loads
+      map.once("style.load", () => {
+        // Restore position
+        map.setCenter(currentCenter);
+        map.setZoom(currentZoom);
+
+        // Re-create source and layers
+        ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+
+        // Wait for map to finish rendering before hiding spinner
+        loadingSeqRef.current += 1;
+        hideLoadingWhenMapReady(map, loadingSeqRef.current);
+      });
+    }
+  }, [theme, shopGeoJsonRef]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -574,8 +663,8 @@ const MapBox = () => {
           lineHeight: 1.3,
         }}
       >
-        Longitude: {center[0].toFixed(4)} | Latitude: {center[1].toFixed(4)} | Zoom:{" "}
-        {zoom.toFixed(2)} | Shops: {shopGeoJson.features.length}
+        Longitude: {center[0].toFixed(4)} | Latitude: {center[1].toFixed(4)} |
+        Zoom: {zoom.toFixed(2)} | Shops: {shopGeoJson.features.length}
       </div>
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
