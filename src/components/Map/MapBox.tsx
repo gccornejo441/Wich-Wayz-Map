@@ -392,6 +392,13 @@ const MapBox = () => {
   );
 
   const [loading, setLoading] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  const appliedStyleRef = useRef<string>(
+    theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT,
+  );
+  const styleSeqRef = useRef(0);
+
   const loadingCaption = useMemo(() => {
     const index = Math.floor(Math.random() * loadingMessages.length);
     return loadingMessages[index];
@@ -404,17 +411,8 @@ const MapBox = () => {
   const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
   const processedDeepLinkRef = useRef<string | null>(null);
 
-  // Monotonic sequence to prevent stale "idle" events from hiding the spinner prematurely.
-  // When shopGeoJson updates rapidly (filters/pagination), we increment this counter.
-  // Only the idle event matching the latest sequence will hide the loading state.
   const loadingSeqRef = useRef(0);
 
-  /**
-   * Helper to hide loading spinner once Mapbox has finished rendering.
-   * Uses map.once("idle") to wait for all tiles, sources, and layers to complete.
-   * Sequence guard prevents stale events from hiding spinner after newer updates.
-   * This replaces timeout/RAF heuristics with deterministic event-based synchronization.
-   */
   const hideLoadingWhenMapReady = (map: Map, expectedSeq: number) => {
     map.once("idle", () => {
       if (loadingSeqRef.current === expectedSeq) {
@@ -458,11 +456,15 @@ const MapBox = () => {
 
     mapboxgl.accessToken = token;
 
+    const initialStyle =
+      theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+    appliedStyleRef.current = initialStyle;
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       center: INITIAL_CENTER,
       zoom: INITIAL_ZOOM,
-      style: theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT,
+      style: initialStyle,
     });
 
     mapRef.current = map;
@@ -479,9 +481,10 @@ const MapBox = () => {
     };
 
     const onLoad = () => {
+      setMapLoaded(true);
+
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
 
-      // Wait for Mapbox to finish rendering initial layers before hiding spinner
       loadingSeqRef.current += 1;
       hideLoadingWhenMapReady(map, loadingSeqRef.current);
 
@@ -580,6 +583,7 @@ const MapBox = () => {
     map.on("load", onLoad);
 
     return () => {
+      setMapLoaded(false);
       closeHoverPopup();
       map.off("load", onLoad);
       map.off("move", onMove);
@@ -595,87 +599,77 @@ const MapBox = () => {
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;
 
-    // Show spinner and update data
     setLoading(true);
     src.setData(shopGeoJson);
 
-    // Increment sequence and wait for Mapbox to finish rendering
     loadingSeqRef.current += 1;
     hideLoadingWhenMapReady(map, loadingSeqRef.current);
   }, [shopGeoJson]);
 
-  // Effect to update map style when theme changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
 
-    const newStyle = theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
-    const currentStyle = map.getStyle();
+    const desiredStyle = theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+    if (appliedStyleRef.current === desiredStyle) return;
 
-    // Only update if style actually changed
-    if (
-      currentStyle &&
-      currentStyle.sprite?.includes(theme === "dark" ? "streets" : "dark")
-    ) {
-      // Show loading indicator during style change
-      setLoading(true);
+    appliedStyleRef.current = desiredStyle;
+    styleSeqRef.current += 1;
+    const expectedStyleSeq = styleSeqRef.current;
 
-      // Preserve current map state
-      const currentCenter = map.getCenter();
-      const currentZoom = map.getZoom();
+    setLoading(true);
 
-      // Set new style
-      map.setStyle(newStyle);
+    const currentCenter = map.getCenter();
+    const currentZoom = map.getZoom();
 
-      // Re-add layers and data after style loads
-      map.once("style.load", () => {
-        // Restore position
-        map.setCenter(currentCenter);
-        map.setZoom(currentZoom);
+    map.setStyle(desiredStyle);
 
-        // Re-create source and layers
-        ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+    map.once("style.load", () => {
+      if (styleSeqRef.current !== expectedStyleSeq) return;
 
-        // Wait for map to finish rendering before hiding spinner
-        loadingSeqRef.current += 1;
-        hideLoadingWhenMapReady(map, loadingSeqRef.current);
-      });
-    }
+      map.setCenter(currentCenter);
+      map.setZoom(currentZoom);
+
+      ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+
+      const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+      if (src) {
+        src.setData(shopGeoJsonRef.current);
+      }
+
+      loadingSeqRef.current += 1;
+      hideLoadingWhenMapReady(map, loadingSeqRef.current);
+    });
   }, [theme, shopGeoJsonRef]);
 
   useEffect(() => {
     const params = parseDeepLink(location.search);
     if (!params) return;
 
-    const { lat, lng, shopId } = params;
-    const paramsKey = `${lat},${lng},${shopId}`;
+    const map = mapRef.current;
+    if (!mapLoaded || !map) return;
 
+    const { lat, lng, z, shopId } = params;
+
+    const zoomValue = typeof z === "number" && Number.isFinite(z) ? z : 16;
+
+    const paramsKey = `${lat},${lng},${zoomValue},${shopId ?? ""}`;
     if (processedDeepLinkRef.current === paramsKey) return;
 
     processedDeepLinkRef.current = paramsKey;
 
-    const map = mapRef.current;
+    map.flyTo({
+      center: [lng, lat],
+      zoom: zoomValue,
+      essential: true,
+    });
 
-    const executeDeepLink = () => {
-      if (!map) return;
-
-      map.flyTo({
-        center: [lng, lat],
-        zoom: 16,
-        essential: true,
-      });
-
+    if (typeof shopId === "number" && Number.isFinite(shopId)) {
       selectShopByIdRef.current(shopId, [lng, lat]).catch((error) => {
         console.error("Deep-link navigation failed:", error);
       });
-    };
-
-    if (map && map.isStyleLoaded()) {
-      executeDeepLink();
-    } else if (map) {
-      map.once("load", executeDeepLink);
     }
-  }, [location.search, selectShopByIdRef]);
+  }, [location.search, mapLoaded, selectShopByIdRef]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>

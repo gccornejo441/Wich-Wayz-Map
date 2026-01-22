@@ -8,6 +8,7 @@ import Map, {
 } from "react-map-gl";
 import { HiClipboard } from "react-icons/hi";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useTheme } from "@hooks/useTheme";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
@@ -25,31 +26,20 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   address,
   onAddressUpdate,
 }) => {
+  const { theme } = useTheme();
   const [coords, setCoords] = useState<Coordinates | null>(null);
-  const [mapStyle, setMapStyle] = useState(
-    document.documentElement.classList.contains("dark")
-      ? "mapbox://styles/mapbox/navigation-night-v1"
-      : "mapbox://styles/mapbox/streets-v12",
-  );
   const mapRef = useRef<MapRef | null>(null);
 
+  const mapStyle =
+    theme === "dark"
+      ? "mapbox://styles/mapbox/navigation-night-v1"
+      : "mapbox://styles/mapbox/streets-v12";
+
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const isDark = document.documentElement.classList.contains("dark");
-      const style = isDark
-        ? "mapbox://styles/mapbox/navigation-night-v1"
-        : "mapbox://styles/mapbox/streets-v12";
-      setMapStyle(style);
-      mapRef.current?.getMap().setStyle(style);
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
+    if (mapRef.current) {
+      mapRef.current.getMap().setStyle(mapStyle);
+    }
+  }, [mapStyle]);
 
   useEffect(() => {
     if (!address) return;

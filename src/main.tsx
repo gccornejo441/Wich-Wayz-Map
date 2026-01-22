@@ -7,16 +7,11 @@ import App from "./App.tsx";
 import { ShopsProvider } from "./context/shopContext.tsx";
 import { AuthProvider } from "./context/authContext.tsx";
 
-const prefersDark =
-  localStorage.theme === "dark" ||
-  (!("theme" in localStorage) &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-if (prefersDark) {
-  document.documentElement.classList.add("dark");
-} else {
-  document.documentElement.classList.remove("dark");
-}
+// Theme initialization is handled by useTheme hook via useSyncExternalStore
+// The hook's initTheme() function runs on first subscription and handles:
+// - Reading from localStorage
+// - Falling back to system preference
+// - Applying the dark class to document.documentElement
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

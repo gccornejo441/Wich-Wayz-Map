@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import SidebarFooter from "./SidebarFooter";
 import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { BsFillAwardFill } from "react-icons/bs";
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
@@ -29,6 +29,17 @@ export const SidebarItem = ({
   external,
 }: BaseItemProps) => {
   const { closeSidebar } = useSidebar();
+  const location = useLocation();
+
+  const resolvedLinkTo = useMemo(() => {
+    if (!linkTo) return undefined;
+    if (external) return linkTo;
+    if (linkTo.includes("?")) return linkTo;
+    if (linkTo === ROUTES.HOME && location.search) {
+      return `${linkTo}${location.search}`;
+    }
+    return linkTo;
+  }, [linkTo, external, location.search]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (disabled) {
@@ -37,7 +48,6 @@ export const SidebarItem = ({
     }
 
     closeSidebar();
-
     onClick?.();
   };
 
@@ -68,10 +78,10 @@ export const SidebarItem = ({
     </div>
   );
 
-  if (linkTo) {
+  if (resolvedLinkTo) {
     return external ? (
       <a
-        href={linkTo}
+        href={resolvedLinkTo}
         target="_blank"
         rel="noopener noreferrer"
         className="w-full"
@@ -79,7 +89,7 @@ export const SidebarItem = ({
         {content}
       </a>
     ) : (
-      <Link to={linkTo} className="w-full">
+      <Link to={resolvedLinkTo} className="w-full">
         {content}
       </Link>
     );

@@ -30,6 +30,7 @@ import {
 } from "@services/commentService";
 import { Comment } from "@models/Comment";
 import { useModal } from "@/context/modalContext";
+import { ShareLinkModal } from "@/components/Modal/ShareLinkModal";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   const totalVotes = upvotes + downvotes;
@@ -87,8 +88,7 @@ const makePreview = (text: string, maxChars = 220) => {
 };
 
 const MapSidebar = () => {
-  const { selectedShop, position, sidebarOpen, closeSidebar } =
-    useShopSidebar();
+  const { selectedShop, sidebarOpen, closeSidebar } = useShopSidebar();
   const { addToast } = useToast();
   const navigate = useNavigate();
   const { openSignupModal } = useModal();
@@ -117,6 +117,8 @@ const MapSidebar = () => {
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
     null,
   );
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
@@ -269,29 +271,23 @@ const MapSidebar = () => {
 
   const handleShareLocation = async () => {
     try {
+      if (!selectedShop) {
+        addToast("No shop selected.", "error");
+        return;
+      }
+
       let latitude: number | undefined;
       let longitude: number | undefined;
 
-      // Primary: Use selectedShop coordinates
       if (
-        selectedShop?.latitude !== undefined &&
-        selectedShop?.longitude !== undefined &&
+        selectedShop.latitude !== undefined &&
+        selectedShop.longitude !== undefined &&
         Number.isFinite(selectedShop.latitude) &&
         Number.isFinite(selectedShop.longitude)
       ) {
         latitude = selectedShop.latitude;
         longitude = selectedShop.longitude;
-      }
-      // Fallback: Use position from context
-      else if (position) {
-        const [lng, lat] = position;
-        if (Number.isFinite(lng) && Number.isFinite(lat)) {
-          longitude = lng;
-          latitude = lat;
-        }
-      }
-      // Last-chance: Try to fetch shop by ID
-      else if (selectedShop?.shopId) {
+      } else if (selectedShop.shopId) {
         try {
           const { fetchShopById } = await import("@services/shopService");
           const shopData = await fetchShopById(selectedShop.shopId);
@@ -309,34 +305,31 @@ const MapSidebar = () => {
         }
       }
 
-      // Validate we have valid coordinates
       if (
         latitude === undefined ||
         longitude === undefined ||
         !Number.isFinite(latitude) ||
         !Number.isFinite(longitude)
       ) {
-        addToast("Location data is missing.", "error");
+        addToast("This shop is missing coordinates.", "error");
         return;
       }
 
-      const baseUrl = window.location.origin;
-      const params = new URLSearchParams();
+      const { buildDeepLink } = await import("@utils/deepLink");
 
-      params.append("lat", latitude.toString());
-      params.append("lng", longitude.toString());
+      const url = buildDeepLink({
+        lat: latitude,
+        lng: longitude,
+        z: 16,
+        shopId: selectedShop.shopId,
+      });
 
-      if (selectedShop?.shopId) {
-        params.append("shopId", selectedShop.shopId.toString());
-      }
-
-      const shareableLink = `${baseUrl}?${params.toString()}`;
-      await navigator.clipboard.writeText(shareableLink);
-
-      addToast("Location link copied to clipboard!", "success");
+      // Open share modal instead of using Web Share API
+      setShareUrl(url);
+      setIsShareModalOpen(true);
     } catch (error) {
-      addToast("Failed to copy location link.", "error");
-      console.error("Failed to copy location link:", error);
+      addToast("Failed to generate share link.", "error");
+      console.error("Failed to generate share link:", error);
     }
   };
 
@@ -363,9 +356,9 @@ const MapSidebar = () => {
   // Parse categories safely
   const parsedCategories = selectedShop?.categories
     ? selectedShop.categories
-        .split(",")
-        .map((cat) => cat.trim())
-        .filter((cat) => cat.length > 0)
+      .split(",")
+      .map((cat) => cat.trim())
+      .filter((cat) => cat.length > 0)
     : [];
 
   const hiddenCategoryCount =
@@ -378,9 +371,8 @@ const MapSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
     >
       <div className="flex flex-col h-full">
         <div className="flex justify-end p-3">
@@ -523,7 +515,7 @@ const MapSidebar = () => {
                   )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
-                    "no website available" && (
+                  "no website available" && (
                     <a
                       href={normalizeWebsiteUrl(selectedShop.website)}
                       target="_blank"
@@ -545,7 +537,7 @@ const MapSidebar = () => {
                   onClick={handleShareLocation}
                   aria-label="Share shop"
                   title="Share shop"
-                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-dark dark:hover:bg-surface-darker transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-brand-primary dark:bg-brand-primary rounded-lg text-white hover:bg-opacity-90 dark:hover:bg-opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                 >
                   <FiShare2 size={20} />
                 </button>
@@ -555,7 +547,7 @@ const MapSidebar = () => {
                   rel="noopener noreferrer"
                   aria-label="Open in Google Maps"
                   title="Open in Google Maps"
-                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-surface-muted dark:bg-surface-dark rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-dark dark:hover:bg-surface-darker transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                  className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 bg-brand-primary dark:bg-brand-primary rounded-lg text-white hover:bg-opacity-90 dark:hover:bg-opacity-90 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                 >
                   <HiExternalLink size={20} />
                 </a>
@@ -715,7 +707,7 @@ const MapSidebar = () => {
 
                                       {comment.dateModified &&
                                         comment.dateModified !==
-                                          comment.dateCreated && (
+                                        comment.dateCreated && (
                                           <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
                                             (edited)
                                           </span>
@@ -901,6 +893,15 @@ const MapSidebar = () => {
           </button>
         </div>
       </div>
+
+      <ShareLinkModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        url={shareUrl}
+        shopName={selectedShop?.shopName}
+        onCopySuccess={() => addToast("Link copied to clipboard!", "success")}
+        onCopyError={() => addToast("Failed to copy link.", "error")}
+      />
     </aside>
   );
 };

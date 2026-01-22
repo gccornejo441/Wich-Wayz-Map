@@ -76,3 +76,7 @@ data/backups/wich-wayz-map_2026-01-19_102057.sql
 data/backups/wich-wayz-map_2026-01-19_102127.db
 data/backups/wich-wayz-map_2026-01-19_102127.schema.sql
 data/backups/wich-wayz-map_2026-01-19_102127.sql
+
+
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
