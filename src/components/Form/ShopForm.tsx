@@ -240,10 +240,11 @@ const ShopForm = ({
             }
           }}
           placeholder="https://example.com"
-          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
+          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+            errors.website_url
               ? "border-red-500 dark:border-red-500"
               : "border-brand-primary dark:border-text-muted"
-            }`}
+          }`}
         />
         {errors.website_url && (
           <p className="mt-1 text-sm text-red-500 dark:text-red-400">
@@ -259,8 +260,9 @@ const ShopForm = ({
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
-            }`}
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+            errors.phone ? "border-red-500 dark:border-red-500" : ""
+          }`}
         />
       </InputField>
 
@@ -318,8 +320,9 @@ const ShopForm = ({
           type="button"
           onClick={prefillAddressFields}
           disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           title="Click to prefill the address details"
         >
           Prefill Address
@@ -329,8 +332,9 @@ const ShopForm = ({
           type="button"
           onClick={handledManualEntry}
           disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
@@ -350,13 +354,14 @@ const ShopForm = ({
           !!errors.address ||
           isSubmitting
         }
-        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
-            !!errors.shopName ||
-            !!errors.address ||
-            isSubmitting
+        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${
+          !isAddressValid ||
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
             ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
             : "bg-brand-primary hover:bg-secondary"
-          }`}
+        }`}
       >
         {isSubmitting ? (
           <>

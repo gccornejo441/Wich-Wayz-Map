@@ -132,8 +132,9 @@ const UpdateShop = () => {
             <input
               type="text"
               {...register("name")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${errors.name ? "border-red-500" : "border-secondary"
-                }`}
+              className={`w-full p-2 border rounded-lg bg-white text-dark ${
+                errors.name ? "border-red-500" : "border-secondary"
+              }`}
             />
             {errors.name && (
               <p className="text-red-500 text-sm">{errors.name.message}</p>
@@ -147,8 +148,9 @@ const UpdateShop = () => {
             <input
               type="text"
               {...register("description")}
-              className={`w-full p-2 border rounded-lg bg-white text-dark ${errors.description ? "border-red-500" : "border-secondary"
-                }`}
+              className={`w-full p-2 border rounded-lg bg-white text-dark ${
+                errors.description ? "border-red-500" : "border-secondary"
+              }`}
             />
             {errors.description && (
               <p className="text-red-500 text-sm">
@@ -187,10 +189,11 @@ const UpdateShop = () => {
 
           <button
             type="submit"
-            className={`w-full px-4 py-2 rounded-lg text-white ${isSaving
+            className={`w-full px-4 py-2 rounded-lg text-white ${
+              isSaving
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-primary hover:bg-secondary"
-              }`}
+            }`}
             disabled={isSaving}
           >
             {isSaving ? "Saving..." : "Save Changes"}

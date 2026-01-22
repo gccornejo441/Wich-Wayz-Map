@@ -3,13 +3,10 @@ import { Category } from "@models/Category";
 
 type ApiError = Error & { status?: number };
 
-const apiBase =
-  (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
+const apiBase = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
 
 const buildUrl = (path: string) => {
-  const normalizedBase = apiBase.endsWith("/")
-    ? apiBase.slice(0, -1)
-    : apiBase;
+  const normalizedBase = apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${normalizedBase}${normalizedPath}`;
 };

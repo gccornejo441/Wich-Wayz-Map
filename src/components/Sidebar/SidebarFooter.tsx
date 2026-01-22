@@ -56,17 +56,11 @@ const SidebarFooter = () => {
           Contact Us
         </button>
 
-        <Link
-          to={ROUTES.LEGAL.PRIVACY_POLICY}
-          className={linkBaseClasses}
-        >
+        <Link to={ROUTES.LEGAL.PRIVACY_POLICY} className={linkBaseClasses}>
           Privacy Policy
         </Link>
 
-        <Link
-          to={ROUTES.LEGAL.TERMS_OF_SERVICE}
-          className={linkBaseClasses}
-        >
+        <Link to={ROUTES.LEGAL.TERMS_OF_SERVICE} className={linkBaseClasses}>
           Terms of Service
         </Link>
       </nav>

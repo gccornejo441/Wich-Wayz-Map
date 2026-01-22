@@ -1,5 +1,6 @@
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 import { useState, createContext, useContext, useEffect } from "react";
+import { fetchShopById } from "@services/shopService";
 
 type Coordinates = [number, number];
 
@@ -19,6 +20,10 @@ interface ShopSidebarContextProps {
   addSavedShop: (shop: ShopGeoJsonProperties) => void;
   removeSavedShop: (shopId: number | string) => void;
   selectShop: (shop: ShopGeoJsonProperties) => void;
+  selectShopById: (
+    shopId: number,
+    centerCoords?: [number, number],
+  ) => Promise<void>;
 }
 
 const ShopSidebarContext = createContext<ShopSidebarContextProps | undefined>(
@@ -89,6 +94,19 @@ export const ShopSidebarProvider = ({
     setSavedShops((prev) => prev.filter((s) => s.shopId !== shopId));
   };
 
+  const selectShopById = async (
+    shopId: number,
+    centerCoords?: [number, number],
+  ) => {
+    try {
+      const shop = await fetchShopById(shopId);
+      openSidebar(shop, centerCoords ?? null);
+    } catch (error) {
+      console.error("Error selecting shop by ID:", error);
+      throw error;
+    }
+  };
+
   return (
     <ShopSidebarContext.Provider
       value={{
@@ -104,6 +122,7 @@ export const ShopSidebarProvider = ({
         addSavedShop,
         removeSavedShop,
         selectShop,
+        selectShopById,
       }}
     >
       {children}

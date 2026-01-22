@@ -18,7 +18,9 @@ export default async function handler(req, res) {
     const { categoryName, description } = req.body || {};
 
     if (!categoryName || !description) {
-      res.status(400).json({ message: "categoryName and description required" });
+      res
+        .status(400)
+        .json({ message: "categoryName and description required" });
       return;
     }
 

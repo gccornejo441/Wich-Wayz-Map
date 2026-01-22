@@ -14,6 +14,7 @@ Guide for AI agents working in the Wich-Wayz-Map codebase.
 ## Essential Commands
 
 ### Development
+
 ```bash
 npm run dev              # Start dev server on port 3100
 npm run build            # TypeScript compile + Vite build
@@ -21,6 +22,7 @@ npm start                # Preview production build on port 5000
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint             # Run ESLint
 npm run format           # Format with Prettier
@@ -28,6 +30,7 @@ npm run test-build       # Full CI pipeline: format + lint + build + analyze
 ```
 
 ### Testing
+
 ```bash
 npm test                 # Run Vitest tests
 npm run test:watch       # Run tests in watch mode
@@ -35,6 +38,7 @@ npm run test:coverage    # Generate coverage report
 ```
 
 ### Analysis
+
 ```bash
 npm run analyze          # Build + bundle size visualization
 ```
@@ -200,17 +204,17 @@ export const MyComponent: React.FC<MyComponentProps> = ({ shopId, onClose }) => 
   // 4a. Hooks at top
   const [state, setState] = useState<string>("");
   const { shops } = useShops();
-  
+
   // 4b. Effects
   useEffect(() => {
     // ...
   }, []);
-  
+
   // 4c. Event handlers
   const handleClick = () => {
     // ...
   };
-  
+
   // 4d. Render
   return (
     <div>
@@ -237,11 +241,11 @@ const MyContext = createContext<MyContextType | undefined>(undefined);
 // 3. Provider component
 export const MyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [data, setData] = useState<string>("");
-  
+
   const updateData = (value: string) => {
     setData(value);
   };
-  
+
   return (
     <MyContext.Provider value={{ data, updateData }}>
       {children}
@@ -268,7 +272,7 @@ export const fetchShops = async (): Promise<Shop[]> => {
   try {
     const { rows } = await executeQuery<Shop>(
       `SELECT * FROM shops WHERE active = ?`,
-      [1]
+      [1],
     );
     return rows;
   } catch (error) {
@@ -279,6 +283,7 @@ export const fetchShops = async (): Promise<Shop[]> => {
 ```
 
 **Key patterns**:
+
 - Try-catch blocks for all async operations
 - `console.error()` for logging (never `console.log()` in production code)
 - Throw user-friendly error messages
@@ -312,13 +317,20 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { locationSchema } from "@constants/validators";
 
-const { register, handleSubmit, formState: { errors } } = useForm({
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm({
   resolver: yupResolver(locationSchema),
-  defaultValues: { /* ... */ }
+  defaultValues: {
+    /* ... */
+  },
 });
 ```
 
 **Validation schemas available**:
+
 - `userCredentialSchema` - Email + password (registration)
 - `userLoginSchema` - Login form
 - `locationSchema` - Shop location + description
@@ -330,6 +342,7 @@ const { register, handleSubmit, formState: { errors } } = useForm({
 ### Error Handling
 
 **Frontend**:
+
 ```typescript
 try {
   await someOperation();
@@ -345,6 +358,7 @@ try {
 ```
 
 **Backend (API routes)**:
+
 ```typescript
 try {
   await tursoClient.execute({ sql: query, args: params });
@@ -360,11 +374,13 @@ try {
 **Local State**: Use `useState` for component-level state
 **Shared State**: Use Context API (no Redux)
 **Persistence**:
+
 - `localStorage` - Long-term (auth tokens, categories)
 - `sessionStorage` - Session-specific (filtered shops, user metadata)
 - `IndexedDB` - Large datasets (shops, locations) via `idb` library
 
 **Context hierarchy** (from `App.tsx`):
+
 ```
 Router
   └─ MapProvider
@@ -384,18 +400,21 @@ Router
 **CSS Framework**: Tailwind CSS with custom theme
 
 **Key Theme Values** (from `tailwind.config.cjs`):
+
 - Brand colors: `brand-primary` (#DA291C red), `brand-secondary` (#FFC72C yellow)
 - Surface colors: `surface-light`, `surface-dark`, `surface-darker`, `surface-muted`
 - Text colors: `text-base`, `text-inverted`, `text-muted`
 - Dark mode: `dark:` prefix (class-based: `darkMode: "class"`)
 
 **Custom animations**:
+
 - `animate-fade-in-up`
 - `animate-check-bounce`
 - `animate-modalEnter` / `animate-modalExit`
 - `animate-slideUp`
 
 **Styling approach**:
+
 - Inline Tailwind classes for most styling
 - Custom CSS files for complex components (e.g., `CustomCheckbox.css`, `Filter.css`)
 - Flowbite React components (`flowbite-react`) for common UI elements
@@ -407,6 +426,7 @@ Router
 **Setup**: `test/setupTests.ts` imports `@testing-library/jest-dom`
 
 **Running tests**:
+
 ```bash
 npm test              # Run once
 npm run test:watch    # Watch mode
@@ -414,12 +434,14 @@ npm run test:coverage # With coverage
 ```
 
 **Test patterns**:
+
 - Use `@testing-library/react` for component tests
 - Use `@testing-library/user-event` for interactions
 - Mock contexts when needed
 - Test files: `*.test.ts` or `*.test.tsx`
 
 **Vitest config** (in `vite.config.ts`):
+
 ```typescript
 test: {
   include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
@@ -445,6 +467,7 @@ Key rules to follow (from `eslint.config.js`):
 ```
 
 **Never use**:
+
 - `console.log()` in production code (use `console.error()` or `console.warn()`)
 - `any` type without good reason (prefer `unknown` or proper types)
 
@@ -457,6 +480,7 @@ Key rules to follow (from `eslint.config.js`):
 5. **Protected Actions**: Voting, shop submission require membership
 
 **Auth context** provides:
+
 - `user` - Current user object
 - `isAuthenticated` - Boolean flag
 - `signIn()`, `signOut()`, `register()`
@@ -465,12 +489,14 @@ Key rules to follow (from `eslint.config.js`):
 ## Data Caching Strategy
 
 **IndexedDB** (via `idb` library):
+
 1. Check cache first
 2. Validate cache count against DB count
 3. Fetch fresh if invalid/missing
 4. Update cache after mutations
 
 **Cache keys**:
+
 - `SHOPS_STORE` - Shops data
 - `LOCATIONS_STORE` - Locations data
 - `FILTERED_SHOPS_KEY` - Filtered results (sessionStorage)
@@ -487,6 +513,7 @@ Located in `api/` directory (Vercel serverless functions):
 - `POST /api/add-new-shop` - Submit new shop
 
 **Important**:
+
 - API routes use Node.js environment
 - Access env vars without `VITE_` prefix
 - Create Turso client in each route (no shared connection)
@@ -530,16 +557,19 @@ Located in `api/` directory (Vercel serverless functions):
 ## Build & Deployment
 
 **Build process**:
+
 1. TypeScript compilation (`tsc -b`)
 2. Vite build (bundles & optimizes)
 3. Manual chunk splitting for vendor code
 
 **Deployment** (Vercel):
+
 - Push to `main` branch triggers auto-deploy
 - API routes deployed as serverless functions
 - Environment variables configured in Vercel dashboard
 
 **Production checklist**:
+
 - Run `npm run test-build` before committing
 - Ensure all env vars set in Vercel
 - Test API routes in staging/preview
@@ -547,6 +577,7 @@ Located in `api/` directory (Vercel serverless functions):
 ## Key Dependencies
 
 **Frontend**:
+
 - `react` / `react-dom` - UI framework
 - `react-router-dom` - Routing
 - `mapbox-gl` / `react-map-gl` - Maps
@@ -558,6 +589,7 @@ Located in `api/` directory (Vercel serverless functions):
 - `idb` - IndexedDB wrapper
 
 **Backend**:
+
 - `@libsql/client` - Turso database client
 - `stripe` - Payment processing
 - `jose` - JWT tokens
@@ -565,6 +597,7 @@ Located in `api/` directory (Vercel serverless functions):
 - `axios` - HTTP client
 
 **Dev Tools**:
+
 - `vite` - Build tool
 - `vitest` - Testing
 - `eslint` + `prettier` - Linting & formatting
@@ -581,7 +614,7 @@ Located in `api/` directory (Vercel serverless functions):
 6. **Type safety** - Avoid `any`, use proper interfaces
 7. **Component size** - Keep components focused, extract when >200 lines
 8. **No console.log** - Use console.error/warn only
-9. **Comments** - Explain *why*, not *what* (code should be self-documenting)
+9. **Comments** - Explain _why_, not _what_ (code should be self-documenting)
 10. **Git commits** - Clear messages, small focused commits
 
 ## Common Tasks

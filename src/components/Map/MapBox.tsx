@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl, { GeoJSONSource, Map } from "mapbox-gl";
 import { GiSandwich } from "react-icons/gi";
+import { useLocation } from "react-router-dom";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
+import { parseDeepLink } from "@utils/deepLink";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
@@ -208,10 +210,10 @@ const buildShopPropsFromShopAndLocation = (
 
   const categoryIds =
     Array.isArray(shopAny.categoryIds) &&
-      shopAny.categoryIds.every((x) => typeof x === "number")
+    shopAny.categoryIds.every((x) => typeof x === "number")
       ? shopAny.categoryIds
       : Array.isArray(shopAny.category_ids) &&
-        shopAny.category_ids.every((x) => typeof x === "number")
+          shopAny.category_ids.every((x) => typeof x === "number")
         ? shopAny.category_ids
         : undefined;
 
@@ -376,8 +378,9 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
 
 const MapBox = () => {
   const { displayedShops } = useShops();
-  const { openSidebar } = useShopSidebar();
+  const { openSidebar, selectShopById } = useShopSidebar();
   const { theme } = useTheme();
+  const location = useLocation();
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -396,8 +399,10 @@ const MapBox = () => {
 
   const openSidebarRef = useLatest(openSidebar);
   const userPositionRef = useLatest(userPosition);
+  const selectShopByIdRef = useLatest(selectShopById);
 
   const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const processedDeepLinkRef = useRef<string | null>(null);
 
   // Monotonic sequence to prevent stale "idle" events from hiding the spinner prematurely.
   // When shopGeoJson updates rapidly (filters/pagination), we increment this counter.
@@ -637,6 +642,40 @@ const MapBox = () => {
       });
     }
   }, [theme, shopGeoJsonRef]);
+
+  useEffect(() => {
+    const params = parseDeepLink(location.search);
+    if (!params) return;
+
+    const { lat, lng, shopId } = params;
+    const paramsKey = `${lat},${lng},${shopId}`;
+
+    if (processedDeepLinkRef.current === paramsKey) return;
+
+    processedDeepLinkRef.current = paramsKey;
+
+    const map = mapRef.current;
+
+    const executeDeepLink = () => {
+      if (!map) return;
+
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 16,
+        essential: true,
+      });
+
+      selectShopByIdRef.current(shopId, [lng, lat]).catch((error) => {
+        console.error("Deep-link navigation failed:", error);
+      });
+    };
+
+    if (map && map.isStyleLoaded()) {
+      executeDeepLink();
+    } else if (map) {
+      map.once("load", executeDeepLink);
+    }
+  }, [location.search, selectShopByIdRef]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>

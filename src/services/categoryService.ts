@@ -1,4 +1,7 @@
-import { apiRequest, getAllCategories as fetchCategoriesApi } from "./apiClient";
+import {
+  apiRequest,
+  getAllCategories as fetchCategoriesApi,
+} from "./apiClient";
 import { Category } from "@models/Category";
 
 export const checkCategoryExistsInDatabase = async (

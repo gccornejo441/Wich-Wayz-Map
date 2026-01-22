@@ -17,7 +17,9 @@ export default async function createComment(req, res) {
     Number.isNaN(parsedUserId) ||
     trimmedBody.length === 0
   ) {
-    res.status(400).json({ message: "shop_id, user_id, and body are required" });
+    res
+      .status(400)
+      .json({ message: "shop_id, user_id, and body are required" });
     return;
   }
 

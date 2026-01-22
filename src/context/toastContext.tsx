@@ -20,7 +20,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = (message: string, type: ToastType = "success") => {
-    const id = crypto.randomUUID ? crypto.randomUUID() : new Date().toISOString();
+    const id = crypto.randomUUID
+      ? crypto.randomUUID()
+      : new Date().toISOString();
 
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
 
@@ -40,8 +42,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
             toast.type === "success"
               ? "border-green-500"
               : toast.type === "error"
-              ? "border-red-500"
-              : "border-blue-500";
+                ? "border-red-500"
+                : "border-blue-500";
 
           const icon =
             toast.type === "success" ? (
