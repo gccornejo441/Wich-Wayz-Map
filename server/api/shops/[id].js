@@ -92,6 +92,8 @@ export default async function handler(req, res) {
     ].some((key) => payload[key] !== undefined);
 
     if (locationId && hasLocationUpdates) {
+      // Build street_address from house_number + address_first ONLY
+      // Do NOT include city, state, or postal_code in street_address
       const streetAddress = payload.house_number
         ? `${payload.house_number} ${payload.address_first ?? ""}`.trim()
         : (payload.address_first ?? "");

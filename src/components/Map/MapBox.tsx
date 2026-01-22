@@ -9,6 +9,7 @@ import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
 import { parseDeepLink } from "@utils/deepLink";
+import { buildStreetAddress } from "@utils/address";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
@@ -160,19 +161,15 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
 };
 
 const buildAddress = (locAny: LocationDataVariants): string | undefined => {
+  // Check for pre-built address field first
   const direct = getString(locAny.address);
   if (direct && direct.trim().length) return direct;
 
-  const parts = [
+  // Build ONLY from street lines, never city/state/postal
+  return buildStreetAddress(
     getString(locAny.street_address),
     getString(locAny.street_address_second),
-    getString(locAny.postal_code) ?? getString(locAny.postalCode),
-    getString(locAny.city),
-    getString(locAny.state),
-  ].filter((x): x is string => typeof x === "string" && x.length > 0);
-
-  const joined = parts.join(", ");
-  return joined.length ? joined : undefined;
+  );
 };
 
 const pickWebsite = (
@@ -210,10 +207,10 @@ const buildShopPropsFromShopAndLocation = (
 
   const categoryIds =
     Array.isArray(shopAny.categoryIds) &&
-    shopAny.categoryIds.every((x) => typeof x === "number")
+      shopAny.categoryIds.every((x) => typeof x === "number")
       ? shopAny.categoryIds
       : Array.isArray(shopAny.category_ids) &&
-          shopAny.category_ids.every((x) => typeof x === "number")
+        shopAny.category_ids.every((x) => typeof x === "number")
         ? shopAny.category_ids
         : undefined;
 
@@ -376,7 +373,11 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
   }
 };
 
-const MapBox = () => {
+type MapBoxProps = {
+  isLoggedIn?: boolean;
+};
+
+const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
   const { openSidebar, selectShopById } = useShopSidebar();
   const { theme } = useTheme();
@@ -390,6 +391,9 @@ const MapBox = () => {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
     null,
   );
+
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const hasCenteredOnUserRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -422,18 +426,23 @@ const MapBox = () => {
   };
 
   useEffect(() => {
-    const fallback: [number, number] = INITIAL_CENTER;
-
-    if (!navigator.geolocation) {
-      setUserPosition(fallback);
-      return;
-    }
+    if (!isLoggedIn) return;
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => setUserPosition([pos.coords.longitude, pos.coords.latitude]),
-      () => setUserPosition(fallback),
+      (pos) => {
+        setUserPosition([pos.coords.longitude, pos.coords.latitude]);
+      },
+      () => {
+        setUserPosition(null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000,
+      },
     );
-  }, []);
+  }, [isLoggedIn]);
 
   const shopGeoJson: ShopFeatureCollection = useMemo(() => {
     return buildShopGeoJson(displayedShops);
@@ -584,7 +593,13 @@ const MapBox = () => {
 
     return () => {
       setMapLoaded(false);
-      closeHoverPopup();
+      hoverPopupRef.current?.remove();
+      hoverPopupRef.current = null;
+
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
+      hasCenteredOnUserRef.current = false;
+
       map.off("load", onLoad);
       map.off("move", onMove);
       map.remove();
@@ -610,7 +625,8 @@ const MapBox = () => {
     const map = mapRef.current;
     if (!map) return;
 
-    const desiredStyle = theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+    const desiredStyle =
+      theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
     if (appliedStyleRef.current === desiredStyle) return;
 
     appliedStyleRef.current = desiredStyle;
@@ -670,6 +686,29 @@ const MapBox = () => {
       });
     }
   }, [location.search, mapLoaded, selectShopByIdRef]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    if (!userPosition) return;
+
+    if (!userMarkerRef.current) {
+      userMarkerRef.current = new mapboxgl.Marker().setLngLat(userPosition).addTo(map);
+    } else {
+      userMarkerRef.current.setLngLat(userPosition);
+    }
+
+    const noDeepLinkApplied = processedDeepLinkRef.current == null;
+
+    if (!hasCenteredOnUserRef.current && noDeepLinkApplied) {
+      hasCenteredOnUserRef.current = true;
+      map.flyTo({
+        center: userPosition,
+        zoom: 13,
+        essential: true,
+      });
+    }
+  }, [userPosition, mapLoaded]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>

@@ -1,6 +1,7 @@
 import { ShopWithUser } from "@/models/ShopWithUser";
 import { apiRequest } from "./apiClient";
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { buildStreetAddress } from "@utils/address";
 
 /**
  * Retrieves all shops from the database, including their associated users, locations, and categories.
@@ -42,15 +43,11 @@ export const fetchShopById = async (
       throw new Error(`Shop with ID ${shopId} has no location data`);
     }
 
-    // Build address string
-    const addressParts = [
+    // Build address string - ONLY street lines, never city/state/postal
+    const address = buildStreetAddress(
       location.street_address,
       location.street_address_second,
-      location.city,
-      location.state,
-      location.postal_code,
-    ].filter((part) => part && part.trim().length > 0);
-    const address = addressParts.join(", ");
+    );
 
     // Build categories string
     const categories =

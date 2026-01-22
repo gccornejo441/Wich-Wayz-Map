@@ -86,6 +86,7 @@ export default async function handler(req, res) {
             modified_by: row.location_modified_by || undefined,
             date_created: row.location_date_created || undefined,
             date_modified: row.location_date_modified || undefined,
+            // Address fields: street_address contains ONLY street lines (no city/state/postal)
             street_address: row.street_address || "",
             street_address_second: row.street_address_second || "",
             city: row.city || "",
@@ -93,6 +94,7 @@ export default async function handler(req, res) {
             country: row.country || "",
             location_open: toBoolean(row.location_open),
             phone: row.phone || null,
+            // Map website_url column to 'website' for backward compatibility with frontend
             website: row.website_url || null,
           });
         }

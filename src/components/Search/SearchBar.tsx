@@ -10,6 +10,7 @@ import { FilterDropdown } from "../Filter/FilterDropdown";
 import { ShopFilters } from "@/types/shopFilter";
 import { useToast } from "@/context/toastContext";
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { buildStreetAddress } from "@utils/address";
 
 interface SearchBarProps {
   navRef?: React.RefObject<HTMLElement>;
@@ -47,14 +48,30 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   const renderSuggestion = (suggestion: IndexedDBShop) => {
     const location = suggestion.locations?.[0];
-    const address = location
-      ? `${location.street_address || ""}, ${location.city || ""}`
-      : "Address not available";
+    let addressDisplay = "Address not available";
+
+    if (location) {
+      const street = buildStreetAddress(
+        location.street_address,
+        location.street_address_second,
+      );
+      const cityState = [location.city, location.state]
+        .filter(Boolean)
+        .join(", ");
+
+      if (street && cityState) {
+        addressDisplay = `${street}, ${cityState}`;
+      } else if (street) {
+        addressDisplay = street;
+      } else if (cityState) {
+        addressDisplay = cityState;
+      }
+    }
 
     return (
       <div className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-white/10">
         <span className="font-medium">{suggestion.name}</span>
-        <span className="text-sm truncate md:ml-2">{address}</span>
+        <span className="text-sm truncate md:ml-2">{addressDisplay}</span>
       </div>
     );
   };
@@ -75,7 +92,11 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
           .join(","),
         categoryIds: suggestion.categories.map((cat) => cat.id),
         createdBy: suggestion.created_by_username,
-        address: location.street_address,
+        // address should be ONLY street lines
+        address: buildStreetAddress(
+          location.street_address,
+          location.street_address_second,
+        ),
         city: location.city,
         state: location.state,
         postalCode: location.postal_code,
@@ -131,7 +152,11 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
           .join(","),
         categoryIds: firstShop.categories.map((cat) => cat.id),
         createdBy: firstShop.created_by_username,
-        address: firstLoc.street_address,
+        // address should be ONLY street lines
+        address: buildStreetAddress(
+          firstLoc.street_address,
+          firstLoc.street_address_second,
+        ),
         city: firstLoc.city,
         state: firstLoc.state,
         postalCode: firstLoc.postal_code,

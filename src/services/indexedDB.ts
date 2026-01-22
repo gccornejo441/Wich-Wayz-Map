@@ -19,6 +19,7 @@ export interface IndexedDBShop {
     country: string;
     postal_code: string;
     street_address: string;
+    street_address_second?: string;
     latitude: number;
     longitude: number;
     location_open: boolean;

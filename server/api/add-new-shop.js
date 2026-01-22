@@ -54,6 +54,8 @@ export default async function handler(req, res) {
     categoryCount: selectedCategoryIds?.length,
   });
 
+  // Build street_address from house_number + address_first ONLY
+  // Do NOT include city, state, or postal_code in street_address
   const streetAddress = [house_number, address_first]
     .filter(Boolean)
     .join(" ")

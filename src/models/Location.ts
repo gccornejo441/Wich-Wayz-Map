@@ -13,5 +13,6 @@ export interface Location {
   country: string;
   location_open?: boolean;
   phone?: string | null;
-  website?: string | null;
+  website?: string | null; // For backward compatibility
+  website_url?: string | null; // Canonical field matching DB schema
 }
