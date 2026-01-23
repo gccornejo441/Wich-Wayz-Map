@@ -9,7 +9,7 @@ import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
 import { parseDeepLink } from "@utils/deepLink";
-import { buildStreetAddress } from "@utils/address";
+import { buildStreetAddress, buildCityStateZip } from "@utils/address";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
@@ -151,11 +151,24 @@ const escapeHtml = (value: string) =>
 
 const buildPopupHtml = (props: ShopGeoJsonProperties) => {
   const shopName = escapeHtml(props.shopName ?? "");
-  const address = escapeHtml(props.address ?? "");
+  const street = escapeHtml(props.address ?? "");
+  const city = props.city ?? "";
+  const state = props.state ?? "";
+  const postalCode = props.postalCode ?? "";
+
+  // Build city/state/zip line using helper
+  const cityStateZip = buildCityStateZip(city, state, postalCode);
+  const cityStateZipEscaped = cityStateZip ? escapeHtml(cityStateZip) : "";
+
   return `
     <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
       <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-      <p class="text-text-base dark:text-text-inverted">${address}</p>
+      ${street || cityStateZipEscaped ? `
+        <div class="text-text-base dark:text-text-inverted">
+          ${street ? `<div>${street}</div>` : ""}
+          ${cityStateZipEscaped ? `<div class="text-xs opacity-80 mt-0.5">${cityStateZipEscaped}</div>` : ""}
+        </div>
+      ` : ""}
     </div>
   `;
 };
