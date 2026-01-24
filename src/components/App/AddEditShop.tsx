@@ -1,16 +1,65 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { HiMap, HiX, HiCheck } from "react-icons/hi";
 import ShopForm from "../Form/ShopForm";
 import MapPreview from "../Map/MapPreview";
+import { AddressDraft, emptyAddress } from "@/types/address";
+import { buildFullAddressForMaps } from "@/utils/address";
 
 const AddEditShop = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialData = location.state?.initialData;
 
-  const [address, setAddress] = useState(initialData?.address || "");
+  // Helper function to convert initialData to AddressDraft
+  const fromInitialData = (initialData: Record<string, unknown> | null | undefined): AddressDraft => {
+    if (!initialData) return emptyAddress;
+
+    const getString = (key: string): string => {
+      const value = initialData[key];
+      return typeof value === "string" ? value : "";
+    };
+
+    const getNumber = (key: string): number | null => {
+      const value = initialData[key];
+      return typeof value === "number" ? value : null;
+    };
+
+    // If initialData has structured address fields, use them
+    if (initialData.streetAddress !== undefined) {
+      return {
+        streetAddress: getString("streetAddress"),
+        streetAddressSecond: getString("streetAddressSecond"),
+        city: getString("city"),
+        state: getString("state"),
+        postalCode: getString("postalCode"),
+        country: getString("country") || "USA",
+        latitude: getNumber("latitude"),
+        longitude: getNumber("longitude"),
+      };
+    }
+
+    // If initialData only has a single address string, put it into streetAddress
+    return {
+      streetAddress: getString("address"),
+      streetAddressSecond: "",
+      city: getString("city"),
+      state: getString("state"),
+      postalCode: getString("postalCode"),
+      country: getString("country") || "USA",
+      latitude: getNumber("latitude"),
+      longitude: getNumber("longitude"),
+    };
+  };
+
+  const [address, setAddress] = useState<AddressDraft>(() => fromInitialData(initialData));
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+  // Derived address string for Maps
+  const fullAddressForMaps = useMemo(() =>
+    buildFullAddressForMaps(address.streetAddress, address.streetAddressSecond, address.city, address.state, address.postalCode),
+    [address.streetAddress, address.streetAddressSecond, address.city, address.state, address.postalCode]
+  );
 
   // Adds Escape key support
   useEffect(() => {
@@ -67,7 +116,7 @@ const AddEditShop = () => {
 
           {/* Desktop map panel */}
           <div className="hidden lg:flex flex-grow pl-6 pt-6 border-l border-lightGray dark:border-surface-light flex-col">
-            <MapPreview address={address} onAddressUpdate={setAddress} />
+            <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} />
           </div>
         </div>
       </div>
@@ -102,7 +151,7 @@ const AddEditShop = () => {
 
             {/* Map content */}
             <div className="flex-1">
-              <MapPreview address={address} onAddressUpdate={setAddress} />
+              <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} />
             </div>
 
             {/* Sticky confirmation bar */}

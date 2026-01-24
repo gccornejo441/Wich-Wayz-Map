@@ -9,12 +9,15 @@ import Map, {
 import { HiClipboard } from "react-icons/hi";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useTheme } from "@hooks/useTheme";
+import { AddressDraft } from "@/types/address";
+import { getStateCode } from "@constants/usStates";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
 interface MapPreviewProps {
-  address: string;
-  onAddressUpdate: (addr: string) => void;
+  address: AddressDraft;
+  fullAddressForMaps: string;
+  onAddressUpdate: (next: AddressDraft) => void;
 }
 
 interface Coordinates {
@@ -24,6 +27,7 @@ interface Coordinates {
 
 const MapPreview: React.FC<MapPreviewProps> = ({
   address,
+  fullAddressForMaps,
   onAddressUpdate,
 }) => {
   const { theme } = useTheme();
@@ -41,12 +45,13 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     }
   }, [mapStyle]);
 
+  // Forward geocoding: use fullAddressForMaps prop
   useEffect(() => {
-    if (!address) return;
+    if (!fullAddressForMaps) return;
     const timeout = setTimeout(() => {
       fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          address,
+          fullAddressForMaps,
         )}.json?access_token=${MAPBOX_TOKEN}`,
       )
         .then((r) => r.json())
@@ -58,8 +63,9 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         });
     }, 400);
     return () => clearTimeout(timeout);
-  }, [address]);
+  }, [fullAddressForMaps]);
 
+  // Reverse geocoding: return structured AddressDraft
   const handleDragEnd = (e: MarkerDragEvent) => {
     const { lat, lng } = e.lngLat;
     const newCoords = { latitude: lat, longitude: lng };
@@ -71,7 +77,52 @@ const MapPreview: React.FC<MapPreviewProps> = ({
       .then((r) => r.json())
       .then((json) => {
         if (json.features?.length) {
-          onAddressUpdate(json.features[0].place_name);
+          const feature = json.features[0];
+          const context = feature.context || [];
+
+          // Extract address components from Mapbox geocode result
+          let street = "";
+          let city = "";
+          let state = "";
+          let postalCode = "";
+          let country = "";
+
+          // Mapbox returns address in feature.place_name and context array
+          // feature.place_type tells us what kind of place this is
+          if (feature.address && feature.text) {
+            street = `${feature.address} ${feature.text}`;
+          } else if (feature.text) {
+            street = feature.text;
+          }
+
+          // Parse context array for city, state, postal code, country
+          for (const ctx of context) {
+            const id = ctx.id || "";
+            if (id.startsWith("postcode")) {
+              postalCode = ctx.text || "";
+            } else if (id.startsWith("place")) {
+              city = ctx.text || "";
+            } else if (id.startsWith("region")) {
+              // Extract state code - Mapbox returns US-XX format in short_code
+              const stateValue = ctx.short_code?.replace("US-", "") || ctx.text || "";
+              // Convert to 2-letter code if full name was returned
+              state = getStateCode(stateValue);
+            } else if (id.startsWith("country")) {
+              country = ctx.short_code?.toUpperCase() || ctx.text || "";
+            }
+          }
+
+          // Call onAddressUpdate with structured update
+          onAddressUpdate({
+            ...address, // Preserve streetAddressSecond and other fields
+            streetAddress: street,
+            city,
+            state, // Will be 2-letter state code
+            postalCode,
+            country: country || address.country, // Fallback to existing country
+            latitude: lat,
+            longitude: lng,
+          });
         }
       });
   };

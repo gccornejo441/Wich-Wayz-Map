@@ -46,6 +46,7 @@ describe("handleLocationSubmit", () => {
 
     const result = await handleLocationSubmit(
       {} as AddAShopPayload,
+      undefined, // address parameter
       setShops,
       setLocations,
       addToast,

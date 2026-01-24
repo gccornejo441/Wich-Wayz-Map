@@ -1,5 +1,6 @@
 import axios from "axios";
-import { AddAShopPayload } from "../types/dataTypes";
+import { AddAShopPayload } from "@/types/dataTypes";
+import { AddressDraft } from "@/types/address";
 import { cacheData } from "./indexedDB";
 import { getCurrentUser } from "./security";
 import { ROUTES } from "../constants/routes";
@@ -15,6 +16,7 @@ import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
  */
 export async function handleLocationSubmit(
   addAShopPayload: AddAShopPayload,
+  address: AddressDraft | undefined,
   setShops: React.Dispatch<React.SetStateAction<Shop[]>>,
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
   addToast: (message: string, type: "success" | "error") => void,
@@ -40,7 +42,7 @@ export async function handleLocationSubmit(
       return false;
     }
 
-    const payload = createLocationShopPayload(addAShopPayload, userId);
+    const payload = createLocationShopPayload(addAShopPayload, userId, address);
 
     const response = await apiRequest<{ shopId: number; locationId: number }>(
       "/add-new-shop",
@@ -92,10 +94,12 @@ export async function handleLocationSubmit(
 
 /**
  * Creates payload for location and shop submission.
+ * Uses buildStreetAddress to construct the address field from street lines only.
  */
 export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
   modifiedBy: number | undefined,
+  address?: AddressDraft,
 ) {
   if (modifiedBy === undefined || modifiedBy === null) {
     throw new Error("User ID (modifiedBy) is required to create a shop.");
@@ -107,38 +111,67 @@ export function createLocationShopPayload(
     "sentence",
   );
 
-  const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
-  const cleanedAddress = cleanString(addAShopPayload.address);
-  const cleanedAddressFirst = cleanString(addAShopPayload.address_first);
-  const cleanedAddressSecond = cleanString(addAShopPayload.address_second);
+  // Use AddressDraft if provided (new flow), otherwise fall back to old fields
+  let addressFirst = "";
+  let addressSecond = "";
+  let city = "";
+  let state = "";
+  let postcode = "";
+  let country = "";
+  let latitude = 0;
+  let longitude = 0;
 
-  const cleanedCity = cleanString(
-    addAShopPayload.city || "Unknown City",
-    "title",
-  );
-  const cleanedState = cleanString(
-    addAShopPayload.state || "Unknown State",
-    "title",
-  );
-  const cleanedCountry = cleanString(
-    addAShopPayload.country || "Unknown Country",
-    "title",
-  );
+  if (address) {
+    // New structured address flow - maps to schema fields
+    // streetAddress → street_address (via address_first)
+    // streetAddressSecond → street_address_second (via address_second)
+    addressFirst = address.streetAddress || "";
+    addressSecond = address.streetAddressSecond || "";
+    city = address.city || "Unknown City";
+    state = address.state || "Unknown State";
+    postcode = address.postalCode || "";
+    country = address.country || "Unknown Country";
+    latitude = address.latitude ?? 0;
+    longitude = address.longitude ?? 0;
+  } else {
+    // Legacy fallback for old address fields
+    const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
+    const cleanedAddress = cleanString(addAShopPayload.address);
+    const cleanedAddressFirst = cleanString(addAShopPayload.address_first);
+    const cleanedAddressSecond = cleanString(addAShopPayload.address_second);
 
-  const streetAddress = cleanedHouseNumber
-    ? `${cleanedHouseNumber} ${cleanedAddressFirst}`
-    : cleanedAddress;
+    const streetAddress = cleanedHouseNumber
+      ? `${cleanedHouseNumber} ${cleanedAddressFirst}`
+      : cleanedAddress;
 
+    addressFirst = cleanedAddressFirst || streetAddress || "";
+    addressSecond = cleanedAddressSecond || "";
+    city = addAShopPayload.city || "Unknown City";
+    state = addAShopPayload.state || "Unknown State";
+    postcode = addAShopPayload.postcode || "";
+    country = addAShopPayload.country || "Unknown Country";
+    latitude = addAShopPayload.latitude ?? 0;
+    longitude = addAShopPayload.longitude ?? 0;
+  }
+
+  const cleanedCity = cleanString(city, "title");
+  const cleanedState = cleanString(state, "title");
+  const cleanedCountry = cleanString(country, "title");
+
+  // Schema-compliant payload structure
+  // Maps to locations table fields (schema lines 23-40)
   const location = {
-    house_number: cleanedHouseNumber || "",
-    address_first: cleanedAddressFirst || streetAddress || "",
-    address_second: cleanedAddressSecond || "",
-    postcode: addAShopPayload.postcode?.trim() || "",
-    city: cleanedCity,
-    state: cleanedState,
-    country: cleanedCountry,
-    latitude: addAShopPayload.latitude,
-    longitude: addAShopPayload.longitude,
+    house_number: "", // Not used with new address structure
+    address_first: addressFirst, // → street_address
+    address_second: addressSecond, // → street_address_second
+    postcode: postcode.trim(), // → postal_code
+    city: cleanedCity, // → city
+    state: cleanedState, // → state
+    country: cleanedCountry, // → country
+    latitude, // → latitude
+    longitude, // → longitude
+    phone: addAShopPayload.phone || "", // → phone (optional)
+    website_url: addAShopPayload.website_url || "", // → website_url (optional)
   };
 
   return {

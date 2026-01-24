@@ -13,7 +13,7 @@ interface AddressComponents {
   suburb?: string;
   city?: string;
   town?: string;
-  county?: string;
+  // county?: string; // NOT IN DATABASE SCHEMA - commented out for compliance
   state?: string;
   postcode?: string;
   country?: string;

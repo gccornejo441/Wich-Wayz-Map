@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import FilterForm from "./FilterForm";
 import { ShopFilters } from "@/types/shopFilter";
 import { filterShops } from "@/services/filterShops";
+import { getStateName } from "@constants/usStates";
 
 const PAGE_SIZE = 10;
 
@@ -47,7 +48,7 @@ const ShopResults = () => {
           <div key={shop.id} className="p-3 bg-gray-50 border rounded">
             <h3 className="font-bold">{shop.name}</h3>
             <p>
-              {shop.city}, {shop.state} — {shop.country}
+              {shop.city}, {getStateName(shop.state)} — {shop.country}
             </p>
             <p>
               {shop.upvotes} upvotes / {shop.downvotes} downvotes

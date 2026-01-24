@@ -9,6 +9,8 @@
  *   Line 2: city, state postal_code
  */
 
+import { getStateName } from "@constants/usStates";
+
 /**
  * Builds the street line(s) from address components.
  * Returns ONLY street information, never city/state/postal.
@@ -34,9 +36,10 @@ export const buildStreetAddress = (
 
 /**
  * Builds the city/state/postal line for display.
+ * Converts 2-letter state codes to full state names for better UX.
  *
  * @param city - City name
- * @param state - State name or abbreviation
+ * @param state - State name or abbreviation (converts codes to full names)
  * @param postalCode - Postal/ZIP code
  * @returns Formatted string like "City, State 12345" or undefined if no data
  */
@@ -45,7 +48,10 @@ export const buildCityStateZip = (
   state?: string | null,
   postalCode?: string | null,
 ): string | undefined => {
-  const cityState = [city, state]
+  // Convert state code to full name for display
+  const stateDisplay = state ? getStateName(state) : null;
+
+  const cityState = [city, stateDisplay]
     .filter(
       (part): part is string =>
         typeof part === "string" && part.trim().length > 0,
@@ -63,7 +69,6 @@ export const buildCityStateZip = (
   const joined = parts.join(" ");
   return joined.length > 0 ? joined : undefined;
 };
-
 
 /**
  * Builds a full address string for Google Maps queries.

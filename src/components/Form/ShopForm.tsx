@@ -5,6 +5,7 @@ import { useTheme } from "@hooks/useTheme";
 import InputField from "../Utilites/InputField";
 import ManualAddressFields from "../Utilites/ManualAddressFields";
 import { AddAShopPayload } from "@/types/dataTypes";
+import { AddressDraft } from "@/types/address";
 import { InputMask } from "@react-input/mask";
 import { useState } from "react";
 import AddCategoryModal from "../Modal/AddCategoryModal";
@@ -12,12 +13,13 @@ import {
   addCategoryIfNotExists,
   GetCategories,
 } from "@/services/categoryService";
+import { US_STATES } from "@constants/usStates";
 
 type ShopFormProps = {
   initialData?: Partial<AddAShopPayload>;
   mode: "add" | "edit";
-  address: string;
-  onAddressChange: (value: string) => void;
+  address: AddressDraft;
+  onAddressChange: (next: AddressDraft) => void;
 };
 
 interface CategoryOption {
@@ -127,7 +129,7 @@ const ShopForm = ({
     setCategories,
     selectedCategories,
     setSelectedCategories,
-  } = useAddShopForm(initialData, mode);
+  } = useAddShopForm(initialData, mode, address);
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -227,8 +229,8 @@ const ShopForm = ({
           }}
           placeholder="https://example.com"
           className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
-              ? "border-red-500 dark:border-red-500"
-              : "border-brand-primary dark:border-text-muted"
+            ? "border-red-500 dark:border-red-500"
+            : "border-brand-primary dark:border-text-muted"
             }`}
         />
         {errors.website_url && (
@@ -287,16 +289,95 @@ const ShopForm = ({
         </div>
       </div>
 
-      {/* Address */}
-      <InputField
-        name="address"
-        label="Address"
-        register={register}
-        errors={errors}
-        value={address}
-        placeholder="Enter address"
-        onChange={(e) => onAddressChange(e.target.value)}
-      />
+      {/* Address Fields */}
+      <div className="space-y-4">
+        {/* Street Address Line 1 */}
+        <InputField
+          name="address"
+          label="Street Address"
+          register={register}
+          errors={errors}
+          value={address.streetAddress}
+          placeholder="Enter street address"
+          onChange={(e) => onAddressChange({ ...address, streetAddress: e.target.value })}
+        />
+
+        {/* Street Address Line 2 */}
+        <InputField
+          name="address_second"
+          label="Street Address Line 2 (Optional)"
+          register={register}
+          errors={errors}
+          value={address.streetAddressSecond}
+          placeholder="Apt, Suite, Unit, etc."
+          onChange={(e) => onAddressChange({ ...address, streetAddressSecond: e.target.value })}
+        />
+
+        {/* City */}
+        <InputField
+          name="city"
+          label="City"
+          register={register}
+          errors={errors}
+          value={address.city}
+          placeholder="Enter city"
+          onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* State Dropdown */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
+              State
+            </label>
+            <select
+              {...register("state")}
+              value={address.state}
+              onChange={(e) => onAddressChange({ ...address, state: e.target.value })}
+              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state
+                  ? "border-red-500 dark:border-red-500"
+                  : "border-brand-primary dark:border-text-muted"
+                }`}
+            >
+              <option value="" className="text-gray-400 dark:text-gray-500">
+                Select a state...
+              </option>
+              {US_STATES.map((state) => (
+                <option key={state.code} value={state.code}>
+                  {state.name}
+                </option>
+              ))}
+            </select>
+            {errors.state && (
+              <p className="mt-1 text-sm text-red-500 dark:text-red-400">
+                {errors.state.message}
+              </p>
+            )}
+          </div>
+
+          {/* Postal Code */}
+          <InputField
+            name="postcode"
+            label="Postal Code"
+            register={register}
+            errors={errors}
+            value={address.postalCode}
+            placeholder="Enter postal code"
+            onChange={(e) => onAddressChange({ ...address, postalCode: e.target.value })}
+          />
+        </div>
+
+        {/* Country */}
+        <InputField
+          name="country"
+          label="Country"
+          register={register}
+          errors={errors}
+          value={address.country}
+          placeholder="Enter country"
+          onChange={(e) => onAddressChange({ ...address, country: e.target.value })}
+        />
+      </div>
 
       {/* Buttons */}
       <div className="flex space-x-4">
@@ -337,11 +418,11 @@ const ShopForm = ({
           isSubmitting
         }
         className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
-            !!errors.shopName ||
-            !!errors.address ||
-            isSubmitting
-            ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
-            : "bg-brand-primary hover:bg-secondary"
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
+          ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
+          : "bg-brand-primary hover:bg-secondary"
           }`}
       >
         {isSubmitting ? (

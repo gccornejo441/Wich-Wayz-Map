@@ -14,6 +14,7 @@ import {
   MapBoxLocationLookup,
 } from "@/services/geolocation";
 import { AddAShopPayload, ShopWithId } from "@/types/dataTypes";
+import { AddressDraft } from "@/types/address";
 import { locationSchema } from "@constants/validators";
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 
@@ -22,6 +23,7 @@ type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
 export const useAddShopForm = (
   initialData?: ShopInitialData,
   mode: "add" | "edit" = "add",
+  address?: AddressDraft,
 ) => {
   const { setShops, setLocations, updateShopInContext } = useShops();
   const { addToast } = useToast();
@@ -205,12 +207,26 @@ export const useAddShopForm = (
     }
 
     data.categoryIds = selectedCategories;
+
+    // Merge address object fields into payload if provided
+    if (address) {
+      data.city = address.city;
+      data.state = address.state;
+      data.postcode = address.postalCode;
+      data.country = address.country;
+      data.latitude = address.latitude ?? 0;
+      data.longitude = address.longitude ?? 0;
+      // Map streetAddress/streetAddressSecond to payload fields (properly handled in services)
+      data.address = address.streetAddress;
+      data.address_second = address.streetAddressSecond;
+    }
+
     const shopId = (initialData as { shopId?: number })?.shopId;
 
     if (mode === "edit" && shopId) {
       try {
         const { updateShop } = await import("@/services/updateShop");
-        const updatedShop = await updateShop(shopId, data);
+        const updatedShop = await updateShop(shopId, data, address);
 
         if (updatedShop) {
           addToast("Shop updated successfully!", "success");
@@ -229,6 +245,7 @@ export const useAddShopForm = (
 
     const success = await handleLocationSubmit(
       data,
+      address,
       setShops,
       setLocations,
       addToast,
