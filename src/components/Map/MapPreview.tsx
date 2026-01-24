@@ -18,6 +18,7 @@ interface MapPreviewProps {
   address: AddressDraft;
   fullAddressForMaps: string;
   onAddressUpdate: (next: AddressDraft) => void;
+  prefillFlyToNonce: number;
 }
 
 interface Coordinates {
@@ -29,6 +30,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   address,
   fullAddressForMaps,
   onAddressUpdate,
+  prefillFlyToNonce,
 }) => {
   const { theme } = useTheme();
   const [coords, setCoords] = useState<Coordinates | null>(null);
@@ -59,11 +61,20 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           if (json.features?.length) {
             const [lon, lat] = json.features[0].geometry.coordinates;
             setCoords({ latitude: lat, longitude: lon });
+
+            // Fly to the new coordinates if map is ready
+            if (mapRef.current) {
+              mapRef.current.flyTo({
+                center: [lon, lat],
+                zoom: 14,
+                duration: 900,
+              });
+            }
           }
         });
     }, 400);
     return () => clearTimeout(timeout);
-  }, [fullAddressForMaps]);
+  }, [fullAddressForMaps, prefillFlyToNonce]);
 
   // Reverse geocoding: return structured AddressDraft
   const handleDragEnd = (e: MarkerDragEvent) => {

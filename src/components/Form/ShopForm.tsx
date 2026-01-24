@@ -20,6 +20,7 @@ type ShopFormProps = {
   mode: "add" | "edit";
   address: AddressDraft;
   onAddressChange: (next: AddressDraft) => void;
+  onPrefillSuccess?: () => void;
 };
 
 interface CategoryOption {
@@ -115,6 +116,7 @@ const ShopForm = ({
   mode,
   address,
   onAddressChange,
+  onPrefillSuccess,
 }: ShopFormProps) => {
   const {
     register,
@@ -410,7 +412,13 @@ const ShopForm = ({
       <div className="flex space-x-4">
         <button
           type="button"
-          onClick={prefillAddressFields}
+          onClick={async () => {
+            const success = await prefillAddressFields();
+            // Only notify parent if prefill was successful
+            if (success && onPrefillSuccess) {
+              onPrefillSuccess();
+            }
+          }}
           disabled={!canPrefill}
           className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${!canPrefill ? "opacity-50 cursor-not-allowed" : ""
             }`}

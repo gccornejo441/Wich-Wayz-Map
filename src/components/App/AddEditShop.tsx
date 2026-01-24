@@ -54,6 +54,7 @@ const AddEditShop = () => {
 
   const [address, setAddress] = useState<AddressDraft>(() => fromInitialData(initialData));
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
 
   // Derived address string for Maps
   const fullAddressForMaps = useMemo(() =>
@@ -100,6 +101,7 @@ const AddEditShop = () => {
               address={address}
               onAddressChange={setAddress}
               mode={initialData ? "edit" : "add"}
+              onPrefillSuccess={() => setPrefillFlyToNonce((n) => n + 1)}
             />
 
             {/* Mobile toggle button */}
@@ -116,7 +118,7 @@ const AddEditShop = () => {
 
           {/* Desktop map panel */}
           <div className="hidden lg:flex flex-grow pl-6 pt-6 border-l border-lightGray dark:border-surface-light flex-col">
-            <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} />
+            <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} prefillFlyToNonce={prefillFlyToNonce} />
           </div>
         </div>
       </div>
@@ -151,7 +153,7 @@ const AddEditShop = () => {
 
             {/* Map content */}
             <div className="flex-1">
-              <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} />
+              <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} prefillFlyToNonce={prefillFlyToNonce} />
             </div>
 
             {/* Sticky confirmation bar */}

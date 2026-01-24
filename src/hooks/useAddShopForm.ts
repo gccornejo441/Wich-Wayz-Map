@@ -20,6 +20,19 @@ import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 
 type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
 
+const coerceNumber = (v: unknown): number => {
+  if (typeof v === "number") return v;
+  const n = parseFloat(String(v));
+  return Number.isFinite(n) ? n : 0;
+};
+
+const hasValidCoords = (lat: number, lon: number): boolean => {
+  if (lat === 0 && lon === 0) return false;
+  if (lat < -90 || lat > 90) return false;
+  if (lon < -180 || lon > 180) return false;
+  return true;
+};
+
 export const useAddShopForm = (
   initialData?: ShopInitialData,
   mode: "add" | "edit" = "add",
@@ -31,10 +44,10 @@ export const useAddShopForm = (
   const { selectShop } = useShopSidebar();
   const navigate = useNavigate();
 
-  const [isManualEntry, setIsManualEntry] = useState(false);
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [isManualEntry, setIsManualEntry] = useState(false);
 
   const {
     register,
@@ -58,8 +71,8 @@ export const useAddShopForm = (
       state: initialData?.state || "",
       postcode: initialData?.postcode || "",
       country: initialData?.country || "",
-      latitude: initialData?.latitude || 0,
-      longitude: initialData?.longitude || 0,
+      latitude: initialData?.latitude ?? 0,
+      longitude: initialData?.longitude ?? 0,
       categoryIds: initialData?.categoryIds || [],
     },
   });
@@ -95,7 +108,10 @@ export const useAddShopForm = (
 
       for (const [key, value] of Object.entries(normalizedData)) {
         if (value !== undefined) {
-          setValue(key as keyof AddAShopPayload, value);
+          setValue(key as keyof AddAShopPayload, value, {
+            shouldDirty: false,
+            shouldValidate: false,
+          });
         }
       }
 
@@ -120,128 +136,133 @@ export const useAddShopForm = (
     }
   }, [initialData, categories, setValue]);
 
-  const isManualEntryValid = (): boolean => {
-    const houseNumber = getValues("house_number")?.trim();
-    const street = getValues("address_first")?.trim();
-    const city = getValues("city")?.trim();
-    const state = getValues("state")?.trim();
-    const postcode = getValues("postcode")?.trim();
-    const country = getValues("country")?.trim();
+  const addressVal = watch("address");
+  const latVal = watch("latitude");
+  const lonVal = watch("longitude");
 
-    return !!(houseNumber && street && city && state && postcode && country);
+  useEffect(() => {
+    const a = (addressVal ?? "").trim();
+    const lat = coerceNumber(latVal);
+    const lon = coerceNumber(lonVal);
+    setIsAddressValid(Boolean(a) && hasValidCoords(lat, lon));
+  }, [addressVal, latVal, lonVal]);
+
+  const applyParsedAddressToForm = (parsed: {
+    coordinates: { latitude: number; longitude: number };
+    components: {
+      house_number?: string;
+      street?: string;
+      road?: string;
+      secondary_address?: string;
+      city?: string;
+      town?: string;
+      state?: string;
+      postcode?: string;
+      country?: string;
+    };
+  }) => {
+    const house = (parsed.components.house_number || "").trim();
+    const street = (
+      parsed.components.street ||
+      parsed.components.road ||
+      ""
+    ).trim();
+
+    const line1 = [house, street].filter(Boolean).join(" ").trim();
+
+    setValue("house_number", house, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("address_first", street, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("address", line1, { shouldDirty: true, shouldValidate: true });
+    setValue("address_second", parsed.components.secondary_address || "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("city", parsed.components.city || parsed.components.town || "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("state", parsed.components.state || "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("postcode", parsed.components.postcode || "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("country", parsed.components.country || "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("latitude", parsed.coordinates.latitude, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("longitude", parsed.coordinates.longitude, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const prefillAddressFields = async (): Promise<boolean> => {
+    const raw = getValues("address")?.trim();
+
+    if (!raw) {
+      addToast("Please enter an address to prefill.", "error");
+      return false;
+    }
+
+    try {
+      let addressDetails = await GetCoordinatesAndAddressDetails(raw);
+
+      if (!addressDetails) {
+        addressDetails = await MapBoxLocationLookup(raw);
+      }
+
+      if (!addressDetails) {
+        addToast("Address not found.", "error");
+        return false;
+      }
+
+      applyParsedAddressToForm(addressDetails);
+      addToast("Address details have been prefilled.", "success");
+      return true;
+    } catch (error) {
+      console.error("Error fetching address details:", error);
+      addToast("Failed to fetch address details. Please try again.", "error");
+      return false;
+    }
   };
 
   const handledManualEntry = () => {
     setIsManualEntry((prev) => !prev);
-    setIsAddressValid(isManualEntryValid());
-  };
-
-  const prefillAddressFields = async () => {
-    const address = getValues("address")?.trim();
-
-    if (!address) {
-      addToast("Please enter an address to prefill.", "error");
-      return;
-    }
-
-    if (!address && !isManualEntryValid()) {
-      setIsAddressValid(false);
-      addToast(
-        "Please enter a valid address or complete the manual form.",
-        "error",
-      );
-      return;
-    }
-
-    try {
-      let addressDetails = await GetCoordinatesAndAddressDetails(address);
-
-      if (!addressDetails) {
-        console.warn("Nominatim returned no results. Falling back to MapBox.");
-        addressDetails = await MapBoxLocationLookup(address);
-      }
-
-      if (addressDetails) {
-        setValue("house_number", addressDetails.components.house_number || "");
-        setValue(
-          "address_first",
-          addressDetails.components.street ||
-            addressDetails.components.road ||
-            "",
-        );
-        setValue(
-          "address_second",
-          addressDetails.components.secondary_address || "",
-        );
-        setValue(
-          "city",
-          addressDetails.components.city ||
-            addressDetails.components.town ||
-            "",
-        );
-        setValue("state", addressDetails.components.state || "");
-        setValue("postcode", addressDetails.components.postcode || "");
-        setValue("country", addressDetails.components.country || "");
-        setValue("latitude", addressDetails.coordinates.latitude);
-        setValue("longitude", addressDetails.coordinates.longitude);
-
-        setIsAddressValid(true);
-        addToast("Address details have been prefilled.", "success");
-      } else {
-        setIsAddressValid(false);
-        addToast("Address not found.", "error");
-      }
-    } catch (error) {
-      console.error("Error fetching address details:", error);
-      setIsAddressValid(false);
-      addToast("Failed to fetch address details. Please try again.", "error");
-    }
   };
 
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
     if (!isAddressValid) {
       addToast(
-        "Please prefill and validate the address before submitting.",
+        "Please prefill the address or set coordinates before submitting.",
         "error",
       );
       return;
     }
 
-    // Submission guard: Validate address and coordinates before proceeding
-    const addr = (data.address ?? "").trim();
-    const house = (data.house_number ?? "").trim();
-    const street = (data.address_first ?? "").trim();
-
-    // Ensure we have a usable street address (DB requires street_address NOT NULL)
-    if (!addr && !(house && street)) {
-      addToast("Address is required before submitting.", "error");
-      return;
-    }
-
-    // Validate coordinates (reject 0,0 "null island" and non-numeric values)
-    if (
-      typeof data.latitude !== "number" ||
-      typeof data.longitude !== "number" ||
-      data.latitude === 0 ||
-      data.longitude === 0
-    ) {
-      addToast("Valid coordinates are required before submitting.", "error");
-      return;
-    }
-
     data.categoryIds = selectedCategories;
 
-    // Merge address object fields into payload if provided
     if (address) {
-      data.city = address.city;
-      data.state = address.state;
-      data.postcode = address.postalCode;
-      data.country = address.country;
-      data.latitude = address.latitude ?? 0;
-      data.longitude = address.longitude ?? 0;
-      // Map streetAddress/streetAddressSecond to payload fields (properly handled in services)
-      data.address = address.streetAddress;
-      data.address_second = address.streetAddressSecond;
+      data.address = data.address ?? address.streetAddress;
+      data.address_second = data.address_second ?? address.streetAddressSecond;
+      data.city = data.city ?? address.city;
+      data.state = data.state ?? address.state;
+      data.postcode = data.postcode ?? address.postalCode;
+      data.country = data.country ?? address.country;
+      data.latitude = data.latitude ?? address.latitude ?? 0;
+      data.longitude = data.longitude ?? address.longitude ?? 0;
     }
 
     const shopId = (initialData as { shopId?: number })?.shopId;
@@ -262,7 +283,6 @@ export const useAddShopForm = (
         console.error("Update failed:", error);
         addToast("Failed to update shop.", "error");
       }
-
       return;
     }
 
@@ -296,7 +316,7 @@ export const useAddShopForm = (
     selectedCategories,
     setSelectedCategories,
     setValue,
-    getValues,
     watch,
+    getValues,
   };
 };
