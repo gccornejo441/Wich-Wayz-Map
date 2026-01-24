@@ -7,7 +7,7 @@ import ManualAddressFields from "../Utilites/ManualAddressFields";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { InputMask } from "@react-input/mask";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import AddCategoryModal from "../Modal/AddCategoryModal";
 import {
   addCategoryIfNotExists,
@@ -129,6 +129,7 @@ const ShopForm = ({
     setCategories,
     selectedCategories,
     setSelectedCategories,
+    watch,
   } = useAddShopForm(initialData, mode, address);
 
   const { theme } = useTheme();
@@ -139,6 +140,13 @@ const ShopForm = ({
   const [websiteUrl, setWebsiteUrl] = useState(
     initialData?.website_url || "https://",
   );
+
+  // Watch address field and compute canPrefill
+  const addressValue = watch("address");
+  const canPrefill = Boolean((addressValue ?? "").trim()) && !isSubmitting;
+
+  // Track last prefill query to avoid duplicate auto-prefills
+  const lastPrefillQueryRef = useRef<string>("");
 
   // Convert categories to options for react-select
   const categoryOptions: CategoryOption[] = categories.map((cat) => ({
@@ -167,6 +175,25 @@ const ShopForm = ({
     const updatedCategories = await GetCategories();
     setCategories(updatedCategories);
   };
+
+  // Auto-prefill effect: debounced geocoding after user stops typing
+  useEffect(() => {
+    if (isManualEntry) return; // Don't interfere with manual entry mode
+    if (isSubmitting) return;
+
+    const q = (addressValue ?? "").trim();
+    if (q.length < 6) return; // Avoid firing for tiny inputs
+
+    const t = window.setTimeout(async () => {
+      // Prevent duplicate calls for the same query
+      if (lastPrefillQueryRef.current === q) return;
+      lastPrefillQueryRef.current = q;
+
+      await prefillAddressFields();
+    }, 700);
+
+    return () => window.clearTimeout(t);
+  }, [addressValue, isManualEntry, isSubmitting, prefillAddressFields]);
 
   return (
     <form
@@ -335,8 +362,8 @@ const ShopForm = ({
               value={address.state}
               onChange={(e) => onAddressChange({ ...address, state: e.target.value })}
               className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state
-                  ? "border-red-500 dark:border-red-500"
-                  : "border-brand-primary dark:border-text-muted"
+                ? "border-red-500 dark:border-red-500"
+                : "border-brand-primary dark:border-text-muted"
                 }`}
             >
               <option value="" className="text-gray-400 dark:text-gray-500">
@@ -384,8 +411,8 @@ const ShopForm = ({
         <button
           type="button"
           onClick={prefillAddressFields}
-          disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          disabled={!canPrefill}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${!canPrefill ? "opacity-50 cursor-not-allowed" : ""
             }`}
           title="Click to prefill the address details"
         >

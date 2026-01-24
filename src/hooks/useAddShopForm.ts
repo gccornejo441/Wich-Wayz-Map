@@ -41,6 +41,7 @@ export const useAddShopForm = (
     handleSubmit,
     setValue,
     getValues,
+    watch,
     formState: { errors },
   } = useForm<AddAShopPayload>({
     resolver: yupResolver(locationSchema),
@@ -206,6 +207,28 @@ export const useAddShopForm = (
       return;
     }
 
+    // Submission guard: Validate address and coordinates before proceeding
+    const addr = (data.address ?? "").trim();
+    const house = (data.house_number ?? "").trim();
+    const street = (data.address_first ?? "").trim();
+
+    // Ensure we have a usable street address (DB requires street_address NOT NULL)
+    if (!addr && !(house && street)) {
+      addToast("Address is required before submitting.", "error");
+      return;
+    }
+
+    // Validate coordinates (reject 0,0 "null island" and non-numeric values)
+    if (
+      typeof data.latitude !== "number" ||
+      typeof data.longitude !== "number" ||
+      data.latitude === 0 ||
+      data.longitude === 0
+    ) {
+      addToast("Valid coordinates are required before submitting.", "error");
+      return;
+    }
+
     data.categoryIds = selectedCategories;
 
     // Merge address object fields into payload if provided
@@ -272,5 +295,8 @@ export const useAddShopForm = (
     setCategories,
     selectedCategories,
     setSelectedCategories,
+    setValue,
+    getValues,
+    watch,
   };
 };
