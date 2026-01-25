@@ -23,6 +23,7 @@ export interface ShopsContextType {
   applyFilters: (next: ShopWithUser[]) => Promise<void>;
   clearFilters: () => Promise<void>;
   updateShopInContext: (shop: ShopWithUser) => void;
+  removeShopFromContext: (shopId: number) => void;
 }
 
 const FILTERED_SHOPS_KEY = "filtered_shops";
@@ -117,6 +118,20 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     });
   };
 
+  const removeShopFromContext = (shopId: number) => {
+    setShops((prev) => {
+      const next = prev.filter((s) => s.id !== shopId);
+      cacheData(SHOPS_STORE, next);
+      return next;
+    });
+    setFiltered((prev) => {
+      if (!prev.length) return prev;
+      const next = prev.filter((s) => s.id !== shopId);
+      sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <ShopsContext.Provider
       value={{
@@ -129,6 +144,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         applyFilters,
         clearFilters,
         updateShopInContext,
+        removeShopFromContext,
       }}
     >
       {children}

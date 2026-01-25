@@ -88,3 +88,31 @@ export const fetchShopById = async (
     throw new Error("Failed to fetch shop details.");
   }
 };
+
+/**
+ * Deletes a shop by ID (Admin only).
+ *
+ * @param {number} shopId - The ID of the shop to delete.
+ * @param {number} userId - The ID of the user performing the deletion.
+ * @param {string} role - The role of the user (must be "admin").
+ * @returns {Promise<void>}
+ * @throws An error if the deletion fails.
+ */
+export const deleteShop = async (
+  shopId: number,
+  userId: number,
+  role: string,
+): Promise<void> => {
+  try {
+    await apiRequest(`/shops/${shopId}`, {
+      method: "DELETE",
+      body: JSON.stringify({ user_id: userId, role }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting shop:", error);
+    throw new Error("Failed to delete shop.");
+  }
+};

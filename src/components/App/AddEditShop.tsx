@@ -1,15 +1,25 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { HiMap, HiX, HiCheck } from "react-icons/hi";
+import { HiMap, HiX, HiCheck, HiTrash } from "react-icons/hi";
 import ShopForm from "../Form/ShopForm";
 import MapPreview from "../Map/MapPreview";
 import { AddressDraft, emptyAddress } from "@/types/address";
 import { buildFullAddressForMaps } from "@/utils/address";
+import { deleteShop } from "@services/shopService";
+import { useShops } from "@context/shopContext";
+import { useToast } from "@context/toastContext";
+import { useAuth } from "@context/authContext";
 
 const AddEditShop = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialData = location.state?.initialData;
+  const { removeShopFromContext } = useShops();
+  const { addToast } = useToast();
+  const { userMetadata } = useAuth();
+
+  // Check if user is admin
+  const isAdmin = userMetadata?.role === "admin";
 
   // Helper function to convert initialData to AddressDraft
   const fromInitialData = (initialData: Record<string, unknown> | null | undefined): AddressDraft => {
@@ -55,6 +65,43 @@ const AddEditShop = () => {
   const [address, setAddress] = useState<AddressDraft>(() => fromInitialData(initialData));
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteShop = async () => {
+    if (!initialData?.shopId) {
+      addToast("Cannot delete shop: No shop ID found", "error");
+      return;
+    }
+
+    if (!userMetadata?.id || !userMetadata?.role) {
+      addToast("User authentication required", "error");
+      return;
+    }
+
+    if (userMetadata.role !== "admin") {
+      addToast("Admin access required to delete shops", "error");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${initialData.shopName}"? This action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteShop(initialData.shopId, userMetadata.id, userMetadata.role);
+      removeShopFromContext(initialData.shopId);
+      addToast("Shop deleted successfully", "success");
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to delete shop:", error);
+      addToast("Failed to delete shop. Please try again.", "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Derived address string for Maps
   const fullAddressForMaps = useMemo(() =>
@@ -85,12 +132,25 @@ const AddEditShop = () => {
           <h2 className="text-2xl font-bold text-text-base dark:text-text-inverted">
             {initialData ? `Edit ${initialData?.shopName}` : "Add New Shop"}
           </h2>
-          <button
-            onClick={() => navigate("/")}
-            className="dark:bg-brand-primary cursor-pointer bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-primaryBorder flex gap-2 transition duration-300"
-          >
-            <HiMap className="w-5 h-5" /> To Map
-          </button>
+          <div className="flex gap-2">
+            {initialData && isAdmin && (
+              <button
+                onClick={handleDeleteShop}
+                disabled={isDeleting}
+                className="cursor-pointer bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed flex gap-2 transition duration-300"
+                title="Delete this shop (Admin only)"
+              >
+                <HiTrash className="w-5 h-5" />
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            )}
+            <button
+              onClick={() => navigate("/")}
+              className="dark:bg-brand-primary cursor-pointer bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-primaryBorder flex gap-2 transition duration-300"
+            >
+              <HiMap className="w-5 h-5" /> To Map
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-2 items-stretch min-h-[400px]">
