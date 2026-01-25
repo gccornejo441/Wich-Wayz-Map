@@ -59,7 +59,6 @@ export const fetchShopById = async (
         ?.map((cat) => cat.id)
         .filter((id): id is number => typeof id === "number") || [];
 
-    // Return shop in ShopGeoJsonProperties format
     return {
       shopId: shop.id!,
       shopName: shop.name,
@@ -81,7 +80,7 @@ export const fetchShopById = async (
       usersAvatarEmail:
         (shop as { users_avatar_email?: string }).users_avatar_email ||
         undefined,
-      locationOpen: location.location_open,
+      locationStatus: location.locationStatus || "open",
     };
   } catch (error) {
     console.error("Error fetching shop by ID:", error);

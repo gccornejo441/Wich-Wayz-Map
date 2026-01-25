@@ -20,7 +20,11 @@ const initTheme = () => {
   const stored = localStorage.getItem("theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  const initial: Theme = isTheme(stored) ? stored : prefersDark ? "dark" : "light";
+  const initial: Theme = isTheme(stored)
+    ? stored
+    : prefersDark
+      ? "dark"
+      : "light";
 
   currentTheme = initial;
   applyThemeToDom(initial);

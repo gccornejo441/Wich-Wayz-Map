@@ -11,8 +11,8 @@ export interface Location {
   city: string;
   state: string;
   country: string;
-  location_open?: boolean;
+  locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
   phone?: string | null;
-  website?: string | null; // For backward compatibility
-  website_url?: string | null; // Canonical field matching DB schema
+  website?: string | null;
+  website_url?: string | null;
 }

@@ -70,7 +70,8 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
   const onSuggestionsClearRequested = () => setSuggestions([]);
 
-  const getSuggestionValue = (suggestion: ShopSearchHit) => suggestion.shop.name;
+  const getSuggestionValue = (suggestion: ShopSearchHit) =>
+    suggestion.shop.name;
 
   const renderSuggestion = (suggestion: ShopSearchHit) => {
     const location = suggestion.location;
@@ -79,7 +80,9 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
       location.street_address,
       location.street_address_second,
     );
-    const cityState = [location.city, location.state].filter(Boolean).join(", ");
+    const cityState = [location.city, location.state]
+      .filter(Boolean)
+      .join(", ");
 
     const addressDisplay =
       street && cityState

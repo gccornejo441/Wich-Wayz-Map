@@ -115,7 +115,8 @@ const MapPreview: React.FC<MapPreviewProps> = ({
               city = ctx.text || "";
             } else if (id.startsWith("region")) {
               // Extract state code - Mapbox returns US-XX format in short_code
-              const stateValue = ctx.short_code?.replace("US-", "") || ctx.text || "";
+              const stateValue =
+                ctx.short_code?.replace("US-", "") || ctx.text || "";
               // Convert to 2-letter code if full name was returned
               state = getStateCode(stateValue);
             } else if (id.startsWith("country")) {

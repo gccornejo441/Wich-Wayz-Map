@@ -58,7 +58,7 @@ export interface PopupContent {
   usersAvatarEmail?: string;
   latitude: number;
   longitude: number;
-  locationOpen?: boolean;
+  locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
 }
 
 export interface ToastMessageProps {

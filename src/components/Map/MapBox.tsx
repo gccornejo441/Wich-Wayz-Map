@@ -61,6 +61,8 @@ export type ShopGeoJsonProperties = {
   latitude?: number;
   longitude?: number;
 
+  locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
+
   [key: string]: unknown;
 };
 
@@ -163,12 +165,16 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
   return `
     <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
       <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-      ${street || cityStateZipEscaped ? `
+      ${
+        street || cityStateZipEscaped
+          ? `
         <div class="text-text-base dark:text-text-inverted">
           ${street ? `<div>${street}</div>` : ""}
           ${cityStateZipEscaped ? `<div class="text-xs opacity-80 mt-0.5">${cityStateZipEscaped}</div>` : ""}
         </div>
-      ` : ""}
+      `
+          : ""
+      }
     </div>
   `;
 };
@@ -220,10 +226,10 @@ const buildShopPropsFromShopAndLocation = (
 
   const categoryIds =
     Array.isArray(shopAny.categoryIds) &&
-      shopAny.categoryIds.every((x) => typeof x === "number")
+    shopAny.categoryIds.every((x) => typeof x === "number")
       ? shopAny.categoryIds
       : Array.isArray(shopAny.category_ids) &&
-        shopAny.category_ids.every((x) => typeof x === "number")
+          shopAny.category_ids.every((x) => typeof x === "number")
         ? shopAny.category_ids
         : undefined;
 
@@ -232,6 +238,8 @@ const buildShopPropsFromShopAndLocation = (
   const phone = pickPhone(shopAny, locAny);
   const website = pickWebsite(shopAny, locAny);
   const website_url = pickWebsiteUrl(shopAny, locAny);
+
+  const locationStatus = loc.locationStatus ?? "open";
 
   return {
     shopId: shop.id,
@@ -271,6 +279,13 @@ const buildShopPropsFromShopAndLocation = (
 
     latitude: ll.lat,
     longitude: ll.lng,
+
+    locationStatus:
+      locationStatus === "open" ||
+      locationStatus === "temporarily_closed" ||
+      locationStatus === "permanently_closed"
+        ? locationStatus
+        : "open",
   };
 };
 
@@ -307,6 +322,18 @@ const coercePropsFromFeatureProperties = (
   const shopId = toNumber(raw.shopId);
   if (!shopId) return null;
 
+  const locationStatusRaw = getString(raw.locationStatus);
+  const locationStatus:
+    | "open"
+    | "temporarily_closed"
+    | "permanently_closed"
+    | undefined =
+    locationStatusRaw === "open" ||
+    locationStatusRaw === "temporarily_closed" ||
+    locationStatusRaw === "permanently_closed"
+      ? locationStatusRaw
+      : undefined;
+
   return {
     ...(raw as unknown as ShopGeoJsonProperties),
     shopId,
@@ -325,6 +352,7 @@ const coercePropsFromFeatureProperties = (
     usersAvatarEmail: getString(raw.usersAvatarEmail),
     usersAvatarId: getString(raw.usersAvatarId),
     createdBy: getString(raw.createdBy),
+    locationStatus,
   };
 };
 
@@ -706,7 +734,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     if (!userPosition) return;
 
     if (!userMarkerRef.current) {
-      userMarkerRef.current = new mapboxgl.Marker().setLngLat(userPosition).addTo(map);
+      userMarkerRef.current = new mapboxgl.Marker()
+        .setLngLat(userPosition)
+        .addTo(map);
     } else {
       userMarkerRef.current.setLngLat(userPosition);
     }

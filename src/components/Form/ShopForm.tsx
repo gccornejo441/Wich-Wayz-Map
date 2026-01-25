@@ -257,10 +257,11 @@ const ShopForm = ({
             }
           }}
           placeholder="https://example.com"
-          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
-            ? "border-red-500 dark:border-red-500"
-            : "border-brand-primary dark:border-text-muted"
-            }`}
+          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+            errors.website_url
+              ? "border-red-500 dark:border-red-500"
+              : "border-brand-primary dark:border-text-muted"
+          }`}
         />
         {errors.website_url && (
           <p className="mt-1 text-sm text-red-500 dark:text-red-400">
@@ -276,8 +277,9 @@ const ShopForm = ({
           replacement={{ _: /\d/ }}
           placeholder="(123) 456-7890"
           {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
-            }`}
+          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+            errors.phone ? "border-red-500 dark:border-red-500" : ""
+          }`}
         />
       </InputField>
 
@@ -328,7 +330,9 @@ const ShopForm = ({
           errors={errors}
           value={address.streetAddress}
           placeholder="Enter street address"
-          onChange={(e) => onAddressChange({ ...address, streetAddress: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, streetAddress: e.target.value })
+          }
         />
 
         {/* Street Address Line 2 */}
@@ -339,7 +343,9 @@ const ShopForm = ({
           errors={errors}
           value={address.streetAddressSecond}
           placeholder="Apt, Suite, Unit, etc."
-          onChange={(e) => onAddressChange({ ...address, streetAddressSecond: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, streetAddressSecond: e.target.value })
+          }
         />
 
         {/* City */}
@@ -350,7 +356,9 @@ const ShopForm = ({
           errors={errors}
           value={address.city}
           placeholder="Enter city"
-          onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, city: e.target.value })
+          }
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -362,11 +370,14 @@ const ShopForm = ({
             <select
               {...register("state")}
               value={address.state}
-              onChange={(e) => onAddressChange({ ...address, state: e.target.value })}
-              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state
-                ? "border-red-500 dark:border-red-500"
-                : "border-brand-primary dark:border-text-muted"
-                }`}
+              onChange={(e) =>
+                onAddressChange({ ...address, state: e.target.value })
+              }
+              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${
+                errors.state
+                  ? "border-red-500 dark:border-red-500"
+                  : "border-brand-primary dark:border-text-muted"
+              }`}
             >
               <option value="" className="text-gray-400 dark:text-gray-500">
                 Select a state...
@@ -392,7 +403,9 @@ const ShopForm = ({
             errors={errors}
             value={address.postalCode}
             placeholder="Enter postal code"
-            onChange={(e) => onAddressChange({ ...address, postalCode: e.target.value })}
+            onChange={(e) =>
+              onAddressChange({ ...address, postalCode: e.target.value })
+            }
           />
         </div>
 
@@ -404,7 +417,9 @@ const ShopForm = ({
           errors={errors}
           value={address.country}
           placeholder="Enter country"
-          onChange={(e) => onAddressChange({ ...address, country: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, country: e.target.value })
+          }
         />
       </div>
 
@@ -420,8 +435,9 @@ const ShopForm = ({
             }
           }}
           disabled={!canPrefill}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${!canPrefill ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            !canPrefill ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           title="Click to prefill the address details"
         >
           Prefill Address
@@ -431,8 +447,9 @@ const ShopForm = ({
           type="button"
           onClick={handledManualEntry}
           disabled={isSubmitting}
-          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           {isManualEntry ? "Hide Manual Entry" : "Manually Enter Data"}
         </button>
@@ -452,13 +469,14 @@ const ShopForm = ({
           !!errors.address ||
           isSubmitting
         }
-        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
+        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${
+          !isAddressValid ||
           !!errors.shopName ||
           !!errors.address ||
           isSubmitting
-          ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
-          : "bg-brand-primary hover:bg-secondary"
-          }`}
+            ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
+            : "bg-brand-primary hover:bg-secondary"
+        }`}
       >
         {isSubmitting ? (
           <>

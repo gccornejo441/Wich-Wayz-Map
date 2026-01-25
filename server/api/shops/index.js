@@ -39,16 +39,20 @@ export default async function handler(req, res) {
         l.city,
         l.state,
         l.country,
-        l.location_open,
         l.phone,
         l.website_url,
+        COALESCE(
+          sl.status,
+          CASE WHEN l.location_open = 0 THEN 'permanently_closed' ELSE 'open' END
+        ) AS location_status,
         c.id AS category_id,
         c.category_name
       FROM shops s
       LEFT JOIN users u ON s.created_by = u.id
       LEFT JOIN shop_categories sc ON s.id = sc.shop_id
       LEFT JOIN categories c ON sc.category_id = c.id
-      LEFT JOIN locations l ON s.id_location = l.id;
+      LEFT JOIN locations l ON s.id_location = l.id
+      LEFT JOIN shop_locations sl ON sl.shop_id = s.id AND sl.location_id = l.id;
     `);
 
     const shopMap = new Map();
@@ -78,6 +82,7 @@ export default async function handler(req, res) {
           (loc) => loc.id === row.id_location,
         );
         if (!hasLocation) {
+          const locationStatus = row.location_status || "open";
           shopEntry.locations?.push({
             id: row.id_location,
             postal_code: row.postal_code || "",
@@ -86,15 +91,18 @@ export default async function handler(req, res) {
             modified_by: row.location_modified_by || undefined,
             date_created: row.location_date_created || undefined,
             date_modified: row.location_date_modified || undefined,
-            // Address fields: street_address contains ONLY street lines (no city/state/postal)
             street_address: row.street_address || "",
             street_address_second: row.street_address_second || "",
             city: row.city || "",
             state: row.state || "",
             country: row.country || "",
-            location_open: toBoolean(row.location_open),
+            locationStatus:
+              locationStatus === "open" ||
+              locationStatus === "temporarily_closed" ||
+              locationStatus === "permanently_closed"
+                ? locationStatus
+                : "open",
             phone: row.phone || null,
-            // Map website_url column to 'website' for backward compatibility with frontend
             website: row.website_url || null,
           });
         }

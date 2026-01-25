@@ -22,7 +22,9 @@ const AddEditShop = () => {
   const isAdmin = userMetadata?.role === "admin";
 
   // Helper function to convert initialData to AddressDraft
-  const fromInitialData = (initialData: Record<string, unknown> | null | undefined): AddressDraft => {
+  const fromInitialData = (
+    initialData: Record<string, unknown> | null | undefined,
+  ): AddressDraft => {
     if (!initialData) return emptyAddress;
 
     const getString = (key: string): string => {
@@ -62,7 +64,9 @@ const AddEditShop = () => {
     };
   };
 
-  const [address, setAddress] = useState<AddressDraft>(() => fromInitialData(initialData));
+  const [address, setAddress] = useState<AddressDraft>(() =>
+    fromInitialData(initialData),
+  );
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -84,7 +88,7 @@ const AddEditShop = () => {
     }
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${initialData.shopName}"? This action cannot be undone.`
+      `Are you sure you want to delete "${initialData.shopName}"? This action cannot be undone.`,
     );
 
     if (!confirmDelete) return;
@@ -104,9 +108,22 @@ const AddEditShop = () => {
   };
 
   // Derived address string for Maps
-  const fullAddressForMaps = useMemo(() =>
-    buildFullAddressForMaps(address.streetAddress, address.streetAddressSecond, address.city, address.state, address.postalCode),
-    [address.streetAddress, address.streetAddressSecond, address.city, address.state, address.postalCode]
+  const fullAddressForMaps = useMemo(
+    () =>
+      buildFullAddressForMaps(
+        address.streetAddress,
+        address.streetAddressSecond,
+        address.city,
+        address.state,
+        address.postalCode,
+      ),
+    [
+      address.streetAddress,
+      address.streetAddressSecond,
+      address.city,
+      address.state,
+      address.postalCode,
+    ],
   );
 
   // Adds Escape key support
@@ -178,7 +195,12 @@ const AddEditShop = () => {
 
           {/* Desktop map panel */}
           <div className="hidden lg:flex flex-grow pl-6 pt-6 border-l border-lightGray dark:border-surface-light flex-col">
-            <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} prefillFlyToNonce={prefillFlyToNonce} />
+            <MapPreview
+              address={address}
+              fullAddressForMaps={fullAddressForMaps}
+              onAddressUpdate={setAddress}
+              prefillFlyToNonce={prefillFlyToNonce}
+            />
           </div>
         </div>
       </div>
@@ -213,7 +235,12 @@ const AddEditShop = () => {
 
             {/* Map content */}
             <div className="flex-1">
-              <MapPreview address={address} fullAddressForMaps={fullAddressForMaps} onAddressUpdate={setAddress} prefillFlyToNonce={prefillFlyToNonce} />
+              <MapPreview
+                address={address}
+                fullAddressForMaps={fullAddressForMaps}
+                onAddressUpdate={setAddress}
+                prefillFlyToNonce={prefillFlyToNonce}
+              />
             </div>
 
             {/* Sticky confirmation bar */}

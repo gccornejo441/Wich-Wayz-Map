@@ -60,6 +60,7 @@ coverage
 
 .continuerules
 .crush.json
+data/*
 data/wich-wayz-map.db
 data/wich-wayz-map.db-shm
 data/wich-wayz-map.db-wal

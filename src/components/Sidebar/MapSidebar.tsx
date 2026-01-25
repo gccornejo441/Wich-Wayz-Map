@@ -347,9 +347,9 @@ const MapSidebar = () => {
 
   const parsedCategories = selectedShop?.categories
     ? selectedShop.categories
-      .split(",")
-      .map((cat) => cat.trim())
-      .filter((cat) => cat.length > 0)
+        .split(",")
+        .map((cat) => cat.trim())
+        .filter((cat) => cat.length > 0)
     : [];
 
   const hiddenCategoryCount =
@@ -393,8 +393,8 @@ const MapSidebar = () => {
 
   const googleMapsSearchUrl = mapsQuery.length
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      mapsQuery,
-    )}`
+        mapsQuery,
+      )}`
     : "";
 
   // For directions, prefer lat/lng; fallback to full address
@@ -404,14 +404,15 @@ const MapSidebar = () => {
 
   const googleMapsDirectionsUrl = mapsDestination.length
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-      mapsDestination,
-    )}`
+        mapsDestination,
+      )}`
     : "";
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         <div className="flex justify-end p-3">
@@ -460,10 +461,11 @@ const MapSidebar = () => {
               {selectedShop.description && (
                 <div className="mt-2">
                   <p
-                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${!showFullDescription && descriptionPreview?.truncated
+                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                      !showFullDescription && descriptionPreview?.truncated
                         ? "line-clamp-3"
                         : ""
-                      }`}
+                    }`}
                   >
                     {showFullDescription || !descriptionPreview?.truncated
                       ? selectedShop.description
@@ -480,7 +482,7 @@ const MapSidebar = () => {
                 </div>
               )}
 
-              {selectedShop.locationOpen == false && (
+              {selectedShop.locationStatus === "permanently_closed" && (
                 <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <FiAlertCircle
                     className="flex-shrink-0 text-red-600 dark:text-red-400"
@@ -488,6 +490,18 @@ const MapSidebar = () => {
                   />
                   <span className="text-xs font-semibold text-red-700 dark:text-red-300">
                     This location is permanently closed.
+                  </span>
+                </div>
+              )}
+
+              {selectedShop.locationStatus === "temporarily_closed" && (
+                <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <FiAlertCircle
+                    className="flex-shrink-0 text-yellow-600 dark:text-yellow-400"
+                    size={16}
+                  />
+                  <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
+                    This location is temporarily closed.
                   </span>
                 </div>
               )}
@@ -568,7 +582,7 @@ const MapSidebar = () => {
                   )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
-                  "no website available" && (
+                    "no website available" && (
                     <a
                       href={normalizeWebsiteUrl(selectedShop.website)}
                       target="_blank"
@@ -642,10 +656,14 @@ const MapSidebar = () => {
                   <div className="flex items-center mt-2 text-sm text-text-muted dark:text-text-inverted">
                     <UserAvatar
                       avatarId={selectedShop.usersAvatarId || "default"}
-                      userEmail={selectedShop.usersAvatarEmail || "guest@example.com"}
+                      userEmail={
+                        selectedShop.usersAvatarEmail || "guest@example.com"
+                      }
                       size="sm"
                     />
-                    <span className="ml-2">Added by: {selectedShop.createdBy}</span>
+                    <span className="ml-2">
+                      Added by: {selectedShop.createdBy}
+                    </span>
                   </div>
                 )}
               </div>
@@ -692,21 +710,34 @@ const MapSidebar = () => {
                       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                         {comments.length === 0 ? (
                           <p className="text-xs text-text-muted dark:text-text-inverted/70 flex items-center gap-1.5 py-1">
-                            <FiAlertCircle size={14} className="flex-shrink-0" />
+                            <FiAlertCircle
+                              size={14}
+                              className="flex-shrink-0"
+                            />
                             Be the first to leave a comment.
                           </p>
                         ) : (
                           comments.map((comment) => {
                             const body = comment.body ?? "";
-                            const { preview, truncated } = makePreview(body, 240);
-                            const expanded = !!expandedComments[String(comment.id)];
-                            const showNew = isRecentDate(comment.dateCreated, 7);
+                            const { preview, truncated } = makePreview(
+                              body,
+                              240,
+                            );
+                            const expanded =
+                              !!expandedComments[String(comment.id)];
+                            const showNew = isRecentDate(
+                              comment.dateCreated,
+                              7,
+                            );
 
                             const avatarId = comment.userAvatar || "default";
-                            const avatarEmail = comment.userEmail || "guest@example.com";
-                            const displayName = comment.userName || "Sandwich Fan";
+                            const avatarEmail =
+                              comment.userEmail || "guest@example.com";
+                            const displayName =
+                              comment.userName || "Sandwich Fan";
 
-                            const isOwnComment = userMetadata?.id === comment.userId;
+                            const isOwnComment =
+                              userMetadata?.id === comment.userId;
                             const isEditing = editingCommentId === comment.id;
                             const isDeleting = deletingCommentId === comment.id;
 
@@ -741,11 +772,14 @@ const MapSidebar = () => {
                                       )}
 
                                       <span className="text-xs text-text-muted dark:text-text-inverted">
-                                        {formatRelativeTime(comment.dateCreated)}
+                                        {formatRelativeTime(
+                                          comment.dateCreated,
+                                        )}
                                       </span>
 
                                       {comment.dateModified &&
-                                        comment.dateModified !== comment.dateCreated && (
+                                        comment.dateModified !==
+                                          comment.dateCreated && (
                                           <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
                                             (edited)
                                           </span>
@@ -757,7 +791,9 @@ const MapSidebar = () => {
                                         <textarea
                                           value={editingCommentBody}
                                           onChange={(e) =>
-                                            setEditingCommentBody(e.target.value)
+                                            setEditingCommentBody(
+                                              e.target.value,
+                                            )
                                           }
                                           maxLength={5000}
                                           className="w-full rounded-lg border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
@@ -771,12 +807,15 @@ const MapSidebar = () => {
                                             }
                                             disabled={
                                               updatingComment ||
-                                              editingCommentBody.trim().length === 0
+                                              editingCommentBody.trim()
+                                                .length === 0
                                             }
                                             className="flex items-center gap-1 px-3 py-1 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:bg-brand-secondary hover:text-text-base transition-colors disabled:bg-surface-dark disabled:text-text-muted disabled:cursor-not-allowed"
                                           >
                                             <FiCheck size={14} />
-                                            {updatingComment ? "Saving..." : "Save"}
+                                            {updatingComment
+                                              ? "Saving..."
+                                              : "Save"}
                                           </button>
                                           <button
                                             type="button"
@@ -792,14 +831,18 @@ const MapSidebar = () => {
                                     ) : (
                                       <>
                                         <p className="mt-1 text-sm text-text-base dark:text-text-inverted leading-relaxed whitespace-pre-wrap break-words">
-                                          {expanded || !truncated ? body : preview}
+                                          {expanded || !truncated
+                                            ? body
+                                            : preview}
                                         </p>
 
                                         {truncated && (
                                           <button
                                             type="button"
                                             onClick={() =>
-                                              toggleCommentExpanded(String(comment.id))
+                                              toggleCommentExpanded(
+                                                String(comment.id),
+                                              )
                                             }
                                             className="mt-2 text-xs text-primary underline"
                                           >
@@ -812,16 +855,22 @@ const MapSidebar = () => {
                                     <div className="mt-2 flex items-center gap-3">
                                       <span
                                         className="text-[11px] text-text-muted dark:text-text-inverted"
-                                        title={new Date(comment.dateCreated).toLocaleString()}
+                                        title={new Date(
+                                          comment.dateCreated,
+                                        ).toLocaleString()}
                                       >
-                                        {new Date(comment.dateCreated).toLocaleDateString()}
+                                        {new Date(
+                                          comment.dateCreated,
+                                        ).toLocaleDateString()}
                                       </span>
 
                                       {isOwnComment && !isEditing && (
                                         <div className="flex items-center gap-2">
                                           <button
                                             type="button"
-                                            onClick={() => handleEditComment(comment)}
+                                            onClick={() =>
+                                              handleEditComment(comment)
+                                            }
                                             className="text-text-muted dark:text-text-inverted hover:text-primary dark:hover:text-brand-secondary transition-colors"
                                             title="Edit comment"
                                           >
@@ -850,7 +899,10 @@ const MapSidebar = () => {
                       </div>
 
                       <div className="pt-3 border-t border-surface-dark/10 dark:border-surface-muted/20">
-                        <form onSubmit={handleCommentSubmit} className="space-y-2">
+                        <form
+                          onSubmit={handleCommentSubmit}
+                          className="space-y-2"
+                        >
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-text-muted dark:text-text-inverted">
                               Share your experience
@@ -862,7 +914,9 @@ const MapSidebar = () => {
 
                           <textarea
                             value={commentBody}
-                            onChange={(event) => setCommentBody(event.target.value)}
+                            onChange={(event) =>
+                              setCommentBody(event.target.value)
+                            }
                             placeholder="What should other sandwich fans know?"
                             maxLength={5000}
                             className="w-full rounded-xl border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
@@ -873,11 +927,14 @@ const MapSidebar = () => {
                             <button
                               type="submit"
                               disabled={
-                                submittingComment || commentBody.trim().length === 0
+                                submittingComment ||
+                                commentBody.trim().length === 0
                               }
                               className="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors disabled:opacity-50 disabled:bg-brand-primary/40 dark:disabled:bg-brand-primary/30 disabled:cursor-not-allowed"
                             >
-                              {submittingComment ? "Posting..." : "Post Comment"}
+                              {submittingComment
+                                ? "Posting..."
+                                : "Post Comment"}
                             </button>
                           </div>
                         </form>
