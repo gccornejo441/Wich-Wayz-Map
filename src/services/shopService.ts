@@ -2,6 +2,7 @@ import { ShopWithUser } from "@/models/ShopWithUser";
 import { apiRequest } from "./apiClient";
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
 import { buildStreetAddress } from "@utils/address";
+import { LocationStatus } from "@/types/dataTypes";
 
 /**
  * Retrieves all shops from the database, including their associated users, locations, and categories.
@@ -76,11 +77,13 @@ export const fetchShopById = async (
       website: location.website || undefined,
       website_url: location.website || undefined,
       createdBy: shop.created_by_username || undefined,
+      created_by: shop.created_by,
       usersAvatarId: shop.users_avatar_id || undefined,
       usersAvatarEmail:
         (shop as { users_avatar_email?: string }).users_avatar_email ||
         undefined,
       locationStatus: location.locationStatus || "open",
+      locationId: location.id,
     };
   } catch (error) {
     console.error("Error fetching shop by ID:", error);
@@ -113,5 +116,76 @@ export const deleteShop = async (
   } catch (error) {
     console.error("Error deleting shop:", error);
     throw new Error("Failed to delete shop.");
+  }
+};
+
+/**
+ * Updates a shop's location status.
+ *
+ * @param {number} shopId - The ID of the shop to update.
+ * @param {LocationStatus} status - The new status ("open", "temporarily_closed", or "permanently_closed").
+ * @param {number | undefined} locationId - The location ID (optional, backend will use first location if not provided).
+ * @param {number} userId - The ID of the user performing the update.
+ * @param {string} role - The role of the user.
+ * @returns {Promise<{ shopId: number; locationId: number; locationStatus: LocationStatus }>}
+ * @throws An error if the update fails with specific error messages for 401, 403, 409, and general errors.
+ */
+export const updateShopLocationStatus = async (
+  shopId: number,
+  status: LocationStatus,
+  locationId: number | undefined,
+  userId: number,
+  role: string,
+): Promise<{
+  shopId: number;
+  locationId: number;
+  locationStatus: LocationStatus;
+}> => {
+  try {
+    const response = await apiRequest<{
+      shopId: number;
+      locationId: number;
+      locationStatus: LocationStatus;
+    }>(`/shops/location-status/${shopId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status,
+        locationId,
+        user_id: userId,
+        role,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response;
+  } catch (error: unknown) {
+    console.error("Error updating shop location status:", error);
+
+    // Handle specific HTTP errors
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+
+      if (
+        errorMessage.includes("401") ||
+        errorMessage.includes("unauthorized")
+      ) {
+        throw new Error("Authentication required");
+      }
+
+      if (errorMessage.includes("403") || errorMessage.includes("forbidden")) {
+        throw new Error(
+          "You don't have permission to change this shop's status.",
+        );
+      }
+
+      if (errorMessage.includes("409") || errorMessage.includes("conflict")) {
+        throw new Error(
+          "Database not migrated for status yet. Contact administrator.",
+        );
+      }
+    }
+
+    throw new Error("Failed to update shop status");
   }
 };

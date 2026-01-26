@@ -1,6 +1,10 @@
 import { ReactNode } from "react";
 
 export type Callback = () => void;
+export type LocationStatus =
+  | "open"
+  | "temporarily_closed"
+  | "permanently_closed";
 export type ShopWithId = AddAShopPayload & { shopId: string | number };
 
 export interface ShopLocation {

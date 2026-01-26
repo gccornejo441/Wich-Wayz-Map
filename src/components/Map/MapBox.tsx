@@ -44,6 +44,7 @@ export type ShopGeoJsonProperties = {
   usersAvatarEmail?: string;
   usersAvatarId?: string;
   createdBy?: string;
+  created_by?: number;
 
   votes?: number;
   categoryIds?: number[];
@@ -62,6 +63,7 @@ export type ShopGeoJsonProperties = {
   longitude?: number;
 
   locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
+  locationId?: number;
 
   [key: string]: unknown;
 };
@@ -165,16 +167,15 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
   return `
     <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
       <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-      ${
-        street || cityStateZipEscaped
-          ? `
+      ${street || cityStateZipEscaped
+      ? `
         <div class="text-text-base dark:text-text-inverted">
           ${street ? `<div>${street}</div>` : ""}
           ${cityStateZipEscaped ? `<div class="text-xs opacity-80 mt-0.5">${cityStateZipEscaped}</div>` : ""}
         </div>
       `
-          : ""
-      }
+      : ""
+    }
     </div>
   `;
 };
@@ -226,10 +227,10 @@ const buildShopPropsFromShopAndLocation = (
 
   const categoryIds =
     Array.isArray(shopAny.categoryIds) &&
-    shopAny.categoryIds.every((x) => typeof x === "number")
+      shopAny.categoryIds.every((x) => typeof x === "number")
       ? shopAny.categoryIds
       : Array.isArray(shopAny.category_ids) &&
-          shopAny.category_ids.every((x) => typeof x === "number")
+        shopAny.category_ids.every((x) => typeof x === "number")
         ? shopAny.category_ids
         : undefined;
 
@@ -263,6 +264,7 @@ const buildShopPropsFromShopAndLocation = (
       getString(shopAny.createdBy) ??
       getString(shopAny.created_by_username) ??
       getString(shopAny.created_by),
+    created_by: isNumber(shop.created_by) ? shop.created_by : undefined,
 
     votes: isNumber(shopAny.votes) ? shopAny.votes : undefined,
     categoryIds,
@@ -282,10 +284,11 @@ const buildShopPropsFromShopAndLocation = (
 
     locationStatus:
       locationStatus === "open" ||
-      locationStatus === "temporarily_closed" ||
-      locationStatus === "permanently_closed"
+        locationStatus === "temporarily_closed" ||
+        locationStatus === "permanently_closed"
         ? locationStatus
         : "open",
+    locationId: isNumber(loc.id) ? loc.id : undefined,
   };
 };
 
@@ -329,8 +332,8 @@ const coercePropsFromFeatureProperties = (
     | "permanently_closed"
     | undefined =
     locationStatusRaw === "open" ||
-    locationStatusRaw === "temporarily_closed" ||
-    locationStatusRaw === "permanently_closed"
+      locationStatusRaw === "temporarily_closed" ||
+      locationStatusRaw === "permanently_closed"
       ? locationStatusRaw
       : undefined;
 
@@ -352,7 +355,9 @@ const coercePropsFromFeatureProperties = (
     usersAvatarEmail: getString(raw.usersAvatarEmail),
     usersAvatarId: getString(raw.usersAvatarId),
     createdBy: getString(raw.createdBy),
+    created_by: toNumber(raw.created_by),
     locationStatus,
+    locationId: toNumber(raw.locationId),
   };
 };
 
