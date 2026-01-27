@@ -55,17 +55,6 @@ describe("useAddShopForm hook", () => {
     });
   });
 
-  // Tests to see if manually entering an address works correctly.
-  it("toggles manual entry state and sets address validity", () => {
-    const { result } = renderHook(() => useAddShopForm());
-    expect(result.current.isManualEntry).toBe(false);
-    act(() => {
-      result.current.handledManualEntry();
-    });
-    expect(result.current.isManualEntry).toBe(true);
-    expect(result.current.isAddressValid).toBe(false);
-  });
-
   // Used to test if the prefillAddressFields function is called correctly.
   it("shows an error toast when prefillAddressFields is called with an empty address", async () => {
     const { result } = renderHook(() => useAddShopForm());
@@ -101,7 +90,7 @@ describe("useAddShopForm hook", () => {
       await result.current.onSubmit(dummyData);
     });
     expect(addToast).toHaveBeenCalledWith(
-      "Please prefill and validate the address before submitting.",
+      "Please prefill the address or set coordinates before submitting.",
       "error",
     );
   });

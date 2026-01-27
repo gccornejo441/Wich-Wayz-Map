@@ -8,21 +8,31 @@ import { titleCase } from "title-case";
  * @returns A new string in title case.
  */
 export function toTitleCase(str: string): string {
-  return str
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ")
+  const trimmed = str.toLowerCase().trim().replace(/\s+/g, " ");
+  if (!trimmed) return "";
+
+  return trimmed
     .split(" ")
-    .map((word) =>
-      word
-        .split(/([-'’])/g)
-        .map((part) =>
-          /[-'’]/.test(part)
-            ? part
-            : part.charAt(0).toUpperCase() + part.slice(1),
-        )
-        .join(""),
-    )
+    .map((word) => {
+      const parts = word.split(/([-''])/g);
+
+      return parts
+        .map((part, index, array) => {
+          if (!part) return part;
+
+          // Preserve delimiters
+          if (part === "-" || part === "'" || part === "'") return part;
+
+          const prev = array[index - 1];
+
+          // After apostrophes: keep as-is (already lowercased)
+          if (prev === "'" || prev === "'") return part;
+
+          // After hyphens (or at start): title-case
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        })
+        .join("");
+    })
     .join(" ");
 }
 

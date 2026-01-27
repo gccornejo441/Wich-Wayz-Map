@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HiMap, HiX, HiCheck, HiTrash } from "react-icons/hi";
 import ShopForm from "../Form/ShopForm";
 import MapPreview from "../Map/MapPreview";
@@ -9,64 +9,105 @@ import { deleteShop } from "@services/shopService";
 import { useShops } from "@context/shopContext";
 import { useToast } from "@context/toastContext";
 import { useAuth } from "@context/authContext";
+import { AddAShopPayload, LocationStatus } from "@/types/dataTypes";
+
+type ShopFormInitialData = Partial<AddAShopPayload> & {
+  shopId?: number;
+  locationId?: number;
+  locationStatus?: LocationStatus;
+  created_by?: number;
+  websiteUrl?: string;
+  website?: string;
+  phone_number?: string;
+  phoneNumber?: string;
+};
+
+const isLocationStatus = (v: unknown): v is LocationStatus =>
+  v === "open" || v === "temporarily_closed" || v === "permanently_closed";
 
 const AddEditShop = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const initialData = location.state?.initialData;
+
+  const rawInitialData = location.state?.initialData as ShopFormInitialData | undefined;
+
+  const initialData = useMemo<ShopFormInitialData | undefined>(() => {
+    if (!rawInitialData) return undefined;
+
+    const website_url =
+      (rawInitialData.website_url as string | undefined) ??
+      rawInitialData.websiteUrl ??
+      rawInitialData.website ??
+      "";
+
+    const phone =
+      (rawInitialData.phone as string | undefined) ??
+      rawInitialData.phone_number ??
+      rawInitialData.phoneNumber ??
+      "";
+
+    const locationStatus = isLocationStatus(rawInitialData.locationStatus)
+      ? rawInitialData.locationStatus
+      : undefined;
+
+    return {
+      ...rawInitialData,
+      website_url,
+      phone,
+      locationStatus,
+    };
+  }, [rawInitialData]);
+
   const { removeShopFromContext } = useShops();
   const { addToast } = useToast();
   const { userMetadata } = useAuth();
 
-  // Check if user is admin
   const isAdmin = userMetadata?.role === "admin";
 
-  // Helper function to convert initialData to AddressDraft
-  const fromInitialData = (
-    initialData: Record<string, unknown> | null | undefined,
-  ): AddressDraft => {
-    if (!initialData) return emptyAddress;
+  const fromInitialData = (data: ShopFormInitialData | undefined): AddressDraft => {
+    if (!data) return emptyAddress;
 
-    const getString = (key: string): string => {
-      const value = initialData[key];
-      return typeof value === "string" ? value : "";
+    const getStringAny = (...keys: string[]): string => {
+      const obj = data as unknown as Record<string, unknown>;
+      for (const k of keys) {
+        const v = obj[k];
+        if (typeof v === "string") return v;
+      }
+      return "";
     };
 
-    const getNumber = (key: string): number | null => {
-      const value = initialData[key];
-      return typeof value === "number" ? value : null;
+    const getNumberAny = (...keys: string[]): number | null => {
+      const obj = data as unknown as Record<string, unknown>;
+      for (const k of keys) {
+        const v = obj[k];
+        if (typeof v === "number") return v;
+      }
+      return null;
     };
 
-    // If initialData has structured address fields, use them
-    if (initialData.streetAddress !== undefined) {
-      return {
-        streetAddress: getString("streetAddress"),
-        streetAddressSecond: getString("streetAddressSecond"),
-        city: getString("city"),
-        state: getString("state"),
-        postalCode: getString("postalCode"),
-        country: getString("country") || "USA",
-        latitude: getNumber("latitude"),
-        longitude: getNumber("longitude"),
-      };
-    }
-
-    // If initialData only has a single address string, put it into streetAddress
     return {
-      streetAddress: getString("address"),
-      streetAddressSecond: "",
-      city: getString("city"),
-      state: getString("state"),
-      postalCode: getString("postalCode"),
-      country: getString("country") || "USA",
-      latitude: getNumber("latitude"),
-      longitude: getNumber("longitude"),
+      streetAddress: getStringAny("address_first", "address", "streetAddress"),
+      streetAddressSecond: getStringAny(
+        "address_second",
+        "streetAddressSecond",
+      ),
+      city: getStringAny("city"),
+      state: getStringAny("state"),
+      postalCode: getStringAny("postcode", "postalCode"),
+      country: getStringAny("country") || "USA",
+      latitude: getNumberAny("latitude"),
+      longitude: getNumberAny("longitude"),
     };
   };
 
   const [address, setAddress] = useState<AddressDraft>(() =>
     fromInitialData(initialData),
   );
+
+  useEffect(() => {
+    setAddress(fromInitialData(initialData));
+  }, [initialData]);
+
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -107,7 +148,6 @@ const AddEditShop = () => {
     }
   };
 
-  // Derived address string for Maps
   const fullAddressForMaps = useMemo(
     () =>
       buildFullAddressForMaps(
@@ -126,7 +166,6 @@ const AddEditShop = () => {
     ],
   );
 
-  // Adds Escape key support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsMapModalOpen(false);
@@ -144,7 +183,6 @@ const AddEditShop = () => {
   return (
     <div className="min-h-[100dvh] pt-16 md:pt-10 flex items-center justify-center dark:bg-surface-dark px-4">
       <div className="w-full max-w-6xl bg-white dark:bg-surface-darker p-6 rounded-xl shadow-md space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-secondary pb-4">
           <h2 className="text-2xl font-bold text-text-base dark:text-text-inverted">
             {initialData ? `Edit ${initialData?.shopName}` : "Add New Shop"}
@@ -171,7 +209,6 @@ const AddEditShop = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-2 items-stretch min-h-[400px]">
-          {/* Form */}
           <div className="w-full lg:max-w-md">
             <ShopForm
               initialData={initialData}
@@ -181,7 +218,6 @@ const AddEditShop = () => {
               onPrefillSuccess={() => setPrefillFlyToNonce((n) => n + 1)}
             />
 
-            {/* Mobile toggle button */}
             <div className="lg:hidden mt-4">
               <button
                 onClick={() => setIsMapModalOpen(true)}
@@ -193,7 +229,6 @@ const AddEditShop = () => {
             </div>
           </div>
 
-          {/* Desktop map panel */}
           <div className="hidden lg:flex flex-grow pl-6 pt-6 border-l border-lightGray dark:border-surface-light flex-col">
             <MapPreview
               address={address}
@@ -205,7 +240,6 @@ const AddEditShop = () => {
         </div>
       </div>
 
-      {/* Modal for mobile */}
       {isMapModalOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center px-4 transition-opacity duration-300 animate-fadeIn"
@@ -220,7 +254,6 @@ const AddEditShop = () => {
             tabIndex={-1}
             ref={(el) => el?.focus()}
           >
-            {/* Close button */}
             <button
               onClick={() => setIsMapModalOpen(false)}
               aria-label="Close Map Modal"
@@ -233,7 +266,6 @@ const AddEditShop = () => {
               Map Selection Modal
             </h2>
 
-            {/* Map content */}
             <div className="flex-1">
               <MapPreview
                 address={address}
@@ -243,7 +275,6 @@ const AddEditShop = () => {
               />
             </div>
 
-            {/* Sticky confirmation bar */}
             <div className="sticky bottom-0 z-10 bg-surface-muted dark:bg-surface-dark px-4 py-3 border-t border-text-muted dark:border-surface-light">
               <button
                 onClick={() => setIsMapModalOpen(false)}

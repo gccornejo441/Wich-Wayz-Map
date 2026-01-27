@@ -47,7 +47,6 @@ export const useAddShopForm = (
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-  const [isManualEntry, setIsManualEntry] = useState(false);
 
   const {
     register,
@@ -209,12 +208,15 @@ export const useAddShopForm = (
     });
   };
 
-  const prefillAddressFields = async (): Promise<boolean> => {
+  const prefillAddressFields = async (): Promise<{
+    success: boolean;
+    formattedAddress?: string;
+  }> => {
     const raw = getValues("address")?.trim();
 
     if (!raw) {
       addToast("Please enter an address to prefill.", "error");
-      return false;
+      return { success: false };
     }
 
     try {
@@ -226,21 +228,35 @@ export const useAddShopForm = (
 
       if (!addressDetails) {
         addToast("Address not found.", "error");
-        return false;
+        return { success: false };
       }
 
       applyParsedAddressToForm(addressDetails);
+
+      // Build formatted address from components
+      const components = addressDetails.components;
+      const house = (components.house_number || "").trim();
+      const street = (components.street || components.road || "").trim();
+      const city = (components.city || components.town || "").trim();
+      const state = (components.state || "").trim();
+      const postcode = (components.postcode || "").trim();
+
+      const parts = [
+        [house, street].filter(Boolean).join(" ").trim(),
+        city,
+        state,
+        postcode,
+      ].filter(Boolean);
+
+      const formattedAddress = parts.join(", ");
+
       addToast("Address details have been prefilled.", "success");
-      return true;
+      return { success: true, formattedAddress };
     } catch (error) {
       console.error("Error fetching address details:", error);
       addToast("Failed to fetch address details. Please try again.", "error");
-      return false;
+      return { success: false };
     }
-  };
-
-  const handledManualEntry = () => {
-    setIsManualEntry((prev) => !prev);
   };
 
   const onSubmit: SubmitHandler<AddAShopPayload> = async (data) => {
@@ -307,8 +323,6 @@ export const useAddShopForm = (
     handleSubmit,
     onSubmit,
     errors,
-    isManualEntry,
-    handledManualEntry,
     prefillAddressFields,
     isAddressValid,
     categories,

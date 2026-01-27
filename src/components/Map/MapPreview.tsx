@@ -33,8 +33,33 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   prefillFlyToNonce,
 }) => {
   const { theme } = useTheme();
-  const [coords, setCoords] = useState<Coordinates | null>(null);
+
+  const [coords, setCoords] = useState<Coordinates | null>(() => {
+    if (
+      typeof address.latitude === "number" &&
+      typeof address.longitude === "number"
+    ) {
+      return { latitude: address.latitude, longitude: address.longitude };
+    }
+    return null;
+  });
+
   const mapRef = useRef<MapRef | null>(null);
+  const fullAddressRef = useRef(fullAddressForMaps);
+  const addressRef = useRef(address);
+  const onAddressUpdateRef = useRef(onAddressUpdate);
+
+  useEffect(() => {
+    fullAddressRef.current = fullAddressForMaps;
+  }, [fullAddressForMaps]);
+
+  useEffect(() => {
+    addressRef.current = address;
+  }, [address]);
+
+  useEffect(() => {
+    onAddressUpdateRef.current = onAddressUpdate;
+  }, [onAddressUpdate]);
 
   const mapStyle =
     theme === "dark"
@@ -47,36 +72,50 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     }
   }, [mapStyle]);
 
-  // Forward geocoding: use fullAddressForMaps prop
+  // Forward-geocoding: Only runs when prefillFlyToNonce changes (button click)
   useEffect(() => {
-    if (!fullAddressForMaps) return;
-    const timeout = setTimeout(() => {
-      fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          fullAddressForMaps,
-        )}.json?access_token=${MAPBOX_TOKEN}`,
-      )
-        .then((r) => r.json())
-        .then((json) => {
-          if (json.features?.length) {
-            const [lon, lat] = json.features[0].geometry.coordinates;
-            setCoords({ latitude: lat, longitude: lon });
+    if (prefillFlyToNonce <= 0) return;
 
-            // Fly to the new coordinates if map is ready
-            if (mapRef.current) {
-              mapRef.current.flyTo({
-                center: [lon, lat],
-                zoom: 14,
-                duration: 900,
-              });
-            }
-          }
+    const query = fullAddressRef.current;
+    if (!query) return;
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          query,
+        )}.json?access_token=${MAPBOX_TOKEN}`;
+
+        const r = await fetch(url, { signal: controller.signal });
+        const json = await r.json();
+
+        if (!json.features?.length) return;
+
+        const [lon, lat] = json.features[0].geometry.coordinates;
+        setCoords({ latitude: lat, longitude: lon });
+
+        onAddressUpdateRef.current({
+          ...addressRef.current,
+          latitude: lat,
+          longitude: lon,
         });
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [fullAddressForMaps, prefillFlyToNonce]);
 
-  // Reverse geocoding: return structured AddressDraft
+        if (mapRef.current) {
+          mapRef.current.flyTo({
+            center: [lon, lat],
+            zoom: 14,
+            duration: 900,
+          });
+        }
+      } catch (err) {
+        if ((err as { name?: string })?.name === "AbortError") return;
+      }
+    })();
+
+    return () => controller.abort();
+  }, [prefillFlyToNonce]);
+
   const handleDragEnd = (e: MarkerDragEvent) => {
     const { lat, lng } = e.lngLat;
     const newCoords = { latitude: lat, longitude: lng };
@@ -91,22 +130,18 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           const feature = json.features[0];
           const context = feature.context || [];
 
-          // Extract address components from Mapbox geocode result
           let street = "";
           let city = "";
           let state = "";
           let postalCode = "";
           let country = "";
 
-          // Mapbox returns address in feature.place_name and context array
-          // feature.place_type tells us what kind of place this is
           if (feature.address && feature.text) {
             street = `${feature.address} ${feature.text}`;
           } else if (feature.text) {
             street = feature.text;
           }
 
-          // Parse context array for city, state, postal code, country
           for (const ctx of context) {
             const id = ctx.id || "";
             if (id.startsWith("postcode")) {
@@ -114,24 +149,21 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             } else if (id.startsWith("place")) {
               city = ctx.text || "";
             } else if (id.startsWith("region")) {
-              // Extract state code - Mapbox returns US-XX format in short_code
               const stateValue =
                 ctx.short_code?.replace("US-", "") || ctx.text || "";
-              // Convert to 2-letter code if full name was returned
               state = getStateCode(stateValue);
             } else if (id.startsWith("country")) {
               country = ctx.short_code?.toUpperCase() || ctx.text || "";
             }
           }
 
-          // Call onAddressUpdate with structured update
-          onAddressUpdate({
-            ...address, // Preserve streetAddressSecond and other fields
+          onAddressUpdateRef.current({
+            ...addressRef.current,
             streetAddress: street,
             city,
-            state, // Will be 2-letter state code
+            state,
             postalCode,
-            country: country || address.country, // Fallback to existing country
+            country: country || addressRef.current.country,
             latitude: lat,
             longitude: lng,
           });
@@ -141,7 +173,9 @@ const MapPreview: React.FC<MapPreviewProps> = ({
 
   const copyToClipboard = () => {
     if (!coords) return;
-    const text = `Lat: ${coords.latitude.toFixed(5)} | Lng: ${coords.longitude.toFixed(5)}`;
+    const text = `Lat: ${coords.latitude.toFixed(5)} | Lng: ${coords.longitude.toFixed(
+      5,
+    )}`;
     navigator.clipboard.writeText(text);
   };
 
@@ -190,7 +224,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         </>
       ) : (
         <div className="flex items-center justify-center h-64 text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
-          Type an address or drag the pin to set the location.
+          Click Prefill Address to set the map location.
         </div>
       )}
     </div>
