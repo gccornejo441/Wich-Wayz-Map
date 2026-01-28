@@ -29,7 +29,9 @@ const AddEditShop = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const rawInitialData = location.state?.initialData as ShopFormInitialData | undefined;
+  const rawInitialData = location.state?.initialData as
+    | ShopFormInitialData
+    | undefined;
 
   const initialData = useMemo<ShopFormInitialData | undefined>(() => {
     if (!rawInitialData) return undefined;
@@ -64,7 +66,9 @@ const AddEditShop = () => {
 
   const isAdmin = userMetadata?.role === "admin";
 
-  const fromInitialData = (data: ShopFormInitialData | undefined): AddressDraft => {
+  const fromInitialData = (
+    data: ShopFormInitialData | undefined,
+  ): AddressDraft => {
     if (!data) return emptyAddress;
 
     const getStringAny = (...keys: string[]): string => {

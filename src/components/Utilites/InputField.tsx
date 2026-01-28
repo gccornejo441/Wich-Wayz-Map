@@ -68,10 +68,11 @@ function InputField<T extends FieldValues>({
             registered?.onChange(e);
             onChange?.(e);
           }}
-          className={`${inputBaseClass} placeholder:text-text-muted dark:placeholder:text-text-muted ${errors[name]
-            ? "border-red-500 dark:border-red-500"
-            : "border-brand-primary dark:border-text-muted"
-            } ${disabled || readOnly ? "opacity-60 cursor-not-allowed bg-gray-100 dark:bg-surface-darker" : ""}`}
+          className={`${inputBaseClass} placeholder:text-text-muted dark:placeholder:text-text-muted ${
+            errors[name]
+              ? "border-red-500 dark:border-red-500"
+              : "border-brand-primary dark:border-text-muted"
+          } ${disabled || readOnly ? "opacity-60 cursor-not-allowed bg-gray-100 dark:bg-surface-darker" : ""}`}
         />
       )}
 

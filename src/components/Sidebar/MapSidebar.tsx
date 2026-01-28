@@ -359,9 +359,9 @@ const MapSidebar = () => {
 
   const parsedCategories = selectedShop?.categories
     ? selectedShop.categories
-      .split(",")
-      .map((cat) => cat.trim())
-      .filter((cat) => cat.length > 0)
+        .split(",")
+        .map((cat) => cat.trim())
+        .filter((cat) => cat.length > 0)
     : [];
 
   const hiddenCategoryCount =
@@ -405,8 +405,8 @@ const MapSidebar = () => {
 
   const googleMapsSearchUrl = mapsQuery.length
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      mapsQuery,
-    )}`
+        mapsQuery,
+      )}`
     : "";
 
   // For directions, prefer lat/lng; fallback to full address
@@ -416,14 +416,15 @@ const MapSidebar = () => {
 
   const googleMapsDirectionsUrl = mapsDestination.length
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-      mapsDestination,
-    )}`
+        mapsDestination,
+      )}`
     : "";
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-lg transition-transform duration-500 ease-in-out transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
       <div className="flex flex-col h-full">
         <div className="flex justify-end p-3">
@@ -472,10 +473,11 @@ const MapSidebar = () => {
               {selectedShop.description && (
                 <div className="mt-2">
                   <p
-                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${!showFullDescription && descriptionPreview?.truncated
-                      ? "line-clamp-3"
-                      : ""
-                      }`}
+                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                      !showFullDescription && descriptionPreview?.truncated
+                        ? "line-clamp-3"
+                        : ""
+                    }`}
                   >
                     {showFullDescription || !descriptionPreview?.truncated
                       ? selectedShop.description
@@ -592,7 +594,7 @@ const MapSidebar = () => {
                   )}
                 {selectedShop.website?.trim() &&
                   selectedShop.website.trim().toLowerCase() !==
-                  "no website available" && (
+                    "no website available" && (
                     <a
                       href={normalizeWebsiteUrl(selectedShop.website)}
                       target="_blank"
@@ -789,7 +791,7 @@ const MapSidebar = () => {
 
                                       {comment.dateModified &&
                                         comment.dateModified !==
-                                        comment.dateCreated && (
+                                          comment.dateCreated && (
                                           <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
                                             (edited)
                                           </span>

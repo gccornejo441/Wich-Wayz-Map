@@ -5,7 +5,7 @@ interface Coordinates {
   longitude: number;
 }
 
-interface AddressComponents {
+interface AddressComponents extends Record<string, unknown> {
   house_number?: string;
   street?: string;
   road?: string;
@@ -13,12 +13,184 @@ interface AddressComponents {
   suburb?: string;
   city?: string;
   town?: string;
-  // county?: string; // NOT IN DATABASE SCHEMA - commented out for compliance
   state?: string;
   postcode?: string;
   country?: string;
   secondary_address?: string;
 }
+
+type UsStateCode =
+  | "AL"
+  | "AK"
+  | "AZ"
+  | "AR"
+  | "CA"
+  | "CO"
+  | "CT"
+  | "DE"
+  | "FL"
+  | "GA"
+  | "HI"
+  | "ID"
+  | "IL"
+  | "IN"
+  | "IA"
+  | "KS"
+  | "KY"
+  | "LA"
+  | "ME"
+  | "MD"
+  | "MA"
+  | "MI"
+  | "MN"
+  | "MS"
+  | "MO"
+  | "MT"
+  | "NE"
+  | "NV"
+  | "NH"
+  | "NJ"
+  | "NM"
+  | "NY"
+  | "NC"
+  | "ND"
+  | "OH"
+  | "OK"
+  | "OR"
+  | "PA"
+  | "RI"
+  | "SC"
+  | "SD"
+  | "TN"
+  | "TX"
+  | "UT"
+  | "VT"
+  | "VA"
+  | "WA"
+  | "WV"
+  | "WI"
+  | "WY"
+  | "DC";
+
+const US_STATE_NAMES_BY_CODE: Record<UsStateCode, string> = {
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+  DC: "District of Columbia",
+};
+
+const US_STATE_CODE_BY_NAME = Object.entries(US_STATE_NAMES_BY_CODE).reduce(
+  (acc, [code, name]) => {
+    acc[name.toLowerCase()] = code as UsStateCode;
+    return acc;
+  },
+  {} as Record<string, UsStateCode>,
+);
+
+const isUsCountry = (country?: string, countryCode?: string): boolean => {
+  const cc = (countryCode ?? "").trim().toUpperCase();
+  if (cc === "US" || cc === "USA") return true;
+
+  const c = (country ?? "").trim().toLowerCase();
+  return (
+    c === "united states" ||
+    c === "united states of america" ||
+    c === "usa" ||
+    c === "us"
+  );
+};
+
+const normalizeUsState = (
+  state?: string,
+  stateCode?: string,
+): { code: UsStateCode; name: string } | null => {
+  const sc = (stateCode ?? "").trim().toUpperCase();
+  if (sc && sc in US_STATE_NAMES_BY_CODE) {
+    const code = sc as UsStateCode;
+    return { code, name: US_STATE_NAMES_BY_CODE[code] };
+  }
+
+  const s = (state ?? "").trim();
+  if (!s) return null;
+
+  const sUpper = s.toUpperCase();
+  if (sUpper in US_STATE_NAMES_BY_CODE) {
+    const code = sUpper as UsStateCode;
+    return { code, name: US_STATE_NAMES_BY_CODE[code] };
+  }
+
+  const byName = US_STATE_CODE_BY_NAME[s.toLowerCase()];
+  if (byName) return { code: byName, name: US_STATE_NAMES_BY_CODE[byName] };
+
+  return null;
+};
+
+const enforceUsStateAddress = <T extends Record<string, unknown>>(
+  components: T & {
+    state?: string;
+    country?: string;
+    state_code?: string;
+    country_code?: string;
+  },
+): (T & { state: string; country: string }) | null => {
+  if (!isUsCountry(components.country, components.country_code)) return null;
+
+  const normalized = normalizeUsState(components.state, components.state_code);
+  if (!normalized) return null;
+
+  return {
+    ...components,
+    state: normalized.code,
+    country: "US",
+  };
+};
 
 interface ParsedAddress {
   coordinates: Coordinates;
@@ -42,22 +214,31 @@ async function GetCoordinatesAndAddressDetails(
           format: "json",
           addressdetails: 1,
           limit: 1,
+          countrycodes: "us",
         },
       },
     );
 
-    if (Array.isArray(data) && data.length > 0) {
-      const { lat, lon, address: components } = data[0];
-      const coordinates: Coordinates = {
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
-      };
+    if (!Array.isArray(data) || data.length === 0) return null;
 
-      return { coordinates, components };
-    } else {
-      console.warn("No results found for the provided address.");
-      return null;
-    }
+    const { lat, lon, address: rawComponents } = data[0];
+    const coordinates: Coordinates = {
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lon),
+    };
+
+    const components = rawComponents as AddressComponents & {
+      country_code?: string;
+    };
+    const enforced = enforceUsStateAddress({
+      ...components,
+      country_code: components.country_code,
+      state_code: undefined,
+    });
+
+    if (!enforced) return null;
+
+    return { coordinates, components: enforced };
   } catch (error) {
     console.error("Geocoding error:", error);
     return null;
@@ -78,97 +259,74 @@ const MapBoxLocationLookup = async (
     permanent?: boolean;
     proximity?: [number, number];
     types?: string;
-    country?: string;
     language?: string;
     limit?: number;
   } = {},
 ): Promise<ParsedAddress | null> => {
   const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
-  if (!mapboxAccessToken) {
-    console.error("Missing MapBox access token.");
-    return null;
-  }
+  if (!mapboxAccessToken) return null;
 
   try {
     const params: Record<string, string | boolean | number> = {
       q: searchText,
       access_token: mapboxAccessToken,
       permanent: options.permanent || false,
+      country: "us",
+      types: options.types || "address,secondary_address",
+      limit: options.limit || 1,
     };
 
-    if (options.proximity) {
-      params.proximity = options.proximity.join(",");
-    }
-    if (options.types) {
-      params.types = options.types;
-    }
-    if (options.country) {
-      params.country = options.country;
-    }
-    if (options.language) {
-      params.language = options.language;
-    }
-    if (options.limit) {
-      params.limit = options.limit;
-    }
+    if (options.proximity) params.proximity = options.proximity.join(",");
+    if (options.language) params.language = options.language;
 
     const { data } = await axios.get(
       "https://api.mapbox.com/search/geocode/v6/forward",
       { params },
     );
 
-    if (data?.features?.length > 0) {
-      const result = data.features[0];
-      if (!result.geometry?.coordinates) {
-        console.error("Invalid geometry in geocoding result.");
-        return null;
-      }
+    const result = data?.features?.[0];
+    if (!result?.geometry?.coordinates) return null;
 
-      const coordinates: Coordinates = {
-        latitude: result.geometry.coordinates[1],
-        longitude: result.geometry.coordinates[0],
-      };
+    const coordinates: Coordinates = {
+      latitude: result.geometry.coordinates[1],
+      longitude: result.geometry.coordinates[0],
+    };
 
-      const context = result.properties?.context;
+    const ctx = result.properties?.context;
 
-      const parsedComponents: AddressComponents = {};
-      if (context) {
-        if (context.secondary_address?.name) {
-          parsedComponents.secondary_address = context.secondary_address.name;
-        }
-        if (context.address?.address_number) {
-          parsedComponents.house_number = context.address.address_number;
-        }
-        if (context.address?.street_name) {
-          parsedComponents.street = context.address.street_name;
-        }
-        if (context.neighborhood?.name) {
-          parsedComponents.neighbourhood = context.neighborhood.name;
-        }
-        if (context.place?.name) {
-          parsedComponents.city = context.place.name;
-        }
-        if (context.region?.name) {
-          parsedComponents.state = context.region.name;
-        }
-        if (context.postcode?.name) {
-          parsedComponents.postcode = context.postcode.name;
-        }
-        if (context.country?.name) {
-          parsedComponents.country = context.country.name;
-        }
-      }
+    const parsedComponents: AddressComponents & {
+      state_code?: string;
+      country_code?: string;
+    } = {} as AddressComponents & {
+      state_code?: string;
+      country_code?: string;
+    };
 
-      return { coordinates, components: parsedComponents };
-    } else {
-      console.warn("No results found for the provided search text.");
-      return null;
-    }
+    if (ctx?.secondary_address?.name)
+      parsedComponents.secondary_address = ctx.secondary_address.name;
+    if (ctx?.address?.address_number)
+      parsedComponents.house_number = ctx.address.address_number;
+    if (ctx?.address?.street_name)
+      parsedComponents.street = ctx.address.street_name;
+    if (ctx?.neighborhood?.name)
+      parsedComponents.neighbourhood = ctx.neighborhood.name;
+    if (ctx?.place?.name) parsedComponents.city = ctx.place.name;
+    if (ctx?.region?.name) parsedComponents.state = ctx.region.name;
+    if (ctx?.region?.region_code)
+      parsedComponents.state_code = ctx.region.region_code;
+    if (ctx?.postcode?.name) parsedComponents.postcode = ctx.postcode.name;
+    if (ctx?.country?.name) parsedComponents.country = ctx.country.name;
+    if (ctx?.country?.country_code)
+      parsedComponents.country_code = ctx.country.country_code;
+
+    const enforced = enforceUsStateAddress(parsedComponents);
+    if (!enforced) return null;
+
+    return { coordinates, components: enforced };
   } catch (error: unknown) {
     if (axios.isAxiosError(error) && error.response) {
       const { status, data } = error.response;
-      console.error(`Error ${status}: ${data.message || "Unknown error."}`);
+      console.error(`Error ${status}: ${data?.message || "Unknown error."}`);
     } else {
       console.error("Unexpected error:", (error as Error).message);
     }
@@ -176,4 +334,101 @@ const MapBoxLocationLookup = async (
   }
 };
 
-export { GetCoordinatesAndAddressDetails, MapBoxLocationLookup };
+/**
+ * Perform a forward geocoding search with MapBox to get multiple address suggestions.
+ *
+ * @param searchText The search query to use for the geocoding search.
+ * @param options An object with optional search parameters.
+ * @returns A Promise that resolves to an array of parsed addresses.
+ */
+const MapBoxMultipleLocationLookup = async (
+  searchText: string,
+  options: {
+    permanent?: boolean;
+    proximity?: [number, number];
+    types?: string;
+    language?: string;
+    limit?: number;
+  } = {},
+): Promise<ParsedAddress[]> => {
+  const mapboxAccessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  if (!mapboxAccessToken) return [];
+
+  try {
+    const params: Record<string, string | boolean | number> = {
+      q: searchText,
+      access_token: mapboxAccessToken,
+      permanent: options.permanent || false,
+      country: "us",
+      types: options.types || "address,secondary_address",
+      limit: options.limit || 5,
+    };
+
+    if (options.proximity) params.proximity = options.proximity.join(",");
+    if (options.language) params.language = options.language;
+
+    const { data } = await axios.get(
+      "https://api.mapbox.com/search/geocode/v6/forward",
+      { params },
+    );
+
+    const features = data?.features;
+    if (!Array.isArray(features) || features.length === 0) return [];
+
+    const results: ParsedAddress[] = [];
+
+    for (const f of features) {
+      if (!f?.geometry?.coordinates) continue;
+
+      const coordinates: Coordinates = {
+        latitude: f.geometry.coordinates[1],
+        longitude: f.geometry.coordinates[0],
+      };
+
+      const ctx = f.properties?.context;
+      const parsedComponents: AddressComponents & {
+        state_code?: string;
+        country_code?: string;
+      } = {} as AddressComponents & {
+        state_code?: string;
+        country_code?: string;
+      };
+
+      if (ctx?.secondary_address?.name)
+        parsedComponents.secondary_address = ctx.secondary_address.name;
+      if (ctx?.address?.address_number)
+        parsedComponents.house_number = ctx.address.address_number;
+      if (ctx?.address?.street_name)
+        parsedComponents.street = ctx.address.street_name;
+      if (ctx?.place?.name) parsedComponents.city = ctx.place.name;
+      if (ctx?.region?.name) parsedComponents.state = ctx.region.name;
+      if (ctx?.region?.region_code)
+        parsedComponents.state_code = ctx.region.region_code;
+      if (ctx?.postcode?.name) parsedComponents.postcode = ctx.postcode.name;
+      if (ctx?.country?.name) parsedComponents.country = ctx.country.name;
+      if (ctx?.country?.country_code)
+        parsedComponents.country_code = ctx.country.country_code;
+
+      const enforced = enforceUsStateAddress(parsedComponents);
+      if (!enforced) continue;
+
+      results.push({ coordinates, components: enforced });
+    }
+
+    return results;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      const { status, data } = error.response;
+      console.error(`Error ${status}: ${data?.message || "Unknown error."}`);
+    } else {
+      console.error("Unexpected error:", (error as Error).message);
+    }
+    return [];
+  }
+};
+
+export {
+  GetCoordinatesAndAddressDetails,
+  MapBoxLocationLookup,
+  MapBoxMultipleLocationLookup,
+};

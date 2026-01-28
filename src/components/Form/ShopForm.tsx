@@ -9,7 +9,10 @@ import AddCategoryModal from "../Modal/AddCategoryModal";
 
 import { AddAShopPayload, LocationStatus } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
-import { addCategoryIfNotExists, GetCategories } from "@/services/categoryService";
+import {
+  addCategoryIfNotExists,
+  GetCategories,
+} from "@/services/categoryService";
 import { US_STATES } from "@constants/usStates";
 import { useAuth } from "@context/authContext";
 import { useToast } from "@context/toastContext";
@@ -17,7 +20,30 @@ import { updateShopLocationStatus } from "@services/shopService";
 import { useShops } from "@context/shopContext";
 import { applyLocationStatusToShop } from "@/utils/shops";
 
-type AddressLookupState = "idle" | "success" | "error" | "loading";
+type AddressLookupState =
+  | "idle"
+  | "success"
+  | "error"
+  | "loading"
+  | "suggestions";
+
+interface AddressSuggestion {
+  formattedAddress: string;
+  parsedData: {
+    coordinates: { latitude: number; longitude: number };
+    components: {
+      house_number?: string;
+      street?: string;
+      road?: string;
+      secondary_address?: string;
+      city?: string;
+      town?: string;
+      state?: string;
+      postcode?: string;
+      country?: string;
+    };
+  };
+}
 
 type ShopFormProps = {
   initialData?: Partial<AddAShopPayload> & {
@@ -67,7 +93,11 @@ const getCustomSelectStyles = (
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isFocused ? (isDark ? "#2A2A3C" : "#F3F4F6") : "transparent",
+    backgroundColor: state.isFocused
+      ? isDark
+        ? "#2A2A3C"
+        : "#F3F4F6"
+      : "transparent",
     color: isDark ? "#FFFFFF" : "#4b5563",
     cursor: "pointer",
   }),
@@ -96,7 +126,14 @@ const LoadingSpinner = () => (
     fill="none"
     viewBox="0 0 24 24"
   >
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
     <path
       className="opacity-75"
       fill="currentColor"
@@ -114,13 +151,20 @@ const normalizeWebsiteUrl = (raw: string): string => {
   return `https://${v}`;
 };
 
-const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSuccess }: ShopFormProps) => {
+const ShopForm = ({
+  initialData,
+  mode,
+  address,
+  onAddressChange,
+  onPrefillSuccess,
+}: ShopFormProps) => {
   const {
     register,
     handleSubmit,
     errors,
     onSubmit,
-    prefillAddressFields,
+    searchAddressSuggestions,
+    applyParsedAddressToForm,
     isAddressValid,
     categories,
     setCategories,
@@ -139,16 +183,28 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
-  const [addressLookupState, setAddressLookupState] = useState<AddressLookupState>("idle");
+  const [addressLookupState, setAddressLookupState] =
+    useState<AddressLookupState>("idle");
   const [addressLocked, setAddressLocked] = useState(false);
   const [lookupMessage, setLookupMessage] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    AddressSuggestion[]
+  >([]);
 
   useEffect(() => {
     const next = normalizeWebsiteUrl(String(initialData?.website_url ?? ""));
-    setValue("website_url", next, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    setValue("website_url", next, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
 
     const phone = String(initialData?.phone ?? "");
-    setValue("phone", phone, { shouldDirty: false, shouldTouch: false, shouldValidate: false });
+    setValue("phone", phone, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
   }, [initialData?.website_url, initialData?.phone, setValue]);
 
   const [locationStatus, setLocationStatus] = useState<LocationStatus>(
@@ -184,7 +240,11 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
 
       await onSubmit(data);
 
-      if (isEditMode && locationStatus !== initialLocationStatus && initialData?.shopId) {
+      if (
+        isEditMode &&
+        locationStatus !== initialLocationStatus &&
+        initialData?.shopId
+      ) {
         if (!userMetadata?.id || !userMetadata?.role) {
           addToast("Authentication required to update status", "error");
           return;
@@ -221,10 +281,49 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
     setCategories(updatedCategories);
   };
 
-  const canSearchAddress = Boolean(address.streetAddress.trim()) && !isSubmitting && addressLookupState !== "loading";
+  const canSearchAddress =
+    Boolean(address.streetAddress.trim()) &&
+    !isSubmitting &&
+    addressLookupState !== "loading";
+
+  // Handler to select an address from suggestions
+  const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
+    setLookupMessage(suggestion.formattedAddress);
+    setAddressLookupState("success");
+    setAddressSuggestions([]);
+
+    // Apply the selected address to form fields
+    applyParsedAddressToForm(suggestion.parsedData);
+    onPrefillSuccess?.();
+  };
+
+  // Handler to confirm and lock the address
+  const handleConfirmAddress = () => {
+    setAddressLocked(true);
+    // Keep lookupMessage and success state
+  };
+
+  // Handler to dismiss search result and reset
+  const handleDismissSearch = () => {
+    setAddressLookupState("idle");
+    setLookupMessage("");
+    setAddressSuggestions([]);
+    // Fields remain unlocked
+  };
+
+  // Handler to unlock fields for editing
+  const handleEditAddress = () => {
+    setAddressLocked(false);
+    setAddressLookupState("idle");
+    setLookupMessage("");
+    setAddressSuggestions([]);
+  };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="p-4 space-y-4 overflow-y-auto">
+    <form
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className="p-4 space-y-4 overflow-y-auto"
+    >
       <InputField
         name="shopName"
         label="Shop Name"
@@ -251,11 +350,15 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           {...register("website_url", {
             setValueAs: (v) => normalizeWebsiteUrl(String(v ?? "")),
           })}
-          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url ? "border-red-500 dark:border-red-500" : "border-brand-primary dark:border-text-muted"
+          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
+            ? "border-red-500 dark:border-red-500"
+            : "border-brand-primary dark:border-text-muted"
             }`}
         />
         {errors.website_url && (
-          <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.website_url.message}</p>
+          <p className="mt-1 text-sm text-red-500 dark:text-red-400">
+            {errors.website_url.message}
+          </p>
         )}
       </div>
 
@@ -285,7 +388,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
                 setSelectedCategories(selected.map((opt) => opt.value));
               }}
               styles={getCustomSelectStyles(isDark)}
-              menuPortalTarget={typeof window !== "undefined" ? document.body : null}
+              menuPortalTarget={
+                typeof window !== "undefined" ? document.body : null
+              }
               menuPosition="fixed"
               menuPlacement="auto"
               isClearable
@@ -311,7 +416,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           </label>
           <select
             value={locationStatus}
-            onChange={(e) => setLocationStatus(e.target.value as LocationStatus)}
+            onChange={(e) =>
+              setLocationStatus(e.target.value as LocationStatus)
+            }
             className="w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md border-brand-primary dark:border-text-muted"
           >
             <option value="open">Open</option>
@@ -350,7 +457,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           errors={errors}
           value={address.streetAddressSecond}
           placeholder="Apt, Suite, Unit, etc."
-          onChange={(e) => onAddressChange({ ...address, streetAddressSecond: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, streetAddressSecond: e.target.value })
+          }
         />
 
         <InputField
@@ -361,7 +470,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           value={address.city}
           placeholder="Enter city"
           readOnly={addressLocked}
-          onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, city: e.target.value })
+          }
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -373,8 +484,12 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
               {...register("state")}
               value={address.state}
               disabled={addressLocked}
-              onChange={(e) => onAddressChange({ ...address, state: e.target.value })}
-              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state ? "border-red-500 dark:border-red-500" : "border-brand-primary dark:border-text-muted"
+              onChange={(e) =>
+                onAddressChange({ ...address, state: e.target.value })
+              }
+              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state
+                ? "border-red-500 dark:border-red-500"
+                : "border-brand-primary dark:border-text-muted"
                 } ${addressLocked ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <option value="" className="text-gray-400 dark:text-gray-500">
@@ -387,7 +502,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
               ))}
             </select>
             {errors.state && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.state.message}</p>
+              <p className="mt-1 text-sm text-red-500 dark:text-red-400">
+                {errors.state.message}
+              </p>
             )}
           </div>
 
@@ -399,7 +516,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
             value={address.postalCode}
             placeholder="Enter postal code"
             readOnly={addressLocked}
-            onChange={(e) => onAddressChange({ ...address, postalCode: e.target.value })}
+            onChange={(e) =>
+              onAddressChange({ ...address, postalCode: e.target.value })
+            }
           />
         </div>
 
@@ -411,7 +530,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           value={address.country}
           placeholder="Enter country"
           readOnly={addressLocked}
-          onChange={(e) => onAddressChange({ ...address, country: e.target.value })}
+          onChange={(e) =>
+            onAddressChange({ ...address, country: e.target.value })
+          }
         />
       </div>
 
@@ -420,17 +541,28 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
         onClick={async () => {
           setAddressLookupState("loading");
           setLookupMessage("");
+          setAddressSuggestions([]);
 
-          const result = await prefillAddressFields();
+          const result = await searchAddressSuggestions();
 
-          if (result.success && result.formattedAddress) {
-            setAddressLookupState("success");
-            setAddressLocked(true);
-            setLookupMessage(result.formattedAddress);
-            onPrefillSuccess?.();
+          if (result.success && result.suggestions) {
+            if (result.suggestions.length === 1) {
+              // Single result - go directly to confirmation
+              const suggestion = result.suggestions[0];
+              setLookupMessage(suggestion.formattedAddress);
+              setAddressLookupState("success");
+              applyParsedAddressToForm(suggestion.parsedData);
+              onPrefillSuccess?.();
+            } else {
+              // Multiple results - show selection list
+              setAddressSuggestions(result.suggestions);
+              setAddressLookupState("suggestions");
+            }
           } else {
             setAddressLookupState("error");
-            setLookupMessage("Could not find a match. Check the street address and try again.");
+            setLookupMessage(
+              "Could not find a match. Check the street address and try again.",
+            );
           }
         }}
         disabled={!canSearchAddress}
@@ -447,85 +579,160 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           "Search Address"
         )}
       </button>
-      {addressLookupState === "success" && lookupMessage && (
+      {/* Address Suggestions List */}
+      {addressLookupState === "suggestions" &&
+        addressSuggestions.length > 0 && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-lg border border-brand-primary bg-surface-muted dark:bg-surface-dark p-3"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
+                <span
+                  className="text-[11px] leading-none translate-y-[0.5px]"
+                  aria-hidden="true"
+                >
+                  {addressSuggestions.length}
+                </span>
+              </div>
+              <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                Found {addressSuggestions.length} address
+                {addressSuggestions.length !== 1 ? "es" : ""} - Select one:
+              </span>
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {addressSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelectSuggestion(suggestion)}
+                  className="w-full text-left px-3 py-2.5 rounded-md bg-white dark:bg-surface-darker hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 border border-gray-200 dark:border-gray-700 transition-colors group"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg
+                        className="h-4 w-4 text-brand-primary opacity-60 group-hover:opacity-100"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-text-base dark:text-text-inverted flex-1">
+                      {suggestion.formattedAddress}
+                    </span>
+                    <svg
+                      className="h-4 w-4 text-brand-primary opacity-0 group-hover:opacity-100 flex-shrink-0 mt-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={handleDismissSearch}
+                className="text-brand-primary hover:text-brand-secondary underline text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+      {/* Variant A: Pending Confirmation (fields stay unlocked) */}
+      {addressLookupState === "success" && !addressLocked && lookupMessage && (
         <div
           role="status"
           aria-live="polite"
-          className="
-      group relative overflow-hidden
-      rounded-xl border border-brand-primary/25
-      bg-white/90 dark:bg-surface-dark/80
-      px-4 py-3
-      shadow-sm ring-1 ring-black/5 dark:ring-white/5
-    "
+          className="rounded-lg border border-l-4 border-l-brand-primary border-brand-primary bg-surface-muted dark:bg-surface-dark p-3"
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="inline-flex h-9 w-9 items-center justify-center self-center">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white">
-                  <span className="text-[11px] leading-none translate-y-[0.5px]" aria-hidden="true">
-                    ✓
-                  </span>
-                </span>
-              </div>
-
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
-                    Address found
-                  </span>
-                  <span
-                    className="
-                hidden sm:inline-flex
-                rounded-full px-2 py-0.5 text-[11px] font-medium
-                bg-brand-primary/10 text-brand-primary
-                dark:bg-brand-primary/15
-              "
-                  >
-                    Verified
-                  </span>
-                </div>
-
-                <div className="mt-0.5 text-sm text-text-muted dark:text-text-inverted/70 break-words">
-                  {lookupMessage}
-                </div>
-              </div>
+          {/* Header with found message */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
+              <span
+                className="text-[11px] leading-none translate-y-[0.5px]"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
             </div>
-
+            <span className="text-sm text-text-base dark:text-text-inverted">
+              Found: {lookupMessage}
+            </span>
+          </div>
+          {/* Action buttons */}
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => {
-                setAddressLocked(false);
-                setAddressLookupState("idle");
-                setLookupMessage("");
-              }}
-              className="
-          self-center inline-flex shrink-0 items-center gap-2
-          rounded-lg px-3 py-1.5
-          text-sm font-medium
-          text-brand-primary
-          bg-brand-primary/10 hover:bg-brand-primary/15
-          dark:bg-brand-primary/15 dark:hover:bg-brand-primary/20
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40
-          transition-colors
-        "
+              onClick={handleConfirmAddress}
+              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-secondary transition-colors text-sm font-medium"
             >
-              Edit
-              <span className="text-brand-primary/80" aria-hidden="true">
-                →
-              </span>
+              Use This Address
+            </button>
+            <button
+              type="button"
+              onClick={handleDismissSearch}
+              className="px-4 py-2 text-brand-primary hover:text-brand-secondary underline text-sm font-medium"
+            >
+              Edit Manually
             </button>
           </div>
+        </div>
+      )}
 
-          <div
-            className="
-        pointer-events-none absolute inset-x-0 bottom-0 h-0.5
-        bg-gradient-to-r from-transparent via-brand-primary/70 to-transparent
-        opacity-60
-      "
-            aria-hidden="true"
-          />
+      {/* Variant B: Confirmed (fields locked) */}
+      {addressLookupState === "success" && addressLocked && lookupMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-lg border border-l-4 border-l-brand-primary border-brand-primary bg-surface-muted dark:bg-surface-dark p-3 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
+              <span
+                className="text-[11px] leading-none translate-y-[0.5px]"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+            </div>
+            <span className="text-sm text-text-base dark:text-text-inverted">
+              Address confirmed: {lookupMessage}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleEditAddress}
+            className="text-brand-primary hover:text-brand-secondary underline text-sm font-medium whitespace-nowrap"
+          >
+            Edit
+          </button>
         </div>
       )}
 
@@ -534,14 +741,24 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
           <div className="mt-0.5 h-5 w-5 rounded-full border border-brand-primary/60 text-brand-primary flex items-center justify-center text-xs">
             !
           </div>
-          <div className="text-sm text-text-base dark:text-text-inverted">{lookupMessage}</div>
+          <div className="text-sm text-text-base dark:text-text-inverted">
+            {lookupMessage}
+          </div>
         </div>
       )}
 
       <button
         type="submit"
-        disabled={!isAddressValid || !!errors.shopName || !!errors.address || isSubmitting}
-        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid || !!errors.shopName || !!errors.address || isSubmitting
+        disabled={
+          !isAddressValid ||
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
+        }
+        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
+          !!errors.shopName ||
+          !!errors.address ||
+          isSubmitting
           ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
           : "bg-brand-primary hover:bg-secondary"
           }`}
@@ -565,7 +782,9 @@ const ShopForm = ({ initialData, mode, address, onAddressChange, onPrefillSucces
             await refreshCategories();
 
             const updated = await GetCategories();
-            const newCategory = updated.find((cat) => cat.category_name === name);
+            const newCategory = updated.find(
+              (cat) => cat.category_name === name,
+            );
             const newCategoryId = newCategory?.id;
 
             if (typeof newCategoryId === "number") {

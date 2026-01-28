@@ -12,11 +12,13 @@ import { Category } from "@models/Category";
 import {
   GetCoordinatesAndAddressDetails,
   MapBoxLocationLookup,
+  MapBoxMultipleLocationLookup,
 } from "@/services/geolocation";
 import { AddAShopPayload, ShopWithId } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { locationSchema } from "@constants/validators";
 import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { US_STATES } from "@constants/usStates";
 
 type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
 
@@ -31,6 +33,19 @@ const hasValidCoords = (lat: number, lon: number): boolean => {
   if (lat < -90 || lat > 90) return false;
   if (lon < -180 || lon > 180) return false;
   return true;
+};
+
+const normalizeUsState = (input: string): { code: string; name: string } | null => {
+  const s = input.trim();
+  if (!s) return null;
+
+  const upper = s.toUpperCase();
+  const byCode = US_STATES.find((x) => x.code === upper);
+  if (byCode) return byCode;
+
+  const lower = s.toLowerCase();
+  const byName = US_STATES.find((x) => x.name.toLowerCase() === lower);
+  return byName ?? null;
 };
 
 export const useAddShopForm = (
@@ -208,6 +223,104 @@ export const useAddShopForm = (
     });
   };
 
+  const formatAddressFromComponents = (components: {
+    house_number?: string;
+    street?: string;
+    road?: string;
+    city?: string;
+    town?: string;
+    state?: string;
+    postcode?: string;
+  }): string => {
+    const house = (components.house_number || "").trim();
+    const street = (components.street || components.road || "").trim();
+    const city = (components.city || components.town || "").trim();
+    const state = (components.state || "").trim();
+    const postcode = (components.postcode || "").trim();
+
+    const parts = [
+      [house, street].filter(Boolean).join(" ").trim(),
+      city,
+      state,
+      postcode,
+    ].filter(Boolean);
+
+    return parts.join(", ");
+  };
+
+  const buildUsQueryFromForm = () => {
+    const line1 = (getValues("address") ?? "").trim();
+    const city = (getValues("city") ?? "").trim();
+    const stateRaw = (getValues("state") ?? "").trim();
+    const zip = (getValues("postcode") ?? "").trim();
+
+    const st = normalizeUsState(stateRaw);
+    if (!st) return null;
+
+    const q = [line1, city, st.code, zip].filter(Boolean).join(" ").trim();
+    return { q, stateCode: st.code };
+  };
+
+  const searchAddressSuggestions = async (): Promise<{
+    success: boolean;
+    suggestions?: Array<{
+      formattedAddress: string;
+      parsedData: {
+        coordinates: { latitude: number; longitude: number };
+        components: {
+          house_number?: string;
+          street?: string;
+          road?: string;
+          secondary_address?: string;
+          city?: string;
+          town?: string;
+          state?: string;
+          postcode?: string;
+          country?: string;
+        };
+      };
+    }>;
+  }> => {
+    const built = buildUsQueryFromForm();
+    if (!built) {
+      addToast("State is required (US only).", "error");
+      return { success: false };
+    }
+
+    if (!built.q) {
+      addToast("Please enter an address to search.", "error");
+      return { success: false };
+    }
+
+    try {
+      const results = await MapBoxMultipleLocationLookup(built.q, {
+        types: "address",
+        limit: 5,
+      });
+
+      const filtered = results.filter((r) => {
+        const st = normalizeUsState(r.components.state ?? "");
+        return st?.code === built.stateCode;
+      });
+
+      if (filtered.length === 0) {
+        addToast("No addresses found for the selected state.", "error");
+        return { success: false };
+      }
+
+      const suggestions = filtered.map((result) => ({
+        formattedAddress: formatAddressFromComponents(result.components),
+        parsedData: result,
+      }));
+
+      return { success: true, suggestions };
+    } catch (error) {
+      console.error("Error searching addresses:", error);
+      addToast("Failed to search addresses. Please try again.", "error");
+      return { success: false };
+    }
+  };
+
   const prefillAddressFields = async (): Promise<{
     success: boolean;
     formattedAddress?: string;
@@ -227,28 +340,15 @@ export const useAddShopForm = (
       }
 
       if (!addressDetails) {
-        addToast("Address not found.", "error");
+        addToast("Please enter a valid US address that includes a state.", "error");
         return { success: false };
       }
 
       applyParsedAddressToForm(addressDetails);
 
-      // Build formatted address from components
-      const components = addressDetails.components;
-      const house = (components.house_number || "").trim();
-      const street = (components.street || components.road || "").trim();
-      const city = (components.city || components.town || "").trim();
-      const state = (components.state || "").trim();
-      const postcode = (components.postcode || "").trim();
-
-      const parts = [
-        [house, street].filter(Boolean).join(" ").trim(),
-        city,
-        state,
-        postcode,
-      ].filter(Boolean);
-
-      const formattedAddress = parts.join(", ");
+      const formattedAddress = formatAddressFromComponents(
+        addressDetails.components,
+      );
 
       addToast("Address details have been prefilled.", "success");
       return { success: true, formattedAddress };
@@ -324,6 +424,9 @@ export const useAddShopForm = (
     onSubmit,
     errors,
     prefillAddressFields,
+    searchAddressSuggestions,
+    applyParsedAddressToForm,
+    formatAddressFromComponents,
     isAddressValid,
     categories,
     setCategories,

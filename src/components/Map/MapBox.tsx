@@ -8,11 +8,14 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@context/authContext";
 import { parseDeepLink } from "@utils/deepLink";
 import { buildStreetAddress, buildCityStateZip } from "@utils/address";
+import { loadMapViewPrefs, saveMapViewPrefs } from "@utils/mapViewPrefs";
 import type { Location } from "@models/Location";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
+import SpeedDial from "../Dial/SpeedDial";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
@@ -427,19 +430,27 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
   const { openSidebar, selectShopById } = useShopSidebar();
   const { theme } = useTheme();
+  const { userMetadata } = useAuth();
   const location = useLocation();
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [center, setCenter] = useState<[number, number]>(INITIAL_CENTER);
-  const [zoom, setZoom] = useState<number>(INITIAL_ZOOM);
+  // Load persisted preferences
+  const viewerKey = userMetadata?.id ? String(userMetadata.id) : undefined;
+  const initialPrefsRef = useRef(loadMapViewPrefs(viewerKey));
+
+  const [center, setCenter] = useState<[number, number]>(
+    initialPrefsRef.current?.center ?? INITIAL_CENTER,
+  );
+  const [zoom, setZoom] = useState<number>(
+    initialPrefsRef.current?.zoom ?? INITIAL_ZOOM,
+  );
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
-    null,
+    initialPrefsRef.current?.userPosition ?? null,
   );
 
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const hasCenteredOnUserRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -471,24 +482,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     });
   };
 
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPosition([pos.coords.longitude, pos.coords.latitude]);
-      },
-      () => {
-        setUserPosition(null);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 60000,
-      },
-    );
-  }, [isLoggedIn]);
 
   const shopGeoJson: ShopFeatureCollection = useMemo(() => {
     return buildShopGeoJson(displayedShops);
@@ -517,8 +510,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      center: INITIAL_CENTER,
-      zoom: INITIAL_ZOOM,
+      center: initialPrefsRef.current?.center ?? INITIAL_CENTER,
+      zoom: initialPrefsRef.current?.zoom ?? INITIAL_ZOOM,
       style: initialStyle,
     });
 
@@ -644,7 +637,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
       userMarkerRef.current?.remove();
       userMarkerRef.current = null;
-      hasCenteredOnUserRef.current = false;
 
       map.off("load", onLoad);
       map.off("move", onMove);
@@ -745,18 +737,105 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     } else {
       userMarkerRef.current.setLngLat(userPosition);
     }
-
-    const noDeepLinkApplied = processedDeepLinkRef.current == null;
-
-    if (!hasCenteredOnUserRef.current && noDeepLinkApplied) {
-      hasCenteredOnUserRef.current = true;
-      map.flyTo({
-        center: userPosition,
-        zoom: 13,
-        essential: true,
-      });
-    }
   }, [userPosition, mapLoaded]);
+
+  // Listen for locateUser event from SpeedDial
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (!navigator.geolocation) return;
+
+    const handleLocateUser = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const newPosition: [number, number] = [
+            pos.coords.longitude,
+            pos.coords.latitude,
+          ];
+          setUserPosition(newPosition);
+
+          const map = mapRef.current;
+          if (map) {
+            map.flyTo({
+              center: newPosition,
+              zoom: 13,
+              essential: true,
+            });
+
+            // Save preferences after flying to user location
+            try {
+              saveMapViewPrefs(
+                {
+                  center: newPosition,
+                  zoom: 13,
+                  userPosition: newPosition,
+                  ts: Date.now(),
+                },
+                viewerKey,
+              );
+            } catch (error) {
+              console.error("Error saving map view preferences:", error);
+            }
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000,
+        },
+      );
+    };
+
+    window.addEventListener("locateUser", handleLocateUser);
+
+    return () => {
+      window.removeEventListener("locateUser", handleLocateUser);
+    };
+  }, [isLoggedIn, viewerKey]);
+
+  // Save map view preferences on moveend (debounced)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const handleMoveEnd = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      timeoutId = setTimeout(() => {
+        const currentCenter = map.getCenter();
+        const currentZoom = map.getZoom();
+
+        try {
+          saveMapViewPrefs(
+            {
+              center: [currentCenter.lng, currentCenter.lat],
+              zoom: currentZoom,
+              userPosition,
+              ts: Date.now(),
+            },
+            viewerKey,
+          );
+        } catch (error) {
+          console.error("Error saving map view preferences:", error);
+        }
+      }, 250);
+    };
+
+    map.on("moveend", handleMoveEnd);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      map.off("moveend", handleMoveEnd);
+    };
+  }, [mapLoaded, userPosition, viewerKey]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -788,6 +867,12 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       </div>
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
+
+      <SpeedDial
+        onLocateUser={() => {
+          window.dispatchEvent(new Event("locateUser"));
+        }}
+      />
     </div>
   );
 };
