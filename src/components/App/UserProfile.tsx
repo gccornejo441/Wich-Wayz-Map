@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import { resendVerification } from "../../services/firebase";
 import AvatarUploader from "../Profile/AvatarUploader";
@@ -7,17 +7,24 @@ import Account from "../Profile/Account";
 import { updateUserProfile } from "@services/apiClient";
 import { userProfileSchema } from "../../constants/validators";
 import { useToast } from "../../context/toastContext";
+import { ROUTES } from "@constants/routes";
 import * as yup from "yup";
 
 const UserProfile = () => {
   const { addToast } = useToast();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const { isAuthenticated, user, userMetadata, setUserMetadata } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+
+  const handleAccountDeleted = async () => {
+    addToast("Account deleted successfully", "success");
+    navigate(ROUTES.HOME, { replace: true });
+  };
 
   const handleUpdateProfile = async () => {
     if (!userMetadata) {
@@ -113,6 +120,8 @@ const UserProfile = () => {
             }
             username={userMetadata.username || ""}
             handleUpdateProfile={handleUpdateProfile}
+            userId={userMetadata.id}
+            onAccountDeleted={handleAccountDeleted}
           />
         </>
       ) : (

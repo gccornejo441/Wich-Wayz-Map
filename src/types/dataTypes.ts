@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export type Callback = () => void;
+export type Callback = () => void | Promise<void>;
 export type LocationStatus =
   | "open"
   | "temporarily_closed"
