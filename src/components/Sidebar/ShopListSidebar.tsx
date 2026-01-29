@@ -13,9 +13,10 @@ const SavedShopSidebar = ({ isOpen }: SidebarProps) => {
 
   return (
     <aside
-      className={`fixed top-8 left-0 z-30 w-64 h-[100dvh] bg-primary dark:bg-dark border-primary border-r dark:border-gray-700 transition-all duration-500 ease-in-out transform shadow-2xl shadow-black-500 ${
-        isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
-      }`}
+      className={`fixed top-8 left-0 z-30 w-64 h-[100dvh] bg-primary dark:bg-dark border-primary border-r dark:border-gray-700 transition-all duration-500 ease-in-out transform ${isOpen
+          ? "translate-x-0 opacity-100 shadow-2xl shadow-black-500 pointer-events-auto"
+          : "-translate-x-full opacity-0 shadow-none pointer-events-none"
+        }`}
       aria-label="Shop List Sidebar"
     >
       <div className="flex flex-col h-full px-2 pb-4">
@@ -27,11 +28,10 @@ const SavedShopSidebar = ({ isOpen }: SidebarProps) => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap text-xs font-medium px-2 py-1 rounded transition-colors ${
-                    activeTab === tab
+                  className={`whitespace-nowrap text-xs font-medium px-2 py-1 rounded transition-colors ${activeTab === tab
                       ? "bg-white text-primary dark:bg-gray-100 dark:text-dark shadow"
                       : "text-white dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-700"
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>

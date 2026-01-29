@@ -53,20 +53,18 @@ export const SidebarItem = ({
 
   const content = (
     <div
-      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${
-        disabled
+      className={`relative flex items-center justify-between p-2 w-full rounded-lg ${disabled
           ? "bg-white/10 cursor-not-allowed"
           : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
-      }`}
+        }`}
       onClick={handleClick}
     >
       <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
         {icon}
       </span>
       <span
-        className={`text-md font-light text-white dark:text-text-inverted ${
-          disabled ? "opacity-50" : ""
-        }`}
+        className={`text-md font-light text-white dark:text-text-inverted ${disabled ? "opacity-50" : ""
+          }`}
       >
         {text}
       </span>
@@ -109,12 +107,13 @@ const Sidebar = () => {
   return (
     <aside
       id="default-sidebar"
-      className={`fixed top-0 left-0 z-30 w-64 h-[100dvh] 
-        bg-brand-primary dark:bg-surface-darker 
-        text-white dark:text-text-inverted 
-        dark:border-r dark:border-gray-700 
-        transition-all duration-500 ease-in-out transform shadow-2xl ${
-          isOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+      className={`fixed top-0 left-0 z-30 w-64 h-[100dvh]
+        bg-brand-primary dark:bg-surface-darker
+        text-white dark:text-text-inverted
+        dark:border-r dark:border-gray-700
+        transition-all duration-500 ease-in-out transform ${isOpen
+          ? "translate-x-0 opacity-100 shadow-2xl pointer-events-auto"
+          : "-translate-x-full opacity-0 shadow-none pointer-events-none"
         }`}
       aria-label="Sidebar"
     >

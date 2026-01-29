@@ -70,7 +70,7 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   }, [isSidebarOpen, closeSidebar]);
 
   return (
-    <div className="relative min-h-[100dvh] bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
+    <div className="relative min-h-[100dvh] overflow-x-hidden bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
       <div ref={sidebarRef} className="relative z-20">
         <NavBar
           onToggleSidebar={handleToggleSidebar}

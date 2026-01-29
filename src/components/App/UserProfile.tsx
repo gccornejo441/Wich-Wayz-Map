@@ -88,7 +88,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto h-[100dvh] content-center mt-6 md:mt-0">
+    <div className="max-w-3xl mx-auto min-h-[100dvh] mt-6 md:mt-0 py-6">
       <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark pb-4 border-b border-brand-secondary dark:border-brand-secondary">
         <h2 className="text-xl font-semibold text-text-base dark:text-text-inverted mb-2">
           App Settings
