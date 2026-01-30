@@ -438,18 +438,24 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Refs for tracking rehydration and suppressing programmatic saves
+  const hydratedKeyRef = useRef<string | null>(null);
+  const suppressNextSaveRef = useRef(0);
+
+  // Make viewerKey always explicit (no undefined)
+  const viewerKey = userMetadata?.id ? String(userMetadata.id) : "anon";
+
   // Load persisted preferences
-  const viewerKey = userMetadata?.id ? String(userMetadata.id) : undefined;
-  const initialPrefsRef = useRef(loadMapViewPrefs(viewerKey));
+  const initialPrefs = useMemo(() => loadMapViewPrefs(viewerKey), [viewerKey]);
 
   const [center, setCenter] = useState<[number, number]>(
-    initialPrefsRef.current?.center ?? INITIAL_CENTER,
+    () => initialPrefs?.center ?? INITIAL_CENTER,
   );
   const [zoom, setZoom] = useState<number>(
-    initialPrefsRef.current?.zoom ?? INITIAL_ZOOM,
+    () => initialPrefs?.zoom ?? INITIAL_ZOOM,
   );
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
-    initialPrefsRef.current?.userPosition ?? null,
+    () => initialPrefs?.userPosition ?? null,
   );
 
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -512,8 +518,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      center: initialPrefsRef.current?.center ?? INITIAL_CENTER,
-      zoom: initialPrefsRef.current?.zoom ?? INITIAL_ZOOM,
+      center: initialPrefs?.center ?? INITIAL_CENTER,
+      zoom: initialPrefs?.zoom ?? INITIAL_ZOOM,
       style: initialStyle,
     });
 
@@ -536,6 +542,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
 
       loadingSeqRef.current += 1;
+
+
       hideLoadingWhenMapReady(map, loadingSeqRef.current);
 
       map.on("click", CLUSTERS_LAYER_ID, (e) => {
@@ -571,6 +579,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
               ? nextZoom
               : map.getZoom();
 
+          suppressNextSaveRef.current += 1;
           map.easeTo({ center: coords, zoom: safeZoom });
         });
       });
@@ -683,6 +692,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     map.once("style.load", () => {
       if (styleSeqRef.current !== expectedStyleSeq) return;
 
+      suppressNextSaveRef.current += 1;
       map.setCenter(currentCenter);
       map.setZoom(currentZoom);
 
@@ -714,6 +724,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     processedDeepLinkRef.current = paramsKey;
 
+    suppressNextSaveRef.current += 1;
     map.flyTo({
       center: [lng, lat],
       zoom: zoomValue,
@@ -757,6 +768,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
           const map = mapRef.current;
           if (map) {
+            suppressNextSaveRef.current += 1;
             map.flyTo({
               center: newPosition,
               zoom: 13,
@@ -803,12 +815,32 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     if (!map || !mapLoaded) return;
     if (!flyToTrigger) return;
 
+    suppressNextSaveRef.current += 1;
     map.flyTo({
       center: [flyToTrigger.lng, flyToTrigger.lat],
       zoom: flyToTrigger.zoom,
       essential: true,
     });
   }, [flyToTrigger, mapLoaded]);
+
+  // Rehydrate when viewerKey becomes known
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!mapLoaded || !map) return;
+
+    if (hydratedKeyRef.current === viewerKey) return;
+    hydratedKeyRef.current = viewerKey;
+
+    const prefs = loadMapViewPrefs(viewerKey);
+    if (!prefs) return;
+
+    // Do NOT suppress save here - jumpTo is instant and won't trigger moveend
+    // The map is already at the correct position from initialPrefs or will update silently
+    map.jumpTo({ center: prefs.center, zoom: prefs.zoom });
+    setCenter(prefs.center);
+    setZoom(prefs.zoom);
+    setUserPosition(prefs.userPosition ?? null);
+  }, [viewerKey, mapLoaded]);
 
   // Save map view preferences on moveend (debounced)
   useEffect(() => {
@@ -818,6 +850,11 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const handleMoveEnd = () => {
+      if (suppressNextSaveRef.current > 0) {
+        suppressNextSaveRef.current -= 1;
+        return;
+      }
+
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
