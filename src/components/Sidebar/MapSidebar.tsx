@@ -422,7 +422,7 @@ const MapSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 w-[400px] max-w-full h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted transition-transform duration-500 ease-in-out transform ${
+      className={`fixed top-[48px] left-0 z-30 sm:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted transition-transform duration-500 ease-in-out transform ${
         sidebarOpen
           ? "translate-x-0 shadow-lg pointer-events-auto"
           : "-translate-x-full shadow-none pointer-events-none"

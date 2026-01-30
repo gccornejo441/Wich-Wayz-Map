@@ -26,7 +26,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const [filters, setFilters] = useState<ShopFilters>({});
 
   const { addToast } = useToast();
-  const { setCenter, setShopId, setZoom, setUserInteracted } = useMap();
+  const { setShopId, setUserInteracted, flyToLocation } = useMap();
   const { applyFilters } = useShops();
   const { openSidebar } = useShopSidebar();
 
@@ -127,8 +127,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
     openSidebar(shopProps, null);
 
-    setCenter([location.longitude, location.latitude]);
-    setZoom(16);
+    flyToLocation(location.longitude, location.latitude, 16);
     setShopId(shop.id.toString());
     setUserInteracted(false);
 
@@ -196,8 +195,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
 
       openSidebar(shopProps, null);
 
-      setCenter([firstLoc.longitude, firstLoc.latitude]);
-      setZoom(13);
+      flyToLocation(firstLoc.longitude, firstLoc.latitude, 13);
       setShopId(firstShop.id.toString());
       setUserInteracted(false);
     }

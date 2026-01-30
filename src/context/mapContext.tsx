@@ -9,6 +9,13 @@ type MapContextType = {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   userInteracted: boolean;
   setUserInteracted: React.Dispatch<React.SetStateAction<boolean>>;
+  flyToLocation: (lng: number, lat: number, zoom: number) => void;
+  flyToTrigger: {
+    lng: number;
+    lat: number;
+    zoom: number;
+    timestamp: number;
+  } | null;
 };
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -20,6 +27,16 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
   const [shopId, setShopId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(13);
   const [userInteracted, setUserInteracted] = useState<boolean>(false);
+  const [flyToTrigger, setFlyToTrigger] = useState<{
+    lng: number;
+    lat: number;
+    zoom: number;
+    timestamp: number;
+  } | null>(null);
+
+  const flyToLocation = (lng: number, lat: number, zoom: number) => {
+    setFlyToTrigger({ lng, lat, zoom, timestamp: Date.now() });
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -48,6 +65,8 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
         setZoom,
         userInteracted,
         setUserInteracted,
+        flyToLocation,
+        flyToTrigger,
       }}
     >
       {children}

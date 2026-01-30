@@ -9,6 +9,7 @@ import { useShops } from "@/context/shopContext";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@context/authContext";
+import { useMap } from "@context/mapContext";
 import { parseDeepLink } from "@utils/deepLink";
 import { buildStreetAddress, buildCityStateZip } from "@utils/address";
 import { loadMapViewPrefs, saveMapViewPrefs } from "@utils/mapViewPrefs";
@@ -431,6 +432,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { openSidebar, selectShopById } = useShopSidebar();
   const { theme } = useTheme();
   const { userMetadata } = useAuth();
+  const { flyToTrigger } = useMap();
   const location = useLocation();
 
   const mapRef = useRef<Map | null>(null);
@@ -794,6 +796,19 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       window.removeEventListener("locateUser", handleLocateUser);
     };
   }, [isLoggedIn, viewerKey]);
+
+  // Handle flyToLocation trigger from context
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    if (!flyToTrigger) return;
+
+    map.flyTo({
+      center: [flyToTrigger.lng, flyToTrigger.lat],
+      zoom: flyToTrigger.zoom,
+      essential: true,
+    });
+  }, [flyToTrigger, mapLoaded]);
 
   // Save map view preferences on moveend (debounced)
   useEffect(() => {
