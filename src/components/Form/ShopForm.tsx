@@ -190,6 +190,49 @@ const ShopForm = ({
   const [addressSuggestions, setAddressSuggestions] = useState<
     AddressSuggestion[]
   >([]);
+  const [pendingParsedAddress, setPendingParsedAddress] =
+    useState<AddressSuggestion["parsedData"] | null>(null);
+
+  // Helper to convert state names to codes
+  const stateCodeByName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of US_STATES) m.set(s.name.toLowerCase(), s.code.toUpperCase());
+    return m;
+  }, []);
+
+  const toStateCode = (raw?: string) => {
+    const v = (raw ?? "").trim();
+    if (!v) return "";
+    if (v.length === 2) return v.toUpperCase();
+    return stateCodeByName.get(v.toLowerCase()) ?? "";
+  };
+
+  const buildStreetAddress = (
+    c: AddressSuggestion["parsedData"]["components"],
+  ) => {
+    const house = (c.house_number ?? "").trim();
+    const road = (c.road ?? c.street ?? "").trim();
+    return `${house} ${road}`.trim();
+  };
+
+  const commitParsedAddress = (parsed: AddressSuggestion["parsedData"]) => {
+    const c = parsed.components ?? {};
+    const next: AddressDraft = {
+      ...address,
+      streetAddress: buildStreetAddress(c),
+      streetAddressSecond: (c.secondary_address ?? address.streetAddressSecond ?? "").trim(),
+      city: (c.city ?? c.town ?? "").trim(),
+      state: toStateCode(c.state),
+      postalCode: (c.postcode ?? "").trim(),
+      country: (c.country ?? address.country ?? "").trim(),
+      latitude: parsed.coordinates?.latitude ?? address.latitude,
+      longitude: parsed.coordinates?.longitude ?? address.longitude,
+    };
+
+    onAddressChange(next);
+    applyParsedAddressToForm(parsed);
+    onPrefillSuccess?.();
+  };
 
   useEffect(() => {
     const next = normalizeWebsiteUrl(String(initialData?.website_url ?? ""));
@@ -286,21 +329,18 @@ const ShopForm = ({
     !isSubmitting &&
     addressLookupState !== "loading";
 
-  // Handler to select an address from suggestions
+  // Handler to select an address from suggestions (stage it, don't apply yet)
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
     setLookupMessage(suggestion.formattedAddress);
     setAddressLookupState("success");
     setAddressSuggestions([]);
-
-    // Apply the selected address to form fields
-    applyParsedAddressToForm(suggestion.parsedData);
-    onPrefillSuccess?.();
+    setPendingParsedAddress(suggestion.parsedData);
   };
 
   // Handler to confirm and lock the address
   const handleConfirmAddress = () => {
+    if (pendingParsedAddress) commitParsedAddress(pendingParsedAddress);
     setAddressLocked(true);
-    // Keep lookupMessage and success state
   };
 
   // Handler to dismiss search result and reset
@@ -308,7 +348,7 @@ const ShopForm = ({
     setAddressLookupState("idle");
     setLookupMessage("");
     setAddressSuggestions([]);
-    // Fields remain unlocked
+    setPendingParsedAddress(null);
   };
 
   // Handler to unlock fields for editing
@@ -317,6 +357,7 @@ const ShopForm = ({
     setAddressLookupState("idle");
     setLookupMessage("");
     setAddressSuggestions([]);
+    setPendingParsedAddress(null);
   };
 
   return (
@@ -446,6 +487,7 @@ const ShopForm = ({
               setAddressLookupState("idle");
               setAddressLocked(false);
               setLookupMessage("");
+              setPendingParsedAddress(null);
             }
           }}
         />
@@ -547,12 +589,11 @@ const ShopForm = ({
 
           if (result.success && result.suggestions) {
             if (result.suggestions.length === 1) {
-              // Single result - go directly to confirmation
+              // Single result - stage it for confirmation
               const suggestion = result.suggestions[0];
               setLookupMessage(suggestion.formattedAddress);
               setAddressLookupState("success");
-              applyParsedAddressToForm(suggestion.parsedData);
-              onPrefillSuccess?.();
+              setPendingParsedAddress(suggestion.parsedData);
             } else {
               // Multiple results - show selection list
               setAddressSuggestions(result.suggestions);
