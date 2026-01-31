@@ -10,8 +10,6 @@ import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
-import { Callback } from "@/types/dataTypes";
-import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useModal } from "../../context/modalContext";
 import { useMap } from "@context/mapContext";
 
@@ -26,11 +24,10 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
-  const { shopListOpen } = useShopSidebar();
   const { openLoginModal, openSignupModal } = useModal();
   const { isNearbyOpen } = useMap();
 
-  const shouldShowSearch = showSearchBar && searchBar && !shopListOpen && !isNearbyOpen;
+  const shouldShowSearch = showSearchBar && searchBar && !isNearbyOpen;
 
   const handleAuthAction = () => {
     if (isAuthenticated) {

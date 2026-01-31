@@ -14,6 +14,8 @@ import {
   FiX,
   FiCheck,
   FiAlertCircle,
+  FiBookmark,
+  FiList,
 } from "react-icons/fi";
 import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
@@ -32,6 +34,8 @@ import { Comment } from "@models/Comment";
 import { useModal } from "@/context/modalContext";
 import { ShareLinkModal } from "@/components/Modal/ShareLinkModal";
 import { buildCityStateZip, buildFullAddressForMaps } from "@utils/address";
+import { useSaved } from "@context/savedContext";
+import CollectionModal from "@/components/Modal/CollectionModal";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   const totalVotes = upvotes + downvotes;
@@ -95,6 +99,13 @@ const MapSidebar = () => {
   const { isAuthenticated, user, userMetadata } = useAuth();
   const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
     useVote();
+  const {
+    savedShopIds,
+    toggleSaved,
+    refreshCollections,
+    setSavedSidebarOpen,
+    setSavedFilterMode,
+  } = useSaved();
 
   const isMember = isAuthenticated && user?.emailVerified;
 
@@ -130,6 +141,7 @@ const MapSidebar = () => {
   );
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
 
   useEffect(() => {
     if (selectedShop?.shopId && !hasFetchedVotes.current) {
@@ -138,6 +150,7 @@ const MapSidebar = () => {
       );
       hasFetchedVotes.current = true;
     }
+    setIsCollectionModalOpen(false);
   }, [selectedShop, getVotesForShop]);
 
   useEffect(() => {
@@ -278,6 +291,43 @@ const MapSidebar = () => {
     } finally {
       setDeletingCommentId(null);
     }
+  };
+
+  const isSaved = selectedShop?.shopId
+    ? savedShopIds.has(selectedShop.shopId)
+    : false;
+
+  const handleToggleSaved = async () => {
+    if (!selectedShop?.shopId) return;
+    if (!isMember) {
+      openSignupModal();
+      return;
+    }
+    try {
+      const saved = await toggleSaved(selectedShop.shopId);
+      addToast(
+        saved ? "Saved to favorites" : "Removed from favorites",
+        "success",
+      );
+    } catch (error) {
+      if (error instanceof Error && error.message === "Not authenticated") {
+        return;
+      }
+      addToast("Could not update saved state", "error");
+    }
+  };
+
+  const handleOpenCollections = async () => {
+    if (!selectedShop?.shopId) return;
+    if (!isMember) {
+      openSignupModal();
+      return;
+    }
+    closeSidebar();
+    await refreshCollections();
+    setIsCollectionModalOpen(true);
+    setSavedSidebarOpen(true);
+    setSavedFilterMode("collection");
   };
 
   const handleShareLocation = async () => {
@@ -612,7 +662,31 @@ const MapSidebar = () => {
                   )}
               </div>
 
-              <div className="mt-6 flex items-center gap-3">
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleToggleSaved}
+                  aria-label="Save shop"
+                  title={isSaved ? "Saved" : "Save"}
+                  className={`flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] px-3 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-brand-secondary ${
+                    isSaved
+                      ? "bg-brand-secondary text-black"
+                      : "bg-brand-primary text-white hover:bg-opacity-90"
+                  }`}
+                >
+                  <FiBookmark size={20} />
+                  <span>{isSaved ? "Saved" : "Save"}</span>
+                </button>
+
+                <button
+                  onClick={handleOpenCollections}
+                  aria-label="Add to list"
+                  title="Add to list"
+                  className="flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] px-3 py-2 rounded-lg bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted hover:bg-surface-dark dark:hover:bg-surface-dark focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                >
+                  <FiList size={18} />
+                  <span>Add to list</span>
+                </button>
+
                 <button
                   onClick={handleShareLocation}
                   aria-label="Share shop"
@@ -984,6 +1058,13 @@ const MapSidebar = () => {
         </div>
       </div>
 
+      {selectedShop?.shopId && (
+        <CollectionModal
+          isOpen={isCollectionModalOpen}
+          onClose={() => setIsCollectionModalOpen(false)}
+          shopId={selectedShop.shopId}
+        />
+      )}
       <ShareLinkModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

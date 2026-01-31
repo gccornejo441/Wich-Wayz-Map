@@ -22,6 +22,9 @@ export interface Routes {
   };
   ANALYTICS: string;
   USER_LEADERBOARD: string;
+  COLLECTIONS: {
+    PUBLIC: string;
+  };
 }
 
 export const ROUTES: Routes = {
@@ -46,6 +49,9 @@ export const ROUTES: Routes = {
   },
   ANALYTICS: "/analytics",
   USER_LEADERBOARD: "/user-leaderboard",
+  COLLECTIONS: {
+    PUBLIC: "/lists/:id",
+  },
 };
 
 /**

@@ -6,10 +6,11 @@ import { useModal } from "../../context/modalContext";
 import UpdateShop from "../Modal/UpdateShop";
 import AuthModal from "../Modal/AuthModal";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
-import ShopListSidebar from "../Sidebar/ShopListSidebar";
 import MapSidebar from "../Sidebar/MapSidebar";
 import { useSidebar } from "@/context/sidebarContext";
 import NearbySidebar from "../Sidebar/NearbySidebar";
+import SavedSidebar from "../Sidebar/SavedSidebar";
+import { useSaved } from "@context/savedContext";
 
 interface AppLayoutProps {
   fullBleed?: boolean;
@@ -18,13 +19,12 @@ interface AppLayoutProps {
 const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   const { currentModal } = useModal();
   const {
-    shopListOpen,
-    closeShopList,
     sidebarOpen: mapSidebarOpen,
     closeSidebar: closeMapSidebar,
   } = useShopSidebar();
 
   const { isOpen: isSidebarOpen, closeSidebar, toggleSidebar } = useSidebar();
+  const { savedSidebarOpen, setSavedSidebarOpen } = useSaved();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -42,12 +42,16 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   };
 
   useEffect(() => {
-    if (shopListOpen) closeSidebar();
-  }, [shopListOpen, closeSidebar]);
+    if (savedSidebarOpen) {
+      closeSidebar();
+    }
+  }, [savedSidebarOpen, closeSidebar]);
 
   useEffect(() => {
-    if (isSidebarOpen && shopListOpen) closeShopList();
-  }, [isSidebarOpen, shopListOpen, closeShopList]);
+    if (mapSidebarOpen && savedSidebarOpen) {
+      setSavedSidebarOpen(false);
+    }
+  }, [mapSidebarOpen, savedSidebarOpen, setSavedSidebarOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,7 +84,7 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
         />
         <Sidebar />
         <NearbySidebar />
-        <ShopListSidebar isOpen={shopListOpen} />
+        <SavedSidebar />
         <MapSidebar />
       </div>
 

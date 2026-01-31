@@ -6,10 +6,10 @@ import { FiCompass } from "react-icons/fi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { ReactNode, useMemo } from "react";
 import { BsFillAwardFill } from "react-icons/bs";
-import { MdFormatListBulletedAdd } from "react-icons/md";
-import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useSidebar } from "@/context/sidebarContext";
 import { useMap } from "@context/mapContext";
+import { useSaved } from "@context/savedContext";
+import { FiBookmark } from "react-icons/fi";
 
 export interface BaseItemProps {
   onClick?: () => void;
@@ -100,9 +100,9 @@ export const SidebarItem = ({
 
 const Sidebar = () => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
-  const { openShopList } = useShopSidebar();
   const { isOpen, toggleSidebar } = useSidebar();
   const { isNearbyOpen, setIsNearbyOpen } = useMap();
+  const { setSavedSidebarOpen } = useSaved();
 
   const { isAuthenticated, user } = useAuth();
   const isMember = isAuthenticated && user?.emailVerified;
@@ -179,15 +179,14 @@ const Sidebar = () => {
               badge="New"
             />
           </li>
-          <li className="hidden">
+          <li>
             <SidebarItem
-              icon={<MdFormatListBulletedAdd className="w-6 h-6 text-white" />}
-              text="Saved Shops"
+              icon={<FiBookmark className="w-6 h-6 text-white" />}
+              text="Saved"
               onClick={() => {
-                openShopList();
+                setSavedSidebarOpen(true);
                 toggleSidebar();
               }}
-              badge="New"
             />
           </li>
         </ul>

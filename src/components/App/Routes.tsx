@@ -11,12 +11,17 @@ import AddShop from "./AddEditShop";
 import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
 import AppLayout from "./AppLayout";
+import PublicCollection from "./PublicCollection";
 
 function MainRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout fullBleed />}>
         <Route path={ROUTES.HOME} element={<MapBox />} />
+        <Route
+          path={ROUTES.COLLECTIONS.PUBLIC}
+          element={<PublicCollection />}
+        />
       </Route>
 
       <Route element={<AppLayout />}>

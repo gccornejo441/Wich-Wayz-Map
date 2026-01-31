@@ -106,3 +106,40 @@ CREATE TABLE comments (
 );
 CREATE INDEX idx_comments_shop ON comments (shop_id, date_created DESC);
 CREATE INDEX idx_comments_user ON comments (user_id, date_created DESC);
+
+-- Saved Shops (favorites)
+CREATE TABLE IF NOT EXISTS saved_shops (
+  user_id INTEGER NOT NULL,
+  shop_id INTEGER NOT NULL,
+  date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, shop_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_saved_shops_user ON saved_shops (user_id, date_created DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_shops_shop ON saved_shops (shop_id);
+
+-- Collections (lists)
+CREATE TABLE IF NOT EXISTS collections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  visibility TEXT NOT NULL DEFAULT 'private', -- private|unlisted|public
+  date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS collection_shops (
+  collection_id INTEGER NOT NULL,
+  shop_id INTEGER NOT NULL,
+  sort_order INTEGER DEFAULT 0,
+  date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (collection_id, shop_id),
+  FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+  FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_collections_user ON collections(user_id, date_created DESC);
+CREATE INDEX IF NOT EXISTS idx_collection_shops_collection ON collection_shops(collection_id, sort_order, date_created DESC);
