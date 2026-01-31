@@ -558,9 +558,9 @@ const ShopForm = ({
             value={address.postalCode}
             placeholder="Enter postal code"
             readOnly={addressLocked}
-            onChange={(e) =>
-              onAddressChange({ ...address, postalCode: e.target.value })
-            }
+            onChange={(e) => {
+              onAddressChange({ ...address, postalCode: e.target.value });
+            }}
           />
         </div>
 

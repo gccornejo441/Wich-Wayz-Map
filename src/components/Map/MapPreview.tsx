@@ -17,7 +17,7 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 interface MapPreviewProps {
   address: AddressDraft;
   fullAddressForMaps: string;
-  onAddressUpdate: (next: AddressDraft) => void;
+  onAddressUpdate: (next: AddressDraft | ((prev: AddressDraft) => AddressDraft)) => void;
   prefillFlyToNonce: number;
 }
 
@@ -95,11 +95,11 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         const [lon, lat] = json.features[0].geometry.coordinates;
         setCoords({ latitude: lat, longitude: lon });
 
-        onAddressUpdateRef.current({
-          ...addressRef.current,
+        onAddressUpdateRef.current((prev) => ({
+          ...prev,
           latitude: lat,
           longitude: lon,
-        });
+        }));
 
         if (mapRef.current) {
           mapRef.current.flyTo({
@@ -157,16 +157,16 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             }
           }
 
-          onAddressUpdateRef.current({
-            ...addressRef.current,
-            streetAddress: street,
-            city,
-            state,
-            postalCode,
-            country: country || addressRef.current.country,
+          onAddressUpdateRef.current((prev) => ({
+            ...prev,
+            streetAddress: street || prev.streetAddress,
+            city: city || prev.city,
+            state: state || prev.state,
+            postalCode: postalCode || prev.postalCode,
+            country: country || prev.country,
             latitude: lat,
             longitude: lng,
-          });
+          }));
         }
       });
   };

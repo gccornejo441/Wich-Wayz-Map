@@ -1,4 +1,5 @@
 import * as yup from "yup";
+import { normalizeZipCode, isValidZipCode } from "@/utils/address";
 
 /**
  * Validation schema for user credentials.
@@ -65,7 +66,12 @@ export const locationSchema = yup.object().shape({
   house_number: yup.string().optional(),
   city: yup.string().optional(),
   state: yup.string().optional(),
-  postcode: yup.string().required("Zip code is required"),
+  postcode: yup
+    .string()
+    .required("Zip code is required")
+    .test("valid-zip", "Zip code must be 5 or 9 digits", (value) => {
+      return isValidZipCode(value);
+    }),
   country: yup.string().optional(),
   latitude: yup
     .number()

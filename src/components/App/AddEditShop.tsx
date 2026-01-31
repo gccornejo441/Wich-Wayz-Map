@@ -76,6 +76,7 @@ const AddEditShop = () => {
       for (const k of keys) {
         const v = obj[k];
         if (typeof v === "string") return v;
+        if (typeof v === "number") return String(v);
       }
       return "";
     };
@@ -97,7 +98,7 @@ const AddEditShop = () => {
       ),
       city: getStringAny("city"),
       state: getStringAny("state"),
-      postalCode: getStringAny("postcode", "postalCode"),
+      postalCode: getStringAny("postcode", "postalCode", "zip", "zipCode", "zipcode", "postal_code"),
       country: getStringAny("country") || "USA",
       latitude: getNumberAny("latitude"),
       longitude: getNumberAny("longitude"),

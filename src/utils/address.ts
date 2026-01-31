@@ -1,15 +1,19 @@
-/**
- * Address utility functions for consistent address composition across the app.
- *
- * PRIMARY RULE:
- * - street_address and street_address_second are the ONLY "street lines"
- * - Never concatenate city/state/postal_code into street address
- * - Display format:
- *   Line 1: street_address (+ street_address_second if present)
- *   Line 2: city, state postal_code
- */
-
 import { getStateName } from "@constants/usStates";
+
+export const normalizeZipCode = (
+  raw: string | number | null | undefined,
+): string => {
+  if (raw === null || raw === undefined) return "";
+  const str = typeof raw === "number" ? String(raw) : String(raw);
+  return str.trim().replace(/\D/g, "");
+};
+
+export const isValidZipCode = (
+  raw: string | number | null | undefined,
+): boolean => {
+  const normalized = normalizeZipCode(raw);
+  return normalized.length === 5 || normalized.length === 9;
+};
 
 /**
  * Builds the street line(s) from address components.

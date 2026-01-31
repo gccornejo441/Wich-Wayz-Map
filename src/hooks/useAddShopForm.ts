@@ -35,7 +35,9 @@ const hasValidCoords = (lat: number, lon: number): boolean => {
   return true;
 };
 
-const normalizeUsState = (input: string): { code: string; name: string } | null => {
+const normalizeUsState = (
+  input: string,
+): { code: string; name: string } | null => {
   const s = input.trim();
   if (!s) return null;
 
@@ -149,6 +151,15 @@ export const useAddShopForm = (
       }
     }
   }, [initialData, categories, setValue]);
+
+  useEffect(() => {
+    if (address?.postalCode !== undefined) {
+      setValue("postcode", address.postalCode, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [address?.postalCode, setValue]);
 
   const addressVal = watch("address");
   const latVal = watch("latitude");
@@ -340,7 +351,10 @@ export const useAddShopForm = (
       }
 
       if (!addressDetails) {
-        addToast("Please enter a valid US address that includes a state.", "error");
+        addToast(
+          "Please enter a valid US address that includes a state.",
+          "error",
+        );
         return { success: false };
       }
 
@@ -375,7 +389,7 @@ export const useAddShopForm = (
       data.address_second = data.address_second ?? address.streetAddressSecond;
       data.city = data.city ?? address.city;
       data.state = data.state ?? address.state;
-      data.postcode = data.postcode ?? address.postalCode;
+      data.postcode = address.postalCode || data.postcode;
       data.country = data.country ?? address.country;
       data.latitude = data.latitude ?? address.latitude ?? 0;
       data.longitude = data.longitude ?? address.longitude ?? 0;
