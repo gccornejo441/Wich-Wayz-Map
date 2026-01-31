@@ -1,5 +1,5 @@
 import * as yup from "yup";
-import { normalizeZipCode, isValidZipCode } from "@/utils/address";
+import { isValidZipCode } from "@/utils/address";
 
 /**
  * Validation schema for user credentials.
