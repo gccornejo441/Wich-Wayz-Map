@@ -15,7 +15,7 @@ import { useMap } from "@context/mapContext";
 
 interface NavBarProps {
   searchBar: boolean;
-  onToggleSidebar: Callback;
+  onToggleSidebar: () => void;
   navRef?: React.RefObject<HTMLElement>;
 }
 

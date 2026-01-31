@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   FiBookmark,
-  FiCompass,
   FiMapPin,
   FiNavigation2,
   FiTarget,
@@ -132,9 +131,9 @@ const SavedSidebar = () => {
       const distance =
         location && effectiveAnchor
           ? distanceMiles(effectiveAnchor, [
-              location.longitude,
-              location.latitude,
-            ])
+            location.longitude,
+            location.latitude,
+          ])
           : Infinity;
       entries.set(item.shopId, {
         shop,
@@ -174,9 +173,9 @@ const SavedSidebar = () => {
               distanceMiles:
                 location && effectiveAnchor
                   ? distanceMiles(effectiveAnchor, [
-                      location.longitude,
-                      location.latitude,
-                    ])
+                    location.longitude,
+                    location.latitude,
+                  ])
                   : Infinity,
             };
           })
@@ -248,9 +247,8 @@ const SavedSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
-        savedSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full shadow-none"
-      }`}
+      className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${savedSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full shadow-none"
+        }`}
       aria-label="Saved shops"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-surface-muted/60 dark:border-gray-700">
@@ -279,11 +277,10 @@ const SavedSidebar = () => {
               key={tab.key}
               type="button"
               onClick={() => setSavedFilterMode(tab.key)}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${
-                savedFilterMode === tab.key
+              className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${savedFilterMode === tab.key
                   ? "bg-brand-primary text-white border-brand-primary"
                   : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted hover:border-brand-primary"
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -296,11 +293,10 @@ const SavedSidebar = () => {
               <button
                 type="button"
                 onClick={() => setAnchorMode("mapCenter")}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${
-                  anchorMode === "mapCenter"
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${anchorMode === "mapCenter"
                     ? "bg-brand-primary text-white border-brand-primary"
                     : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted"
-                }`}
+                  }`}
               >
                 <FiMapPin />
                 Map Area
@@ -308,11 +304,10 @@ const SavedSidebar = () => {
               <button
                 type="button"
                 onClick={() => setAnchorMode("userLocation")}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${
-                  anchorMode === "userLocation"
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${anchorMode === "userLocation"
                     ? "bg-brand-secondary text-black border-brand-secondary"
                     : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted"
-                }`}
+                  }`}
               >
                 <FiTarget />
                 Near Me
@@ -325,11 +320,10 @@ const SavedSidebar = () => {
                   key={value}
                   type="button"
                   onClick={() => setRadiusMiles(value)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-                    radiusMiles === value
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${radiusMiles === value
                       ? "bg-brand-primary text-white border-brand-primary"
                       : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted hover:border-brand-primary"
-                  }`}
+                    }`}
                 >
                   {value} mi
                 </button>
