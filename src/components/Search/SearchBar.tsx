@@ -8,7 +8,7 @@ import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { FilterDropdown } from "../Filter/FilterDropdown";
 import { ShopFilters } from "@/types/shopFilter";
 import { useToast } from "@/context/toastContext";
-import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { buildStreetAddress } from "@utils/address";
 
 interface SearchBarProps {

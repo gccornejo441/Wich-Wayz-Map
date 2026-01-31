@@ -2,12 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import SidebarFooter from "./SidebarFooter";
 import { HiChartBar, HiMap, HiPlus, HiUser } from "react-icons/hi";
+import { FiCompass } from "react-icons/fi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { ReactNode, useMemo } from "react";
 import { BsFillAwardFill } from "react-icons/bs";
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useSidebar } from "@/context/sidebarContext";
+import { useMap } from "@context/mapContext";
 
 export interface BaseItemProps {
   onClick?: () => void;
@@ -100,6 +102,7 @@ const Sidebar = () => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
   const { openShopList } = useShopSidebar();
   const { isOpen, toggleSidebar } = useSidebar();
+  const { isNearbyOpen, setIsNearbyOpen } = useMap();
 
   const { isAuthenticated, user } = useAuth();
   const isMember = isAuthenticated && user?.emailVerified;
@@ -135,6 +138,18 @@ const Sidebar = () => {
                 icon={<HiUser className="w-6 h-6 text-white" />}
                 text="Profile"
                 linkTo={ROUTES.ACCOUNT.PROFILE}
+              />
+            </li>
+          )}
+          {isAuthenticated && showUserProfile && (
+            <li>
+              <SidebarItem
+                icon={<FiCompass className="w-6 h-6 text-white" />}
+                text={isNearbyOpen ? "Close Nearby" : "Nearby"}
+                onClick={() => {
+                  setIsNearbyOpen((prev) => !prev);
+                  toggleSidebar();
+                }}
               />
             </li>
           )}

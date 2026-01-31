@@ -17,7 +17,7 @@ import {
 import { AddAShopPayload, ShopWithId } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { locationSchema } from "@constants/validators";
-import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { US_STATES } from "@constants/usStates";
 
 type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;

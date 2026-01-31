@@ -11,11 +11,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@context/authContext";
 import { useMap } from "@context/mapContext";
 import { parseDeepLink } from "@utils/deepLink";
-import { buildStreetAddress, buildCityStateZip } from "@utils/address";
+import { buildCityStateZip } from "@utils/address";
 import { loadMapViewPrefs, saveMapViewPrefs } from "@utils/mapViewPrefs";
-import type { Location } from "@models/Location";
-import type { ShopWithUser } from "@models/ShopWithUser";
-import type { ShopDataVariants, LocationDataVariants } from "@/types/dataTypes";
+import {
+  buildShopGeoJson,
+  coercePropsFromFeatureProperties,
+  type ShopFeatureCollection,
+  type ShopGeoJsonProperties,
+} from "@utils/shopGeoJson";
 import SpeedDial from "../Dial/SpeedDial";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
@@ -37,51 +40,11 @@ const loadingMessages = [
   "Serving It Up Fresh...",
 ];
 
-export type ShopGeoJsonProperties = {
-  shopId: number;
-  shopName: string;
-  categories: string;
-
-  imageUrl?: string;
-  description?: string;
-
-  usersAvatarEmail?: string;
-  usersAvatarId?: string;
-  createdBy?: string;
-  created_by?: number;
-
-  votes?: number;
-  categoryIds?: number[];
-
-  address?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
-
-  phone?: string;
-  website?: string;
-  website_url?: string;
-
-  latitude?: number;
-  longitude?: number;
-
-  locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
-  locationId?: number;
-
-  [key: string]: unknown;
-};
-
-type ShopFeature = GeoJSON.Feature<GeoJSON.Point, ShopGeoJsonProperties>;
-type ShopFeatureCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  ShopGeoJsonProperties
->;
-
 const SOURCE_ID = "shops";
 const CLUSTERS_LAYER_ID = "shops-clusters";
 const CLUSTER_COUNT_LAYER_ID = "shops-cluster-count";
 const UNCLUSTERED_LAYER_ID = "shops-unclustered";
+const HOVERED_LAYER_ID = "shops-hovered";
 
 const CLUSTER_COLOR = "#DA291C";
 const CLUSTER_TEXT_COLOR = "#FFFFFF";
@@ -91,47 +54,12 @@ const POINT_STROKE_COLOR = "#5A110C";
 const isNumber = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
 
-const getString = (v: unknown): string | undefined =>
-  typeof v === "string" ? v : undefined;
-
-const toNumber = (v: unknown): number | undefined => {
-  if (isNumber(v)) return v;
-  if (typeof v === "string") {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  }
-  return undefined;
-};
-
 const useLatest = <T,>(value: T) => {
   const ref = useRef(value);
   useEffect(() => {
     ref.current = value;
   }, [value]);
   return ref;
-};
-
-const getLngLat = (loc: Location): { lng: number; lat: number } | null => {
-  const maybeLng = loc.longitude;
-  const maybeLat = loc.latitude;
-
-  if (!isNumber(maybeLng) || !isNumber(maybeLat)) return null;
-  return { lng: maybeLng, lat: maybeLat };
-};
-
-const getShopName = (shop: ShopWithUser): string => {
-  if (typeof shop.name === "string" && shop.name.length) return shop.name;
-  return "";
-};
-
-const getCategoriesString = (shop: ShopWithUser): string => {
-  if (Array.isArray(shop.categories)) {
-    return shop.categories
-      .map((cat) => cat.category_name)
-      .filter((x): x is string => typeof x === "string")
-      .join(",");
-  }
-  return "";
 };
 
 const stopMapClick = (e: mapboxgl.MapMouseEvent) => {
@@ -182,187 +110,6 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
     }
     </div>
   `;
-};
-
-const buildAddress = (locAny: LocationDataVariants): string | undefined => {
-  // Check for pre-built address field first
-  const direct = getString(locAny.address);
-  if (direct && direct.trim().length) return direct;
-
-  // Build ONLY from street lines, never city/state/postal
-  return buildStreetAddress(
-    getString(locAny.street_address),
-    getString(locAny.street_address_second),
-  );
-};
-
-const pickWebsite = (
-  shopAny: ShopDataVariants,
-  locAny: LocationDataVariants,
-): string | undefined =>
-  getString(shopAny.website) ??
-  getString(shopAny.websiteUrl) ??
-  getString(shopAny.website_url) ??
-  getString(locAny.website);
-
-const pickWebsiteUrl = (
-  shopAny: ShopDataVariants,
-  locAny: LocationDataVariants,
-): string | undefined =>
-  getString(shopAny.website_url) ??
-  getString(shopAny.websiteUrl) ??
-  getString(shopAny.website) ??
-  getString(locAny.website);
-
-const pickPhone = (
-  shopAny: ShopDataVariants,
-  locAny: LocationDataVariants,
-): string | undefined => getString(shopAny.phone) ?? getString(locAny.phone);
-
-const buildShopPropsFromShopAndLocation = (
-  shop: ShopWithUser,
-  loc: Location,
-  ll: { lng: number; lat: number },
-): ShopGeoJsonProperties | null => {
-  if (typeof shop.id !== "number") return null;
-
-  const shopAny = shop as unknown as ShopDataVariants;
-  const locAny = loc as unknown as LocationDataVariants;
-
-  const categoryIds =
-    Array.isArray(shopAny.categoryIds) &&
-      shopAny.categoryIds.every((x) => typeof x === "number")
-      ? shopAny.categoryIds
-      : Array.isArray(shopAny.category_ids) &&
-        shopAny.category_ids.every((x) => typeof x === "number")
-        ? shopAny.category_ids
-        : undefined;
-
-  const address = buildAddress(locAny);
-
-  const phone = pickPhone(shopAny, locAny);
-  const website = pickWebsite(shopAny, locAny);
-  const website_url = pickWebsiteUrl(shopAny, locAny);
-
-  const locationStatus = loc.locationStatus ?? "open";
-
-  return {
-    shopId: shop.id,
-    shopName: getShopName(shop),
-    categories: getCategoriesString(shop),
-
-    imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
-    description:
-      getString(shopAny.description) ?? getString(shopAny.shop_description),
-
-    usersAvatarEmail:
-      getString(shopAny.usersAvatarEmail) ??
-      getString(shopAny.users_avatar_email) ??
-      getString(shopAny.user_email),
-    usersAvatarId:
-      getString(shopAny.usersAvatarId) ??
-      getString(shopAny.users_avatar_id) ??
-      getString(shopAny.user_avatar_id),
-
-    createdBy:
-      getString(shopAny.createdBy) ??
-      getString(shopAny.created_by_username) ??
-      getString(shopAny.created_by),
-    created_by: isNumber(shop.created_by) ? shop.created_by : undefined,
-
-    votes: isNumber(shopAny.votes) ? shopAny.votes : undefined,
-    categoryIds,
-
-    address,
-    city: getString(locAny.city),
-    state: getString(locAny.state),
-    postalCode: getString(locAny.postalCode) ?? getString(locAny.postal_code),
-    country: getString(locAny.country),
-
-    phone,
-    website,
-    website_url,
-
-    latitude: ll.lat,
-    longitude: ll.lng,
-
-    locationStatus:
-      locationStatus === "open" ||
-        locationStatus === "temporarily_closed" ||
-        locationStatus === "permanently_closed"
-        ? locationStatus
-        : "open",
-    locationId: isNumber(loc.id) ? loc.id : undefined,
-  };
-};
-
-const buildShopGeoJson = (
-  displayedShops: ShopWithUser[],
-): ShopFeatureCollection => {
-  const features: ShopFeature[] = [];
-
-  for (const shop of displayedShops) {
-    if (typeof shop.id !== "number") continue;
-
-    const locs = shop.locations ?? [];
-    for (const loc of locs) {
-      const ll = getLngLat(loc);
-      if (!ll) continue;
-
-      const props = buildShopPropsFromShopAndLocation(shop, loc, ll);
-      if (!props) continue;
-
-      features.push({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [ll.lng, ll.lat] },
-        properties: props,
-      });
-    }
-  }
-
-  return { type: "FeatureCollection", features };
-};
-
-const coercePropsFromFeatureProperties = (
-  raw: Record<string, unknown>,
-): ShopGeoJsonProperties | null => {
-  const shopId = toNumber(raw.shopId);
-  if (!shopId) return null;
-
-  const locationStatusRaw = getString(raw.locationStatus);
-  const locationStatus:
-    | "open"
-    | "temporarily_closed"
-    | "permanently_closed"
-    | undefined =
-    locationStatusRaw === "open" ||
-      locationStatusRaw === "temporarily_closed" ||
-      locationStatusRaw === "permanently_closed"
-      ? locationStatusRaw
-      : undefined;
-
-  return {
-    ...(raw as unknown as ShopGeoJsonProperties),
-    shopId,
-    shopName: getString(raw.shopName) ?? "",
-    categories: getString(raw.categories) ?? "",
-    address: getString(raw.address),
-    phone: getString(raw.phone),
-    website: getString(raw.website),
-    website_url: getString(raw.website_url),
-    city: getString(raw.city),
-    state: getString(raw.state),
-    postalCode: getString(raw.postalCode),
-    country: getString(raw.country),
-    imageUrl: getString(raw.imageUrl),
-    description: getString(raw.description),
-    usersAvatarEmail: getString(raw.usersAvatarEmail),
-    usersAvatarId: getString(raw.usersAvatarId),
-    createdBy: getString(raw.createdBy),
-    created_by: toNumber(raw.created_by),
-    locationStatus,
-    locationId: toNumber(raw.locationId),
-  };
 };
 
 const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
@@ -421,6 +168,22 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       },
     });
   }
+
+  if (!map.getLayer(HOVERED_LAYER_ID)) {
+    map.addLayer({
+      id: HOVERED_LAYER_ID,
+      type: "circle",
+      source: SOURCE_ID,
+      filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "locationId"], -1]],
+      paint: {
+        "circle-color": "#FFC72C",
+        "circle-stroke-color": "#111827",
+        "circle-radius": 11,
+        "circle-stroke-width": 3,
+        "circle-opacity": 0.95,
+      },
+    });
+  }
 };
 
 type MapBoxProps = {
@@ -429,10 +192,18 @@ type MapBoxProps = {
 
 const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
-  const { openSidebar, selectShopById } = useShopSidebar();
+  const { openSidebar, selectShopById, selectedShop, sidebarOpen } = useShopSidebar();
   const { theme } = useTheme();
   const { userMetadata } = useAuth();
-  const { flyToTrigger } = useMap();
+  const {
+    flyToTrigger,
+    setUserPosition: setUserPositionInContext,
+    setPendingCenterCoords,
+    hoveredLocationId,
+    setIsNearbyOpen,
+    setCenter: setContextCenter,
+    setZoom: setContextZoom,
+  } = useMap();
   const location = useLocation();
 
   const mapRef = useRef<Map | null>(null);
@@ -457,6 +228,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
     () => initialPrefs?.userPosition ?? null,
   );
+  useEffect(() => {
+    setUserPositionInContext(userPosition);
+  }, [userPosition, setUserPositionInContext]);
 
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
@@ -476,8 +250,10 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const openSidebarRef = useLatest(openSidebar);
   const userPositionRef = useLatest(userPosition);
   const selectShopByIdRef = useLatest(selectShopById);
+  const hoveredLocationIdRef = useLatest(hoveredLocationId);
 
   const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const selectedPopupRef = useRef<mapboxgl.Popup | null>(null);
   const processedDeepLinkRef = useRef<string | null>(null);
 
   const loadingSeqRef = useRef(0);
@@ -529,6 +305,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       const c = map.getCenter();
       setCenter([c.lng, c.lat]);
       setZoom(map.getZoom());
+      setContextCenter([c.lng, c.lat]);
+      setContextZoom(map.getZoom());
     };
 
     const closeHoverPopup = () => {
@@ -540,6 +318,19 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       setMapLoaded(true);
 
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+
+      const initialCenter = map.getCenter();
+      setPendingCenterCoords([initialCenter.lng, initialCenter.lat]);
+      setContextCenter([initialCenter.lng, initialCenter.lat]);
+      setContextZoom(map.getZoom());
+
+      if (map.getLayer(HOVERED_LAYER_ID)) {
+        map.setFilter(HOVERED_LAYER_ID, [
+          "all",
+          ["!", ["has", "point_count"]],
+          ["==", ["get", "locationId"], hoveredLocationIdRef.current ?? -1],
+        ]);
+      }
 
       loadingSeqRef.current += 1;
 
@@ -595,6 +386,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
         if (!props) return;
 
         closeHoverPopup();
+        setIsNearbyOpen(false);
         openSidebarRef.current(props, userPositionRef.current);
       });
 
@@ -645,6 +437,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       setMapLoaded(false);
       hoverPopupRef.current?.remove();
       hoverPopupRef.current = null;
+      selectedPopupRef.current?.remove();
+      selectedPopupRef.current = null;
 
       userMarkerRef.current?.remove();
       userMarkerRef.current = null;
@@ -654,7 +448,18 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       map.remove();
       mapRef.current = null;
     };
-  }, [openSidebarRef, shopGeoJsonRef, userPositionRef, theme]);
+  }, [
+    openSidebarRef,
+    shopGeoJsonRef,
+    userPositionRef,
+    theme,
+    setContextCenter,
+    setContextZoom,
+    setPendingCenterCoords,
+    setIsNearbyOpen,
+    hoveredLocationIdRef,
+    initialPrefs,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -697,6 +502,13 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       map.setZoom(currentZoom);
 
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+      if (map.getLayer(HOVERED_LAYER_ID)) {
+        map.setFilter(HOVERED_LAYER_ID, [
+          "all",
+          ["!", ["has", "point_count"]],
+          ["==", ["get", "locationId"], hoveredLocationIdRef.current ?? -1],
+        ]);
+      }
 
       const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
       if (src) {
@@ -706,7 +518,60 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       loadingSeqRef.current += 1;
       hideLoadingWhenMapReady(map, loadingSeqRef.current);
     });
-  }, [theme, shopGeoJsonRef]);
+  }, [theme, shopGeoJsonRef, hoveredLocationIdRef]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    if (!sidebarOpen || !selectedShop) {
+      selectedPopupRef.current?.remove();
+      selectedPopupRef.current = null;
+      return;
+    }
+
+    const lng = selectedShop.longitude;
+    const lat = selectedShop.latitude;
+
+    if (
+      typeof lng !== "number" ||
+      typeof lat !== "number" ||
+      !Number.isFinite(lng) ||
+      !Number.isFinite(lat)
+    ) {
+      selectedPopupRef.current?.remove();
+      selectedPopupRef.current = null;
+      return;
+    }
+
+    const html = buildPopupHtml(selectedShop);
+
+    if (!selectedPopupRef.current) {
+      selectedPopupRef.current = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: false,
+        closeOnClick: false,
+        className: "mapboxPopup",
+      })
+        .setLngLat([lng, lat])
+        .setHTML(html)
+        .addTo(map);
+    } else {
+      selectedPopupRef.current.setLngLat([lng, lat]).setHTML(html);
+    }
+  }, [sidebarOpen, selectedShop, mapLoaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    if (!map.getLayer(HOVERED_LAYER_ID)) return;
+
+    const hoveredId = hoveredLocationId ?? -1;
+    map.setFilter(HOVERED_LAYER_ID, [
+      "all",
+      ["!", ["has", "point_count"]],
+      ["==", ["get", "locationId"], hoveredId],
+    ]);
+  }, [hoveredLocationId, mapLoaded]);
 
   useEffect(() => {
     const params = parseDeepLink(location.search);
@@ -730,13 +595,14 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       zoom: zoomValue,
       essential: true,
     });
+    setIsNearbyOpen(false);
 
     if (typeof shopId === "number" && Number.isFinite(shopId)) {
       selectShopByIdRef.current(shopId, [lng, lat]).catch((error) => {
         console.error("Deep-link navigation failed:", error);
       });
     }
-  }, [location.search, mapLoaded, selectShopByIdRef]);
+  }, [location.search, mapLoaded, selectShopByIdRef, setIsNearbyOpen]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -765,6 +631,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
             pos.coords.latitude,
           ];
           setUserPosition(newPosition);
+          setUserPositionInContext(newPosition);
 
           const map = mapRef.current;
           if (map) {
@@ -807,7 +674,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     return () => {
       window.removeEventListener("locateUser", handleLocateUser);
     };
-  }, [isLoggedIn, viewerKey]);
+  }, [isLoggedIn, viewerKey, setUserPositionInContext]);
 
   // Handle flyToLocation trigger from context
   useEffect(() => {
@@ -840,7 +707,18 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     setCenter(prefs.center);
     setZoom(prefs.zoom);
     setUserPosition(prefs.userPosition ?? null);
-  }, [viewerKey, mapLoaded]);
+    setContextCenter(prefs.center);
+    setContextZoom(prefs.zoom);
+    setUserPositionInContext(prefs.userPosition ?? null);
+    setPendingCenterCoords([prefs.center[0], prefs.center[1]]);
+  }, [
+    viewerKey,
+    mapLoaded,
+    setContextCenter,
+    setContextZoom,
+    setPendingCenterCoords,
+    setUserPositionInContext,
+  ]);
 
   // Save map view preferences on moveend (debounced)
   useEffect(() => {
@@ -850,6 +728,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const handleMoveEnd = () => {
+      const currentCenter = map.getCenter();
+      setPendingCenterCoords([currentCenter.lng, currentCenter.lat]);
+
       if (suppressNextSaveRef.current > 0) {
         suppressNextSaveRef.current -= 1;
         return;
@@ -887,7 +768,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       }
       map.off("moveend", handleMoveEnd);
     };
-  }, [mapLoaded, userPosition, viewerKey]);
+  }, [mapLoaded, userPosition, viewerKey, setPendingCenterCoords]);
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>

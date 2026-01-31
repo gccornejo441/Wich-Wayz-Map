@@ -1,6 +1,6 @@
 import { ShopWithUser } from "@/models/ShopWithUser";
 import { apiRequest } from "./apiClient";
-import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { buildStreetAddress } from "@utils/address";
 import { LocationStatus } from "@/types/dataTypes";
 

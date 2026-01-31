@@ -10,9 +10,10 @@ import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
-import { Callback } from "../../types/dataTypes";
+import { Callback } from "@/types/dataTypes";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useModal } from "../../context/modalContext";
+import { useMap } from "@context/mapContext";
 
 interface NavBarProps {
   searchBar: boolean;
@@ -26,14 +27,16 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
   const { shopListOpen } = useShopSidebar();
-  const { openLoginModal, openSignupModal, currentModal } = useModal();
+  const { openLoginModal, openSignupModal } = useModal();
+  const { isNearbyOpen } = useMap();
+
+  const shouldShowSearch = showSearchBar && searchBar && !shopListOpen && !isNearbyOpen;
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
       logout();
       addToast("You have been logged out successfully.", "success");
     } else {
-      console.log("currentModal before opening:", currentModal);
       addToast("Sign in to continue.", "info");
       openLoginModal();
     }
@@ -76,7 +79,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
             </Link>
           </div>
 
-          {showSearchBar && !shopListOpen && (
+          {shouldShowSearch && (
             <div className="hidden md:flex w-1/2">
               <SearchBar navRef={navRef} />
             </div>
@@ -164,7 +167,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
         </div>
       </div>
 
-      {showSearchBar && searchBar && !shopListOpen && (
+      {shouldShowSearch && (
         <div className="flex md:hidden w-full p-2">
           <SearchBar navRef={navRef} />
         </div>

@@ -9,7 +9,7 @@ import { Shop } from "@/models/Shop";
 import { Location } from "@/models/Location";
 import { GetShops, fetchShopById } from "./shopService";
 import { apiRequest } from "./apiClient";
-import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 
 /**
  * Handles submitting location and shop data with multiple locations.

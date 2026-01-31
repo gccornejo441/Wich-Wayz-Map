@@ -1,4 +1,4 @@
-import { ShopGeoJsonProperties } from "@/components/Map/MapBox";
+import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { useState, createContext, useContext, useEffect } from "react";
 import { fetchShopById } from "@services/shopService";
 

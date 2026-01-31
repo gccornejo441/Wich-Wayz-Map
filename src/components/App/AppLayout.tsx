@@ -9,6 +9,7 @@ import { useShopSidebar } from "@/context/ShopSidebarContext";
 import ShopListSidebar from "../Sidebar/ShopListSidebar";
 import MapSidebar from "../Sidebar/MapSidebar";
 import { useSidebar } from "@/context/sidebarContext";
+import NearbySidebar from "../Sidebar/NearbySidebar";
 
 interface AppLayoutProps {
   fullBleed?: boolean;
@@ -78,6 +79,7 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
           navRef={navRef}
         />
         <Sidebar />
+        <NearbySidebar />
         <ShopListSidebar isOpen={shopListOpen} />
         <MapSidebar />
       </div>
