@@ -17,6 +17,10 @@ type ShopFormInitialData = Partial<AddAShopPayload> & {
   website?: string;
   phone_number?: string;
   phoneNumber?: string;
+  zip?: string;
+  zip_code?: string;
+  postal_code?: string;
+  postalCode?: string;
 };
 
 const isLocationStatus = (v: unknown): v is LocationStatus =>
@@ -45,6 +49,14 @@ const AddEditShop = () => {
       rawInitialData.phoneNumber ??
       "";
 
+    const postcode =
+      (rawInitialData.postcode as string | undefined) ||
+      rawInitialData.postalCode ||
+      rawInitialData.zip ||
+      rawInitialData.zip_code ||
+      rawInitialData.postal_code ||
+      "";
+
     const locationStatus = isLocationStatus(rawInitialData.locationStatus)
       ? rawInitialData.locationStatus
       : undefined;
@@ -53,6 +65,7 @@ const AddEditShop = () => {
       ...rawInitialData,
       website_url,
       phone,
+      postcode,
       locationStatus,
     };
   }, [rawInitialData]);
