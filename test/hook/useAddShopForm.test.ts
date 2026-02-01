@@ -3,21 +3,40 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useAddShopForm } from "../../src/hooks/useAddShopForm";
 import type { AddAShopPayload } from "../../src/types/dataTypes";
 
-type MockSetter = (value: unknown) => void;
-type MockToast = (message: string, type: string) => void;
-type MockLogout = () => void;
-type MockNavigate = (path: string) => void;
+const addToast = vi.fn();
+const navigate = vi.fn();
 
-const setShops: MockSetter = vi.fn();
-const setLocations: MockSetter = vi.fn();
-const addToast: MockToast = vi.fn();
-const logout: MockLogout = vi.fn();
-const navigate: MockNavigate = vi.fn();
-
+// Mock context hooks
 vi.mock("@context/shopContext", () => ({
   useShops: () => ({
-    setShops,
-    setLocations,
+    shops: [],
+    filtered: [],
+    displayedShops: [],
+    locations: [],
+    setShops: vi.fn(),
+    setLocations: vi.fn(),
+    applyFilters: vi.fn(),
+    clearFilters: vi.fn(),
+    updateShopInContext: vi.fn(),
+    removeShopFromContext: vi.fn(),
+  }),
+}));
+
+vi.mock("@context/ShopSidebarContext", () => ({
+  useShopSidebar: () => ({
+    selectedShop: null,
+    position: null,
+    sidebarOpen: false,
+    shopListOpen: false,
+    openSidebar: vi.fn(),
+    closeSidebar: vi.fn(),
+    openShopList: vi.fn(),
+    closeShopList: vi.fn(),
+    savedShops: [],
+    addSavedShop: vi.fn(),
+    removeSavedShop: vi.fn(),
+    selectShop: vi.fn(),
+    selectShopById: vi.fn(),
   }),
 }));
 
@@ -29,13 +48,25 @@ vi.mock("@context/toastContext", () => ({
 
 vi.mock("@context/authContext", () => ({
   useAuth: () => ({
-    logout,
+    user: { uid: "test-uid", email: "test@example.com" },
+    userMetadata: { id: 1, role: "user", username: "testuser" },
+    isAuthenticated: true,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    register: vi.fn(),
+    updateProfile: vi.fn(),
   }),
 }));
 
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => navigate,
-}));
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>(
+    "react-router-dom"
+  );
+  return {
+    ...actual,
+    useNavigate: () => navigate,
+  };
+});
 
 const dummyCategories = [{ id: 1, name: "Category1" }];
 

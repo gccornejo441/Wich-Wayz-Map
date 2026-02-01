@@ -6,7 +6,7 @@ import {
   FieldValues,
   UseFormProps,
 } from "react-hook-form";
-import { BrowserRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 
 interface RHFRenderOptions<T extends FieldValues = FieldValues> extends Omit<
   RenderOptions,
@@ -14,11 +14,12 @@ interface RHFRenderOptions<T extends FieldValues = FieldValues> extends Omit<
 > {
   defaultValues?: Partial<T>;
   resolver?: UseFormProps<T>["resolver"];
+  route?: string;
 }
 
 export function renderWithRHF<T extends FieldValues = FieldValues>(
   ui: ReactElement,
-  { defaultValues, resolver, ...renderOptions }: RHFRenderOptions<T> = {},
+  { defaultValues, resolver, route = "/", ...renderOptions }: RHFRenderOptions<T> = {},
 ) {
   function Wrapper({ children }: { children: React.ReactNode }) {
     const methods = useForm<T>({
@@ -28,9 +29,9 @@ export function renderWithRHF<T extends FieldValues = FieldValues>(
     });
 
     return (
-      <BrowserRouter>
+      <MemoryRouter initialEntries={[route]}>
         <FormProvider {...methods}>{children}</FormProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     );
   }
 

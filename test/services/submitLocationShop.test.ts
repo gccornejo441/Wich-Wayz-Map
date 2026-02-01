@@ -97,7 +97,7 @@ describe("createLocationShopPayload", () => {
       shopName: "Test Shop",
       shop_description: "A test shop description",
       userId: modifiedBy,
-      house_number: "123",
+      house_number: "", // Not used with new address structure
       address_first: "Main St",
       address_second: "Apt 4b",
       postcode: "12345",
@@ -107,6 +107,8 @@ describe("createLocationShopPayload", () => {
       latitude: 40.7128,
       longitude: -74.006,
       selectedCategoryIds: [1, 2, 3],
+      phone: "",
+      website_url: "",
     });
   });
 
@@ -147,6 +149,8 @@ describe("createLocationShopPayload", () => {
       latitude: 0,
       longitude: 0,
       selectedCategoryIds: [],
+      phone: "",
+      website_url: "",
     });
   });
 

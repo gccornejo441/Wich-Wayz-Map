@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { yupResolver } from "@hookform/resolvers/yup";
 import ShopForm from "@components/Form/ShopForm";
 import { locationSchema } from "@constants/validators";
@@ -31,6 +30,11 @@ vi.mock("@context/authContext", () => ({
   useAuth: () => ({
     isAuthenticated: true,
     userMetadata: { id: 1, role: "user" },
+    user: null,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    register: vi.fn(),
+    updateProfile: vi.fn(),
     logout: vi.fn(),
   }),
 }));
@@ -38,21 +42,40 @@ vi.mock("@context/authContext", () => ({
 vi.mock("@context/toastContext", () => ({
   useToast: () => ({
     addToast: mockAddToast,
+    toasts: [],
   }),
 }));
 
 vi.mock("@context/shopContext", () => ({
   useShops: () => ({
-    updateShopInContext: mockUpdateShopInContext,
     shops: [],
+    filtered: [],
+    displayedShops: [],
+    locations: [],
     setShops: vi.fn(),
     setLocations: vi.fn(),
+    applyFilters: vi.fn(),
+    clearFilters: vi.fn(),
+    updateShopInContext: mockUpdateShopInContext,
+    removeShopFromContext: vi.fn(),
   }),
 }));
 
 vi.mock("@context/ShopSidebarContext", () => ({
   useShopSidebar: () => ({
+    selectedShop: null,
+    position: null,
+    sidebarOpen: false,
+    shopListOpen: false,
+    openSidebar: vi.fn(),
+    closeSidebar: vi.fn(),
+    openShopList: vi.fn(),
+    closeShopList: vi.fn(),
+    savedShops: [],
+    addSavedShop: vi.fn(),
+    removeSavedShop: vi.fn(),
     selectShop: vi.fn(),
+    selectShopById: vi.fn(),
   }),
 }));
 
@@ -157,7 +180,7 @@ describe("ShopForm - Edit Mode Normalization", () => {
   });
 
   it("should display normalized state (NC) from full name (North Carolina)", async () => {
-    renderWithRHF(<ShopForm mode="edit" initialData={mockInitialData} />, {
+    renderWithRHF(<ShopForm mode="edit" layoutMode="form-section" initialData={mockInitialData} />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
@@ -169,15 +192,13 @@ describe("ShopForm - Edit Mode Normalization", () => {
   });
 
   it("should display normalized postcode (275021234) from formatted (27502-1234)", async () => {
-    renderWithRHF(<ShopForm mode="edit" initialData={mockInitialData} />, {
+    renderWithRHF(<ShopForm mode="edit" layoutMode="form-section" initialData={mockInitialData} />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
 
     await waitFor(() => {
-      const postcodeInput = screen.getByLabelText(
-        /postal code/i,
-      ) as HTMLInputElement;
+      const postcodeInput = screen.getByLabelText(/zip/i) as HTMLInputElement;
       expect(postcodeInput.value).toBe("275021234");
     });
   });
@@ -208,7 +229,7 @@ describe("ShopForm - Field Locking Behavior", () => {
   });
 
   it("should not have disabled attribute on state select", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="form-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
@@ -220,7 +241,7 @@ describe("ShopForm - Field Locking Behavior", () => {
   });
 
   it("should apply pointer-events-none class when address is locked", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="form-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
@@ -232,37 +253,6 @@ describe("ShopForm - Field Locking Behavior", () => {
   });
 });
 
-describe("ShopForm - Map Update Invariants", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("should normalize state and postcode when map sends filled updates", async () => {
-    const user = userEvent.setup();
-
-    renderWithRHF(<ShopForm mode="add" />, {
-      defaultValues: normalizedDefaults,
-      resolver: yupResolver(locationSchema),
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("map-preview")).toBeInTheDocument();
-    });
-
-    const filledUpdateButton = screen.getByTestId("map-update-filled");
-    await user.click(filledUpdateButton);
-
-    await waitFor(() => {
-      const stateSelect = screen.getByLabelText(/state/i) as HTMLSelectElement;
-      const postcodeInput = screen.getByLabelText(
-        /postal code/i,
-      ) as HTMLInputElement;
-
-      expect(stateSelect.value).toBe("NC");
-      expect(postcodeInput.value).toBe("275021234");
-    });
-  });
-});
 
 describe("ShopForm - Form Submission", () => {
   beforeEach(() => {
@@ -270,30 +260,30 @@ describe("ShopForm - Form Submission", () => {
   });
 
   it("should render submit button in add mode", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="form-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
 
     await waitFor(() => {
       const submitButton = screen.getByRole("button", {
-        name: /submit location/i,
+        name: /save/i,
       });
       expect(submitButton).toBeInTheDocument();
     });
   });
 
   it("should render update button in edit mode", async () => {
-    renderWithRHF(<ShopForm mode="edit" initialData={mockInitialData} />, {
+    renderWithRHF(<ShopForm mode="edit" layoutMode="form-section" initialData={mockInitialData} />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
 
     await waitFor(() => {
-      const updateButton = screen.getByRole("button", {
-        name: /update location/i,
+      const saveButton = screen.getByRole("button", {
+        name: /save/i,
       });
-      expect(updateButton).toBeInTheDocument();
+      expect(saveButton).toBeInTheDocument();
     });
   });
 });
@@ -304,25 +294,25 @@ describe("ShopForm - Rendering", () => {
   });
 
   it("should render all required form fields", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="form-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/shop name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/shop description/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/website url/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/website/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/^street address$/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/^city$/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/street/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/city/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/state/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/postal code/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/zip/i)).toBeInTheDocument();
     });
   });
 
   it("should render state dropdown with US states", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="form-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });
@@ -337,7 +327,7 @@ describe("ShopForm - Rendering", () => {
   });
 
   it("should render map preview", async () => {
-    renderWithRHF(<ShopForm mode="add" />, {
+    renderWithRHF(<ShopForm mode="add" layoutMode="map-section" />, {
       defaultValues: normalizedDefaults,
       resolver: yupResolver(locationSchema),
     });

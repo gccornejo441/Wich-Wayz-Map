@@ -48,6 +48,8 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     return null;
   });
 
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
   const mapRef = useRef<MapRef | null>(null);
   const fullAddressRef = useRef(fullAddressForMaps);
   const addressRef = useRef(address);
@@ -180,6 +182,43 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     navigator.clipboard.writeText(text);
   };
 
+  // Initialize with user's current location if no coordinates provided
+  useEffect(() => {
+    if (coords) return; // Already have coordinates
+    if (!navigator.geolocation) return; // Geolocation not supported
+    if (isLoadingLocation) return; // Already loading
+
+    setIsLoadingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userCoords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        setCoords(userCoords);
+        
+        // Update the form with user's location
+        onAddressUpdateRef.current((prev) => ({
+          ...prev,
+          latitude: userCoords.latitude,
+          longitude: userCoords.longitude,
+        }));
+        
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setIsLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000,
+      }
+    );
+  }, [coords, isLoadingLocation]);
+
   return (
     <div
       className={`w-full h-full overflow-hidden dark:bg-surface-dark flex flex-col min-h-0 ${
@@ -233,7 +272,14 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         </>
       ) : (
         <div className="flex-1 min-h-0 flex items-center justify-center text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
-          Click Prefill Address to set the map location.
+          {isLoadingLocation ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+              <span>Getting your location...</span>
+            </div>
+          ) : (
+            <span>Click Prefill Address to set the map location.</span>
+          )}
         </div>
       )}
     </div>

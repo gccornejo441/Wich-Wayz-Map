@@ -17,18 +17,13 @@ export function toTitleCase(str: string): string {
       const parts = word.split(/([-''])/g);
 
       return parts
-        .map((part, index, array) => {
+        .map((part) => {
           if (!part) return part;
 
           // Preserve delimiters
           if (part === "-" || part === "'" || part === "'") return part;
 
-          const prev = array[index - 1];
-
-          // After apostrophes: keep as-is (already lowercased)
-          if (prev === "'" || prev === "'") return part;
-
-          // After hyphens (or at start): title-case
+          // Capitalize first letter of every word part (handles O'Neal, Mary-Jane correctly)
           return part.charAt(0).toUpperCase() + part.slice(1);
         })
         .join("");
