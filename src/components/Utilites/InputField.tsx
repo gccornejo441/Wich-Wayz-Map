@@ -13,12 +13,14 @@ interface InputFieldProps<T extends FieldValues> {
   type?: string;
   step?: string;
   register?: UseFormRegister<T>;
-  errors: FieldErrors<T>;
+  errors?: FieldErrors<T>;
   value?: string;
   children?: React.ReactNode;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
   readOnly?: boolean;
+  id?: string;
 }
 
 // Base class for input fields
@@ -35,21 +37,27 @@ function InputField<T extends FieldValues>({
   step,
   register,
   value,
-  errors,
+  errors = {},
   children,
   onChange,
+  onBlur,
   disabled = false,
   readOnly = false,
+  id,
 }: InputFieldProps<T>) {
   const errorMessage = errors[name]?.message
     ? String(errors[name]?.message)
     : null;
 
   const registered = register?.(name);
+  const inputId = id ?? String(name);
 
   return (
     <div>
-      <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
+      <label
+        htmlFor={children ? (id ? inputId : undefined) : inputId}
+        className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted"
+      >
         {label}
       </label>
 
@@ -57,6 +65,7 @@ function InputField<T extends FieldValues>({
         children
       ) : (
         <input
+          id={inputId}
           type={type}
           step={step}
           value={value}
@@ -67,6 +76,10 @@ function InputField<T extends FieldValues>({
           onChange={(e) => {
             registered?.onChange(e);
             onChange?.(e);
+          }}
+          onBlur={(e) => {
+            registered?.onBlur(e);
+            onBlur?.(e);
           }}
           className={`${inputBaseClass} placeholder:text-text-muted dark:placeholder:text-text-muted ${
             errors[name]

@@ -43,13 +43,11 @@ type SavedContextType = {
   refreshSaved: () => Promise<void>;
   toggleSaved: (shopId: number) => Promise<boolean>;
   refreshCollections: () => Promise<void>;
-  createCollection: (
-    payload: {
-      name: string;
-      description?: string;
-      visibility?: CollectionVisibility;
-    },
-  ) => Promise<Collection>;
+  createCollection: (payload: {
+    name: string;
+    description?: string;
+    visibility?: CollectionVisibility;
+  }) => Promise<Collection>;
   updateCollection: (
     id: number,
     payload: Partial<{
@@ -59,7 +57,10 @@ type SavedContextType = {
     }>,
   ) => Promise<Collection>;
   deleteCollection: (id: number) => Promise<void>;
-  addShopToCollection: (collectionId: number, shopId: number) => Promise<boolean>;
+  addShopToCollection: (
+    collectionId: number,
+    shopId: number,
+  ) => Promise<boolean>;
   removeShopFromCollection: (
     collectionId: number,
     shopId: number,
@@ -83,7 +84,8 @@ const loadPrefs = (): SavedPrefs | null => {
     const parsed = JSON.parse(raw) as Partial<SavedPrefs>;
 
     const savedFilterMode: SavedFilterMode =
-      parsed.savedFilterMode === "nearby" || parsed.savedFilterMode === "collection"
+      parsed.savedFilterMode === "nearby" ||
+      parsed.savedFilterMode === "collection"
         ? parsed.savedFilterMode
         : "all";
 
@@ -91,12 +93,14 @@ const loadPrefs = (): SavedPrefs | null => {
       parsed.anchorMode === "userLocation" ? "userLocation" : "mapCenter";
 
     const radius =
-      typeof parsed.radiusMiles === "number" && Number.isFinite(parsed.radiusMiles)
+      typeof parsed.radiusMiles === "number" &&
+      Number.isFinite(parsed.radiusMiles)
         ? parsed.radiusMiles
         : 5;
 
     const activeCollectionId =
-      typeof parsed.activeCollectionId === "number" && Number.isFinite(parsed.activeCollectionId)
+      typeof parsed.activeCollectionId === "number" &&
+      Number.isFinite(parsed.activeCollectionId)
         ? parsed.activeCollectionId
         : null;
 
@@ -224,10 +228,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         setSavedItems((prev) => {
           const exists = prev.some((item) => item.shopId === shopId);
           if (saved && !exists) {
-            return [
-              { shopId, dateCreated: new Date().toISOString() },
-              ...prev,
-            ];
+            return [{ shopId, dateCreated: new Date().toISOString() }, ...prev];
           }
           if (!saved) {
             return prev.filter((item) => item.shopId !== shopId);
@@ -328,7 +329,10 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
             ...prev,
           ]);
         } catch (error) {
-          console.error("Failed to auto-save shop when adding to collection:", error);
+          console.error(
+            "Failed to auto-save shop when adding to collection:",
+            error,
+          );
         }
       }
 

@@ -23,7 +23,10 @@ const formatDistance = (value: number) => {
   return `${value.toFixed(1)} mi`;
 };
 
-const coordsChanged = (a: [number, number] | null, b: [number, number] | null) => {
+const coordsChanged = (
+  a: [number, number] | null,
+  b: [number, number] | null,
+) => {
   if (!a || !b) return Boolean(a || b);
   return Math.abs(a[0] - b[0]) > 0.0001 || Math.abs(a[1] - b[1]) > 0.0001;
 };
@@ -63,12 +66,21 @@ const NearbySidebar = () => {
     if (nearbyMode !== "mapCenter") return;
     if (nearbyAnchorCoords || !pendingCenterCoords) return;
     setNearbyAnchorCoords(pendingCenterCoords);
-  }, [nearbyMode, nearbyAnchorCoords, pendingCenterCoords, setNearbyAnchorCoords]);
+  }, [
+    nearbyMode,
+    nearbyAnchorCoords,
+    pendingCenterCoords,
+    setNearbyAnchorCoords,
+  ]);
 
   const anchorCoords =
     nearbyMode === "userLocation" ? userPosition : nearbyAnchorCoords;
 
-  const nearbyResults = useNearbyFeatures(shopFeatures, anchorCoords, nearbyRadiusMiles);
+  const nearbyResults = useNearbyFeatures(
+    shopFeatures,
+    anchorCoords,
+    nearbyRadiusMiles,
+  );
 
   const handleModeChange = (mode: "mapCenter" | "userLocation") => {
     setNearbyMode(mode);
@@ -96,7 +108,9 @@ const NearbySidebar = () => {
   return (
     <aside
       className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
-        isNearbyOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full shadow-none"
+        isNearbyOpen
+          ? "translate-x-0 shadow-2xl"
+          : "-translate-x-full shadow-none"
       }`}
       aria-label="Nearby sandwich shops"
     >
@@ -186,7 +200,8 @@ const NearbySidebar = () => {
         {nearbyMode === "userLocation" && !userPosition && (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-surface-muted dark:border-gray-700 bg-surface-muted/60 dark:bg-surface-darker px-3 py-2">
             <span className="text-xs text-text-muted dark:text-text-inverted/70">
-              Location unavailable. Enable location services to find shops near you.
+              Location unavailable. Enable location services to find shops near
+              you.
             </span>
             <button
               type="button"

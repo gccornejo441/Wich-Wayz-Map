@@ -17,8 +17,11 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 interface MapPreviewProps {
   address: AddressDraft;
   fullAddressForMaps: string;
-  onAddressUpdate: (next: AddressDraft | ((prev: AddressDraft) => AddressDraft)) => void;
+  onAddressUpdate: (
+    next: AddressDraft | ((prev: AddressDraft) => AddressDraft),
+  ) => void;
   prefillFlyToNonce: number;
+  containerClassName?: string;
 }
 
 interface Coordinates {
@@ -31,6 +34,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   fullAddressForMaps,
   onAddressUpdate,
   prefillFlyToNonce,
+  containerClassName,
 }) => {
   const { theme } = useTheme();
 
@@ -72,7 +76,6 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     }
   }, [mapStyle]);
 
-  // Forward-geocoding: Only runs when prefillFlyToNonce changes (button click)
   useEffect(() => {
     if (prefillFlyToNonce <= 0) return;
 
@@ -173,17 +176,19 @@ const MapPreview: React.FC<MapPreviewProps> = ({
 
   const copyToClipboard = () => {
     if (!coords) return;
-    const text = `Lat: ${coords.latitude.toFixed(5)} | Lng: ${coords.longitude.toFixed(
-      5,
-    )}`;
+    const text = `Lat: ${coords.latitude.toFixed(5)} | Lng: ${coords.longitude.toFixed(5)}`;
     navigator.clipboard.writeText(text);
   };
 
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden shadow-sm bg-lightGray dark:bg-surface-dark p-2 flex flex-col">
+    <div
+      className={`w-full h-full overflow-hidden dark:bg-surface-dark flex flex-col min-h-0 ${
+        containerClassName ?? ""
+      }`}
+    >
       {coords ? (
         <>
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-0">
             <Map
               ref={mapRef}
               mapboxAccessToken={MAPBOX_TOKEN}
@@ -195,7 +200,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
               mapStyle={mapStyle}
               style={{ width: "100%", height: "100%" }}
             >
-              <NavigationControl position="top-right" />
+              <NavigationControl position="bottom-right" />
               <FullscreenControl position="bottom-right" />
               <Marker
                 longitude={coords.longitude}
@@ -207,23 +212,27 @@ const MapPreview: React.FC<MapPreviewProps> = ({
                 <div className="text-xl cursor-pointer">📍</div>
               </Marker>
             </Map>
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-2 text-sm text-text-base dark:text-text-inverted">
-            <span>
-              Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
-              {coords.longitude.toFixed(5)}
-            </span>
-            <button
-              onClick={copyToClipboard}
-              aria-label="Copy coordinates to clipboard"
-              className="hover:text-primary transition"
-            >
-              <HiClipboard className="w-5 h-5" />
-            </button>
+
+            <div className="absolute left-2 bottom-8">
+              <div className="bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 text-xs text-text-base dark:text-text-inverted shadow-md">
+                <span className="whitespace-nowrap">
+                  Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
+                  {coords.longitude.toFixed(5)}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyToClipboard}
+                  aria-label="Copy coordinates to clipboard"
+                  className="ml-2 hover:text-primary transition flex-shrink-0"
+                >
+                  <HiClipboard className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </>
       ) : (
-        <div className="flex items-center justify-center h-64 text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
+        <div className="flex-1 min-h-0 flex items-center justify-center text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
           Click Prefill Address to set the map location.
         </div>
       )}

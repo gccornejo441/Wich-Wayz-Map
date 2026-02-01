@@ -18,15 +18,13 @@ import { AddAShopPayload, ShopWithId } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { locationSchema } from "@constants/validators";
 import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
-import { US_STATES } from "@constants/usStates";
+import {
+  normalizeZip,
+  normalizeState,
+  coerceNumber,
+} from "@/utils/normalizers";
 
 type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
-
-const coerceNumber = (v: unknown): number => {
-  if (typeof v === "number") return v;
-  const n = parseFloat(String(v));
-  return Number.isFinite(n) ? n : 0;
-};
 
 const hasValidCoords = (lat: number, lon: number): boolean => {
   if (lat === 0 && lon === 0) return false;
@@ -35,25 +33,62 @@ const hasValidCoords = (lat: number, lon: number): boolean => {
   return true;
 };
 
-const normalizeUsState = (
-  input: string,
-): { code: string; name: string } | null => {
-  const s = input.trim();
-  if (!s) return null;
+const normalizeInitialData = (
+  initialData?: ShopInitialData,
+): AddAShopPayload => {
+  if (!initialData) {
+    return {
+      shopName: "",
+      shop_description: "",
+      address: "",
+      website_url: "",
+      phone: "",
+      address_first: "",
+      address_second: "",
+      house_number: "",
+      city: "",
+      state: "",
+      postcode: "",
+      country: "",
+      latitude: 0,
+      longitude: 0,
+      categoryIds: [],
+    };
+  }
 
-  const upper = s.toUpperCase();
-  const byCode = US_STATES.find((x) => x.code === upper);
-  if (byCode) return byCode;
+  const normalizedState = normalizeState(initialData.state);
+  const normalizedPostcode = normalizeZip(initialData.postcode);
+  const lat = coerceNumber(initialData.latitude);
+  const lon = coerceNumber(initialData.longitude);
 
-  const lower = s.toLowerCase();
-  const byName = US_STATES.find((x) => x.name.toLowerCase() === lower);
-  return byName ?? null;
+  let categoryIds: number[] = [];
+  if (initialData.categoryIds) {
+    categoryIds = initialData.categoryIds;
+  }
+
+  return {
+    shopName: initialData.shopName ?? "",
+    shop_description:
+      initialData.shop_description ?? initialData.description ?? "",
+    website_url: initialData.website_url ?? initialData.website ?? "",
+    phone: initialData.phone ?? "",
+    address: initialData.address ?? "",
+    address_first: initialData.address_first ?? "",
+    address_second: initialData.address_second ?? "",
+    house_number: initialData.house_number ?? "",
+    city: initialData.city ?? "",
+    state: normalizedState,
+    postcode: normalizedPostcode,
+    country: initialData.country ?? "",
+    latitude: lat,
+    longitude: lon,
+    categoryIds,
+  };
 };
 
 export const useAddShopForm = (
   initialData?: ShopInitialData,
   mode: "add" | "edit" = "add",
-  address?: AddressDraft,
 ) => {
   const { setShops, setLocations, updateShopInContext } = useShops();
   const { addToast } = useToast();
@@ -71,26 +106,12 @@ export const useAddShopForm = (
     setValue,
     getValues,
     watch,
+    control,
+    reset,
     formState: { errors },
   } = useForm<AddAShopPayload>({
     resolver: yupResolver(locationSchema),
-    defaultValues: {
-      shopName: initialData?.shopName || "",
-      shop_description: initialData?.shop_description || "",
-      address: initialData?.address || "",
-      website_url: initialData?.website_url || "",
-      phone: initialData?.phone || "",
-      address_first: initialData?.address_first || "",
-      address_second: initialData?.address_second || "",
-      house_number: initialData?.house_number || "",
-      city: initialData?.city || "",
-      state: initialData?.state || "",
-      postcode: initialData?.postcode || "",
-      country: initialData?.country || "",
-      latitude: initialData?.latitude ?? 0,
-      longitude: initialData?.longitude ?? 0,
-      categoryIds: initialData?.categoryIds || [],
-    },
+    defaultValues: normalizeInitialData(initialData),
   });
 
   useEffect(() => {
@@ -103,33 +124,8 @@ export const useAddShopForm = (
 
   useEffect(() => {
     if (initialData) {
-      const normalizedData: Partial<AddAShopPayload> = {
-        shopName: initialData.shopName ?? "",
-        shop_description:
-          initialData.shop_description ?? initialData.description ?? "",
-        website_url: initialData.website_url ?? initialData.website ?? "",
-        phone: initialData.phone ?? "",
-        address: initialData.address ?? "",
-        address_first: initialData.address_first ?? "",
-        address_second: initialData.address_second ?? "",
-        house_number: initialData.house_number ?? "",
-        city: initialData.city ?? "",
-        state: initialData.state ?? "",
-        postcode: initialData.postcode ?? "",
-        country: initialData.country ?? "",
-        latitude: initialData.latitude ?? 0,
-        longitude: initialData.longitude ?? 0,
-        categoryIds: initialData.categoryIds ?? [],
-      };
-
-      for (const [key, value] of Object.entries(normalizedData)) {
-        if (value !== undefined) {
-          setValue(key as keyof AddAShopPayload, value, {
-            shouldDirty: false,
-            shouldValidate: false,
-          });
-        }
-      }
+      const normalized = normalizeInitialData(initialData);
+      reset(normalized, { keepDefaultValues: false });
 
       if (
         !initialData.categoryIds &&
@@ -150,16 +146,7 @@ export const useAddShopForm = (
         setSelectedCategories(initialData.categoryIds);
       }
     }
-  }, [initialData, categories, setValue]);
-
-  useEffect(() => {
-    if (address?.postalCode !== undefined) {
-      setValue("postcode", address.postalCode, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
-  }, [address?.postalCode, setValue]);
+  }, [initialData, categories, reset]);
 
   const addressVal = watch("address");
   const latVal = watch("latitude");
@@ -212,14 +199,19 @@ export const useAddShopForm = (
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("state", parsed.components.state || "", {
+
+    const normalizedState = normalizeState(parsed.components.state);
+    setValue("state", normalizedState, {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("postcode", parsed.components.postcode || "", {
+
+    const normalizedPostcode = normalizeZip(parsed.components.postcode);
+    setValue("postcode", normalizedPostcode, {
       shouldDirty: true,
       shouldValidate: true,
     });
+
     setValue("country", parsed.components.country || "", {
       shouldDirty: true,
       shouldValidate: true,
@@ -262,14 +254,13 @@ export const useAddShopForm = (
   const buildUsQueryFromForm = () => {
     const line1 = (getValues("address") ?? "").trim();
     const city = (getValues("city") ?? "").trim();
-    const stateRaw = (getValues("state") ?? "").trim();
-    const zip = (getValues("postcode") ?? "").trim();
+    const stateCode = normalizeState(getValues("state"));
+    const zip = normalizeZip(getValues("postcode"));
 
-    const st = normalizeUsState(stateRaw);
-    if (!st) return null;
+    if (!stateCode) return null;
 
-    const q = [line1, city, st.code, zip].filter(Boolean).join(" ").trim();
-    return { q, stateCode: st.code };
+    const q = [line1, city, stateCode, zip].filter(Boolean).join(" ").trim();
+    return { q, stateCode };
   };
 
   const searchAddressSuggestions = async (): Promise<{
@@ -310,8 +301,8 @@ export const useAddShopForm = (
       });
 
       const filtered = results.filter((r) => {
-        const st = normalizeUsState(r.components.state ?? "");
-        return st?.code === built.stateCode;
+        const stateCode = normalizeState(r.components.state);
+        return stateCode === built.stateCode;
       });
 
       if (filtered.length === 0) {
@@ -383,24 +374,25 @@ export const useAddShopForm = (
     }
 
     data.categoryIds = selectedCategories;
-
-    if (address) {
-      data.address = data.address ?? address.streetAddress;
-      data.address_second = data.address_second ?? address.streetAddressSecond;
-      data.city = data.city ?? address.city;
-      data.state = data.state ?? address.state;
-      data.postcode = address.postalCode || data.postcode;
-      data.country = data.country ?? address.country;
-      data.latitude = data.latitude ?? address.latitude ?? 0;
-      data.longitude = data.longitude ?? address.longitude ?? 0;
-    }
+    data.postcode = normalizeZip(data.postcode);
+    data.state = normalizeState(data.state);
 
     const shopId = (initialData as { shopId?: number })?.shopId;
 
     if (mode === "edit" && shopId) {
       try {
         const { updateShop } = await import("@/services/updateShop");
-        const updatedShop = await updateShop(shopId, data, address);
+        const addressDraft: AddressDraft = {
+          streetAddress: data.address ?? "",
+          streetAddressSecond: data.address_second ?? "",
+          city: data.city ?? "",
+          state: data.state ?? "",
+          postalCode: data.postcode ?? "",
+          country: data.country ?? "",
+          latitude: data.latitude ?? 0,
+          longitude: data.longitude ?? 0,
+        };
+        const updatedShop = await updateShop(shopId, data, addressDraft);
 
         if (updatedShop) {
           addToast("Shop updated successfully!", "success");
@@ -416,9 +408,20 @@ export const useAddShopForm = (
       return;
     }
 
+    const addressDraft: AddressDraft = {
+      streetAddress: data.address ?? "",
+      streetAddressSecond: data.address_second ?? "",
+      city: data.city ?? "",
+      state: data.state ?? "",
+      postalCode: data.postcode ?? "",
+      country: data.country ?? "",
+      latitude: data.latitude ?? 0,
+      longitude: data.longitude ?? 0,
+    };
+
     const success = await handleLocationSubmit(
       data,
-      address,
+      addressDraft,
       setShops,
       setLocations,
       addToast,
@@ -448,6 +451,7 @@ export const useAddShopForm = (
     setSelectedCategories,
     setValue,
     watch,
+    control,
     getValues,
   };
 };

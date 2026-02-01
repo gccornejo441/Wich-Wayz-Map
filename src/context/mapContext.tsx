@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type Coords = [number, number];
 type NearbyMode = "mapCenter" | "userLocation";
@@ -70,7 +76,8 @@ const loadNearbyPrefs = (): NearbyPrefs | null => {
         : "mapCenter";
 
     const radius =
-      typeof parsed.nearbyRadiusMiles === "number" && Number.isFinite(parsed.nearbyRadiusMiles)
+      typeof parsed.nearbyRadiusMiles === "number" &&
+      Number.isFinite(parsed.nearbyRadiusMiles)
         ? parsed.nearbyRadiusMiles
         : 5;
 
@@ -92,7 +99,9 @@ const saveNearbyPrefs = (prefs: NearbyPrefs) => {
   }
 };
 
-export const MapProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const initialNearbyPrefs = useMemo(() => loadNearbyPrefs(), []);
 
   const [center, setCenter] = useState<Coords | null>(null);
@@ -113,9 +122,15 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [nearbyRadiusMiles, setNearbyRadiusMiles] = useState<number>(
     () => initialNearbyPrefs?.nearbyRadiusMiles ?? 5,
   );
-  const [nearbyAnchorCoords, setNearbyAnchorCoords] = useState<Coords | null>(null);
-  const [pendingCenterCoords, setPendingCenterCoords] = useState<Coords | null>(null);
-  const [hoveredLocationId, setHoveredLocationId] = useState<number | null>(null);
+  const [nearbyAnchorCoords, setNearbyAnchorCoords] = useState<Coords | null>(
+    null,
+  );
+  const [pendingCenterCoords, setPendingCenterCoords] = useState<Coords | null>(
+    null,
+  );
+  const [hoveredLocationId, setHoveredLocationId] = useState<number | null>(
+    null,
+  );
 
   const flyToLocation = (lng: number, lat: number, zoomValue: number) => {
     setFlyToTrigger({ lng, lat, zoom: zoomValue, timestamp: Date.now() });

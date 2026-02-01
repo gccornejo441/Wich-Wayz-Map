@@ -18,10 +18,8 @@ interface AppLayoutProps {
 
 const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   const { currentModal } = useModal();
-  const {
-    sidebarOpen: mapSidebarOpen,
-    closeSidebar: closeMapSidebar,
-  } = useShopSidebar();
+  const { sidebarOpen: mapSidebarOpen, closeSidebar: closeMapSidebar } =
+    useShopSidebar();
 
   const { isOpen: isSidebarOpen, closeSidebar, toggleSidebar } = useSidebar();
   const { savedSidebarOpen, setSavedSidebarOpen } = useSaved();

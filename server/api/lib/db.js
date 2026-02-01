@@ -158,6 +158,10 @@ export const db = {
     await ensureSchema();
     return dbClient.execute(params);
   },
+  transaction: async (mode) => {
+    await ensureSchema();
+    return dbClient.transaction(mode);
+  },
 };
 
 export const executeQuery = async (sql, args = []) => {

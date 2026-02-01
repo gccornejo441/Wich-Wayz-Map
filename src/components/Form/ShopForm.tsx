@@ -1,11 +1,18 @@
 import Select, { GroupBase, MultiValue, StylesConfig } from "react-select";
 import { InputMask } from "@react-input/mask";
 import { useEffect, useMemo, useState } from "react";
+import { useWatch } from "react-hook-form";
+import { HiTrash, HiMap, HiSave } from "react-icons/hi";
 
 import { useAddShopForm } from "@/hooks/useAddShopForm";
+import {
+  normalizeZip,
+  normalizeState,
+  coerceNumber,
+} from "@/utils/normalizers";
 import { useTheme } from "@hooks/useTheme";
-import InputField from "../Utilites/InputField";
 import AddCategoryModal from "../Modal/AddCategoryModal";
+import MapPreview from "../Map/MapPreview";
 
 import { AddAShopPayload, LocationStatus } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
@@ -53,9 +60,10 @@ type ShopFormProps = {
     created_by?: number;
   };
   mode: "add" | "edit";
-  address: AddressDraft;
-  onAddressChange: (next: AddressDraft) => void;
+  layoutMode?: "map-section" | "form-section";
   onPrefillSuccess?: () => void;
+  onDelete?: () => void;
+  onNavigateToMap?: () => void;
 };
 
 interface CategoryOption {
@@ -76,16 +84,10 @@ const getCustomSelectStyles = (
     boxShadow: state.isFocused ? "0 0 0 1px #4b5563" : base.boxShadow,
     padding: "0.2rem",
     "&:hover": { borderColor: "#4b5563" },
+    minHeight: "36px",
   }),
-  singleValue: (base) => ({
-    ...base,
-    color: isDark ? "#FFFFFF" : "#4b5563",
-  }),
-  input: (base) => ({
-    ...base,
-    color: isDark ? "#FFFFFF" : "#4b5563",
-    borderColor: isDark ? "#4b5563" : base.borderColor,
-  }),
+  singleValue: (base) => ({ ...base, color: isDark ? "#FFFFFF" : "#4b5563" }),
+  input: (base) => ({ ...base, color: isDark ? "#FFFFFF" : "#4b5563" }),
   menu: (base) => ({
     ...base,
     backgroundColor: isDark ? "#1E1E2F" : "#FFFFFF",
@@ -154,9 +156,10 @@ const normalizeWebsiteUrl = (raw: string): string => {
 const ShopForm = ({
   initialData,
   mode,
-  address,
-  onAddressChange,
+  layoutMode,
   onPrefillSuccess,
+  onDelete,
+  onNavigateToMap,
 }: ShopFormProps) => {
   const {
     register,
@@ -171,7 +174,8 @@ const ShopForm = ({
     selectedCategories,
     setSelectedCategories,
     setValue,
-  } = useAddShopForm(initialData, mode, address);
+    control,
+  } = useAddShopForm(initialData, mode);
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -190,47 +194,40 @@ const ShopForm = ({
   const [addressSuggestions, setAddressSuggestions] = useState<
     AddressSuggestion[]
   >([]);
-  const [pendingParsedAddress, setPendingParsedAddress] =
-    useState<AddressSuggestion["parsedData"] | null>(null);
+  const [pendingParsedAddress, setPendingParsedAddress] = useState<
+    AddressSuggestion["parsedData"] | null
+  >(null);
 
-  // Helper to convert state names to codes
-  const stateCodeByName = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const s of US_STATES) m.set(s.name.toLowerCase(), s.code.toUpperCase());
-    return m;
-  }, []);
+  const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
 
-  const toStateCode = (raw?: string) => {
-    const v = (raw ?? "").trim();
-    if (!v) return "";
-    if (v.length === 2) return v.toUpperCase();
-    return stateCodeByName.get(v.toLowerCase()) ?? "";
-  };
+  const watchedFields = useWatch({
+    control,
+    name: [
+      "address",
+      "address_second",
+      "city",
+      "state",
+      "postcode",
+      "country",
+      "latitude",
+      "longitude",
+    ],
+  });
 
-  const buildStreetAddress = (
-    c: AddressSuggestion["parsedData"]["components"],
-  ) => {
-    const house = (c.house_number ?? "").trim();
-    const road = (c.road ?? c.street ?? "").trim();
-    return `${house} ${road}`.trim();
+  const derivedAddress: AddressDraft = {
+    streetAddress: (watchedFields[0] as string) ?? "",
+    streetAddressSecond: (watchedFields[1] as string) ?? "",
+    city: (watchedFields[2] as string) ?? "",
+    state: (watchedFields[3] as string) ?? "",
+    postalCode: (watchedFields[4] as string) ?? "",
+    country: (watchedFields[5] as string) ?? "",
+    latitude: coerceNumber(watchedFields[6]),
+    longitude: coerceNumber(watchedFields[7]),
   };
 
   const commitParsedAddress = (parsed: AddressSuggestion["parsedData"]) => {
-    const c = parsed.components ?? {};
-    const next: AddressDraft = {
-      ...address,
-      streetAddress: buildStreetAddress(c),
-      streetAddressSecond: (c.secondary_address ?? address.streetAddressSecond ?? "").trim(),
-      city: (c.city ?? c.town ?? "").trim(),
-      state: toStateCode(c.state),
-      postalCode: (c.postcode ?? "").trim(),
-      country: (c.country ?? address.country ?? "").trim(),
-      latitude: parsed.coordinates?.latitude ?? address.latitude,
-      longitude: parsed.coordinates?.longitude ?? address.longitude,
-    };
-
-    onAddressChange(next);
     applyParsedAddressToForm(parsed);
+    setPrefillFlyToNonce((n) => n + 1);
     onPrefillSuccess?.();
   };
 
@@ -280,7 +277,6 @@ const ShopForm = ({
     setIsSubmitting(true);
     try {
       data.website_url = normalizeWebsiteUrl(String(data.website_url ?? ""));
-
       await onSubmit(data);
 
       if (
@@ -296,7 +292,7 @@ const ShopForm = ({
         const result = await updateShopLocationStatus(
           initialData.shopId,
           locationStatus,
-          initialData.locationId,
+          initialData.locationId ?? undefined,
           userMetadata.id,
           userMetadata.role,
         );
@@ -325,11 +321,10 @@ const ShopForm = ({
   };
 
   const canSearchAddress =
-    Boolean(address.streetAddress.trim()) &&
+    Boolean(derivedAddress.streetAddress.trim()) &&
     !isSubmitting &&
     addressLookupState !== "loading";
 
-  // Handler to select an address from suggestions (stage it, don't apply yet)
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
     setLookupMessage(suggestion.formattedAddress);
     setAddressLookupState("success");
@@ -337,13 +332,11 @@ const ShopForm = ({
     setPendingParsedAddress(suggestion.parsedData);
   };
 
-  // Handler to confirm and lock the address
   const handleConfirmAddress = () => {
     if (pendingParsedAddress) commitParsedAddress(pendingParsedAddress);
     setAddressLocked(true);
   };
 
-  // Handler to dismiss search result and reset
   const handleDismissSearch = () => {
     setAddressLookupState("idle");
     setLookupMessage("");
@@ -351,7 +344,6 @@ const ShopForm = ({
     setPendingParsedAddress(null);
   };
 
-  // Handler to unlock fields for editing
   const handleEditAddress = () => {
     setAddressLocked(false);
     setAddressLookupState("idle");
@@ -360,487 +352,541 @@ const ShopForm = ({
     setPendingParsedAddress(null);
   };
 
-  return (
-    <form
-      onSubmit={handleSubmit(handleFormSubmit)}
-      className="p-4 space-y-4 overflow-y-auto"
-    >
-      <InputField
-        name="shopName"
-        label="Shop Name"
-        register={register}
-        errors={errors}
-        placeholder="Enter shop name"
-      />
+  const handleAddressUpdate = (
+    next: AddressDraft | ((prev: AddressDraft) => AddressDraft),
+  ) => {
+    const updated = typeof next === "function" ? next(derivedAddress) : next;
 
-      <InputField
-        name="shop_description"
-        label="Shop Description"
-        register={register}
-        errors={errors}
-        placeholder="Enter shop description"
-      />
+    if (
+      updated.streetAddress !== derivedAddress.streetAddress &&
+      updated.streetAddress
+    ) {
+      setValue("address", updated.streetAddress, { shouldValidate: true });
+    }
+    if (updated.streetAddressSecond !== derivedAddress.streetAddressSecond) {
+      setValue("address_second", updated.streetAddressSecond, {
+        shouldValidate: true,
+      });
+    }
+    if (updated.city !== derivedAddress.city && updated.city) {
+      setValue("city", updated.city, { shouldValidate: true });
+    }
+    if (updated.state !== derivedAddress.state && updated.state) {
+      const normalized = normalizeState(updated.state);
+      setValue("state", normalized, { shouldValidate: true });
+    }
+    if (
+      updated.postalCode !== derivedAddress.postalCode &&
+      updated.postalCode
+    ) {
+      const normalized = normalizeZip(updated.postalCode);
+      setValue("postcode", normalized, { shouldValidate: true });
+    }
+    if (updated.country !== derivedAddress.country && updated.country) {
+      setValue("country", updated.country, { shouldValidate: true });
+    }
+    if (updated.latitude !== derivedAddress.latitude) {
+      const lat = coerceNumber(updated.latitude);
+      setValue("latitude", lat, { shouldValidate: true });
+    }
+    if (updated.longitude !== derivedAddress.longitude) {
+      const lon = coerceNumber(updated.longitude);
+      setValue("longitude", lon, { shouldValidate: true });
+    }
+  };
 
-      <div>
-        <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
-          Website URL
-        </label>
-        <input
-          type="text"
-          placeholder="https://example.com"
-          {...register("website_url", {
-            setValueAs: (v) => normalizeWebsiteUrl(String(v ?? "")),
-          })}
-          className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.website_url
-            ? "border-red-500 dark:border-red-500"
-            : "border-brand-primary dark:border-text-muted"
-            }`}
-        />
-        {errors.website_url && (
-          <p className="mt-1 text-sm text-red-500 dark:text-red-400">
-            {errors.website_url.message}
-          </p>
-        )}
-      </div>
+  const fullAddressForMaps = [
+    derivedAddress.streetAddress,
+    derivedAddress.city,
+    derivedAddress.state,
+    derivedAddress.postalCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
-      <InputField name="phone" label="Phone" errors={errors}>
-        <InputMask
-          mask="(___) ___-____"
-          replacement={{ _: /\d/ }}
-          placeholder="(123) 456-7890"
-          {...register("phone")}
-          className={`w-full text-dark dark:text-white text-md border-2 border-brand-primary dark:border-text-muted px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.phone ? "border-red-500 dark:border-red-500" : ""
-            }`}
-        />
-      </InputField>
+  const canSubmit = isAddressValid && !errors.shopName && !errors.address;
 
-      <div>
-        <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
-          Select Categories
-        </label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Select<CategoryOption, true, GroupBase<CategoryOption>>
-              placeholder="Search"
-              isMulti
-              value={selectedOptions}
-              options={categoryOptions}
-              onChange={(selected: MultiValue<CategoryOption>) => {
-                setSelectedCategories(selected.map((opt) => opt.value));
-              }}
-              styles={getCustomSelectStyles(isDark)}
-              menuPortalTarget={
-                typeof window !== "undefined" ? document.body : null
-              }
-              menuPosition="fixed"
-              menuPlacement="auto"
-              isClearable
-              isSearchable
-              className="react-select-container"
-              classNamePrefix="react-select"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowCategoryModal(true)}
-            className="h-[45px] px-4 rounded-md bg-brand-primary text-white hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors duration-200 ease-in-out flex items-center gap-2 whitespace-nowrap"
-          >
-            Add Category
-          </button>
-        </div>
-      </div>
-
-      {isEditMode && canEditStatus && (
-        <div>
-          <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
-            Location Status
-          </label>
-          <select
-            value={locationStatus}
-            onChange={(e) =>
-              setLocationStatus(e.target.value as LocationStatus)
-            }
-            className="w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md border-brand-primary dark:border-text-muted"
-          >
-            <option value="open">Open</option>
-            <option value="temporarily_closed">Temporarily Closed</option>
-            <option value="permanently_closed">Permanently Closed</option>
-          </select>
-          <p className="mt-1 text-xs text-text-muted dark:text-text-inverted">
-            Update the current operational status of this location
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <InputField
-          name="address"
-          label="Street Address"
-          register={register}
-          errors={errors}
-          value={address.streetAddress}
-          placeholder="Enter street address"
-          readOnly={addressLocked}
-          onChange={(e) => {
-            onAddressChange({ ...address, streetAddress: e.target.value });
-            if (addressLookupState !== "idle") {
-              setAddressLookupState("idle");
-              setAddressLocked(false);
-              setLookupMessage("");
-              setPendingParsedAddress(null);
-            }
-          }}
-        />
-
-        <InputField
-          name="address_second"
-          label="Street Address Line 2 (Optional)"
-          register={register}
-          errors={errors}
-          value={address.streetAddressSecond}
-          placeholder="Apt, Suite, Unit, etc."
-          onChange={(e) =>
-            onAddressChange({ ...address, streetAddressSecond: e.target.value })
-          }
-        />
-
-        <InputField
-          name="city"
-          label="City"
-          register={register}
-          errors={errors}
-          value={address.city}
-          placeholder="Enter city"
-          readOnly={addressLocked}
-          onChange={(e) =>
-            onAddressChange({ ...address, city: e.target.value })
-          }
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2 text-sm font-medium text-text-base dark:text-text-inverted">
-              State
-            </label>
-            <select
-              {...register("state")}
-              value={address.state}
-              disabled={addressLocked}
-              onChange={(e) =>
-                onAddressChange({ ...address, state: e.target.value })
-              }
-              className={`w-full text-dark dark:text-white text-md border-2 px-4 py-2 bg-white dark:bg-surface-dark focus:border-1 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out rounded-md ${errors.state
-                ? "border-red-500 dark:border-red-500"
-                : "border-brand-primary dark:border-text-muted"
-                } ${addressLocked ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              <option value="" className="text-gray-400 dark:text-gray-500">
-                Select a state...
-              </option>
-              {US_STATES.map((s) => (
-                <option key={s.code} value={s.code}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-            {errors.state && (
-              <p className="mt-1 text-sm text-red-500 dark:text-red-400">
-                {errors.state.message}
-              </p>
-            )}
-          </div>
-
-          <InputField
-            name="postcode"
-            label="Postal Code"
-            register={register}
-            errors={errors}
-            value={address.postalCode}
-            placeholder="Enter postal code"
-            readOnly={addressLocked}
-            onChange={(e) => {
-              onAddressChange({ ...address, postalCode: e.target.value });
-            }}
+  if (layoutMode === "map-section") {
+    return (
+      <div className="w-full h-full border-t-[1px] border-gray-200">
+        {typeof window !== "undefined" && (
+          <MapPreview
+            address={derivedAddress}
+            fullAddressForMaps={fullAddressForMaps}
+            onAddressUpdate={handleAddressUpdate}
+            prefillFlyToNonce={prefillFlyToNonce}
           />
-        </div>
-
-        <InputField
-          name="country"
-          label="Country"
-          register={register}
-          errors={errors}
-          value={address.country}
-          placeholder="Enter country"
-          readOnly={addressLocked}
-          onChange={(e) =>
-            onAddressChange({ ...address, country: e.target.value })
-          }
-        />
-      </div>
-
-      <button
-        type="button"
-        onClick={async () => {
-          setAddressLookupState("loading");
-          setLookupMessage("");
-          setAddressSuggestions([]);
-
-          const result = await searchAddressSuggestions();
-
-          if (result.success && result.suggestions) {
-            if (result.suggestions.length === 1) {
-              // Single result - stage it for confirmation
-              const suggestion = result.suggestions[0];
-              setLookupMessage(suggestion.formattedAddress);
-              setAddressLookupState("success");
-              setPendingParsedAddress(suggestion.parsedData);
-            } else {
-              // Multiple results - show selection list
-              setAddressSuggestions(result.suggestions);
-              setAddressLookupState("suggestions");
-            }
-          } else {
-            setAddressLookupState("error");
-            setLookupMessage(
-              "Could not find a match. Check the street address and try again.",
-            );
-          }
-        }}
-        disabled={!canSearchAddress}
-        className={`w-full px-4 py-2 rounded-lg bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 flex items-center justify-center ${!canSearchAddress ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        title="Click to search for the address"
-      >
-        {addressLookupState === "loading" ? (
-          <>
-            <LoadingSpinner />
-            Searching...
-          </>
-        ) : (
-          "Search Address"
         )}
-      </button>
-      {/* Address Suggestions List */}
-      {addressLookupState === "suggestions" &&
-        addressSuggestions.length > 0 && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="rounded-lg border border-brand-primary bg-surface-muted dark:bg-surface-dark p-3"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
-                <span
-                  className="text-[11px] leading-none translate-y-[0.5px]"
-                  aria-hidden="true"
-                >
-                  {addressSuggestions.length}
-                </span>
-              </div>
-              <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
-                Found {addressSuggestions.length} address
-                {addressSuggestions.length !== 1 ? "es" : ""} - Select one:
-              </span>
-            </div>
+      </div>
+    );
+  }
 
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {addressSuggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleSelectSuggestion(suggestion)}
-                  className="w-full text-left px-3 py-2.5 rounded-md bg-white dark:bg-surface-darker hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 border border-gray-200 dark:border-gray-700 transition-colors group"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <svg
-                        className="h-4 w-4 text-brand-primary opacity-60 group-hover:opacity-100"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-sm text-text-base dark:text-text-inverted flex-1">
-                      {suggestion.formattedAddress}
-                    </span>
-                    <svg
-                      className="h-4 w-4 text-brand-primary opacity-0 group-hover:opacity-100 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
-                </button>
-              ))}
-            </div>
+  if (layoutMode === "form-section") {
+    const isAdmin = userMetadata?.role === "admin";
 
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+    return (
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="flex flex-col h-full border-t-[1px] border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-darker">
+          <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
+            {isEditMode
+              ? `Edit ${initialData?.shopName || "Shop"}`
+              : "Add New Shop"}
+          </h4>
+          <div className="flex gap-2">
+            {isEditMode && isAdmin && onDelete ? (
               <button
                 type="button"
-                onClick={handleDismissSearch}
-                className="text-brand-primary hover:text-brand-secondary underline text-sm font-medium"
+                onClick={onDelete}
+                className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 flex items-center gap-1.5 transition text-xs"
+                title="Delete this shop (Admin only)"
               >
-                Cancel
+                <HiTrash className="w-4 h-4" />
+                <span className="sm:inline hidden">Delete</span>
+              </button>
+            ) : null}
+            {onNavigateToMap ? (
+              <button
+                type="button"
+                onClick={onNavigateToMap}
+                className="bg-gray-500 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 flex items-center gap-1.5 transition text-xs"
+              >
+                <HiMap className="w-4 h-4" />
+                <span className="sm:inline hidden">To Map</span>
+              </button>
+            ) : null}
+            <button
+              type="submit"
+              disabled={!canSubmit || isSubmitting}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                !canSubmit || isSubmitting
+                  ? "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
+                  : "bg-brand-primary hover:bg-brand-secondary hover:text-gray-900 text-white"
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <HiSave className="w-4 h-4" />
+                  <span>Save</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div>
+            <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              Basics
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label
+                  htmlFor="shopName"
+                  className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                >
+                  Shop Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="shopName"
+                  type="text"
+                  placeholder="Enter shop name"
+                  {...register("shopName")}
+                  className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors ${
+                    errors.shopName
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
+                  }`}
+                />
+                {errors.shopName && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.shopName.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="shop_description"
+                  className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="shop_description"
+                  rows={3}
+                  placeholder="Describe your shop..."
+                  {...register("shop_description")}
+                  className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors resize-none border-gray-300 dark:border-gray-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                Categories
+              </h4>
+              {selectedCategories.length > 0 && (
+                <span className="text-xs px-2 py-0.5 bg-brand-primary text-white rounded">
+                  {selectedCategories.length}
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
+              <Select<CategoryOption, true, GroupBase<CategoryOption>>
+                placeholder="Select categories..."
+                isMulti
+                value={selectedOptions}
+                options={categoryOptions}
+                onChange={(selected: MultiValue<CategoryOption>) => {
+                  setSelectedCategories(selected.map((opt) => opt.value));
+                }}
+                styles={getCustomSelectStyles(isDark)}
+                menuPortalTarget={
+                  typeof window !== "undefined" ? document.body : null
+                }
+                menuPosition="fixed"
+                menuPlacement="auto"
+                isClearable
+                isSearchable
+              />
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(true)}
+                className="text-xs text-brand-primary hover:text-brand-secondary underline"
+              >
+                + Add New Category
               </button>
             </div>
           </div>
-        )}
 
-      {/* Variant A: Pending Confirmation (fields stay unlocked) */}
-      {addressLookupState === "success" && !addressLocked && lookupMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-lg border border-l-4 border-l-brand-primary border-brand-primary bg-surface-muted dark:bg-surface-dark p-3"
-        >
-          {/* Header with found message */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
-              <span
-                className="text-[11px] leading-none translate-y-[0.5px]"
-                aria-hidden="true"
-              >
-                ✓
-              </span>
+          <div>
+            <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              Contact
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label
+                  htmlFor="website_url"
+                  className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                >
+                  Website
+                </label>
+                <input
+                  id="website_url"
+                  type="text"
+                  placeholder="https://example.com"
+                  {...register("website_url", {
+                    setValueAs: (v) => normalizeWebsiteUrl(String(v ?? "")),
+                  })}
+                  className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                >
+                  Phone
+                </label>
+                <InputMask
+                  id="phone"
+                  mask="(___) ___-____"
+                  replacement={{ _: /\d/ }}
+                  placeholder="(123) 456-7890"
+                  {...register("phone")}
+                  className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                />
+              </div>
+
+              {isEditMode && canEditStatus && (
+                <div>
+                  <label
+                    htmlFor="locationStatus"
+                    className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Status
+                  </label>
+                  <select
+                    id="locationStatus"
+                    value={locationStatus}
+                    onChange={(e) =>
+                      setLocationStatus(e.target.value as LocationStatus)
+                    }
+                    className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                  >
+                    <option value="open">Open</option>
+                    <option value="temporarily_closed">
+                      Temporarily Closed
+                    </option>
+                    <option value="permanently_closed">
+                      Permanently Closed
+                    </option>
+                  </select>
+                </div>
+              )}
             </div>
-            <span className="text-sm text-text-base dark:text-text-inverted">
-              Found: {lookupMessage}
-            </span>
           </div>
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleConfirmAddress}
-              className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-secondary transition-colors text-sm font-medium"
-            >
-              Use This Address
-            </button>
-            <button
-              type="button"
-              onClick={handleDismissSearch}
-              className="px-4 py-2 text-brand-primary hover:text-brand-secondary underline text-sm font-medium"
-            >
-              Edit Manually
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* Variant B: Confirmed (fields locked) */}
-      {addressLookupState === "success" && addressLocked && lookupMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-lg border border-l-4 border-l-brand-primary border-brand-primary bg-surface-muted dark:bg-surface-dark p-3 flex items-center justify-between"
-        >
-          <div className="flex items-center gap-2">
-            <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white flex-shrink-0">
-              <span
-                className="text-[11px] leading-none translate-y-[0.5px]"
-                aria-hidden="true"
-              >
-                ✓
-              </span>
+          <div>
+            <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              Address
+            </h4>
+            <div className="space-y-3">
+              {addressLocked && lookupMessage ? (
+                <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-l-brand-primary rounded p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-text-base dark:text-text-inverted mb-1">
+                        Confirmed
+                      </p>
+                      <p className="text-xs text-text-muted dark:text-text-inverted break-words">
+                        {lookupMessage}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleEditAddress}
+                      className="text-xs text-brand-primary hover:text-brand-secondary underline flex-shrink-0"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label
+                      htmlFor="address"
+                      className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      Street
+                    </label>
+                    <input
+                      id="address"
+                      type="text"
+                      placeholder="123 Main St"
+                      {...register("address")}
+                      readOnly={addressLocked}
+                      className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="address_second"
+                      className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      Line 2
+                    </label>
+                    <input
+                      id="address_second"
+                      type="text"
+                      placeholder="Apt, Suite"
+                      {...register("address_second")}
+                      className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="city"
+                      className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      City
+                    </label>
+                    <input
+                      id="city"
+                      type="text"
+                      placeholder="City"
+                      {...register("city")}
+                      readOnly={addressLocked}
+                      className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        htmlFor="state"
+                        className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                      >
+                        State
+                      </label>
+                      <select
+                        id="state"
+                        {...register("state")}
+                        className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                      >
+                        <option value="">Select...</option>
+                        {US_STATES.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="postcode"
+                        className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                      >
+                        ZIP
+                      </label>
+                      <input
+                        id="postcode"
+                        type="text"
+                        placeholder="12345"
+                        {...register("postcode")}
+                        readOnly={addressLocked}
+                        className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setAddressLookupState("loading");
+                      const result = await searchAddressSuggestions();
+                      if (result.success && result.suggestions) {
+                        if (result.suggestions.length === 1) {
+                          const suggestion = result.suggestions[0];
+                          setLookupMessage(suggestion.formattedAddress);
+                          setAddressLookupState("success");
+                          setPendingParsedAddress(suggestion.parsedData);
+                        } else {
+                          setAddressSuggestions(result.suggestions);
+                          setAddressLookupState("suggestions");
+                        }
+                      } else {
+                        setAddressLookupState("error");
+                        setLookupMessage(
+                          "No match found. Check address and try again.",
+                        );
+                      }
+                    }}
+                    disabled={!canSearchAddress}
+                    className={`w-full px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-colors ${
+                      !canSearchAddress
+                        ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                        : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-gray-900"
+                    }`}
+                  >
+                    {addressLookupState === "loading" ? (
+                      <>
+                        <LoadingSpinner />
+                        Searching...
+                      </>
+                    ) : (
+                      "Search Address"
+                    )}
+                  </button>
+
+                  {addressLookupState === "suggestions" &&
+                    addressSuggestions.length > 0 && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-2 space-y-1">
+                        <p className="text-xs font-medium mb-1">
+                          Found {addressSuggestions.length} - Select one:
+                        </p>
+                        {addressSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(suggestion)}
+                            className="w-full text-left px-2 py-1.5 rounded bg-white dark:bg-surface-darker hover:bg-brand-primary/10 text-xs"
+                          >
+                            {suggestion.formattedAddress}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={handleDismissSearch}
+                          className="text-xs text-brand-primary underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+
+                  {addressLookupState === "success" &&
+                    !addressLocked &&
+                    lookupMessage && (
+                      <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-l-brand-primary rounded p-2">
+                        <p className="text-xs mb-2">Found: {lookupMessage}</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleConfirmAddress}
+                            className="px-3 py-1.5 bg-brand-primary text-white rounded text-xs hover:bg-brand-secondary"
+                          >
+                            Use This Address
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDismissSearch}
+                            className="text-xs text-brand-primary underline"
+                          >
+                            Edit Manually
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                  {addressLookupState === "error" && lookupMessage && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
+                      <p className="text-xs text-red-700 dark:text-red-300">
+                        {lookupMessage}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <span className="text-sm text-text-base dark:text-text-inverted">
-              Address confirmed: {lookupMessage}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleEditAddress}
-            className="text-brand-primary hover:text-brand-secondary underline text-sm font-medium whitespace-nowrap"
-          >
-            Edit
-          </button>
-        </div>
-      )}
-
-      {addressLookupState === "error" && lookupMessage && (
-        <div className="rounded-lg border border-brand-primary/30 bg-white dark:bg-surface-dark px-4 py-3 flex items-start gap-3 shadow-sm">
-          <div className="mt-0.5 h-5 w-5 rounded-full border border-brand-primary/60 text-brand-primary flex items-center justify-center text-xs">
-            !
-          </div>
-          <div className="text-sm text-text-base dark:text-text-inverted">
-            {lookupMessage}
           </div>
         </div>
-      )}
 
-      <button
-        type="submit"
-        disabled={
-          !isAddressValid ||
-          !!errors.shopName ||
-          !!errors.address ||
-          isSubmitting
-        }
-        className={`w-full px-4 py-2 rounded-lg text-white flex items-center justify-center ${!isAddressValid ||
-          !!errors.shopName ||
-          !!errors.address ||
-          isSubmitting
-          ? "bg-brand-primary opacity-30 text-gray-500 cursor-not-allowed"
-          : "bg-brand-primary hover:bg-secondary"
-          }`}
-      >
-        {isSubmitting ? (
-          <>
-            <LoadingSpinner />
-            {mode === "edit" ? "Updating..." : "Submitting..."}
-          </>
-        ) : (
-          <>{mode === "edit" ? "Update Location" : "Submit Location"}</>
-        )}
-      </button>
+        <AddCategoryModal
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onSubmit={async (name, desc) => {
+            try {
+              await addCategoryIfNotExists(name, desc);
+              await refreshCategories();
 
-      <AddCategoryModal
-        isOpen={showCategoryModal}
-        onClose={() => setShowCategoryModal(false)}
-        onSubmit={async (name, desc) => {
-          try {
-            await addCategoryIfNotExists(name, desc);
-            await refreshCategories();
+              const updated = await GetCategories();
+              const newCategory = updated.find(
+                (cat) => cat.category_name === name,
+              );
+              const newCategoryId = newCategory?.id;
 
-            const updated = await GetCategories();
-            const newCategory = updated.find(
-              (cat) => cat.category_name === name,
-            );
-            const newCategoryId = newCategory?.id;
+              if (typeof newCategoryId === "number") {
+                setSelectedCategories((prev) => [...prev, newCategoryId]);
+              }
 
-            if (typeof newCategoryId === "number") {
-              setSelectedCategories((prev) => [...prev, newCategoryId]);
+              setShowCategoryModal(false);
+            } catch (err) {
+              if (err instanceof Error) alert(err.message);
+              else console.error("Unexpected error:", err);
             }
+          }}
+        />
+      </form>
+    );
+  }
 
-            setShowCategoryModal(false);
-          } catch (err) {
-            if (err instanceof Error) alert(err.message);
-            else console.error("Unexpected error:", err);
-          }
-        }}
-      />
-    </form>
-  );
+  return null;
 };
 
 export default ShopForm;

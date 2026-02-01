@@ -99,15 +99,16 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
   return `
     <div class="bg-surface-light dark:bg-surface-dark text-sm rounded-lg max-w-xs -m-3 -mb-5 p-3 animate-fadeIn transition-sidebar">
       <h2 class="text-base font-bold text-brand-primary dark:text-brand-secondary ">${shopName}</h2>
-      ${street || cityStateZipEscaped
-      ? `
+      ${
+        street || cityStateZipEscaped
+          ? `
         <div class="text-text-base dark:text-text-inverted">
           ${street ? `<div>${street}</div>` : ""}
           ${cityStateZipEscaped ? `<div class="text-xs opacity-80 mt-0.5">${cityStateZipEscaped}</div>` : ""}
         </div>
       `
-      : ""
-    }
+          : ""
+      }
     </div>
   `;
 };
@@ -174,7 +175,11 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       id: HOVERED_LAYER_ID,
       type: "circle",
       source: SOURCE_ID,
-      filter: ["all", ["!", ["has", "point_count"]], ["==", ["get", "locationId"], -1]],
+      filter: [
+        "all",
+        ["!", ["has", "point_count"]],
+        ["==", ["get", "locationId"], -1],
+      ],
       paint: {
         "circle-color": "#FFC72C",
         "circle-stroke-color": "#111827",
@@ -192,7 +197,8 @@ type MapBoxProps = {
 
 const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
-  const { openSidebar, selectShopById, selectedShop, sidebarOpen } = useShopSidebar();
+  const { openSidebar, selectShopById, selectedShop, sidebarOpen } =
+    useShopSidebar();
   const { theme } = useTheme();
   const { userMetadata } = useAuth();
   const {
@@ -266,7 +272,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     });
   };
 
-
   const shopGeoJson: ShopFeatureCollection = useMemo(() => {
     return buildShopGeoJson(displayedShops);
   }, [displayedShops]);
@@ -333,7 +338,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       }
 
       loadingSeqRef.current += 1;
-
 
       hideLoadingWhenMapReady(map, loadingSeqRef.current);
 

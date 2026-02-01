@@ -119,7 +119,8 @@ const PublicCollection = () => {
               </p>
             )}
             <p className="text-xs uppercase tracking-wide text-text-muted dark:text-text-inverted/60 mt-2">
-              {collection.visibility} • {collection.shopCount ?? features.length} shops
+              {collection.visibility} •{" "}
+              {collection.shopCount ?? features.length} shops
             </p>
           </div>
           <button

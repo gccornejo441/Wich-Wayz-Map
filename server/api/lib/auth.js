@@ -43,10 +43,13 @@ export const extractAuthUser = async (req) => {
   if (!token) return { userId: null, role };
 
   try {
-    const { payload } = await jwtVerify(token, new TextEncoder().encode(SECRET));
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(SECRET),
+    );
     const tokenUserId = parseUserId(payload.sub);
     const tokenRole =
-      typeof payload.role === "string" ? payload.role : role ?? null;
+      typeof payload.role === "string" ? payload.role : (role ?? null);
     return { userId: tokenUserId, role: tokenRole };
   } catch (error) {
     console.error("Failed to verify auth token:", error);

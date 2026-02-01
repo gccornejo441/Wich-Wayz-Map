@@ -150,7 +150,8 @@ const buildShopPropsFromShopAndLocation = (
     categories: getCategoriesString(shop),
 
     imageUrl: getString(shopAny.imageUrl) ?? getString(shopAny.image_url),
-    description: getString(shopAny.description) ?? getString(shopAny.shop_description),
+    description:
+      getString(shopAny.description) ?? getString(shopAny.shop_description),
 
     usersAvatarEmail:
       getString(shopAny.usersAvatarEmail) ??

@@ -14,9 +14,7 @@ export type NearbyFeatureResult<P = GeoJSON.GeoJsonProperties> = {
 const isFiniteNumber = (value: number): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-const extractPoint = <P,>(
-  feature: PointFeature<P>,
-): [number, number] | null => {
+const extractPoint = <P>(feature: PointFeature<P>): [number, number] | null => {
   if (feature.geometry.type !== "Point") return null;
   const [lng, lat] = feature.geometry.coordinates;
   if (!isFiniteNumber(lng) || !isFiniteNumber(lat)) return null;
@@ -41,7 +39,10 @@ export const computeNearbyFeatures = <P = GeoJSON.GeoJsonProperties>(
 
       return { feature, distanceMiles: dist };
     })
-    .filter((item): item is NearbyFeatureResult<P> => !!item && item.distanceMiles <= radiusMiles)
+    .filter(
+      (item): item is NearbyFeatureResult<P> =>
+        !!item && item.distanceMiles <= radiusMiles,
+    )
     .sort((a, b) => a.distanceMiles - b.distanceMiles);
 };
 

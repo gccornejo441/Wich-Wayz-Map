@@ -125,7 +125,9 @@ const CollectionModal = ({ isOpen, onClose, shopId }: CollectionModalProps) => {
               disabled={creating}
               className="px-3 py-2 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:bg-brand-secondary hover:text-text-base disabled:opacity-60"
             >
-              {creating ? "Saving..." : (
+              {creating ? (
+                "Saving..."
+              ) : (
                 <span className="flex items-center gap-1">
                   <FiPlus />
                   Create
@@ -155,7 +157,10 @@ const CollectionModal = ({ isOpen, onClose, shopId }: CollectionModalProps) => {
                         </div>
                         <div className="text-[11px] uppercase tracking-wide text-text-muted dark:text-text-inverted/60">
                           {collection.visibility} •{" "}
-                          {collection.shopCount ?? collection.shopIds?.length ?? 0} shops
+                          {collection.shopCount ??
+                            collection.shopIds?.length ??
+                            0}{" "}
+                          shops
                         </div>
                       </div>
                       <button

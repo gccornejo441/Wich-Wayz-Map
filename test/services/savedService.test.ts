@@ -1,5 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { getSavedShopIds, toggleSavedShop } from "../../src/services/savedService";
+import {
+  getSavedShopIds,
+  toggleSavedShop,
+} from "../../src/services/savedService";
 
 const mockFetch = (data: unknown, status = 200) => {
   global.fetch = vi.fn().mockResolvedValue({

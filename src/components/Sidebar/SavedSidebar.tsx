@@ -37,13 +37,15 @@ const coordsChanged = (
 
 const pickPrimaryLocation = (shop: ShopWithUser): Location | null => {
   const locations = shop.locations ?? [];
-  return locations.find(
-    (loc) =>
-      typeof loc.latitude === "number" &&
-      Number.isFinite(loc.latitude) &&
-      typeof loc.longitude === "number" &&
-      Number.isFinite(loc.longitude),
-  ) ?? null;
+  return (
+    locations.find(
+      (loc) =>
+        typeof loc.latitude === "number" &&
+        Number.isFinite(loc.latitude) &&
+        typeof loc.longitude === "number" &&
+        Number.isFinite(loc.longitude),
+    ) ?? null
+  );
 };
 
 type ListItem = {
@@ -71,8 +73,13 @@ const SavedSidebar = () => {
   } = useSaved();
 
   const { shops } = useShops();
-  const { center, pendingCenterCoords, userPosition, flyToLocation, setHoveredLocationId } =
-    useMap();
+  const {
+    center,
+    pendingCenterCoords,
+    userPosition,
+    flyToLocation,
+    setHoveredLocationId,
+  } = useMap();
   const { openSidebar, closeSidebar } = useShopSidebar();
 
   const [anchorCoords, setAnchorCoords] = useState<[number, number] | null>(
@@ -103,8 +110,8 @@ const SavedSidebar = () => {
 
   const effectiveAnchor =
     anchorMode === "userLocation"
-      ? userPosition ?? anchorCoords
-      : anchorCoords ?? center ?? pendingCenterCoords;
+      ? (userPosition ?? anchorCoords)
+      : (anchorCoords ?? center ?? pendingCenterCoords);
 
   const shopMap = useMemo(
     () =>
@@ -131,9 +138,9 @@ const SavedSidebar = () => {
       const distance =
         location && effectiveAnchor
           ? distanceMiles(effectiveAnchor, [
-            location.longitude,
-            location.latitude,
-          ])
+              location.longitude,
+              location.latitude,
+            ])
           : Infinity;
       entries.set(item.shopId, {
         shop,
@@ -173,9 +180,9 @@ const SavedSidebar = () => {
               distanceMiles:
                 location && effectiveAnchor
                   ? distanceMiles(effectiveAnchor, [
-                    location.longitude,
-                    location.latitude,
-                  ])
+                      location.longitude,
+                      location.latitude,
+                    ])
                   : Infinity,
             };
           })
@@ -212,10 +219,7 @@ const SavedSidebar = () => {
     effectiveAnchor,
   ]);
 
-  const features = useMemo(
-    () => buildShopGeoJson(shops).features,
-    [shops],
-  );
+  const features = useMemo(() => buildShopGeoJson(shops).features, [shops]);
 
   const featureByLocationId = useMemo(() => {
     const map = new Map<number, ShopGeoJsonProperties>();
@@ -247,8 +251,11 @@ const SavedSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${savedSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full shadow-none"
-        }`}
+      className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
+        savedSidebarOpen
+          ? "translate-x-0 shadow-2xl"
+          : "-translate-x-full shadow-none"
+      }`}
       aria-label="Saved shops"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-surface-muted/60 dark:border-gray-700">
@@ -268,19 +275,22 @@ const SavedSidebar = () => {
 
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-3 gap-2">
-          {([
-            { key: "all", label: "All Saved" },
-            { key: "nearby", label: "Saved Nearby" },
-            { key: "collection", label: "Collections" },
-          ] as const).map((tab) => (
+          {(
+            [
+              { key: "all", label: "All Saved" },
+              { key: "nearby", label: "Saved Nearby" },
+              { key: "collection", label: "Collections" },
+            ] as const
+          ).map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setSavedFilterMode(tab.key)}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${savedFilterMode === tab.key
+              className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                savedFilterMode === tab.key
                   ? "bg-brand-primary text-white border-brand-primary"
                   : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted hover:border-brand-primary"
-                }`}
+              }`}
             >
               {tab.label}
             </button>
@@ -293,10 +303,11 @@ const SavedSidebar = () => {
               <button
                 type="button"
                 onClick={() => setAnchorMode("mapCenter")}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${anchorMode === "mapCenter"
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${
+                  anchorMode === "mapCenter"
                     ? "bg-brand-primary text-white border-brand-primary"
                     : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted"
-                  }`}
+                }`}
               >
                 <FiMapPin />
                 Map Area
@@ -304,10 +315,11 @@ const SavedSidebar = () => {
               <button
                 type="button"
                 onClick={() => setAnchorMode("userLocation")}
-                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${anchorMode === "userLocation"
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border ${
+                  anchorMode === "userLocation"
                     ? "bg-brand-secondary text-black border-brand-secondary"
                     : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted"
-                  }`}
+                }`}
               >
                 <FiTarget />
                 Near Me
@@ -320,10 +332,11 @@ const SavedSidebar = () => {
                   key={value}
                   type="button"
                   onClick={() => setRadiusMiles(value)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${radiusMiles === value
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                    radiusMiles === value
                       ? "bg-brand-primary text-white border-brand-primary"
                       : "bg-surface-muted dark:bg-surface-darker text-text-base dark:text-text-inverted border-surface-muted hover:border-brand-primary"
-                    }`}
+                  }`}
                 >
                   {value} mi
                 </button>
@@ -353,7 +366,8 @@ const SavedSidebar = () => {
             {anchorMode === "userLocation" && !userPosition && (
               <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-surface-muted dark:border-gray-700 bg-surface-muted/60 dark:bg-surface-darker px-3 py-2">
                 <span className="text-xs text-text-muted dark:text-text-inverted/70">
-                  Location unavailable. Enable location services to see saved shops near you.
+                  Location unavailable. Enable location services to see saved
+                  shops near you.
                 </span>
                 <button
                   type="button"
@@ -384,7 +398,8 @@ const SavedSidebar = () => {
               <option value="">Choose a collection</option>
               {collections.map((collection) => (
                 <option key={collection.id} value={collection.id}>
-                  {collection.name} ({collection.shopCount ?? collection.shopIds?.length ?? 0})
+                  {collection.name} (
+                  {collection.shopCount ?? collection.shopIds?.length ?? 0})
                 </option>
               ))}
             </select>
@@ -429,7 +444,12 @@ const SavedSidebar = () => {
                       flyToLocation(location.longitude, location.latitude, 14);
                     }
                     if (props) {
-                      openSidebar(props, location ? [location.longitude, location.latitude] : null);
+                      openSidebar(
+                        props,
+                        location
+                          ? [location.longitude, location.latitude]
+                          : null,
+                      );
                     }
                     setSavedSidebarOpen(false);
                     setHoveredLocationId(null);

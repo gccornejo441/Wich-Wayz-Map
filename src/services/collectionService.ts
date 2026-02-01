@@ -8,18 +8,14 @@ import { ShopWithUser } from "@models/ShopWithUser";
 import { Category } from "@models/Category";
 import { Location } from "@models/Location";
 
-const normalizeVisibility = (
-  value: unknown,
-): CollectionVisibility => {
+const normalizeVisibility = (value: unknown): CollectionVisibility => {
   if (value === "public" || value === "unlisted") return value;
   return "private";
 };
 
 const parseShopIds = (value: unknown): number[] => {
   if (Array.isArray(value)) {
-    return value
-      .map((id) => Number(id))
-      .filter((id) => Number.isInteger(id));
+    return value.map((id) => Number(id)).filter((id) => Number.isInteger(id));
   }
 
   if (typeof value === "string" && value.trim().length) {
@@ -208,14 +204,17 @@ export const updateCollection = async (
   userId?: number,
 ): Promise<Collection> => {
   try {
-    const data = await apiRequest<Record<string, unknown>>(`/collections/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        ...payload,
-        userId,
-        user_id: userId,
-      }),
-    });
+    const data = await apiRequest<Record<string, unknown>>(
+      `/collections/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...payload,
+          userId,
+          user_id: userId,
+        }),
+      },
+    );
     return mapCollection(data);
   } catch (error) {
     console.error("Failed to update collection:", error);

@@ -131,7 +131,10 @@ export default async function handler(req, res) {
 
       const shopEntry = shopMap.get(row.shop_id);
 
-      if (row.location_id && !shopEntry.locations?.some((l) => l.id === row.location_id)) {
+      if (
+        row.location_id &&
+        !shopEntry.locations?.some((l) => l.id === row.location_id)
+      ) {
         const status = isValidStatus(row.location_status)
           ? row.location_status
           : "open";
