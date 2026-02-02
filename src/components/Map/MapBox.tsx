@@ -225,12 +225,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   // Load persisted preferences
   const initialPrefs = useMemo(() => loadMapViewPrefs(viewerKey), [viewerKey]);
 
-  const [center, setCenter] = useState<[number, number]>(
-    () => initialPrefs?.center ?? INITIAL_CENTER,
-  );
-  const [zoom, setZoom] = useState<number>(
-    () => initialPrefs?.zoom ?? INITIAL_ZOOM,
-  );
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
     () => initialPrefs?.userPosition ?? null,
   );
@@ -305,14 +299,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     });
 
     mapRef.current = map;
-
-    const onMove = () => {
-      const c = map.getCenter();
-      setCenter([c.lng, c.lat]);
-      setZoom(map.getZoom());
-      setContextCenter([c.lng, c.lat]);
-      setContextZoom(map.getZoom());
-    };
 
     const closeHoverPopup = () => {
       hoverPopupRef.current?.remove();
@@ -434,7 +420,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       });
     };
 
-    map.on("move", onMove);
     map.on("load", onLoad);
 
     return () => {
@@ -448,7 +433,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       userMarkerRef.current = null;
 
       map.off("load", onLoad);
-      map.off("move", onMove);
       map.remove();
       mapRef.current = null;
     };
@@ -705,11 +689,8 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     const prefs = loadMapViewPrefs(viewerKey);
     if (!prefs) return;
 
-    // Do NOT suppress save here - jumpTo is instant and won't trigger moveend
-    // The map is already at the correct position from initialPrefs or will update silently
+    suppressNextSaveRef.current += 1;
     map.jumpTo({ center: prefs.center, zoom: prefs.zoom });
-    setCenter(prefs.center);
-    setZoom(prefs.zoom);
     setUserPosition(prefs.userPosition ?? null);
     setContextCenter(prefs.center);
     setContextZoom(prefs.zoom);
@@ -732,27 +713,29 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const handleMoveEnd = () => {
-      const currentCenter = map.getCenter();
-      setPendingCenterCoords([currentCenter.lng, currentCenter.lat]);
+      const c = map.getCenter();
+      const z = map.getZoom();
+
+      setPendingCenterCoords([c.lng, c.lat]);
+      setContextCenter([c.lng, c.lat]);
+      setContextZoom(z);
 
       if (suppressNextSaveRef.current > 0) {
         suppressNextSaveRef.current -= 1;
         return;
       }
 
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
+      if (timeoutId) clearTimeout(timeoutId);
 
       timeoutId = setTimeout(() => {
-        const currentCenter = map.getCenter();
-        const currentZoom = map.getZoom();
+        const c2 = map.getCenter();
+        const z2 = map.getZoom();
 
         try {
           saveMapViewPrefs(
             {
-              center: [currentCenter.lng, currentCenter.lat],
-              zoom: currentZoom,
+              center: [c2.lng, c2.lat],
+              zoom: z2,
               userPosition,
               ts: Date.now(),
             },
@@ -767,15 +750,20 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     map.on("moveend", handleMoveEnd);
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
+      if (timeoutId) clearTimeout(timeoutId);
       map.off("moveend", handleMoveEnd);
     };
-  }, [mapLoaded, userPosition, viewerKey, setPendingCenterCoords]);
+  }, [
+    mapLoaded,
+    userPosition,
+    viewerKey,
+    setPendingCenterCoords,
+    setContextCenter,
+    setContextZoom,
+  ]);
 
   return (
-    <div style={{ position: "fixed", inset: 0 }}>
+    <div id="mapbox-root" style={{ position: "fixed", inset: 0 }}>
       {loading && (
         <div className="absolute top-0 left-0 w-[100vw] h-[100dvh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50">
           <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
@@ -784,24 +772,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
           </span>
         </div>
       )}
-
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          left: 12,
-          zIndex: 1,
-          padding: "8px 10px",
-          borderRadius: 8,
-          background: "rgba(0,0,0,0.65)",
-          color: "white",
-          fontSize: 13,
-          lineHeight: 1.3,
-        }}
-      >
-        Longitude: {center[0].toFixed(4)} | Latitude: {center[1].toFixed(4)} |
-        Zoom: {zoom.toFixed(2)} | Shops: {shopGeoJson.features.length}
-      </div>
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
 

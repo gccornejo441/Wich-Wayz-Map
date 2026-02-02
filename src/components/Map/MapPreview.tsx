@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Map, {
   Marker,
   NavigationControl,
@@ -29,6 +29,13 @@ interface Coordinates {
   longitude: number;
 }
 
+const isFiniteNumber = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v);
+
+// Styles (fix 404s by using dark-v11)
+const MAPBOX_STYLE_LIGHT = "mapbox://styles/mapbox/streets-v12";
+const MAPBOX_STYLE_DARK = "mapbox://styles/mapbox/dark-v11";
+
 const MapPreview: React.FC<MapPreviewProps> = ({
   address,
   fullAddressForMaps,
@@ -39,10 +46,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   const { theme } = useTheme();
 
   const [coords, setCoords] = useState<Coordinates | null>(() => {
-    if (
-      typeof address.latitude === "number" &&
-      typeof address.longitude === "number"
-    ) {
+    if (isFiniteNumber(address.latitude) && isFiniteNumber(address.longitude)) {
       return { latitude: address.latitude, longitude: address.longitude };
     }
     return null;
@@ -67,17 +71,29 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     onAddressUpdateRef.current = onAddressUpdate;
   }, [onAddressUpdate]);
 
-  const mapStyle =
-    theme === "dark"
-      ? "mapbox://styles/mapbox/navigation-night-v1"
-      : "mapbox://styles/mapbox/streets-v12";
 
+  // ✅ Map style (fix 404s)
+  const mapStyle = useMemo(
+    () => (theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT),
+    [theme],
+  );
+
+  // ✅ Update style without recreating map
   useEffect(() => {
-    if (mapRef.current) {
-      mapRef.current.getMap().setStyle(mapStyle);
-    }
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    map.setStyle(mapStyle);
   }, [mapStyle]);
 
+
+  // ✅ Keep state in sync if address props get lat/lon later
+  useEffect(() => {
+    if (isFiniteNumber(address.latitude) && isFiniteNumber(address.longitude)) {
+      setCoords({ latitude: address.latitude, longitude: address.longitude });
+    }
+  }, [address.latitude, address.longitude]);
+
+  // Prefill address -> forward geocode -> set coords -> flyTo
   useEffect(() => {
     if (prefillFlyToNonce <= 0) return;
 
@@ -98,19 +114,21 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         if (!json.features?.length) return;
 
         const [lon, lat] = json.features[0].geometry.coordinates;
-        setCoords({ latitude: lat, longitude: lon });
 
+        setCoords({ latitude: lat, longitude: lon });
         onAddressUpdateRef.current((prev) => ({
           ...prev,
           latitude: lat,
           longitude: lon,
         }));
 
-        if (mapRef.current) {
-          mapRef.current.flyTo({
+        const m = mapRef.current?.getMap();
+        if (m) {
+          m.flyTo({
             center: [lon, lat],
             zoom: 14,
             duration: 900,
+            essential: true,
           });
         }
       } catch (err) {
@@ -154,8 +172,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             } else if (id.startsWith("place")) {
               city = ctx.text || "";
             } else if (id.startsWith("region")) {
-              const stateValue =
-                ctx.short_code?.replace("US-", "") || ctx.text || "";
+              const stateValue = ctx.short_code?.replace("US-", "") || ctx.text || "";
               state = getStateCode(stateValue);
             } else if (id.startsWith("country")) {
               country = ctx.short_code?.toUpperCase() || ctx.text || "";
@@ -172,7 +189,20 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             latitude: lat,
             longitude: lng,
           }));
+        } else {
+          onAddressUpdateRef.current((prev) => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng,
+          }));
         }
+      })
+      .catch(() => {
+        onAddressUpdateRef.current((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+        }));
       });
   };
 
@@ -184,9 +214,9 @@ const MapPreview: React.FC<MapPreviewProps> = ({
 
   // Initialize with user's current location if no coordinates provided
   useEffect(() => {
-    if (coords) return; // Already have coordinates
-    if (!navigator.geolocation) return; // Geolocation not supported
-    if (isLoadingLocation) return; // Already loading
+    if (coords) return;
+    if (!navigator.geolocation) return;
+    if (isLoadingLocation) return;
 
     setIsLoadingLocation(true);
 
@@ -197,14 +227,13 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           longitude: position.coords.longitude,
         };
         setCoords(userCoords);
-        
-        // Update the form with user's location
+
         onAddressUpdateRef.current((prev) => ({
           ...prev,
           latitude: userCoords.latitude,
           longitude: userCoords.longitude,
         }));
-        
+
         setIsLoadingLocation(false);
       },
       (error) => {
@@ -215,27 +244,37 @@ const MapPreview: React.FC<MapPreviewProps> = ({
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 60000,
-      }
+      },
     );
   }, [coords, isLoadingLocation]);
 
+  const initialViewState = useMemo(() => {
+    if (!coords) return undefined;
+    return {
+      longitude: coords.longitude,
+      latitude: coords.latitude,
+      zoom: 14,
+    };
+  }, [coords]);
+
   return (
     <div
-      className={`w-full h-full overflow-hidden dark:bg-surface-dark flex flex-col min-h-0 ${
+      id="map-preview-root"
+      data-map-preview
+      className={`relative isolate w-full h-full overflow-hidden dark:bg-surface-dark flex flex-col min-h-0 ${
         containerClassName ?? ""
       }`}
     >
       {coords ? (
-        <>
-          <div className="flex-1 relative min-h-0">
+        <div className="relative flex-1 min-h-0">
+          {/* Map container with pointer-events-none to prevent blocking form clicks.
+              To enable interactive map preview (pan, zoom controls), remove pointer-events-none,
+              but ensure the preview container never overlaps the form area to avoid click conflicts. */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
             <Map
               ref={mapRef}
               mapboxAccessToken={MAPBOX_TOKEN}
-              initialViewState={{
-                longitude: coords.longitude,
-                latitude: coords.latitude,
-                zoom: 14,
-              }}
+              initialViewState={initialViewState}
               mapStyle={mapStyle}
               style={{ width: "100%", height: "100%" }}
             >
@@ -251,30 +290,30 @@ const MapPreview: React.FC<MapPreviewProps> = ({
                 <div className="text-xl cursor-pointer">📍</div>
               </Marker>
             </Map>
+          </div>
 
-            <div className="absolute left-2 bottom-8">
-              <div className="bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 text-xs text-text-base dark:text-text-inverted shadow-md">
-                <span className="whitespace-nowrap">
-                  Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
-                  {coords.longitude.toFixed(5)}
-                </span>
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  aria-label="Copy coordinates to clipboard"
-                  className="ml-2 hover:text-primary transition flex-shrink-0"
-                >
-                  <HiClipboard className="w-4 h-4" />
-                </button>
-              </div>
+          {/* ✅ Overlay on top */}
+          <div className="absolute left-2 bottom-8 z-10">
+            <div className="bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 text-xs text-text-base dark:text-text-inverted shadow-md">
+              <span className="whitespace-nowrap">
+                Lat: {coords.latitude.toFixed(5)} | Lng: {coords.longitude.toFixed(5)}
+              </span>
+              <button
+                type="button"
+                onClick={copyToClipboard}
+                aria-label="Copy coordinates to clipboard"
+                className="ml-2 hover:text-primary transition flex-shrink-0"
+              >
+                <HiClipboard className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        </>
+        </div>
       ) : (
         <div className="flex-1 min-h-0 flex items-center justify-center text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
           {isLoadingLocation ? (
             <div className="flex flex-col items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary" />
               <span>Getting your location...</span>
             </div>
           ) : (
