@@ -7,7 +7,6 @@ import { renderWithRHF } from "../../test-utils/rhfHarness";
 
 const mockAddToast = vi.fn();
 const mockUpdateShopInContext = vi.fn();
-const mockOnAddressUpdate = vi.fn();
 const mockSearchAddressSuggestions = vi.fn();
 
 vi.mock("@services/categoryService", () => ({
@@ -91,52 +90,6 @@ vi.mock("@/utils/shops", () => ({
 
 vi.mock("@hooks/useTheme", () => ({
   useTheme: () => ({ theme: "light" }),
-}));
-
-vi.mock("@components/Map/MapPreview", () => ({
-  default: ({
-    onAddressUpdate,
-  }: {
-    onAddressUpdate: (addr: unknown) => void;
-  }) => {
-    mockOnAddressUpdate.mockImplementation(onAddressUpdate);
-    return (
-      <div data-testid="map-preview">
-        <button
-          data-testid="map-update-empty"
-          onClick={() =>
-            onAddressUpdate({
-              streetAddress: "",
-              city: "",
-              state: "",
-              postalCode: "",
-              country: "",
-              latitude: 35.9,
-              longitude: -78.8,
-            })
-          }
-        >
-          Update Empty
-        </button>
-        <button
-          data-testid="map-update-filled"
-          onClick={() =>
-            onAddressUpdate({
-              streetAddress: "456 Oak St",
-              city: "Durham",
-              state: "north carolina",
-              postalCode: "27502-1234",
-              country: "USA",
-              latitude: 35.9,
-              longitude: -78.8,
-            })
-          }
-        >
-          Update Filled
-        </button>
-      </div>
-    );
-  },
 }));
 
 const mockInitialData = {
@@ -323,17 +276,6 @@ describe("ShopForm - Rendering", () => {
       expect(options.length).toBeGreaterThan(50);
       expect(options.some((opt) => opt.value === "NC")).toBe(true);
       expect(options.some((opt) => opt.value === "CA")).toBe(true);
-    });
-  });
-
-  it("should render map preview", async () => {
-    renderWithRHF(<ShopForm mode="add" layoutMode="map-section" />, {
-      defaultValues: normalizedDefaults,
-      resolver: yupResolver(locationSchema),
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("map-preview")).toBeInTheDocument();
     });
   });
 });

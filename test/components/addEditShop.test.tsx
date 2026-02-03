@@ -66,11 +66,6 @@ type ShopFormProps = {
 
 vi.mock("@/components/Form/ShopForm", () => ({
   default: (props: ShopFormProps) => {
-    // Only render the form section mock (not the map section duplicate)
-    if (props.layoutMode === "map-section") {
-      return null;
-    }
-    
     return (
       <div data-testid="shop-form">
         <div>{props.mode === "edit" ? "Edit Form" : "Add Form"}</div>
@@ -80,10 +75,6 @@ vi.mock("@/components/Form/ShopForm", () => ({
       </div>
     );
   },
-}));
-// Mock MapPreview so no map libs run
-vi.mock("@/components/Map/MapPreview", () => ({
-  default: () => <div data-testid="map-preview">Map Preview</div>,
 }));
 
 import { useLocation } from "react-router-dom";

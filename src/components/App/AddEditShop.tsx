@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
-import { HiChevronUp, HiChevronDown } from "react-icons/hi";
+import { useMemo } from "react";
 import ShopForm from "../Form/ShopForm";
 import { deleteShop } from "@services/shopService";
 import { useShops } from "@context/shopContext";
@@ -74,8 +73,6 @@ const AddEditShop = () => {
   const { addToast } = useToast();
   const { userMetadata } = useAuth();
 
-  const [isMapCollapsed, setIsMapCollapsed] = useState(false);
-
   const handleDeleteShop = async () => {
     if (!initialData?.shopId) {
       addToast("Cannot delete shop: No shop ID found", "error");
@@ -111,12 +108,8 @@ const AddEditShop = () => {
 
   return (
     <div className="fixed inset-0 pt-[50px] md:pt-10 bg-surface-light dark:bg-surface-dark">
-      <div className="flex flex-col md:flex-row h-[calc(100vh-3.5rem)] md:h-[calc(100vh-2.5rem)]">
-        <div
-          className={`w-full md:w-1/2 bg-white dark:bg-surface-darker border-r border-gray-200 dark:border-gray-700 flex flex-col order-1 md:order-1 overflow-hidden transition-all duration-300 ${
-            isMapCollapsed ? "h-[calc(100%-3rem)]" : "h-[60vh]"
-          } md:h-full`}
-        >
+      <div className="flex justify-center h-[calc(100vh-3.5rem)] md:h-[calc(100vh-2.5rem)]">
+        <div className="w-full max-w-3xl bg-white dark:bg-surface-darker border-x border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
           <ShopForm
             initialData={initialData}
             mode={initialData ? "edit" : "add"}
@@ -124,47 +117,6 @@ const AddEditShop = () => {
             onDelete={handleDeleteShop}
             onNavigateToMap={() => navigate("/")}
           />
-        </div>
-
-        <div
-          className={`w-full md:w-1/2 relative order-2 md:order-2 transition-all duration-300 ${
-            isMapCollapsed ? "h-12" : "h-[40vh]"
-          } md:h-full`}
-        >
-          {/* Mobile Collapse Notch */}
-          <button
-            onClick={() => setIsMapCollapsed(!isMapCollapsed)}
-            className="md:hidden absolute top-0 left-0 right-0 z-10 bg-white dark:bg-surface-darker border-b border-gray-200 dark:border-gray-700 h-12 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex flex-col items-center gap-1">
-              {isMapCollapsed ? (
-                <>
-                  <HiChevronUp className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Show Map
-                  </span>
-                </>
-              ) : (
-                <>
-                  <HiChevronDown className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Hide Map
-                  </span>
-                </>
-              )}
-            </div>
-          </button>
-
-          {/* Map Content */}
-          <div
-            className={`h-full ${isMapCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"} transition-opacity duration-300 md:opacity-100 md:pointer-events-auto`}
-          >
-            <ShopForm
-              initialData={initialData}
-              mode={initialData ? "edit" : "add"}
-              layoutMode="map-section"
-            />
-          </div>
         </div>
       </div>
     </div>

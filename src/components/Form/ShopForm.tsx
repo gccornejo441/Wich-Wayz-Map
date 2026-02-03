@@ -1,18 +1,13 @@
 import Select, { GroupBase, MultiValue, StylesConfig } from "react-select";
 import { InputMask } from "@react-input/mask";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { HiTrash, HiMap, HiSave } from "react-icons/hi";
 
 import { useAddShopForm } from "@/hooks/useAddShopForm";
-import {
-  normalizeZip,
-  normalizeState,
-  coerceNumber,
-} from "@/utils/normalizers";
+import { coerceNumber } from "@/utils/normalizers";
 import { useTheme } from "@hooks/useTheme";
 import AddCategoryModal from "../Modal/AddCategoryModal";
-import MapPreview from "../Map/MapPreview";
 
 import { AddAShopPayload, LocationStatus } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
@@ -61,10 +56,8 @@ type ShopFormProps = {
   };
   mode: "add" | "edit";
   layoutMode?: "map-section" | "form-section";
-  onPrefillSuccess?: () => void;
   onDelete?: () => void;
   onNavigateToMap?: () => void;
-  debugCaller?: string; // Debug: Track where ShopForm is rendered from
 };
 
 interface CategoryOption {
@@ -158,10 +151,8 @@ const ShopForm = ({
   initialData,
   mode,
   layoutMode,
-  onPrefillSuccess,
   onDelete,
   onNavigateToMap,
-  debugCaller,
 }: ShopFormProps) => {
   const {
     register,
@@ -200,8 +191,6 @@ const ShopForm = ({
     AddressSuggestion["parsedData"] | null
   >(null);
 
-  const [prefillFlyToNonce, setPrefillFlyToNonce] = useState(0);
-
   const watchedFields = useWatch({
     control,
     name: [
@@ -229,8 +218,6 @@ const ShopForm = ({
 
   const commitParsedAddress = (parsed: AddressSuggestion["parsedData"]) => {
     applyParsedAddressToForm(parsed);
-    setPrefillFlyToNonce((n) => n + 1);
-    onPrefillSuccess?.();
   };
 
   useEffect(() => {
@@ -354,74 +341,7 @@ const ShopForm = ({
     setPendingParsedAddress(null);
   };
 
-  const handleAddressUpdate = (
-    next: AddressDraft | ((prev: AddressDraft) => AddressDraft),
-  ) => {
-    const updated = typeof next === "function" ? next(derivedAddress) : next;
-
-    if (
-      updated.streetAddress !== derivedAddress.streetAddress &&
-      updated.streetAddress
-    ) {
-      setValue("address", updated.streetAddress, { shouldValidate: true });
-    }
-    if (updated.streetAddressSecond !== derivedAddress.streetAddressSecond) {
-      setValue("address_second", updated.streetAddressSecond, {
-        shouldValidate: true,
-      });
-    }
-    if (updated.city !== derivedAddress.city && updated.city) {
-      setValue("city", updated.city, { shouldValidate: true });
-    }
-    if (updated.state !== derivedAddress.state && updated.state) {
-      const normalized = normalizeState(updated.state);
-      setValue("state", normalized, { shouldValidate: true });
-    }
-    if (
-      updated.postalCode !== derivedAddress.postalCode &&
-      updated.postalCode
-    ) {
-      const normalized = normalizeZip(updated.postalCode);
-      setValue("postcode", normalized, { shouldValidate: true });
-    }
-    if (updated.country !== derivedAddress.country && updated.country) {
-      setValue("country", updated.country, { shouldValidate: true });
-    }
-    if (updated.latitude !== derivedAddress.latitude) {
-      const lat = coerceNumber(updated.latitude);
-      setValue("latitude", lat, { shouldValidate: true });
-    }
-    if (updated.longitude !== derivedAddress.longitude) {
-      const lon = coerceNumber(updated.longitude);
-      setValue("longitude", lon, { shouldValidate: true });
-    }
-  };
-
-  const fullAddressForMaps = [
-    derivedAddress.streetAddress,
-    derivedAddress.city,
-    derivedAddress.state,
-    derivedAddress.postalCode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
   const canSubmit = isAddressValid && !errors.shopName && !errors.address;
-
-  if (layoutMode === "map-section") {
-    return (
-      <div className="w-full h-full border-t-[1px] border-gray-200">
-        {typeof window !== "undefined" && (
-          <MapPreview
-            address={derivedAddress}
-            fullAddressForMaps={fullAddressForMaps}
-            onAddressUpdate={handleAddressUpdate}
-            prefillFlyToNonce={prefillFlyToNonce}
-          />
-        )}
-      </div>
-    );
-  }
 
   if (layoutMode === "form-section") {
     const isAdmin = userMetadata?.role === "admin";
@@ -798,8 +718,8 @@ const ShopForm = ({
 
                   {addressLookupState === "suggestions" &&
                     addressSuggestions.length > 0 && (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-2 space-y-1">
-                        <p className="text-xs font-medium mb-1">
+                      <div className="bg-surface-muted dark:bg-surface-darker border border-gray-300 dark:border-gray-600 rounded p-2 space-y-1">
+                        <p className="text-xs font-medium mb-1 text-text-base dark:text-text-inverted">
                           Found {addressSuggestions.length} - Select one:
                         </p>
                         {addressSuggestions.map((suggestion, index) => (
@@ -807,7 +727,7 @@ const ShopForm = ({
                             key={index}
                             type="button"
                             onClick={() => handleSelectSuggestion(suggestion)}
-                            className="w-full text-left px-2 py-1.5 rounded bg-white dark:bg-surface-darker hover:bg-brand-primary/10 text-xs"
+                            className="w-full text-left px-2 py-1.5 rounded bg-white dark:bg-surface-dark hover:bg-brand-primary/10 dark:hover:bg-brand-primary/20 text-xs text-text-base dark:text-text-inverted transition-colors"
                           >
                             {suggestion.formattedAddress}
                           </button>
@@ -815,7 +735,7 @@ const ShopForm = ({
                         <button
                           type="button"
                           onClick={handleDismissSearch}
-                          className="text-xs text-brand-primary underline"
+                          className="text-xs text-brand-primary hover:text-brand-secondary underline transition-colors"
                         >
                           Cancel
                         </button>
@@ -825,20 +745,20 @@ const ShopForm = ({
                   {addressLookupState === "success" &&
                     !addressLocked &&
                     lookupMessage && (
-                      <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-l-brand-primary rounded p-2">
-                        <p className="text-xs mb-2">Found: {lookupMessage}</p>
+                      <div className="bg-surface-muted dark:bg-surface-darker border-l-4 border-l-brand-primary rounded p-2">
+                        <p className="text-xs mb-2 text-text-base dark:text-text-inverted">Found: {lookupMessage}</p>
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={handleConfirmAddress}
-                            className="px-3 py-1.5 bg-brand-primary text-white rounded text-xs hover:bg-brand-secondary"
+                            className="px-3 py-1.5 bg-brand-primary text-white rounded text-xs hover:bg-brand-secondary hover:text-text-base transition-colors"
                           >
                             Use This Address
                           </button>
                           <button
                             type="button"
                             onClick={handleDismissSearch}
-                            className="text-xs text-brand-primary underline"
+                            className="text-xs text-brand-primary hover:text-brand-secondary underline transition-colors"
                           >
                             Edit Manually
                           </button>
