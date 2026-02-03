@@ -107,9 +107,9 @@ const AddEditShop = () => {
   };
 
   return (
-    <div className="fixed inset-0 pt-[50px] md:pt-10 bg-surface-light dark:bg-surface-dark">
-      <div className="flex justify-center h-[calc(100vh-3.5rem)] md:h-[calc(100vh-2.5rem)]">
-        <div className="w-full max-w-3xl bg-white dark:bg-surface-darker border-x border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+    <div className="min-h-[100dvh] pt-[50px] md:pt-10 bg-surface-light dark:bg-surface-dark pb-[env(safe-area-inset-bottom)]">
+      <div className="flex justify-center">
+        <div className="w-full max-w-3xl bg-white dark:bg-surface-darker border-x border-gray-200 dark:border-gray-700">
           <ShopForm
             initialData={initialData}
             mode={initialData ? "edit" : "add"}

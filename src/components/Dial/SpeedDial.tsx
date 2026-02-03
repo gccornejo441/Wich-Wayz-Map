@@ -68,9 +68,9 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
   };
 
   return (
-    <div className="fixed bottom-6 right-3 z-50 group">
+    <div className="fixed bottom-6 right-3 z-50 group pointer-events-none">
       <div
-        className={`flex flex-col justify-end px-1 ${
+        className={`flex flex-col justify-end px-1 pointer-events-auto ${
           isOpen
             ? "opacity-100 scale-100 translate-y-0"
             : "opacity-0 scale-95 translate-y-4"
@@ -123,7 +123,7 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
         onClick={toggleMenu}
         aria-controls="speed-dial-menu-dropdown"
         aria-expanded={isOpen}
-        className="flex items-center justify-center ml-auto text-white bg-brand-primary dark:bg-surface-darker rounded-full w-14 h-14 focus:ring-4 focus:outline-none focus:ring-brand-primary/50 dark:focus:ring-surface-dark/50"
+        className="flex items-center justify-center ml-auto text-white bg-brand-primary dark:bg-surface-darker rounded-full w-14 h-14 focus:ring-4 focus:outline-none focus:ring-brand-primary/50 dark:focus:ring-surface-dark/50 pointer-events-auto touch-manipulation"
       >
         <HiOutlineDotsHorizontal className="w-6 h-6" aria-hidden="true" />
         <span className="sr-only">Open actions menu</span>

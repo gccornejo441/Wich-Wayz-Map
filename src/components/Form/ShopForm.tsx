@@ -349,7 +349,7 @@ const ShopForm = ({
     return (
       <form
         onSubmit={handleSubmit(handleFormSubmit)}
-        className="flex flex-col h-full border-t-[1px] border-gray-200 dark:border-gray-700"
+        className="flex flex-col border-t-[1px] border-gray-200 dark:border-gray-700"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-darker">
           <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
@@ -403,7 +403,7 @@ const ShopForm = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="p-4 space-y-6">
           <div>
             <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
               Basics
