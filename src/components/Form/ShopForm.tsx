@@ -163,27 +163,6 @@ const ShopForm = ({
   onNavigateToMap,
   debugCaller,
 }: ShopFormProps) => {
-  // Debug: Track instance ID
-  const instanceId = useRef(Math.random().toString(16).slice(2));
-  
-  // Debug: Log mount/unmount
-  useEffect(() => {
-    const id = instanceId.current;
-    const caller = debugCaller;
-    // eslint-disable-next-line no-console
-    console.log(`[ShopForm ${id}]${caller ? ` (${caller})` : ''} mounted`, { layoutMode });
-    // eslint-disable-next-line no-console
-    return () => console.log(`[ShopForm ${id}]${caller ? ` (${caller})` : ''} unmounted`);
-  }, [layoutMode, debugCaller]);
-
-  // Debug: Stack trace to see where ShopForm is being rendered from
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.log(`[ShopForm ${instanceId.current}]${debugCaller ? ` (${debugCaller})` : ''} render`, { layoutMode });
-    // eslint-disable-next-line no-console
-    console.trace(`[ShopForm ${instanceId.current}] render trace`);
-  }
-  
   const {
     register,
     handleSubmit,
@@ -429,13 +408,7 @@ const ShopForm = ({
 
   const canSubmit = isAddressValid && !errors.shopName && !errors.address;
 
-  // Debug: Log layoutMode decision with instance ID
-  // eslint-disable-next-line no-console
-  console.log(`[ShopForm ${instanceId.current}] layoutMode =`, layoutMode);
-
   if (layoutMode === "map-section") {
-    // eslint-disable-next-line no-console
-    console.log(`[ShopForm ${instanceId.current}] rendering map-section; will render MapPreview =`, typeof window !== "undefined");
     return (
       <div className="w-full h-full border-t-[1px] border-gray-200">
         {typeof window !== "undefined" && (
