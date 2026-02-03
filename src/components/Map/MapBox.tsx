@@ -19,7 +19,7 @@ import {
   type ShopFeatureCollection,
   type ShopGeoJsonProperties,
 } from "@utils/shopGeoJson";
-import SpeedDial from "../Dial/SpeedDial";
+// import SpeedDial from "../Dial/SpeedDial";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
@@ -775,11 +775,11 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
 
-      <SpeedDial
+      {/* <SpeedDial
         onLocateUser={() => {
           window.dispatchEvent(new Event("locateUser"));
         }}
-      />
+      /> */}
     </div>
   );
 };
