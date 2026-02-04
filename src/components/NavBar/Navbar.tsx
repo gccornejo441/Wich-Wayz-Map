@@ -1,16 +1,8 @@
 import Logo from "../Logo/Logo";
 import { Link } from "react-router-dom";
-import UserAvatar from "../Avatar/UserAvatar";
-import { Dropdown } from "flowbite-react";
-import { useAuth } from "../../context/authContext";
-import { HiLogin, HiLogout, HiUserAdd, HiKey } from "react-icons/hi";
-import { useNavigate } from "react-router";
-import { createPaymentLink } from "../../services/stripe";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
-import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
-import { useModal } from "../../context/modalContext";
 import { useOverlay } from "@/context/overlayContext";
 
 interface NavBarProps {
@@ -20,46 +12,11 @@ interface NavBarProps {
 }
 
 const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
-  const { isAuthenticated, logout, userMetadata } = useAuth();
-  const navigate = useNavigate();
-  const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
-  const { openLoginModal, openSignupModal } = useModal();
   const { isOpen } = useOverlay();
 
   const shouldShowSearch = showSearchBar && searchBar;
   const shouldShowSearchMobile = shouldShowSearch && !isOpen("nearby") && !isOpen("saved");
-
-  const handleAuthAction = () => {
-    if (isAuthenticated) {
-      logout();
-      addToast("You have been logged out successfully.", "success");
-    } else {
-      addToast("Sign in to continue.", "info");
-      openLoginModal();
-    }
-  };
-
-  const handleSignup = async () => {
-    if (isAuthenticated) {
-      try {
-        const paymentLink = await createPaymentLink(
-          userMetadata?.id,
-          userMetadata?.email,
-        );
-        window.location.href = paymentLink;
-      } catch (error) {
-        addToast("Failed to create payment link. Please try again.", "error");
-        console.error("Error creating payment link:", error);
-      }
-    } else {
-      openSignupModal();
-    }
-  };
-
-  const handleAdminSettings = () => {
-    navigate(ROUTES.ACCOUNT.ADMIN_SETTINGS);
-  };
 
   return (
     <nav
@@ -78,90 +35,15 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
           </div>
 
           {shouldShowSearch && (
-            <div className="hidden md:flex w-1/2">
-              <SearchBar navRef={navRef} />
+            <div className="hidden md:flex flex-1 justify-center mx-4">
+              <div className="w-full max-w-2xl">
+                <SearchBar navRef={navRef} />
+              </div>
             </div>
           )}
 
-          <div className="flex items-center gap-4 z-20">
-            <Dropdown
-              arrowIcon={false}
-              inline={true}
-              label={
-                <div className="cursor-pointer">
-                  <UserAvatar
-                    avatarId={userMetadata?.avatar || "default"}
-                    userEmail={userMetadata?.email || "guest@example.com"}
-                    size="md"
-                  />
-                </div>
-              }
-              className="p-1 rounded-lg shadow-lg bg-white dark:bg-surface-darker border border-surface-muted dark:border-gray-700 text-sm"
-            >
-              {isAuthenticated ? (
-                <>
-                  <Dropdown.Header className="px-4 py-2 text-sm text-gray-700 dark:text-white">
-                    <span className="block font-semibold text-base text-accent dark:text-brand-secondary">
-                      {userMetadata?.username}
-                    </span>
-                    <span className="block truncate text-sm text-text-base dark:text-text-inverted">
-                      {userMetadata?.email}
-                    </span>
-                  </Dropdown.Header>
-
-                  {userMetadata?.verified &&
-                    userMetadata?.membershipStatus !== "member" && (
-                      <Dropdown.Item
-                        icon={HiUserAdd}
-                        onClick={handleSignup}
-                        className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
-                      >
-                        Become a Club Member
-                      </Dropdown.Item>
-                    )}
-
-                  <Dropdown.Divider />
-                  {userMetadata?.role === "admin" && (
-                    <Dropdown.Item
-                      icon={HiKey}
-                      onClick={handleAdminSettings}
-                      className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
-                    >
-                      Admin Settings
-                    </Dropdown.Item>
-                  )}
-                  <Dropdown.Item
-                    icon={HiLogout}
-                    onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
-                  >
-                    Sign Out
-                  </Dropdown.Item>
-                </>
-              ) : (
-                <>
-                  <Dropdown.Item
-                    icon={HiLogin}
-                    onClick={handleAuthAction}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
-                  >
-                    Sign In
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    icon={HiUserAdd}
-                    onClick={handleSignup}
-                    className="flex items-center gap-4 px-4 py-2 text-gray-700 dark:text-white hover:text-white hover:bg-brand-primary hover:bg-white/20 focus:ring-white/20 cursor-pointer rounded-lg transition duration-300 ease-in-out"
-                  >
-                    Register
-                  </Dropdown.Item>
-                  <Dropdown.Divider />
-                  <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
-                    Guest
-                  </div>
-                </>
-              )}
-            </Dropdown>
-          </div>
+          {/* Empty div for layout balance */}
+          <div className="w-0" />
         </div>
       </div>
 
