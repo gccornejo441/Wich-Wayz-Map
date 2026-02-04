@@ -5,12 +5,10 @@ import NavBar from "../NavBar/Navbar";
 import { useModal } from "../../context/modalContext";
 import UpdateShop from "../Modal/UpdateShop";
 import AuthModal from "../Modal/AuthModal";
-import { useShopSidebar } from "@/context/ShopSidebarContext";
 import MapSidebar from "../Sidebar/MapSidebar";
-import { useSidebar } from "@/context/sidebarContext";
 import NearbySidebar from "../Sidebar/NearbySidebar";
 import SavedSidebar from "../Sidebar/SavedSidebar";
-import { useSaved } from "@context/savedContext";
+import { useOverlay } from "@/context/overlayContext";
 
 interface AppLayoutProps {
   fullBleed?: boolean;
@@ -18,66 +16,58 @@ interface AppLayoutProps {
 
 const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   const { currentModal } = useModal();
-  const { sidebarOpen: mapSidebarOpen, closeSidebar: closeMapSidebar } =
-    useShopSidebar();
 
-  const { isOpen: isSidebarOpen, closeSidebar, toggleSidebar } = useSidebar();
-  const { savedSidebarOpen, setSavedSidebarOpen } = useSaved();
+  const { isOpen, closeActive, toggle } = useOverlay();
+
+  const isSidebarOpen = isOpen("nav");
+  const isShopOpen = isOpen("shop");
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  // Handler for sidebar toggle button - closes MapSidebar and opens main Sidebar if MapSidebar is open
   const handleToggleSidebar = () => {
-    if (mapSidebarOpen) {
-      closeMapSidebar();
-      if (!isSidebarOpen) {
-        toggleSidebar();
-      }
-    } else {
-      toggleSidebar();
-    }
+    toggle("nav");
   };
 
+  // Close any open panel with Escape key
   useEffect(() => {
-    if (savedSidebarOpen) {
-      closeSidebar();
-    }
-  }, [savedSidebarOpen, closeSidebar]);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeActive();
+      }
+    };
 
-  useEffect(() => {
-    if (mapSidebarOpen && savedSidebarOpen) {
-      setSavedSidebarOpen(false);
-    }
-  }, [mapSidebarOpen, savedSidebarOpen, setSavedSidebarOpen]);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [closeActive]);
 
+  // Click outside to close any open panel
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         sidebarRef.current &&
         !sidebarRef.current.contains(event.target as Node)
       ) {
-        closeSidebar();
+        closeActive();
       }
     };
 
-    if (isSidebarOpen) {
+    const anyPanelOpen = isOpen("nav") || isOpen("nearby") || isOpen("saved") || isOpen("shop");
+    if (anyPanelOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSidebarOpen, closeSidebar]);
+  }, [isOpen, closeActive]);
 
   return (
     <div className="relative min-h-[100dvh] overflow-x-hidden bg-gray-100 dark:bg-surface-dark transition-colors duration-500">
       <div ref={sidebarRef} className="relative z-20">
         <NavBar
           onToggleSidebar={handleToggleSidebar}
-          searchBar={!isSidebarOpen && !mapSidebarOpen}
+          searchBar={!isSidebarOpen && !isShopOpen}
           navRef={navRef}
         />
         <Sidebar />

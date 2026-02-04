@@ -6,10 +6,8 @@ import { FiCompass } from "react-icons/fi";
 import { ROUTES, useRouteCheck } from "../../constants/routes";
 import { ReactNode, useMemo } from "react";
 import { BsFillAwardFill } from "react-icons/bs";
-import { useSidebar } from "@/context/sidebarContext";
-import { useMap } from "@context/mapContext";
-import { useSaved } from "@context/savedContext";
 import { FiBookmark } from "react-icons/fi";
+import { useOverlay } from "@/context/overlayContext";
 
 export interface BaseItemProps {
   onClick?: () => void;
@@ -30,7 +28,7 @@ export const SidebarItem = ({
   badge,
   external,
 }: BaseItemProps) => {
-  const { closeSidebar } = useSidebar();
+  const { close } = useOverlay();
   const location = useLocation();
 
   const resolvedLinkTo = useMemo(() => {
@@ -49,7 +47,7 @@ export const SidebarItem = ({
       return;
     }
 
-    closeSidebar();
+    close("nav");
     onClick?.();
   };
 
@@ -102,9 +100,7 @@ export const SidebarItem = ({
 
 const Sidebar = () => {
   const { showAddShop, showUserProfile, showMap } = useRouteCheck(ROUTES);
-  const { isOpen, toggleSidebar } = useSidebar();
-  const { isNearbyOpen, setIsNearbyOpen } = useMap();
-  const { setSavedSidebarOpen } = useSaved();
+  const { isOpen, toggle } = useOverlay();
 
   const { isAuthenticated, user } = useAuth();
   const isMember = isAuthenticated && user?.emailVerified;
@@ -117,7 +113,7 @@ const Sidebar = () => {
         text-white dark:text-text-inverted
         dark:border-r dark:border-gray-700
         transition-all duration-500 ease-in-out transform ${
-          isOpen
+          isOpen("nav")
             ? "translate-x-0 opacity-100 shadow-2xl pointer-events-auto"
             : "-translate-x-full opacity-0 shadow-none pointer-events-none"
         }`}
@@ -148,10 +144,9 @@ const Sidebar = () => {
             <li>
               <SidebarItem
                 icon={<FiCompass className="w-6 h-6 text-white" />}
-                text={isNearbyOpen ? "Close Nearby" : "Nearby"}
+                text={isOpen("nearby") ? "Close Nearby" : "Nearby"}
                 onClick={() => {
-                  setIsNearbyOpen((prev) => !prev);
-                  toggleSidebar();
+                  toggle("nearby");
                 }}
               />
             </li>
@@ -185,10 +180,9 @@ const Sidebar = () => {
           <li>
             <SidebarItem
               icon={<FiBookmark className="w-6 h-6 text-white" />}
-              text="Saved"
+              text={isOpen("saved") ? "Close Saved" : "Saved"}
               onClick={() => {
-                setSavedSidebarOpen(true);
-                toggleSidebar();
+                toggle("saved");
               }}
             />
           </li>

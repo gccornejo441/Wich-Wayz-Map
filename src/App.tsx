@@ -7,31 +7,31 @@ import { ToastProvider } from "./context/toastContext";
 import { VoteProvider } from "./context/voteContext";
 import { UserLeaderboardProvider } from "./context/userLeaderboardContext";
 import { ShopSidebarProvider } from "./context/ShopSidebarContext";
-import { SidebarProvider } from "./context/sidebarContext";
 import { SavedProvider } from "./context/savedContext";
+import { OverlayProvider } from "./context/overlayContext";
 
 function App() {
   return (
     <Router>
-      <MapProvider>
+      <OverlayProvider>
+        <MapProvider>
         <ToastProvider>
           <ModalProvider>
             <VoteProvider>
               <UserLeaderboardProvider>
                 <ShopSidebarProvider>
                   <SavedProvider>
-                    <SidebarProvider>
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <MainRoutes />
-                      </Suspense>
-                    </SidebarProvider>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <MainRoutes />
+                    </Suspense>
                   </SavedProvider>
                 </ShopSidebarProvider>
               </UserLeaderboardProvider>
             </VoteProvider>
           </ModalProvider>
         </ToastProvider>
-      </MapProvider>
+        </MapProvider>
+      </OverlayProvider>
     </Router>
   );
 }

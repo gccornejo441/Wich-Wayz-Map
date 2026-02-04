@@ -10,6 +10,7 @@ import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@context/authContext";
 import { useMap } from "@context/mapContext";
+import { useOverlay } from "@/context/overlayContext";
 import { parseDeepLink } from "@utils/deepLink";
 import { buildCityStateZip } from "@utils/address";
 import { loadMapViewPrefs, saveMapViewPrefs } from "@utils/mapViewPrefs";
@@ -197,7 +198,7 @@ type MapBoxProps = {
 
 const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
-  const { openSidebar, selectShopById, selectedShop, sidebarOpen } =
+  const { openSidebar, selectShopById, selectedShop } =
     useShopSidebar();
   const { theme } = useTheme();
   const { userMetadata } = useAuth();
@@ -206,11 +207,14 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     setUserPosition: setUserPositionInContext,
     setPendingCenterCoords,
     hoveredLocationId,
-    setIsNearbyOpen,
     setCenter: setContextCenter,
     setZoom: setContextZoom,
   } = useMap();
+  const { isOpen, close } = useOverlay();
   const location = useLocation();
+
+  // Derive stable overlay states for effect dependencies
+  const shopOpen = isOpen("shop");
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -376,7 +380,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
         if (!props) return;
 
         closeHoverPopup();
-        setIsNearbyOpen(false);
+        close("nearby");
         openSidebarRef.current(props, userPositionRef.current);
       });
 
@@ -441,11 +445,10 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     shopGeoJsonRef,
     userPositionRef,
     theme,
-    setContextCenter,
-    setContextZoom,
-    setPendingCenterCoords,
-    setIsNearbyOpen,
-    hoveredLocationIdRef,
+      setContextCenter,
+      setContextZoom,
+      setPendingCenterCoords,
+      hoveredLocationIdRef,
     initialPrefs,
   ]);
 
@@ -511,7 +514,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
-    if (!sidebarOpen || !selectedShop) {
+    
+    // Only show popup when shop panel is actually open
+    if (!shopOpen || !selectedShop) {
       selectedPopupRef.current?.remove();
       selectedPopupRef.current = null;
       return;
@@ -546,7 +551,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     } else {
       selectedPopupRef.current.setLngLat([lng, lat]).setHTML(html);
     }
-  }, [sidebarOpen, selectedShop, mapLoaded]);
+  }, [shopOpen, selectedShop, mapLoaded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -583,14 +588,14 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       zoom: zoomValue,
       essential: true,
     });
-    setIsNearbyOpen(false);
+    close("nearby");
 
     if (typeof shopId === "number" && Number.isFinite(shopId)) {
       selectShopByIdRef.current(shopId, [lng, lat]).catch((error) => {
         console.error("Deep-link navigation failed:", error);
       });
     }
-  }, [location.search, mapLoaded, selectShopByIdRef, setIsNearbyOpen]);
+  }, [location.search, mapLoaded, selectShopByIdRef, close]);
 
   useEffect(() => {
     const map = mapRef.current;

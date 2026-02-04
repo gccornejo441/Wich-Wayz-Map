@@ -10,6 +10,7 @@ import { useSaved } from "@context/savedContext";
 import { useShops } from "@context/shopContext";
 import { useMap } from "@context/mapContext";
 import { useShopSidebar } from "@context/ShopSidebarContext";
+import { useOverlay } from "@/context/overlayContext";
 import { distanceMiles } from "@utils/geo";
 import {
   buildShopGeoJson,
@@ -57,8 +58,6 @@ type ListItem = {
 
 const SavedSidebar = () => {
   const {
-    savedSidebarOpen,
-    setSavedSidebarOpen,
     savedFilterMode,
     setSavedFilterMode,
     radiusMiles,
@@ -72,6 +71,11 @@ const SavedSidebar = () => {
     setActiveCollectionId,
   } = useSaved();
 
+  const { isOpen, close } = useOverlay();
+
+  // Derive stable overlay states for effect dependencies
+  const savedOpen = isOpen("saved");
+
   const { shops } = useShops();
   const {
     center,
@@ -80,20 +84,18 @@ const SavedSidebar = () => {
     flyToLocation,
     setHoveredLocationId,
   } = useMap();
-  const { openSidebar, closeSidebar } = useShopSidebar();
+  const { openSidebar } = useShopSidebar();
 
   const [anchorCoords, setAnchorCoords] = useState<[number, number] | null>(
     null,
   );
 
-  // Close map sidebar when Saved opens
+  // Clear hovered location when Saved closes
   useEffect(() => {
-    if (savedSidebarOpen) {
-      closeSidebar();
-    } else {
+    if (!savedOpen) {
       setHoveredLocationId(null);
     }
-  }, [savedSidebarOpen, closeSidebar, setHoveredLocationId]);
+  }, [savedOpen, setHoveredLocationId]);
 
   useEffect(() => {
     if (anchorMode === "mapCenter" && center && !anchorCoords) {
@@ -252,7 +254,7 @@ const SavedSidebar = () => {
   return (
     <aside
       className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
-        savedSidebarOpen
+        savedOpen
           ? "translate-x-0 shadow-2xl"
           : "-translate-x-full shadow-none"
       }`}
@@ -265,7 +267,7 @@ const SavedSidebar = () => {
         </div>
         <button
           type="button"
-          onClick={() => setSavedSidebarOpen(false)}
+          onClick={() => close("saved")}
           className="p-2 rounded-lg hover:bg-surface-muted dark:hover:bg-surface-darker text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
           aria-label="Close saved panel"
         >
@@ -451,7 +453,7 @@ const SavedSidebar = () => {
                           : null,
                       );
                     }
-                    setSavedSidebarOpen(false);
+                    close("saved");
                     setHoveredLocationId(null);
                   }}
                 >

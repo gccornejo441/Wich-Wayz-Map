@@ -1,6 +1,7 @@
 import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { useState, createContext, useContext, useEffect } from "react";
 import { fetchShopById } from "@services/shopService";
+import { useOverlay } from "./overlayContext";
 
 type Coordinates = [number, number];
 
@@ -35,12 +36,15 @@ export const ShopSidebarProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const { isOpen, open, close } = useOverlay();
+  
   const [selectedShop, setSelectedShop] =
     useState<ShopGeoJsonProperties | null>(null);
   const [position, setPosition] = useState<Coordinates | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedShops, setSavedShops] = useState<ShopGeoJsonProperties[]>([]);
   const [shopListOpen, setShopListOpen] = useState(false);
+
+  const sidebarOpen = isOpen("shop");
 
   const openShopList = () => setShopListOpen(true);
   const closeShopList = () => setShopListOpen(false);
@@ -66,12 +70,12 @@ export const ShopSidebarProvider = ({
   ) => {
     setSelectedShop(shop);
     if (pos) setPosition(pos);
-    setSidebarOpen(true);
+    open("shop");
   };
 
   const closeSidebar = () => {
     setSelectedShop(null);
-    setSidebarOpen(false);
+    close("shop");
   };
 
   /**
@@ -80,7 +84,7 @@ export const ShopSidebarProvider = ({
    */
   const selectShop = (shop: ShopGeoJsonProperties) => {
     setSelectedShop(shop);
-    setSidebarOpen(true);
+    open("shop");
   };
 
   const addSavedShop = (shop: ShopGeoJsonProperties) => {

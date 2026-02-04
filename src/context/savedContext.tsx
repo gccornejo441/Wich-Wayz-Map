@@ -31,11 +31,9 @@ type SavedContextType = {
   savedItems: SavedShopItem[];
   collections: Collection[];
   activeCollectionId: number | null;
-  savedSidebarOpen: boolean;
   savedFilterMode: SavedFilterMode;
   radiusMiles: number;
   anchorMode: AnchorMode;
-  setSavedSidebarOpen: (open: boolean) => void;
   setSavedFilterMode: (mode: SavedFilterMode) => void;
   setRadiusMiles: (miles: number) => void;
   setAnchorMode: (mode: AnchorMode) => void;
@@ -68,7 +66,6 @@ type SavedContextType = {
 };
 
 type SavedPrefs = {
-  savedSidebarOpen: boolean;
   savedFilterMode: SavedFilterMode;
   radiusMiles: number;
   anchorMode: AnchorMode;
@@ -105,7 +102,6 @@ const loadPrefs = (): SavedPrefs | null => {
         : null;
 
     return {
-      savedSidebarOpen: !!parsed.savedSidebarOpen,
       savedFilterMode,
       radiusMiles: radius,
       anchorMode,
@@ -135,9 +131,6 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const initialPrefs = useMemo(() => loadPrefs(), []);
 
-  const [savedSidebarOpen, setSavedSidebarOpen] = useState<boolean>(
-    () => initialPrefs?.savedSidebarOpen ?? false,
-  );
   const [savedFilterMode, setSavedFilterMode] = useState<SavedFilterMode>(
     () => initialPrefs?.savedFilterMode ?? "all",
   );
@@ -163,14 +156,12 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     persistPrefs({
-      savedSidebarOpen,
       savedFilterMode,
       radiusMiles,
       anchorMode,
       activeCollectionId,
     });
   }, [
-    savedSidebarOpen,
     savedFilterMode,
     radiusMiles,
     anchorMode,
@@ -212,7 +203,6 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       setSavedItems([]);
       setCollections([]);
-      setSavedSidebarOpen(false);
     }
   }, [isAuthenticated, userId, refreshSaved, refreshCollections]);
 
@@ -376,11 +366,9 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
     savedItems,
     collections,
     activeCollectionId,
-    savedSidebarOpen,
     savedFilterMode,
     radiusMiles,
     anchorMode,
-    setSavedSidebarOpen,
     setSavedFilterMode,
     setRadiusMiles,
     setAnchorMode,

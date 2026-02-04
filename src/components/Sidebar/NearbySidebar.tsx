@@ -10,6 +10,7 @@ import { useMap } from "@context/mapContext";
 import { useShops } from "@context/shopContext";
 import { useShopSidebar } from "@context/ShopSidebarContext";
 import useNearbyFeatures from "@hooks/useNearbyFeatures";
+import { useOverlay } from "@/context/overlayContext";
 import {
   buildShopGeoJson,
   type ShopGeoJsonProperties,
@@ -41,8 +42,6 @@ const NearbySidebar = () => {
   const {
     userPosition,
     flyToLocation,
-    isNearbyOpen,
-    setIsNearbyOpen,
     nearbyMode,
     setNearbyMode,
     nearbyRadiusMiles,
@@ -52,6 +51,11 @@ const NearbySidebar = () => {
     pendingCenterCoords,
     setHoveredLocationId,
   } = useMap();
+
+  const { isOpen, close } = useOverlay();
+
+  // Derive stable overlay states for effect dependencies
+  const nearbyOpen = isOpen("nearby");
 
   const { displayedShops } = useShops();
   const { openSidebar } = useShopSidebar();
@@ -108,7 +112,7 @@ const NearbySidebar = () => {
   return (
     <aside
       className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
-        isNearbyOpen
+        nearbyOpen
           ? "translate-x-0 shadow-2xl"
           : "-translate-x-full shadow-none"
       }`}
@@ -123,7 +127,7 @@ const NearbySidebar = () => {
           type="button"
           onClick={() => {
             setHoveredLocationId(null);
-            setIsNearbyOpen(false);
+            close("nearby");
           }}
           className="p-2 rounded-lg hover:bg-surface-muted dark:hover:bg-surface-darker text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
           aria-label="Close nearby panel"
@@ -247,7 +251,7 @@ const NearbySidebar = () => {
                   onClick={() => {
                     flyToLocation(coords[0], coords[1], 14);
                     openSidebar(props, userPosition);
-                    setIsNearbyOpen(false);
+                    close("nearby");
                     setHoveredLocationId(null);
                   }}
                 >

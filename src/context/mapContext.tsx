@@ -35,9 +35,6 @@ type MapContextType = {
   flyToLocation: (lng: number, lat: number, zoom: number) => void;
   flyToTrigger: FlyToTrigger | null;
 
-  isNearbyOpen: boolean;
-  setIsNearbyOpen: React.Dispatch<React.SetStateAction<boolean>>;
-
   nearbyMode: NearbyMode;
   setNearbyMode: React.Dispatch<React.SetStateAction<NearbyMode>>;
 
@@ -57,7 +54,6 @@ type MapContextType = {
 const MapContext = createContext<MapContextType | undefined>(undefined);
 
 type NearbyPrefs = {
-  isNearbyOpen: boolean;
   nearbyMode: NearbyMode;
   nearbyRadiusMiles: number;
 };
@@ -82,7 +78,6 @@ const loadNearbyPrefs = (): NearbyPrefs | null => {
         : 5;
 
     return {
-      isNearbyOpen: !!parsed.isNearbyOpen,
       nearbyMode: mode,
       nearbyRadiusMiles: radius,
     };
@@ -113,9 +108,6 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [flyToTrigger, setFlyToTrigger] = useState<FlyToTrigger | null>(null);
 
-  const [isNearbyOpen, setIsNearbyOpen] = useState<boolean>(
-    () => initialNearbyPrefs?.isNearbyOpen ?? false,
-  );
   const [nearbyMode, setNearbyMode] = useState<NearbyMode>(
     () => initialNearbyPrefs?.nearbyMode ?? "mapCenter",
   );
@@ -137,8 +129,8 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    saveNearbyPrefs({ isNearbyOpen, nearbyMode, nearbyRadiusMiles });
-  }, [isNearbyOpen, nearbyMode, nearbyRadiusMiles]);
+    saveNearbyPrefs({ nearbyMode, nearbyRadiusMiles });
+  }, [nearbyMode, nearbyRadiusMiles]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -173,8 +165,6 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
         setUserPosition,
         flyToLocation,
         flyToTrigger,
-        isNearbyOpen,
-        setIsNearbyOpen,
         nearbyMode,
         setNearbyMode,
         nearbyRadiusMiles,

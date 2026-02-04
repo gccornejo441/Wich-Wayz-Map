@@ -11,7 +11,7 @@ import { useToast } from "../../context/toastContext";
 import SearchBar from "../Search/SearchBar";
 import { SidebarToggleButton } from "../Sidebar/SidebarButtons";
 import { useModal } from "../../context/modalContext";
-import { useMap } from "@context/mapContext";
+import { useOverlay } from "@/context/overlayContext";
 
 interface NavBarProps {
   searchBar: boolean;
@@ -25,9 +25,10 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { addToast } = useToast();
   const { showSearchBar, showMap } = useRouteCheck(ROUTES);
   const { openLoginModal, openSignupModal } = useModal();
-  const { isNearbyOpen } = useMap();
+  const { isOpen } = useOverlay();
 
-  const shouldShowSearch = showSearchBar && searchBar && !isNearbyOpen;
+  const shouldShowSearch = showSearchBar && searchBar;
+  const shouldShowSearchMobile = shouldShowSearch && !isOpen("nearby") && !isOpen("saved");
 
   const handleAuthAction = () => {
     if (isAuthenticated) {
@@ -164,7 +165,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
         </div>
       </div>
 
-      {shouldShowSearch && (
+      {shouldShowSearchMobile && (
         <div className="flex md:hidden w-full p-2">
           <SearchBar navRef={navRef} />
         </div>
