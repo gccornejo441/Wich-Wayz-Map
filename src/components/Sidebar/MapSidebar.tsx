@@ -36,6 +36,7 @@ import { useModal } from "@/context/modalContext";
 import { ShareLinkModal } from "@/components/Modal/ShareLinkModal";
 import { buildCityStateZip, buildFullAddressForMaps } from "@utils/address";
 import { useSaved } from "@context/savedContext";
+import { useOverlay } from "@/context/overlayContext";
 import CollectionModal from "@/components/Modal/CollectionModal";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
@@ -95,9 +96,9 @@ const MapSidebar = () => {
     savedShopIds,
     toggleSaved,
     refreshCollections,
-    setSavedSidebarOpen,
     setSavedFilterMode,
   } = useSaved();
+  const { open: openOverlay } = useOverlay();
 
   const isMember = isAuthenticated && user?.emailVerified;
 
@@ -334,7 +335,7 @@ const MapSidebar = () => {
     closeSidebar();
     await refreshCollections();
     setIsCollectionModalOpen(true);
-    setSavedSidebarOpen(true);
+    openOverlay("saved");
     setSavedFilterMode("collection");
   };
 
@@ -463,7 +464,7 @@ const MapSidebar = () => {
 
   return (
     <aside
-      className={`fixed top-[48px] left-0 z-30 sm:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted transition-transform duration-500 ease-in-out transform ${
+      className={`fixed top-[48px] left-0 z-30 w-full sm:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted transition-transform duration-500 ease-in-out transform ${
         sidebarOpen
           ? "translate-x-0 shadow-lg pointer-events-auto"
           : "-translate-x-full shadow-none pointer-events-none"
