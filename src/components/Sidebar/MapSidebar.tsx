@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
 import { useShopSidebar } from "@/context/ShopSidebarContext";
 import { useAuth } from "@/context/authContext";
 import { useVote } from "@/context/voteContext";
+import { generateMapLinks } from "@services/mapLinkService";
 import {
   FiArrowLeft,
   FiMapPin,
@@ -434,25 +435,18 @@ const MapSidebar = () => {
 
   const cityStateZip = buildCityStateZip(city, state, zip) || "";
 
-  const hasCoords =
-    typeof selectedShop?.latitude === "number" &&
-    typeof selectedShop?.longitude === "number" &&
-    Number.isFinite(selectedShop.latitude) &&
-    Number.isFinite(selectedShop.longitude);
-
   const fullAddress = buildFullAddressForMaps(street, undefined, city, state, zip);
 
-  const mapsQuery = [safeTrim(selectedShop?.shopName), fullAddress].filter(Boolean).join(" ").trim();
-
-  const googleMapsSearchUrl = mapsQuery.length
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`
-    : "";
-
-  const mapsDestination = hasCoords ? `${selectedShop.latitude},${selectedShop.longitude}` : fullAddress;
-
-  const googleMapsDirectionsUrl = mapsDestination.length
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapsDestination)}`
-    : "";
+  // Generate map URLs using centralized service with performance optimization
+  const { searchUrl: googleMapsSearchUrl, directionsUrl: googleMapsDirectionsUrl } = useMemo(
+    () => generateMapLinks({
+      latitude: selectedShop?.latitude,
+      longitude: selectedShop?.longitude,
+      address: fullAddress,
+      shopName: selectedShop?.shopName,
+    }),
+    [selectedShop?.latitude, selectedShop?.longitude, fullAddress, selectedShop?.shopName]
+  );
 
   const heroImg = selectedShop?.imageUrl || "/sandwich-default.png";
 
