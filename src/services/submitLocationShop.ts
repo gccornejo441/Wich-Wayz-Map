@@ -155,8 +155,6 @@ export function createLocationShopPayload(
   }
 
   const cleanedCity = cleanString(city, "title");
-  const cleanedState = cleanString(state, "title");
-  const cleanedCountry = cleanString(country, "title");
 
   // Schema-compliant payload structure
   // Maps to locations table fields (schema lines 23-40)
@@ -166,8 +164,8 @@ export function createLocationShopPayload(
     address_second: addressSecond, // → street_address_second
     postcode: postcode.trim(), // → postal_code
     city: cleanedCity, // → city
-    state: cleanedState, // → state
-    country: cleanedCountry, // → country
+    state: state.toUpperCase().trim(), // → state (keep uppercase for state codes)
+    country: country.toUpperCase().trim(), // → country (keep uppercase for country codes)
     latitude, // → latitude
     longitude, // → longitude
     phone: addAShopPayload.phone || "", // → phone (optional)

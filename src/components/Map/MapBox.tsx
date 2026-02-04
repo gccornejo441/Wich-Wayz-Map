@@ -164,7 +164,7 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       paint: {
         "circle-color": POINT_COLOR,
         "circle-stroke-color": POINT_STROKE_COLOR,
-        "circle-radius": 8,
+        "circle-radius": 14, // Increased from 8 to 14 for better mobile touch targets (28px diameter)
         "circle-stroke-width": 2,
         "circle-opacity": 0.9,
       },
@@ -184,7 +184,7 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       paint: {
         "circle-color": "#FFC72C",
         "circle-stroke-color": "#111827",
-        "circle-radius": 11,
+        "circle-radius": 18, // Increased from 11 to 18 to maintain proportion with regular markers
         "circle-stroke-width": 3,
         "circle-opacity": 0.95,
       },
