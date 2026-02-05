@@ -23,7 +23,7 @@ const ShopLocationChart = () => {
 
   return (
     <div className="h-96 w-full">
-      <div className="mt-10"></div>
+      <div className="mt-10" />
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

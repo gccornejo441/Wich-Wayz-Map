@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabItem, CustomFlowbiteTheme } from "flowbite-react";
 import { HiAdjustments, HiClipboardList, HiRefresh } from "react-icons/hi";
 import FilterForm from "./FilterForm";
@@ -48,18 +48,18 @@ export function FilterDropdown({
   const [filters, setFilters] = useState<ShopFilters>({});
   const [tab, setTab] = useState("general");
 
-  const updateTop = () => {
+  const updateTop = useCallback(() => {
     if (navRef?.current) {
       setTop(navRef.current.offsetHeight);
     }
-  };
+  }, [navRef]);
 
   useEffect(() => {
     if (open) updateTop();
     const handleResize = () => updateTop();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [open]);
+  }, [open, updateTop]);
 
   const handleReset = () => {
     setFilters({});

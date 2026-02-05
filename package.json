@@ -14,15 +14,22 @@
     "dev:web": "vite --port 3100",
     "dev:vercel": "vercel dev --listen 3001",
     "dev:all": "concurrently -k -n vercel,vite \"vercel dev --listen 3001\" \"npm run dev\"",
+    "prebuild": "npm run lint && npm run test",
     "build": "tsc -b && vite build",
     "start": "vite preview --port 5000",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "analyze": "vite build --mode production && rollup-plugin-visualizer",
+    "validate": "npm run format:check && npm run lint",
+    "ci": "npm run validate && npm run test && npm run build",
+    "ci:quick": "npm run lint && npm run test && npm run build",
     "test-build": "npm run format && npm run lint && npm run build && npm run analyze",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "prepare": "husky install"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,scss,md}": [
@@ -83,6 +90,8 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.2.1",
     "eslint": "^9.13.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.13",
     "globals": "^15.11.0",

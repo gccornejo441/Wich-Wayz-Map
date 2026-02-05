@@ -4,6 +4,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import {
   onAuthStateChanged,
@@ -141,6 +142,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return metadata;
   });
 
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setUserMetadata(null);
+      sessionStorage.removeItem("userMetadata");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  }, []);
+
+  const refreshToken = useCallback(async (): Promise<string | null> => {
+    if (!user) return null;
+
+    try {
+      const token = await user.getIdToken(true);
+      const tokenExpiryTime = Date.now() + 3600 * 1000;
+
+      if (!userMetadata) return null;
+
+      const updatedMetadata: UserMetadata = {
+        ...userMetadata,
+        tokenExpiry: new Date(tokenExpiryTime).toISOString(),
+        id: userMetadata.id || 0,
+      };
+
+      setUserMetadata(updatedMetadata);
+      sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
+
+      if (updatedMetadata.tokenExpiry) {
+        localStorage.setItem("tokenExpiry", updatedMetadata.tokenExpiry);
+      } else {
+        console.error("Token expiry is null; cannot set in localStorage.");
+      }
+      sessionStorage.setItem("token", token);
+
+      return token;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      await logout();
+      return null;
+    }
+  }, [user, userMetadata, logout]);
+
   useEffect(() => {
     const refreshAuthToken = async () => {
       if (!user || !userMetadata) {
@@ -168,7 +213,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return () => {
       clearInterval(interval);
     };
-  }, [user, userMetadata]);
+  }, [user, userMetadata, refreshToken]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -292,17 +337,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         success: false,
         message: "Something went wrong. Please try again later.",
       };
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      setUserMetadata(null);
-      sessionStorage.removeItem("userMetadata");
-    } catch (error) {
-      console.error("Error during logout:", error);
     }
   };
 
@@ -478,39 +512,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           ? error.message
           : "An unexpected error occurred. Please try again.";
       return { success: false, message };
-    }
-  };
-
-  const refreshToken = async (): Promise<string | null> => {
-    if (!user) return null;
-
-    try {
-      const token = await user.getIdToken(true);
-      const tokenExpiryTime = Date.now() + 3600 * 1000;
-
-      if (!userMetadata) return null;
-
-      const updatedMetadata: UserMetadata = {
-        ...userMetadata,
-        tokenExpiry: new Date(tokenExpiryTime).toISOString(),
-        id: userMetadata.id || 0,
-      };
-
-      setUserMetadata(updatedMetadata);
-      sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
-
-      if (updatedMetadata.tokenExpiry) {
-        localStorage.setItem("tokenExpiry", updatedMetadata.tokenExpiry);
-      } else {
-        console.error("Token expiry is null; cannot set in localStorage.");
-      }
-      sessionStorage.setItem("token", token);
-
-      return token;
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-      logout();
-      return null;
     }
   };
 
