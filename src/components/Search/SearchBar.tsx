@@ -26,7 +26,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const [filters, setFilters] = useState<ShopFilters>({});
 
   const { addToast } = useToast();
-  const { setShopId, setUserInteracted, flyToLocation } = useMap();
+  const { center, setShopId, setUserInteracted, flyToLocation } = useMap();
   const { applyFilters } = useShops();
   const { openSidebar } = useShopSidebar();
 
@@ -52,11 +52,30 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     }
 
     debounceTimer.current = window.setTimeout(async () => {
+      // Build search options with geo-bias if map center available
+      const searchOptions: {
+        limit: number;
+        minQueryLength: number;
+        geo?: { center: [number, number]; radiusKm: number; weight: number };
+      } = {
+        limit: SUGGESTION_LIMIT,
+        minQueryLength: MIN_QUERY_LEN,
+      };
+
+      // Add geo-bias using map center for relevance ranking
+      if (center && Array.isArray(center) && center.length === 2) {
+        searchOptions.geo = {
+          center: center as [number, number],
+          radiusKm: 25,
+          weight: 0.15,
+        };
+      }
+
       const results = await SearchShops(
         trimmed,
         { ...appliedFilters, search: trimmed },
         false,
-        { limit: SUGGESTION_LIMIT, minQueryLength: MIN_QUERY_LEN },
+        searchOptions,
       );
 
       if (seq === requestSeq.current) {
@@ -150,11 +169,28 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
     await applyFilters(shops);
 
     if (search.trim().length >= MIN_QUERY_LEN) {
+      const searchOptions: {
+        limit: number;
+        minQueryLength: number;
+        geo?: { center: [number, number]; radiusKm: number; weight: number };
+      } = {
+        limit: SUGGESTION_LIMIT,
+        minQueryLength: MIN_QUERY_LEN,
+      };
+
+      if (center && Array.isArray(center) && center.length === 2) {
+        searchOptions.geo = {
+          center: center as [number, number],
+          radiusKm: 25,
+          weight: 0.15,
+        };
+      }
+
       const hits = await SearchShops(
         search,
         { ...updatedFilters, search },
         false,
-        { limit: SUGGESTION_LIMIT, minQueryLength: MIN_QUERY_LEN },
+        searchOptions,
       );
       setSuggestions(hits);
     } else {

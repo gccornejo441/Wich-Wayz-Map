@@ -12,7 +12,7 @@ import WarningDialog from "../Modal/Dialog/WarningDialog";
 import { refreshCache } from "../../services/indexedDB";
 import { ROUTES } from "../../constants/routes";
 import { useAuth } from "@/context/authContext";
-import { BaseItemProps, SidebarItem } from "../Sidebar/Sidebar";
+import { BaseItemProps, SidebarItem } from "../Sidebar/SidebarItem";
 
 export const DialItem = ({
   linkTo,
