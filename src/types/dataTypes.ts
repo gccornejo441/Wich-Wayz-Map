@@ -108,9 +108,9 @@ export interface VoteContextData {
       userVote: "up" | "down" | null;
     }
   >;
-  addVote: (shopId: number, isUpvote: boolean) => void;
+  addVote: (shopId: number, isUpvote: boolean) => "up" | "down" | null;
   getVotesForShop: (shopId: number) => Promise<void>;
-  submitVote: (shopId: number, isUpvote: boolean) => Promise<void>;
+  submitVote: (shopId: number, nextUserVote: "up" | "down" | null) => Promise<void>;
   loadingVotes: boolean;
 }
 

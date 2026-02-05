@@ -3,88 +3,82 @@ import { useAuth } from "./authContext";
 import { VoteContextData } from "../types/dataTypes";
 import { GetVotesForShop, InsertVote } from "../services/vote";
 
+type UserVote = "up" | "down" | null;
+
 const VoteContext = createContext<VoteContextData | undefined>(undefined);
+
+const applyVoteTransition = (
+  current: { upvotes: number; downvotes: number; userVote: UserVote },
+  nextUserVote: UserVote,
+) => {
+  let up = current.upvotes;
+  let down = current.downvotes;
+
+  // Remove previous vote from totals
+  if (current.userVote === "up") up -= 1;
+  if (current.userVote === "down") down -= 1;
+
+  // Add new vote to totals
+  if (nextUserVote === "up") up += 1;
+  if (nextUserVote === "down") down += 1;
+
+  return {
+    upvotes: Math.max(0, up),
+    downvotes: Math.max(0, down),
+    userVote: nextUserVote,
+  };
+};
 
 export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, userMetadata } = useAuth();
+
   const [votes, setVotes] = useState<
-    Record<
-      number,
-      { upvotes: number; downvotes: number; userVote: "up" | "down" | null }
-    >
+    Record<number, { upvotes: number; downvotes: number; userVote: UserVote }>
   >({});
 
   const [loadingVotes, setLoadingVotes] = useState<boolean>(false);
 
-  const addVote = (
-    shopId: number,
-    isUpvote: boolean,
-    intentionalToggle: boolean = true,
-  ) => {
-    setVotes((prevVotes) => {
-      const currentVote = prevVotes[shopId] || {
-        upvotes: 0,
-        downvotes: 0,
-        userVote: null,
-      };
+  const addVote = (shopId: number, isUpvote: boolean): UserVote => {
+    const direction: UserVote = isUpvote ? "up" : "down";
+    const current = votes[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
+    const nextUserVote: UserVote = current.userVote === direction ? null : direction;
 
-      let newUpvotes = currentVote.upvotes;
-      let newDownvotes = currentVote.downvotes;
-      const newUserVote: "up" | "down" | null = isUpvote ? "up" : "down";
-
-      if (!intentionalToggle && currentVote.userVote === newUserVote) {
-        return prevVotes;
-      }
-
-      if (intentionalToggle && currentVote.userVote === newUserVote) {
-        return {
-          ...prevVotes,
-          [shopId]: {
-            upvotes: isUpvote ? newUpvotes - 1 : newUpvotes,
-            downvotes: !isUpvote ? newDownvotes - 1 : newDownvotes,
-            userVote: null,
-          },
-        };
-      }
-
-      if (currentVote.userVote === "up" && !isUpvote) {
-        newUpvotes -= 1;
-        newDownvotes += 1;
-      } else if (currentVote.userVote === "down" && isUpvote) {
-        newDownvotes -= 1;
-        newUpvotes += 1;
-      } else if (currentVote.userVote === null) {
-        if (isUpvote) newUpvotes += 1;
-        else newDownvotes += 1;
-      }
-
+    setVotes((prev) => {
+      const cur = prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
       return {
-        ...prevVotes,
-        [shopId]: {
-          upvotes: newUpvotes,
-          downvotes: newDownvotes,
-          userVote: newUserVote,
-        },
+        ...prev,
+        [shopId]: applyVoteTransition(cur, nextUserVote),
       };
     });
+
+    return nextUserVote;
   };
 
   const getVotesForShop = async (shopId: number) => {
     setLoadingVotes(true);
+
+    // Set placeholder while loading
+    setVotes((prev) => ({
+      ...prev,
+      [shopId]: prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null },
+    }));
+
     try {
-      const voteData = await GetVotesForShop(shopId);
-      setVotes((prevVotes) => ({
-        ...prevVotes,
+      const userId = userMetadata?.id;
+      const voteData = await GetVotesForShop(shopId, userId);
+
+      setVotes((prev) => ({
+        ...prev,
         [shopId]: {
-          upvotes: voteData ? voteData.upvotes : 0,
-          downvotes: voteData ? voteData.downvotes : 0,
-          userVote: prevVotes[shopId]?.userVote || null,
+          upvotes: voteData?.upvotes ?? 0,
+          downvotes: voteData?.downvotes ?? 0,
+          userVote: voteData?.userVote ?? null,
         },
       }));
     } catch (error) {
       console.error(`Error fetching votes for shop ${shopId}:`, error);
-      setVotes((prevVotes) => ({
-        ...prevVotes,
+      setVotes((prev) => ({
+        ...prev,
         [shopId]: { upvotes: 0, downvotes: 0, userVote: null },
       }));
     } finally {
@@ -92,20 +86,19 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const submitVote = async (shopId: number, isUpvote: boolean) => {
-    if (user && userMetadata) {
-      try {
-        const newVote = {
-          shop_id: shopId,
-          user_id: userMetadata.id,
-          upvote: isUpvote,
-          downvote: !isUpvote,
-        };
-        await InsertVote(newVote);
-      } catch (error) {
-        console.error(`Error submitting vote for shopId ${shopId}:`, error);
-        throw new Error("Failed to submit vote.");
-      }
+  const submitVote = async (shopId: number, nextUserVote: UserVote) => {
+    if (!user || !userMetadata) return;
+
+    try {
+      await InsertVote({
+        shop_id: shopId,
+        user_id: userMetadata.id,
+        upvote: nextUserVote === "up",
+        downvote: nextUserVote === "down",
+      });
+    } catch (error) {
+      console.error(`Error submitting vote for shopId ${shopId}:`, error);
+      throw new Error("Failed to submit vote.");
     }
   };
 

@@ -111,8 +111,6 @@ const MapSidebar = () => {
     return false;
   }, [isAuthenticated, userMetadata, selectedShop]);
 
-  const hasFetchedVotes = useRef(false);
-
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [upvotes, setUpvotes] = useState(0);
@@ -165,14 +163,12 @@ const MapSidebar = () => {
 
 
   useEffect(() => {
-    if (selectedShop?.shopId && !hasFetchedVotes.current) {
-      getVotesForShop(selectedShop.shopId).catch((error) =>
-        console.error("Failed to fetch votes:", error),
-      );
-      hasFetchedVotes.current = true;
-    }
+    if (!selectedShop?.shopId) return;
+    getVotesForShop(selectedShop.shopId).catch((error) =>
+      console.error("Failed to fetch votes:", error),
+    );
     setIsCollectionModalOpen(false);
-  }, [selectedShop, getVotesForShop]);
+  }, [selectedShop?.shopId, userMetadata?.id, getVotesForShop]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -195,29 +191,31 @@ const MapSidebar = () => {
     loadComments();
   }, [selectedShop, addToast]);
 
+  // Derive vote state from context for the selected shop
+  const shopVote = selectedShop?.shopId && votes[selectedShop.shopId]
+    ? votes[selectedShop.shopId]
+    : { upvotes: 0, downvotes: 0, userVote: null };
+
   useEffect(() => {
-    if (selectedShop && votes && selectedShop.shopId in votes) {
-      const currentVotes = votes[selectedShop.shopId] || {
-        upvotes: 0,
-        downvotes: 0,
-        userVote: null,
-      };
-      setUpvotes(currentVotes.upvotes);
-      setDownvotes(currentVotes.downvotes);
-      setUserVote(currentVotes.userVote || null);
-    }
-  }, [votes, selectedShop]);
+    setUpvotes(shopVote.upvotes);
+    setDownvotes(shopVote.downvotes);
+    setUserVote(shopVote.userVote);
+  }, [shopVote.upvotes, shopVote.downvotes, shopVote.userVote]);
 
   const handleVote = async (isUpvote: boolean) => {
     if (!isMember) {
       openSignupModal();
       return;
     }
-    if (!selectedShop) return;
-    const isDifferentVote = userVote !== (isUpvote ? "up" : "down");
-    if (isDifferentVote) {
-      addVote(selectedShop.shopId, isUpvote);
-      await submitVote(selectedShop.shopId, isUpvote);
+    if (!selectedShop?.shopId) return;
+
+    try {
+      const nextUserVote = addVote(selectedShop.shopId, isUpvote);
+      await submitVote(selectedShop.shopId, nextUserVote);
+      await getVotesForShop(selectedShop.shopId);
+    } catch (error) {
+      console.error("Failed to submit vote:", error);
+      addToast("Failed to submit vote.", "error");
     }
   };
 
@@ -757,6 +755,7 @@ const MapSidebar = () => {
                     ) : (
                       <>
                         <VoteButtons
+                          key={selectedShop.shopId}
                           isMember={isMember}
                           userVote={userVote}
                           handleVote={handleVote}

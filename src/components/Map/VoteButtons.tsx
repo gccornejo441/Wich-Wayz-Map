@@ -13,31 +13,41 @@ const VoteButtons = ({
   upvotes,
   downvotes,
 }: VoteButtonsProps) => {
-  // Ensure votes are always valid numbers
-  const safeUpvotes =
-    typeof upvotes === "number" && !isNaN(upvotes) ? upvotes : 0;
-  const safeDownvotes =
-    typeof downvotes === "number" && !isNaN(downvotes) ? downvotes : 0;
+  const canVote = !!isMember;
+
+  const safeUpvotes = typeof upvotes === "number" && !isNaN(upvotes) ? upvotes : 0;
+  const safeDownvotes = typeof downvotes === "number" && !isNaN(downvotes) ? downvotes : 0;
 
   return (
     <div className="flex justify-around mt-4">
       <button
         onClick={() => handleVote(true)}
-        title={isMember ? "I like this!" : "Sign in to vote"}
-        className={`px-3 py-1 dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
-          isMember ? "bg-primary" : "bg-primary/50 cursor-pointer"
-        }`}
-        disabled={isMember && userVote === "up"}
+        title={canVote ? "I like this!" : "Sign in to vote"}
+        disabled={!canVote}
+        aria-pressed={userVote === "up"}
+        className={[
+          "px-3 py-1 rounded-lg focus:outline-none",
+          "dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white",
+          canVote ? "hover:bg-secondary-dark" : "opacity-60 cursor-not-allowed",
+          userVote === "up" ? "ring-2 ring-offset-2 ring-offset-transparent" : "",
+          "bg-primary",
+        ].join(" ")}
       >
         👍 {safeUpvotes}
       </button>
+
       <button
         onClick={() => handleVote(false)}
-        title={isMember ? "I don't like this." : "Sign in to vote"}
-        className={`px-3 py-1 dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-secondary-dark focus:outline-none ${
-          isMember ? "bg-primary" : "bg-primary/50 cursor-pointer"
-        }`}
-        disabled={isMember && userVote === "down"}
+        title={canVote ? "I don't like this." : "Sign in to vote"}
+        disabled={!canVote}
+        aria-pressed={userVote === "down"}
+        className={[
+          "px-3 py-1 rounded-lg focus:outline-none",
+          "dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white",
+          canVote ? "hover:bg-secondary-dark" : "opacity-60 cursor-not-allowed",
+          userVote === "down" ? "ring-2 ring-offset-2 ring-offset-transparent" : "",
+          "bg-primary",
+        ].join(" ")}
       >
         👎 {safeDownvotes}
       </button>
