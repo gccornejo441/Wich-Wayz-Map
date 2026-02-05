@@ -29,13 +29,10 @@
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,css,scss,md}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
+    "*.{js,jsx,ts,tsx,json,css,md,html,yml,yaml}": "prettier --write"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
