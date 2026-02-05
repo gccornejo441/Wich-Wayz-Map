@@ -5,78 +5,48 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
   test:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [20.x]
-    
+
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: npm
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 🎨 Check formatting
-        run: npm run format -- --check
+      - name: Check formatting
+        run: npm run format:check
 
-      - name: 🔍 Run ESLint
+      - name: Run ESLint
         run: npm run lint
 
-      - name: 🧪 Run tests
+      - name: Run tests
         run: npm test
 
-      - name: 🏗️ Build application
+      - name: Build application
         run: npm run build
         env:
-          # Add your environment variables here if needed for build
           VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
-          # Add other VITE_ prefixed vars as needed
 
-      - name: 📊 Upload build artifacts (optional)
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: dist
           path: dist/
           retention-days: 7
-
-  # Optional: Separate job for coverage
-  coverage:
-    name: Test Coverage
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          cache: 'npm'
-
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🧪 Run tests with coverage
-        run: npm run test:coverage
-
-      - name: 📈 Upload coverage reports
-        uses: codecov/codecov-action@v4
-        if: success()
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false

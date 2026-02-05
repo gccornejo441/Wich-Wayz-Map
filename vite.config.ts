@@ -123,5 +123,26 @@ export default defineConfig({
     globals: true,
     environment: "happy-dom",
     setupFiles: "./test/setupTests.ts",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html", "lcov"],
+      reportsDirectory: "./coverage",
+      exclude: [
+        "node_modules/",
+        "test/",
+        "dist/",
+        "**/*.config.*",
+        "**/*.d.ts",
+        "**/types/",
+        "src/vite-env.d.ts",
+      ],
+      all: true,
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 70,
+        statements: 70,
+      },
+    },
   },
 });
