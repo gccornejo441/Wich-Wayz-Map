@@ -24,7 +24,8 @@
 - **Vote tracking** via API; aggregated upvotes/downvotes are displayed for each shop.
 - **Membership gating** using Stripe webhooks; only paying members can submit or edit shops and vote.
 - **Shop submission/editing** with client‑side cleaning of names and addresses and server‑side persistence; supports categories.
-- **IndexedDB caching** of shops and locations for faster load times and offline capability.
+- **IndexedDB caching** of shops and locations for faster subsequent load times
+- **PWA service worker** enables offline-capable app shell (after first load) and runtime caching for map tiles and API responses
 - **Admin functions** (planned) for managing users, roles and categories.
 
 ## Technology stack
