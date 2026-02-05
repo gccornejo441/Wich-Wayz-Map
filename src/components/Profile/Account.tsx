@@ -98,8 +98,11 @@ const Account = ({
         <h3 className="text-xl font-semibold mb-2">Profile Information</h3>
         <div className="mt-2 space-y-3">
           <div className="flex flex-col">
-            <label className="text-sm">First Name</label>
+            <label htmlFor="first-name" className="text-sm">
+              First Name
+            </label>
             <input
+              id="first-name"
               type="text"
               value={firstName || ""}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -110,8 +113,11 @@ const Account = ({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm">Last Name</label>
+            <label htmlFor="last-name" className="text-sm">
+              Last Name
+            </label>
             <input
+              id="last-name"
               type="text"
               value={lastName || ""}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -122,8 +128,11 @@ const Account = ({
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm">Username</label>
+            <label htmlFor="username" className="text-sm">
+              Username
+            </label>
             <input
+              id="username"
               type="text"
               value={username || ""}
               readOnly
@@ -132,8 +141,11 @@ const Account = ({
             />
           </div>
           <div className="flex flex-col relative">
-            <label className="text-sm">Email</label>
+            <label htmlFor="email" className="text-sm">
+              Email
+            </label>
             <input
+              id="email"
               type="text"
               value={email}
               readOnly
@@ -179,10 +191,14 @@ const Account = ({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text-base dark:text-text-inverted mb-2">
+                <label
+                  htmlFor="delete-confirm"
+                  className="block text-sm font-medium text-text-base dark:text-text-inverted mb-2"
+                >
                   Type <span className="font-bold">DELETE</span> to confirm:
                 </label>
                 <input
+                  id="delete-confirm"
                   type="text"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
@@ -194,10 +210,14 @@ const Account = ({
 
               {needsReauth && (
                 <div>
-                  <label className="block text-sm font-medium text-text-base dark:text-text-inverted mb-2">
+                  <label
+                    htmlFor="delete-password"
+                    className="block text-sm font-medium text-text-base dark:text-text-inverted mb-2"
+                  >
                     Password:
                   </label>
                   <input
+                    id="delete-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

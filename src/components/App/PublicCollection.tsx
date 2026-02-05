@@ -140,6 +140,8 @@ const PublicCollection = () => {
             return (
               <div
                 key={`${props.shopId}-${props.locationId ?? "loc"}`}
+                role="button"
+                tabIndex={0}
                 className="py-3 cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-darker rounded-lg px-2"
                 onClick={() =>
                   setViewState((prev) => ({
@@ -149,6 +151,17 @@ const PublicCollection = () => {
                     zoom: 14,
                   }))
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setViewState((prev) => ({
+                      ...prev,
+                      longitude: coords[0],
+                      latitude: coords[1],
+                      zoom: 14,
+                    }));
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div className="font-semibold text-text-base dark:text-text-inverted">

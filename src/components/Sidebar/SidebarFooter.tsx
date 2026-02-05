@@ -255,6 +255,7 @@ const SidebarFooter = () => {
                   className="absolute bottom-0 left-full ml-2 w-56 bg-white dark:bg-surface-darker rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
                   onMouseLeave={() => setShowHelpSubmenu(false)}
                   role="menu"
+                  tabIndex={-1}
                 >
                   <a
                     href="https://en.wikipedia.org/wiki/Sandwich"

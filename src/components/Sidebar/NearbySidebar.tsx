@@ -228,7 +228,7 @@ const NearbySidebar = () => {
                 : "Set the anchor to the current map area to load nearby shops."}
           </div>
         ) : (
-          <ul className="divide-y divide-surface-muted/60 dark:divide-gray-700">
+          <div className="divide-y divide-surface-muted/60 dark:divide-gray-700">
             {nearbyResults.map(({ feature, distanceMiles }) => {
               const coords = getCoordinatesFromFeature(feature);
               const props = feature.properties as ShopGeoJsonProperties;
@@ -241,9 +241,10 @@ const NearbySidebar = () => {
               if (!coords) return null;
 
               return (
-                <li
+                <button
                   key={`${props.locationId ?? props.shopId}-${distanceMiles.toFixed(3)}`}
-                  className="p-4 hover:bg-surface-muted dark:hover:bg-surface-darker cursor-pointer transition-colors"
+                  type="button"
+                  className="w-full text-left p-4 hover:bg-surface-muted dark:hover:bg-surface-darker cursor-pointer transition-colors"
                   onMouseEnter={() => {
                     if (locationId !== null) setHoveredLocationId(locationId);
                   }}
@@ -253,6 +254,15 @@ const NearbySidebar = () => {
                     openSidebar(props, userPosition);
                     close("nearby");
                     setHoveredLocationId(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      flyToLocation(coords[0], coords[1], 14);
+                      openSidebar(props, userPosition);
+                      close("nearby");
+                      setHoveredLocationId(null);
+                    }
                   }}
                 >
                   <div className="flex items-center justify-between">
@@ -281,10 +291,10 @@ const NearbySidebar = () => {
                       {props.categories.split(",").slice(0, 3).join(", ")}
                     </div>
                   )}
-                </li>
+                </button>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </aside>

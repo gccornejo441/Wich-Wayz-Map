@@ -254,6 +254,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const userPositionRef = useLatest(userPosition);
   const selectShopByIdRef = useLatest(selectShopById);
   const hoveredLocationIdRef = useLatest(hoveredLocationId);
+  const closeRef = useLatest(close);
 
   const hoverPopupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedPopupRef = useRef<mapboxgl.Popup | null>(null);
@@ -379,7 +380,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
         if (!props) return;
 
         closeHoverPopup();
-        close("nearby");
+        closeRef.current("nearby");
         openSidebarRef.current(props, userPositionRef.current);
       });
 
@@ -443,6 +444,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     openSidebarRef,
     shopGeoJsonRef,
     userPositionRef,
+    closeRef,
     theme,
     setContextCenter,
     setContextZoom,
@@ -587,14 +589,14 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       zoom: zoomValue,
       essential: true,
     });
-    close("nearby");
+    closeRef.current("nearby");
 
     if (typeof shopId === "number" && Number.isFinite(shopId)) {
       selectShopByIdRef.current(shopId, [lng, lat]).catch((error) => {
         console.error("Deep-link navigation failed:", error);
       });
     }
-  }, [location.search, mapLoaded, selectShopByIdRef, close]);
+  }, [location.search, mapLoaded, selectShopByIdRef, closeRef]);
 
   useEffect(() => {
     const map = mapRef.current;

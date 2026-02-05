@@ -151,16 +151,26 @@ const AuthModal = () => {
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+      <button
+        type="button"
+        tabIndex={-1}
+        className="fixed inset-0 bg-black/50 z-40 animate-fade-in border-0 p-0 cursor-default"
         onClick={handleClose}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            handleClose();
+          }
+        }}
+        aria-label="Close modal"
       />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
           className="relative bg-white dark:bg-surface-darker rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-modalEnter"
-          onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
@@ -185,10 +195,14 @@ const AuthModal = () => {
               // SIGN IN FORM
               <form className="space-y-4" onSubmit={handleLogin}>
                 <div>
-                  <label className="text-dark dark:text-white text-sm mb-2 block">
+                  <label
+                    htmlFor="modal-email"
+                    className="text-dark dark:text-white text-sm mb-2 block"
+                  >
                     Email
                   </label>
                   <input
+                    id="modal-email"
                     type="email"
                     required
                     value={email}
@@ -199,11 +213,15 @@ const AuthModal = () => {
                 </div>
 
                 <div>
-                  <label className="text-dark dark:text-white text-sm mb-2 block">
+                  <label
+                    htmlFor="modal-password"
+                    className="text-dark dark:text-white text-sm mb-2 block"
+                  >
                     Password
                   </label>
                   <div className="relative flex items-center">
                     <input
+                      id="modal-password"
                       type={passwordVisible ? "text" : "password"}
                       required
                       value={password}
@@ -294,7 +312,10 @@ const AuthModal = () => {
                 onSubmit={handleSubmit(handleRegister)}
               >
                 <div>
-                  <label className="block text-dark dark:text-white text-sm mb-2">
+                  <label
+                    htmlFor="register-email"
+                    className="block text-dark dark:text-white text-sm mb-2"
+                  >
                     Email
                   </label>
                   <Controller
@@ -303,6 +324,7 @@ const AuthModal = () => {
                     render={({ field }) => (
                       <input
                         {...field}
+                        id="register-email"
                         type="email"
                         className="w-full border border-lightGray dark:border-gray-600 px-4 py-3 rounded-md text-dark dark:text-white bg-white dark:bg-surface-dark focus:outline-none focus:ring focus:ring-brand-secondary"
                         placeholder="Enter your email"
@@ -317,7 +339,10 @@ const AuthModal = () => {
                 </div>
 
                 <div>
-                  <label className="block text-dark dark:text-white text-sm mb-2">
+                  <label
+                    htmlFor="register-password"
+                    className="block text-dark dark:text-white text-sm mb-2"
+                  >
                     Password
                   </label>
                   <Controller
@@ -326,6 +351,7 @@ const AuthModal = () => {
                     render={({ field }) => (
                       <input
                         {...field}
+                        id="register-password"
                         type="password"
                         className="w-full border border-lightGray dark:border-gray-600 px-4 py-3 rounded-md text-dark dark:text-white bg-white dark:bg-surface-dark focus:outline-none focus:ring focus:ring-brand-secondary"
                         placeholder="Enter your password"
@@ -340,7 +366,10 @@ const AuthModal = () => {
                 </div>
 
                 <div>
-                  <label className="block text-dark dark:text-white text-sm mb-2">
+                  <label
+                    htmlFor="register-confirm-password"
+                    className="block text-dark dark:text-white text-sm mb-2"
+                  >
                     Confirm Password
                   </label>
                   <Controller
@@ -349,6 +378,7 @@ const AuthModal = () => {
                     render={({ field }) => (
                       <input
                         {...field}
+                        id="register-confirm-password"
                         type="password"
                         className="w-full border border-gray-200 dark:border-gray-600 px-4 py-3 rounded-md text-dark dark:text-white bg-white dark:bg-surface-dark focus:outline-none focus:ring focus:ring-brand-secondary"
                         placeholder="Confirm your password"

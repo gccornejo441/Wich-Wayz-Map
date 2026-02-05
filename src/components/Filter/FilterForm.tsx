@@ -138,12 +138,16 @@ export default function FilterForm({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase">
+              <label
+                htmlFor="sort-results"
+                className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase"
+              >
                 Sort Results
               </label>
               <div className="relative">
                 <HiSortDescending className="absolute left-3 top-3 text-text-muted w-5 h-5 z-10" />
                 <select
+                  id="sort-results"
                   className="h-10 pl-10 pr-4 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
                   value={filters.sort ?? ""}
                   onChange={(e) =>

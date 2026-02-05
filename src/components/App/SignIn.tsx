@@ -104,11 +104,15 @@ const SignIn = () => {
           </h2>
           <form className="mt-8 space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="text-dark dark:text-white text-sm mb-2 block">
+              <label
+                htmlFor="email"
+                className="text-dark dark:text-white text-sm mb-2 block"
+              >
                 Email
               </label>
               <div className="relative flex items-center">
                 <input
+                  id="email"
                   type="email"
                   required
                   value={email}
@@ -119,11 +123,15 @@ const SignIn = () => {
               </div>
             </div>
             <div>
-              <label className="text-dark dark:text-white text-sm mb-2 block">
+              <label
+                htmlFor="password"
+                className="text-dark dark:text-white text-sm mb-2 block"
+              >
                 Password
               </label>
               <div className="relative flex items-center">
                 <input
+                  id="password"
                   type={passwordVisible ? "text" : "password"}
                   required
                   value={password}

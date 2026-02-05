@@ -47,12 +47,20 @@ export const SidebarItem = ({
 
   const content = (
     <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
       className={`relative flex items-center justify-between p-2 w-full rounded-lg ${
         disabled
           ? "bg-white/10 cursor-not-allowed"
           : "hover:bg-white/20 focus:ring-white/20 cursor-pointer"
       }`}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          handleClick(e);
+        }
+      }}
     >
       <span className={`w-6 h-6 mr-3 ${disabled ? "opacity-50" : ""}`}>
         {icon}

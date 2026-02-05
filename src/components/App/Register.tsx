@@ -65,13 +65,16 @@ const Register = () => {
         </h2>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label className="block text-dark text-sm mb-2">Email</label>
+            <label htmlFor="email" className="block text-dark text-sm mb-2">
+              Email
+            </label>
             <Controller
               name="email"
               control={control}
               render={({ field }) => (
                 <input
                   {...field}
+                  id="email"
                   type="email"
                   className="w-full border border-lightGray px-4 py-3 rounded-md text-dark focus:outline-none focus:ring focus:ring-secondary"
                   placeholder="Enter your email"
@@ -84,13 +87,16 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-dark text-sm mb-2">Password</label>
+            <label htmlFor="password" className="block text-dark text-sm mb-2">
+              Password
+            </label>
             <Controller
               name="password"
               control={control}
               render={({ field }) => (
                 <input
                   {...field}
+                  id="password"
                   type="password"
                   className="w-full border border-lightGray px-4 py-3 rounded-md text-dark focus:outline-none focus:ring focus:ring-secondary"
                   placeholder="Enter your password"
@@ -103,7 +109,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-dark text-sm mb-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-dark text-sm mb-2"
+            >
               Confirm Password
             </label>
             <Controller
@@ -112,6 +121,7 @@ const Register = () => {
               render={({ field }) => (
                 <input
                   {...field}
+                  id="confirmPassword"
                   type="password"
                   className="w-full border border-gray-200 px-4 py-3 rounded-md text-dark focus:outline-none focus:ring focus:ring-secondary"
                   placeholder="Confirm your password"

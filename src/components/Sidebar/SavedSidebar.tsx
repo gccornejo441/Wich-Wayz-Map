@@ -383,10 +383,14 @@ const SavedSidebar = () => {
 
         {savedFilterMode === "collection" && (
           <div className="space-y-2">
-            <label className="text-xs uppercase tracking-wide text-text-muted dark:text-text-inverted/70">
+            <label
+              htmlFor="collection-select"
+              className="text-xs uppercase tracking-wide text-text-muted dark:text-text-inverted/70"
+            >
               Select a list
             </label>
             <select
+              id="collection-select"
               className="w-full rounded-lg border border-surface-muted dark:border-gray-700 bg-white dark:bg-surface-darker text-sm text-text-base dark:text-text-inverted px-3 py-2"
               value={activeCollectionId ?? ""}
               onChange={(event) =>
@@ -417,7 +421,7 @@ const SavedSidebar = () => {
                 : "No saved shops yet."}
           </div>
         ) : (
-          <ul className="divide-y divide-surface-muted/60 dark:divide-gray-700">
+          <div className="divide-y divide-surface-muted/60 dark:divide-gray-700">
             {listItems.map((item) => {
               const { shop, location } = item;
               const locationId =
@@ -432,9 +436,10 @@ const SavedSidebar = () => {
                 featureByShopId.get(shop.id ?? -1);
 
               return (
-                <li
+                <button
                   key={`${shop.id}-${locationId ?? "nolocation"}`}
-                  className="p-4 hover:bg-surface-muted dark:hover:bg-surface-darker cursor-pointer transition-colors"
+                  type="button"
+                  className="w-full text-left p-4 hover:bg-surface-muted dark:hover:bg-surface-darker cursor-pointer transition-colors"
                   onMouseEnter={() => {
                     if (locationId !== null) setHoveredLocationId(locationId);
                   }}
@@ -453,6 +458,28 @@ const SavedSidebar = () => {
                     }
                     close("saved");
                     setHoveredLocationId(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      if (location) {
+                        flyToLocation(
+                          location.longitude,
+                          location.latitude,
+                          14,
+                        );
+                      }
+                      if (props) {
+                        openSidebar(
+                          props,
+                          location
+                            ? [location.longitude, location.latitude]
+                            : null,
+                        );
+                      }
+                      close("saved");
+                      setHoveredLocationId(null);
+                    }
                   }}
                 >
                   <div className="flex items-center justify-between">
@@ -493,10 +520,10 @@ const SavedSidebar = () => {
                         .join(", ")}
                     </div>
                   ) : null}
-                </li>
+                </button>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </aside>

@@ -126,10 +126,14 @@ const UpdateShop = () => {
           className="p-4 space-y-4 max-h-[75dvh] overflow-y-auto"
         >
           <div>
-            <label className="block mb-2 text-sm font-medium text-dark">
+            <label
+              htmlFor="shop-name"
+              className="block mb-2 text-sm font-medium text-dark"
+            >
               Shop Name
             </label>
             <input
+              id="shop-name"
               type="text"
               {...register("name")}
               className={`w-full p-2 border rounded-lg bg-white text-dark ${
@@ -142,10 +146,14 @@ const UpdateShop = () => {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm font-medium text-dark">
+            <label
+              htmlFor="shop-description"
+              className="block mb-2 text-sm font-medium text-dark"
+            >
               Shop Description
             </label>
             <input
+              id="shop-description"
               type="text"
               {...register("description")}
               className={`w-full p-2 border rounded-lg bg-white text-dark ${
@@ -160,10 +168,14 @@ const UpdateShop = () => {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm font-medium text-dark">
+            <label
+              htmlFor="shop-categories"
+              className="block mb-2 text-sm font-medium text-dark"
+            >
               Categories
             </label>
             <Select
+              inputId="shop-categories"
               isMulti
               options={
                 categories.map((category) => ({

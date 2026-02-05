@@ -43,7 +43,9 @@ const SavedShopSidebar = ({ isOpen }: SidebarProps) => {
             {activeTab === "Lists" && (
               <button
                 className="text-xs text-secondary font-medium hover:underline ml-2 whitespace-nowrap"
-                onClick={() => console.log("New list clicked")}
+                onClick={() => {
+                  // TODO: Implement new list functionality
+                }}
               >
                 + New list
               </button>
