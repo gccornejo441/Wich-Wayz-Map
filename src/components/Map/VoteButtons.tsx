@@ -15,8 +15,10 @@ const VoteButtons = ({
 }: VoteButtonsProps) => {
   const canVote = !!isMember;
 
-  const safeUpvotes = typeof upvotes === "number" && !isNaN(upvotes) ? upvotes : 0;
-  const safeDownvotes = typeof downvotes === "number" && !isNaN(downvotes) ? downvotes : 0;
+  const safeUpvotes =
+    typeof upvotes === "number" && !isNaN(upvotes) ? upvotes : 0;
+  const safeDownvotes =
+    typeof downvotes === "number" && !isNaN(downvotes) ? downvotes : 0;
 
   return (
     <div className="flex justify-around mt-4">
@@ -29,7 +31,9 @@ const VoteButtons = ({
           "px-3 py-1 rounded-lg focus:outline-none",
           "dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white",
           canVote ? "hover:bg-secondary-dark" : "opacity-60 cursor-not-allowed",
-          userVote === "up" ? "ring-2 ring-offset-2 ring-offset-transparent" : "",
+          userVote === "up"
+            ? "ring-2 ring-offset-2 ring-offset-transparent"
+            : "",
           "bg-primary",
         ].join(" ")}
       >
@@ -45,7 +49,9 @@ const VoteButtons = ({
           "px-3 py-1 rounded-lg focus:outline-none",
           "dark:bg-surface-dark dark:border dark:border-gray-700 text-gray-900 dark:text-white",
           canVote ? "hover:bg-secondary-dark" : "opacity-60 cursor-not-allowed",
-          userVote === "down" ? "ring-2 ring-offset-2 ring-offset-transparent" : "",
+          userVote === "down"
+            ? "ring-2 ring-offset-2 ring-offset-transparent"
+            : "",
           "bg-primary",
         ].join(" ")}
       >

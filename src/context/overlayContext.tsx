@@ -41,7 +41,8 @@ function reducer(state: OverlayState, action: Action): OverlayState {
     }
 
     case "TOGGLE": {
-      if (state[action.id]) return reducer(state, { type: "CLOSE", id: action.id });
+      if (state[action.id])
+        return reducer(state, { type: "CLOSE", id: action.id });
       return reducer(state, { type: "OPEN", id: action.id });
     }
 
@@ -112,10 +113,12 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       getActivePanel,
       closeActive,
     }),
-    [isOpen, open, close, toggle, closeAll, getActivePanel, closeActive]
+    [isOpen, open, close, toggle, closeAll, getActivePanel, closeActive],
   );
 
-  return <OverlayContext.Provider value={value}>{children}</OverlayContext.Provider>;
+  return (
+    <OverlayContext.Provider value={value}>{children}</OverlayContext.Provider>
+  );
 }
 
 export function useOverlay() {

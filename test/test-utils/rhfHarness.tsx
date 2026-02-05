@@ -19,7 +19,12 @@ interface RHFRenderOptions<T extends FieldValues = FieldValues> extends Omit<
 
 export function renderWithRHF<T extends FieldValues = FieldValues>(
   ui: ReactElement,
-  { defaultValues, resolver, route = "/", ...renderOptions }: RHFRenderOptions<T> = {},
+  {
+    defaultValues,
+    resolver,
+    route = "/",
+    ...renderOptions
+  }: RHFRenderOptions<T> = {},
 ) {
   function Wrapper({ children }: { children: React.ReactNode }) {
     const methods = useForm<T>({

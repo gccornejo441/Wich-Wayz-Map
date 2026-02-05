@@ -67,7 +67,9 @@ describe("SearchBar", () => {
 
   it("renders the search bar input", () => {
     render(<SearchBar />);
-    const inputElement = screen.getByPlaceholderText("Search shops, city, category...");
+    const inputElement = screen.getByPlaceholderText(
+      "Search shops, city, category...",
+    );
     expect(inputElement).toBeInTheDocument();
   });
 
@@ -103,7 +105,9 @@ describe("SearchBar", () => {
 
     render(<SearchBar />);
 
-    const input = screen.getByPlaceholderText("Search shops, city, category...");
+    const input = screen.getByPlaceholderText(
+      "Search shops, city, category...",
+    );
     await userEvent.type(input, "Shop");
 
     await waitFor(() => {
@@ -111,7 +115,7 @@ describe("SearchBar", () => {
         "Shop",
         expect.any(Object),
         false,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -141,7 +145,9 @@ describe("SearchBar", () => {
 
     render(<SearchBar />);
 
-    const input = screen.getByPlaceholderText("Search shops, city, category...");
+    const input = screen.getByPlaceholderText(
+      "Search shops, city, category...",
+    );
     await userEvent.type(input, "Molinari");
 
     await waitFor(() =>
@@ -149,7 +155,7 @@ describe("SearchBar", () => {
         "Molinari",
         expect.any(Object),
         false,
-        expect.any(Object)
+        expect.any(Object),
       ),
     );
 

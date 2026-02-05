@@ -37,7 +37,7 @@ export const ShopSidebarProvider = ({
   children: React.ReactNode;
 }) => {
   const { isOpen, open, close } = useOverlay();
-  
+
   const [selectedShop, setSelectedShop] =
     useState<ShopGeoJsonProperties | null>(null);
   const [position, setPosition] = useState<Coordinates | null>(null);

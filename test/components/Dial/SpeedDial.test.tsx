@@ -86,7 +86,7 @@ describe("SpeedDial", () => {
     );
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
-    
+
     // Menu should initially be hidden (opacity-0)
     const { container } = render(
       <BrowserRouter>
@@ -99,7 +99,7 @@ describe("SpeedDial", () => {
 
     // Click to open
     fireEvent.click(button);
-    
+
     // After clicking, menu should be visible (opacity-100)
     expect(menuDiv).toHaveClass("opacity-100");
   });

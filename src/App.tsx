@@ -15,21 +15,21 @@ function App() {
     <Router>
       <OverlayProvider>
         <MapProvider>
-        <ToastProvider>
-          <ModalProvider>
-            <VoteProvider>
-              <UserLeaderboardProvider>
-                <ShopSidebarProvider>
-                  <SavedProvider>
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <MainRoutes />
-                    </Suspense>
-                  </SavedProvider>
-                </ShopSidebarProvider>
-              </UserLeaderboardProvider>
-            </VoteProvider>
-          </ModalProvider>
-        </ToastProvider>
+          <ToastProvider>
+            <ModalProvider>
+              <VoteProvider>
+                <UserLeaderboardProvider>
+                  <ShopSidebarProvider>
+                    <SavedProvider>
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <MainRoutes />
+                      </Suspense>
+                    </SavedProvider>
+                  </ShopSidebarProvider>
+                </UserLeaderboardProvider>
+              </VoteProvider>
+            </ModalProvider>
+          </ToastProvider>
         </MapProvider>
       </OverlayProvider>
     </Router>

@@ -43,9 +43,13 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
     let nextUserVote: UserVote;
 
     setVotes((prev) => {
-      const current = prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
+      const current = prev[shopId] || {
+        upvotes: 0,
+        downvotes: 0,
+        userVote: null,
+      };
       nextUserVote = current.userVote === direction ? null : direction;
-      
+
       return {
         ...prev,
         [shopId]: applyVoteTransition(current, nextUserVote),
@@ -55,53 +59,59 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
     return nextUserVote!;
   }, []);
 
-  const getVotesForShop = useCallback(async (shopId: number) => {
-    setLoadingVotes(true);
+  const getVotesForShop = useCallback(
+    async (shopId: number) => {
+      setLoadingVotes(true);
 
-    // Set placeholder while loading
-    setVotes((prev) => ({
-      ...prev,
-      [shopId]: prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null },
-    }));
-
-    try {
-      const userId = userMetadata?.id;
-      const voteData = await GetVotesForShop(shopId, userId);
-
+      // Set placeholder while loading
       setVotes((prev) => ({
         ...prev,
-        [shopId]: {
-          upvotes: voteData?.upvotes ?? 0,
-          downvotes: voteData?.downvotes ?? 0,
-          userVote: voteData?.userVote ?? null,
-        },
+        [shopId]: prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null },
       }));
-    } catch (error) {
-      console.error(`Error fetching votes for shop ${shopId}:`, error);
-      setVotes((prev) => ({
-        ...prev,
-        [shopId]: { upvotes: 0, downvotes: 0, userVote: null },
-      }));
-    } finally {
-      setLoadingVotes(false);
-    }
-  }, [userMetadata?.id]);
 
-  const submitVote = useCallback(async (shopId: number, nextUserVote: UserVote) => {
-    if (!user || !userMetadata) return;
+      try {
+        const userId = userMetadata?.id;
+        const voteData = await GetVotesForShop(shopId, userId);
 
-    try {
-      await InsertVote({
-        shop_id: shopId,
-        user_id: userMetadata.id,
-        upvote: nextUserVote === "up",
-        downvote: nextUserVote === "down",
-      });
-    } catch (error) {
-      console.error(`Error submitting vote for shopId ${shopId}:`, error);
-      throw new Error("Failed to submit vote.");
-    }
-  }, [user, userMetadata]);
+        setVotes((prev) => ({
+          ...prev,
+          [shopId]: {
+            upvotes: voteData?.upvotes ?? 0,
+            downvotes: voteData?.downvotes ?? 0,
+            userVote: voteData?.userVote ?? null,
+          },
+        }));
+      } catch (error) {
+        console.error(`Error fetching votes for shop ${shopId}:`, error);
+        setVotes((prev) => ({
+          ...prev,
+          [shopId]: { upvotes: 0, downvotes: 0, userVote: null },
+        }));
+      } finally {
+        setLoadingVotes(false);
+      }
+    },
+    [userMetadata?.id],
+  );
+
+  const submitVote = useCallback(
+    async (shopId: number, nextUserVote: UserVote) => {
+      if (!user || !userMetadata) return;
+
+      try {
+        await InsertVote({
+          shop_id: shopId,
+          user_id: userMetadata.id,
+          upvote: nextUserVote === "up",
+          downvote: nextUserVote === "down",
+        });
+      } catch (error) {
+        console.error(`Error submitting vote for shopId ${shopId}:`, error);
+        throw new Error("Failed to submit vote.");
+      }
+    },
+    [user, userMetadata],
+  );
 
   return (
     <VoteContext.Provider

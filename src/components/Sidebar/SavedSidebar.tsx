@@ -254,9 +254,7 @@ const SavedSidebar = () => {
   return (
     <aside
       className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
-        savedOpen
-          ? "translate-x-0 shadow-2xl"
-          : "-translate-x-full shadow-none"
+        savedOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full shadow-none"
       }`}
       aria-label="Saved shops"
     >

@@ -746,7 +746,9 @@ const ShopForm = ({
                     !addressLocked &&
                     lookupMessage && (
                       <div className="bg-surface-muted dark:bg-surface-darker border-l-4 border-l-brand-primary rounded p-2">
-                        <p className="text-xs mb-2 text-text-base dark:text-text-inverted">Found: {lookupMessage}</p>
+                        <p className="text-xs mb-2 text-text-base dark:text-text-inverted">
+                          Found: {lookupMessage}
+                        </p>
                         <div className="flex gap-2">
                           <button
                             type="button"

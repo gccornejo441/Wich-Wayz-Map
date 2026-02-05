@@ -135,7 +135,9 @@ const SidebarFooter = () => {
                 <p className="text-sm font-medium text-white truncate group-hover:text-white/90">
                   {userMetadata.firstName && userMetadata.lastName
                     ? `${userMetadata.firstName} ${userMetadata.lastName}`
-                    : userMetadata.username || user.email?.split("@")[0] || "User"}
+                    : userMetadata.username ||
+                      user.email?.split("@")[0] ||
+                      "User"}
                 </p>
                 {!user.emailVerified && (
                   <p className="text-xs text-white/50">Email not verified</p>
@@ -163,7 +165,10 @@ const SidebarFooter = () => {
 
                 {userMetadata?.verified &&
                   userMetadata?.membershipStatus !== "member" && (
-                    <button onClick={handleBecomeMember} className={menuItemRow}>
+                    <button
+                      onClick={handleBecomeMember}
+                      className={menuItemRow}
+                    >
                       <span className={menuItemLeft}>
                         <HiUserAdd className="w-4 h-4" />
                         Become a Club Member

@@ -52,7 +52,8 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
       }
     };
 
-    const anyPanelOpen = isOpen("nav") || isOpen("nearby") || isOpen("saved") || isOpen("shop");
+    const anyPanelOpen =
+      isOpen("nav") || isOpen("nearby") || isOpen("saved") || isOpen("shop");
     if (anyPanelOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }

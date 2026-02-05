@@ -53,8 +53,11 @@ export default async function getVotesForShop(req, res) {
           FROM votes
           WHERE shop_id = ? AND user_id = ?
         `;
-        const userVoteRows = await executeQuery(userVoteQuery, [parsedShopId, parsedUserId]);
-        
+        const userVoteRows = await executeQuery(userVoteQuery, [
+          parsedShopId,
+          parsedUserId,
+        ]);
+
         if (userVoteRows.length > 0) {
           const userVoteRow = userVoteRows[0];
           if (userVoteRow.upvote === 1) {

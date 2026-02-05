@@ -63,7 +63,9 @@ describe("VoteContext", () => {
 
       // Functions should maintain the same reference
       expect(result.current.addVote).toBe(initialFunctions.addVote);
-      expect(result.current.getVotesForShop).toBe(initialFunctions.getVotesForShop);
+      expect(result.current.getVotesForShop).toBe(
+        initialFunctions.getVotesForShop,
+      );
       expect(result.current.submitVote).toBe(initialFunctions.submitVote);
     });
 
@@ -114,7 +116,7 @@ describe("VoteContext", () => {
         callCount++;
         if (callCount > maxCalls) {
           throw new Error(
-            `Infinite loop detected: function called ${callCount} times`
+            `Infinite loop detected: function called ${callCount} times`,
           );
         }
         // In a real useEffect, this would trigger re-render if function reference changes
@@ -139,9 +141,9 @@ describe("VoteContext", () => {
         userVote: "up" as const,
       };
 
-      (voteService.GetVotesForShop as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockVoteData
-      );
+      (
+        voteService.GetVotesForShop as ReturnType<typeof vi.fn>
+      ).mockResolvedValue(mockVoteData);
 
       const { result } = renderHook(() => useVote(), { wrapper });
 
@@ -155,14 +157,14 @@ describe("VoteContext", () => {
 
       expect(voteService.GetVotesForShop).toHaveBeenCalledWith(
         1,
-        mockUserMetadata.id
+        mockUserMetadata.id,
       );
     });
 
     it("should handle vote fetching errors gracefully", async () => {
-      (voteService.GetVotesForShop as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error("Network error")
-      );
+      (
+        voteService.GetVotesForShop as ReturnType<typeof vi.fn>
+      ).mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useVote(), { wrapper });
 
@@ -250,7 +252,9 @@ describe("VoteContext", () => {
     });
 
     it("should submit vote to API", async () => {
-      (voteService.InsertVote as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (voteService.InsertVote as ReturnType<typeof vi.fn>).mockResolvedValue(
+        {},
+      );
 
       const { result } = renderHook(() => useVote(), { wrapper });
 
@@ -267,7 +271,9 @@ describe("VoteContext", () => {
     });
 
     it("should submit null vote (unvote) to API", async () => {
-      (voteService.InsertVote as ReturnType<typeof vi.fn>).mockResolvedValue({});
+      (voteService.InsertVote as ReturnType<typeof vi.fn>).mockResolvedValue(
+        {},
+      );
 
       const { result } = renderHook(() => useVote(), { wrapper });
 
@@ -285,7 +291,7 @@ describe("VoteContext", () => {
 
     it("should handle vote submission errors", async () => {
       (voteService.InsertVote as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error("API error")
+        new Error("API error"),
       );
 
       const { result } = renderHook(() => useVote(), { wrapper });
@@ -297,7 +303,7 @@ describe("VoteContext", () => {
       await expect(
         act(async () => {
           await result.current.submitVote(1, "up");
-        })
+        }),
       ).rejects.toThrow("Failed to submit vote.");
 
       expect(consoleErrorSpy).toHaveBeenCalled();
@@ -348,7 +354,11 @@ describe("VoteContext", () => {
 
       act(() => {
         result.current.votes[1] = { upvotes: 1, downvotes: 0, userVote: "up" };
-        result.current.votes[2] = { upvotes: 0, downvotes: 1, userVote: "down" };
+        result.current.votes[2] = {
+          upvotes: 0,
+          downvotes: 1,
+          userVote: "down",
+        };
       });
 
       act(() => {
@@ -391,12 +401,21 @@ describe("VoteContext", () => {
 
   describe("Loading State", () => {
     it("should set loading state during vote fetch", async () => {
-      (voteService.GetVotesForShop as ReturnType<typeof vi.fn>).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({
-          upvotes: 5,
-          downvotes: 2,
-          userVote: null,
-        }), 100))
+      (
+        voteService.GetVotesForShop as ReturnType<typeof vi.fn>
+      ).mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  upvotes: 5,
+                  downvotes: 2,
+                  userVote: null,
+                }),
+              100,
+            ),
+          ),
       );
 
       const { result } = renderHook(() => useVote(), { wrapper });

@@ -198,8 +198,7 @@ type MapBoxProps = {
 
 const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { displayedShops } = useShops();
-  const { openSidebar, selectShopById, selectedShop } =
-    useShopSidebar();
+  const { openSidebar, selectShopById, selectedShop } = useShopSidebar();
   const { theme } = useTheme();
   const { userMetadata } = useAuth();
   const {
@@ -445,10 +444,10 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     shopGeoJsonRef,
     userPositionRef,
     theme,
-      setContextCenter,
-      setContextZoom,
-      setPendingCenterCoords,
-      hoveredLocationIdRef,
+    setContextCenter,
+    setContextZoom,
+    setPendingCenterCoords,
+    hoveredLocationIdRef,
     initialPrefs,
   ]);
 
@@ -514,7 +513,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
-    
+
     // Only show popup when shop panel is actually open
     if (!shopOpen || !selectedShop) {
       selectedPopupRef.current?.remove();

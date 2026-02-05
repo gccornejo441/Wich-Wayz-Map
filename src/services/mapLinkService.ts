@@ -1,6 +1,6 @@
 /**
  * Map Link Service
- * 
+ *
  * Centralized service for generating map URLs (Google Maps, Apple Maps, etc.)
  * Provides consistent URL generation across the application.
  */
@@ -32,7 +32,7 @@ const hasValidCoordinates = (
 /**
  * Generate Google Maps search URL
  * Priority: coordinates > address search
- * 
+ *
  * @param options - Location details
  * @returns Google Maps search URL or empty string if no valid location
  */
@@ -60,7 +60,7 @@ export const generateGoogleMapsSearchUrl = (
 /**
  * Generate Google Maps directions URL
  * Priority: coordinates > address
- * 
+ *
  * @param options - Destination details
  * @returns Google Maps directions URL or empty string if no valid destination
  */
@@ -85,7 +85,7 @@ export const generateGoogleMapsDirectionsUrl = (
 /**
  * Generate all map links for a location
  * Convenience function that returns both search and directions URLs
- * 
+ *
  * @param options - Location details
  * @returns Object containing searchUrl and directionsUrl
  */
@@ -98,7 +98,7 @@ export const generateMapLinks = (options: MapLinkOptions) => {
 
 /**
  * Generate Apple Maps URL (for iOS users)
- * 
+ *
  * @param options - Location details
  * @returns Apple Maps URL or empty string if no valid location
  */
@@ -129,7 +129,7 @@ export const isIOSDevice = (): boolean => {
 
 /**
  * Get the preferred map URL based on user's platform
- * 
+ *
  * @param options - Location details
  * @returns URL for the preferred map provider
  */

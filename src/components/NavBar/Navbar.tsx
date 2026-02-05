@@ -16,7 +16,8 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   const { isOpen } = useOverlay();
 
   const shouldShowSearch = showSearchBar && searchBar;
-  const shouldShowSearchMobile = shouldShowSearch && !isOpen("nearby") && !isOpen("saved");
+  const shouldShowSearchMobile =
+    shouldShowSearch && !isOpen("nearby") && !isOpen("saved");
 
   return (
     <nav

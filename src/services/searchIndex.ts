@@ -1,10 +1,6 @@
 import Fuse from "fuse.js";
 import type { FuseResult } from "fuse.js";
-import {
-  SHOPS_STORE,
-  IndexedDBShop,
-  getCachedData,
-} from "./indexedDB";
+import { SHOPS_STORE, IndexedDBShop, getCachedData } from "./indexedDB";
 
 export type SearchEntry = {
   shop: IndexedDBShop;
@@ -86,7 +82,9 @@ const createFuseInstance = (entries: SearchEntry[]): Fuse<SearchEntry> => {
   });
 };
 
-export const ensureSearchIndex = async (force: boolean = false): Promise<void> => {
+export const ensureSearchIndex = async (
+  force: boolean = false,
+): Promise<void> => {
   if (force || cachedEntries === null || cachedFuseInstance === null) {
     const shops: IndexedDBShop[] = await getCachedData(SHOPS_STORE);
     cachedEntries = buildSearchEntries(shops);
@@ -104,7 +102,7 @@ export const searchWithFuse = async (
   limit: number = 10,
 ): Promise<FuseResult<SearchEntry>[]> => {
   await ensureSearchIndex();
-  
+
   if (!cachedFuseInstance) {
     return [];
   }

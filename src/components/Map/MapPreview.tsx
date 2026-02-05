@@ -71,7 +71,6 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     onAddressUpdateRef.current = onAddressUpdate;
   }, [onAddressUpdate]);
 
-
   // ✅ Map style (fix 404s)
   const mapStyle = useMemo(
     () => (theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT),
@@ -84,7 +83,6 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     if (!map) return;
     map.setStyle(mapStyle);
   }, [mapStyle]);
-
 
   // ✅ Keep state in sync if address props get lat/lon later
   useEffect(() => {
@@ -172,7 +170,8 @@ const MapPreview: React.FC<MapPreviewProps> = ({
             } else if (id.startsWith("place")) {
               city = ctx.text || "";
             } else if (id.startsWith("region")) {
-              const stateValue = ctx.short_code?.replace("US-", "") || ctx.text || "";
+              const stateValue =
+                ctx.short_code?.replace("US-", "") || ctx.text || "";
               state = getStateCode(stateValue);
             } else if (id.startsWith("country")) {
               country = ctx.short_code?.toUpperCase() || ctx.text || "";
@@ -296,7 +295,8 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           <div className="absolute left-2 bottom-8 z-10">
             <div className="bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 text-xs text-text-base dark:text-text-inverted shadow-md">
               <span className="whitespace-nowrap">
-                Lat: {coords.latitude.toFixed(5)} | Lng: {coords.longitude.toFixed(5)}
+                Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
+                {coords.longitude.toFixed(5)}
               </span>
               <button
                 type="button"

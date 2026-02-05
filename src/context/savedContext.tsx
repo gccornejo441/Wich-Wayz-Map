@@ -161,12 +161,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
       anchorMode,
       activeCollectionId,
     });
-  }, [
-    savedFilterMode,
-    radiusMiles,
-    anchorMode,
-    activeCollectionId,
-  ]);
+  }, [savedFilterMode, radiusMiles, anchorMode, activeCollectionId]);
 
   const refreshSaved = useCallback(async () => {
     if (!userId) {

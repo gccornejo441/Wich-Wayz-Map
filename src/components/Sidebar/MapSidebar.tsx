@@ -81,8 +81,12 @@ const isRecentDate = (value: string | number | Date, days = 7) => {
 
 const makePreview = (text: string, maxChars = 220) => {
   const normalized = text.trim();
-  if (normalized.length <= maxChars) return { preview: normalized, truncated: false };
-  return { preview: `${normalized.slice(0, maxChars).trimEnd()}…`, truncated: true };
+  if (normalized.length <= maxChars)
+    return { preview: normalized, truncated: false };
+  return {
+    preview: `${normalized.slice(0, maxChars).trimEnd()}…`,
+    truncated: true,
+  };
 };
 
 const MapSidebar = () => {
@@ -92,13 +96,10 @@ const MapSidebar = () => {
   const { openSignupModal } = useModal();
 
   const { isAuthenticated, user, userMetadata } = useAuth();
-  const { votes, addVote, getVotesForShop, submitVote, loadingVotes } = useVote();
-  const {
-    savedShopIds,
-    toggleSaved,
-    refreshCollections,
-    setSavedFilterMode,
-  } = useSaved();
+  const { votes, addVote, getVotesForShop, submitVote, loadingVotes } =
+    useVote();
+  const { savedShopIds, toggleSaved, refreshCollections, setSavedFilterMode } =
+    useSaved();
   const { open: openOverlay } = useOverlay();
 
   const isMember = isAuthenticated && user?.emailVerified;
@@ -121,11 +122,15 @@ const MapSidebar = () => {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentBody, setCommentBody] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
-  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [expandedComments, setExpandedComments] = useState<
+    Record<string, boolean>
+  >({});
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState("");
   const [updatingComment, setUpdatingComment] = useState(false);
-  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
+    null,
+  );
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -157,10 +162,10 @@ const MapSidebar = () => {
 
     if (showActionsMenu) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showActionsMenu]);
-
 
   useEffect(() => {
     if (!selectedShop?.shopId) return;
@@ -192,9 +197,10 @@ const MapSidebar = () => {
   }, [selectedShop, addToast]);
 
   // Derive vote state from context for the selected shop
-  const shopVote = selectedShop?.shopId && votes[selectedShop.shopId]
-    ? votes[selectedShop.shopId]
-    : { upvotes: 0, downvotes: 0, userVote: null };
+  const shopVote =
+    selectedShop?.shopId && votes[selectedShop.shopId]
+      ? votes[selectedShop.shopId]
+      : { upvotes: 0, downvotes: 0, userVote: null };
 
   useEffect(() => {
     setUpvotes(shopVote.upvotes);
@@ -279,7 +285,9 @@ const MapSidebar = () => {
     setUpdatingComment(true);
     try {
       const updated = await updateComment(commentId, userMetadata.id, trimmed);
-      setComments((prev) => prev.map((c) => (c.id === commentId ? updated : c)));
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? updated : c)),
+      );
       setEditingCommentId(null);
       setEditingCommentBody("");
       addToast("Comment updated!", "success");
@@ -294,7 +302,9 @@ const MapSidebar = () => {
   const handleDeleteComment = async (commentId: number) => {
     if (!userMetadata) return;
 
-    const confirmDelete = window.confirm("Are you sure you want to delete this comment?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this comment?",
+    );
     if (!confirmDelete) return;
 
     setDeletingCommentId(commentId);
@@ -310,7 +320,9 @@ const MapSidebar = () => {
     }
   };
 
-  const isSaved = selectedShop?.shopId ? savedShopIds.has(selectedShop.shopId) : false;
+  const isSaved = selectedShop?.shopId
+    ? savedShopIds.has(selectedShop.shopId)
+    : false;
 
   const handleToggleSaved = async () => {
     if (!selectedShop?.shopId) return;
@@ -320,9 +332,13 @@ const MapSidebar = () => {
     }
     try {
       const saved = await toggleSaved(selectedShop.shopId);
-      addToast(saved ? "Saved to favorites" : "Removed from favorites", "success");
+      addToast(
+        saved ? "Saved to favorites" : "Removed from favorites",
+        "success",
+      );
     } catch (error) {
-      if (error instanceof Error && error.message === "Not authenticated") return;
+      if (error instanceof Error && error.message === "Not authenticated")
+        return;
       addToast("Could not update saved state", "error");
     }
   };
@@ -405,11 +421,13 @@ const MapSidebar = () => {
 
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
-  const sanitizePhone = (phone: string): string => phone.replace(/[\s\-()]/g, "");
+  const sanitizePhone = (phone: string): string =>
+    phone.replace(/[\s\-()]/g, "");
 
   const normalizeWebsiteUrl = (url: string): string => {
     const trimmed = url.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://"))
+      return trimmed;
     return `https://${trimmed}`;
   };
 
@@ -420,13 +438,15 @@ const MapSidebar = () => {
         .filter((cat) => cat.length > 0)
     : [];
 
-  const hiddenCategoryCount = parsedCategories.length > 3 ? parsedCategories.length - 3 : 0;
+  const hiddenCategoryCount =
+    parsedCategories.length > 3 ? parsedCategories.length - 3 : 0;
 
   const descriptionPreview = selectedShop?.description
     ? makePreview(selectedShop.description, 180)
     : null;
 
-  const safeTrim = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+  const safeTrim = (v: unknown): string =>
+    typeof v === "string" ? v.trim() : "";
 
   const street = safeTrim(selectedShop?.address);
   const city = safeTrim(selectedShop?.city);
@@ -435,17 +455,32 @@ const MapSidebar = () => {
 
   const cityStateZip = buildCityStateZip(city, state, zip) || "";
 
-  const fullAddress = buildFullAddressForMaps(street, undefined, city, state, zip);
+  const fullAddress = buildFullAddressForMaps(
+    street,
+    undefined,
+    city,
+    state,
+    zip,
+  );
 
   // Generate map URLs using centralized service with performance optimization
-  const { searchUrl: googleMapsSearchUrl, directionsUrl: googleMapsDirectionsUrl } = useMemo(
-    () => generateMapLinks({
-      latitude: selectedShop?.latitude,
-      longitude: selectedShop?.longitude,
-      address: fullAddress,
-      shopName: selectedShop?.shopName,
-    }),
-    [selectedShop?.latitude, selectedShop?.longitude, fullAddress, selectedShop?.shopName]
+  const {
+    searchUrl: googleMapsSearchUrl,
+    directionsUrl: googleMapsDirectionsUrl,
+  } = useMemo(
+    () =>
+      generateMapLinks({
+        latitude: selectedShop?.latitude,
+        longitude: selectedShop?.longitude,
+        address: fullAddress,
+        shopName: selectedShop?.shopName,
+      }),
+    [
+      selectedShop?.latitude,
+      selectedShop?.longitude,
+      fullAddress,
+      selectedShop?.shopName,
+    ],
   );
 
   const heroImg = selectedShop?.imageUrl || "/sandwich-default.png";
@@ -470,7 +505,7 @@ const MapSidebar = () => {
           onScroll={handleScroll}
           className="flex-grow overflow-y-auto"
         >
-         <div
+          <div
             className={`sticky top-0 z-20 flex items-center justify-between h-[3.2rem] px-[1.6rem] py-[0.3rem] transition-all duration-300 ${
               headerHasBg
                 ? "bg-surface-light/90 dark:bg-surface-dark/80 backdrop-blur border-b border-surface-dark/10 dark:border-surface-muted/20 shadow-sm"
@@ -496,14 +531,18 @@ const MapSidebar = () => {
                       onMouseLeave={() => setShowFavoriteTip(false)}
                       onFocus={() => setShowFavoriteTip(true)}
                       onBlur={() => setShowFavoriteTip(false)}
-                      aria-label={isSaved ? "Remove from saved" : "Add to saved"}
+                      aria-label={
+                        isSaved ? "Remove from saved" : "Add to saved"
+                      }
                       title={isSaved ? "Remove from saved" : "Add to saved"}
                       className="lk-image favorite-img flex items-center justify-center w-[35px] h-[35px] rounded-lg bg-white/15 hover:bg-white/20 text-white transition-all focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                     >
                       <FiHeart
                         size={18}
                         className={`transition-colors ${
-                          isSaved ? "fill-brand-secondary text-brand-secondary" : ""
+                          isSaved
+                            ? "fill-brand-secondary text-brand-secondary"
+                            : ""
                         }`}
                       />
                     </button>
@@ -540,7 +579,10 @@ const MapSidebar = () => {
                       {selectedShop.shopName}
                     </h2>
 
-                    <div className="relative flex-shrink-0" ref={actionsMenuRef}>
+                    <div
+                      className="relative flex-shrink-0"
+                      ref={actionsMenuRef}
+                    >
                       <button
                         onClick={() => setShowActionsMenu(!showActionsMenu)}
                         aria-label="Shop actions"
@@ -557,7 +599,9 @@ const MapSidebar = () => {
                               onClick={() => {
                                 setShowActionsMenu(false);
                                 closeSidebar();
-                                navigate(ROUTES.SHOPS.ADD, { state: { initialData: selectedShop } });
+                                navigate(ROUTES.SHOPS.ADD, {
+                                  state: { initialData: selectedShop },
+                                });
                               }}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-surface-dark transition-colors"
                             >
@@ -581,7 +625,10 @@ const MapSidebar = () => {
                             onClick={() => {
                               setShowActionsMenu(false);
                               if (!googleMapsSearchUrl) {
-                                addToast("Address is missing for this shop.", "error");
+                                addToast(
+                                  "Address is missing for this shop.",
+                                  "error",
+                                );
                                 return;
                               }
                               window.open(googleMapsSearchUrl, "_blank");
@@ -614,7 +661,9 @@ const MapSidebar = () => {
                   <div className="mt-2">
                     <p
                       className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
-                        !showFullDescription && descriptionPreview?.truncated ? "line-clamp-3" : ""
+                        !showFullDescription && descriptionPreview?.truncated
+                          ? "line-clamp-3"
+                          : ""
                       }`}
                     >
                       {showFullDescription || !descriptionPreview?.truncated
@@ -634,7 +683,10 @@ const MapSidebar = () => {
 
                 {selectedShop.locationStatus === "permanently_closed" && (
                   <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <FiAlertCircle className="flex-shrink-0 text-red-600 dark:text-red-400" size={16} />
+                    <FiAlertCircle
+                      className="flex-shrink-0 text-red-600 dark:text-red-400"
+                      size={16}
+                    />
                     <span className="text-xs font-semibold text-red-700 dark:text-red-300">
                       This location is permanently closed.
                     </span>
@@ -643,7 +695,10 @@ const MapSidebar = () => {
 
                 {selectedShop.locationStatus === "temporarily_closed" && (
                   <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <FiAlertCircle className="flex-shrink-0 text-yellow-600 dark:text-yellow-400" size={16} />
+                    <FiAlertCircle
+                      className="flex-shrink-0 text-yellow-600 dark:text-yellow-400"
+                      size={16}
+                    />
                     <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
                       This location is temporarily closed.
                     </span>
@@ -661,13 +716,18 @@ const MapSidebar = () => {
                   aria-label="View address in Google Maps"
                   className="flex items-start gap-3 mt-3 w-full text-left text-text-base dark:text-text-inverted hover:text-primary dark:hover:text-brand-secondary transition-colors p-2 -ml-2 rounded-lg hover:bg-surface-muted dark:hover:bg-surface-darker focus:outline-none focus:ring-2 focus:ring-brand-secondary group"
                 >
-                  <FiMapPin size={20} className="flex-shrink-0 text-primary group-hover:text-primary mt-0.5" />
+                  <FiMapPin
+                    size={20}
+                    className="flex-shrink-0 text-primary group-hover:text-primary mt-0.5"
+                  />
                   <div className="text-sm break-words flex-1">
                     {street || cityStateZip ? (
                       <>
                         {street && <div>{street}</div>}
                         {cityStateZip && (
-                          <div className="text-xs opacity-80 mt-0.5">{cityStateZip}</div>
+                          <div className="text-xs opacity-80 mt-0.5">
+                            {cityStateZip}
+                          </div>
                         )}
                       </>
                     ) : (
@@ -682,7 +742,10 @@ const MapSidebar = () => {
                       {parsedCategories.map((category, index) => {
                         const isHidden = !showAllCategories && index >= 3;
                         return (
-                          <li key={category} className={isHidden ? "hidden" : ""}>
+                          <li
+                            key={category}
+                            className={isHidden ? "hidden" : ""}
+                          >
                             <span className="bg-brand-secondary text-black px-3 py-1 rounded-full text-xs font-semibold">
                               {category}
                             </span>
@@ -696,7 +759,9 @@ const MapSidebar = () => {
                         onClick={() => setShowAllCategories((prev) => !prev)}
                         className="mt-2 text-xs text-primary hover:text-primary/80 underline focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-offset-1 rounded"
                       >
-                        {showAllCategories ? "Show less" : `+${hiddenCategoryCount} more`}
+                        {showAllCategories
+                          ? "Show less"
+                          : `+${hiddenCategoryCount} more`}
                       </button>
                     )}
                   </div>
@@ -704,10 +769,12 @@ const MapSidebar = () => {
 
                 {(() => {
                   const hasPhone =
-                    selectedShop.phone && selectedShop.phone !== "No phone number available";
+                    selectedShop.phone &&
+                    selectedShop.phone !== "No phone number available";
                   const hasWebsite =
                     selectedShop.website?.trim() &&
-                    selectedShop.website.trim().toLowerCase() !== "no website available";
+                    selectedShop.website.trim().toLowerCase() !==
+                      "no website available";
 
                   const iconLinkClass =
                     "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-black/10 bg-black/5 text-text-base transition hover:border-black/20 hover:bg-black/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary dark:border-white/10 dark:bg-white/5 dark:text-text-inverted dark:hover:border-white/20 dark:hover:bg-white/10";
@@ -735,14 +802,16 @@ const MapSidebar = () => {
                             aria-label="Open website"
                             title="Open website"
                           >
-                            <FiExternalLink size={18} className="text-primary" />
+                            <FiExternalLink
+                              size={18}
+                              className="text-primary"
+                            />
                           </a>
                         )}
                       </div>
                     )
                   );
                 })()}
-
 
                 <div className="mt-6">
                   <h5 className="text-sm font-semibold text-text-muted dark:text-text-inverted my-2">
@@ -777,10 +846,14 @@ const MapSidebar = () => {
                     <div className="flex items-center mt-2 text-sm text-text-muted dark:text-text-inverted">
                       <UserAvatar
                         avatarId={selectedShop.usersAvatarId || "default"}
-                        userEmail={selectedShop.usersAvatarEmail || "guest@example.com"}
+                        userEmail={
+                          selectedShop.usersAvatarEmail || "guest@example.com"
+                        }
                         size="sm"
                       />
-                      <span className="ml-2">Added by: {selectedShop.createdBy}</span>
+                      <span className="ml-2">
+                        Added by: {selectedShop.createdBy}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -791,7 +864,8 @@ const MapSidebar = () => {
                       Comments
                     </h5>
                     <span className="text-xs text-text-muted dark:text-text-inverted">
-                      {comments.length} {comments.length === 1 ? "comment" : "comments"}
+                      {comments.length}{" "}
+                      {comments.length === 1 ? "comment" : "comments"}
                     </span>
                   </div>
 
@@ -826,23 +900,37 @@ const MapSidebar = () => {
                         <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                           {comments.length === 0 ? (
                             <p className="text-xs text-text-muted dark:text-text-inverted/70 flex items-center gap-1.5 py-1">
-                              <FiAlertCircle size={14} className="flex-shrink-0" />
+                              <FiAlertCircle
+                                size={14}
+                                className="flex-shrink-0"
+                              />
                               Be the first to leave a comment.
                             </p>
                           ) : (
                             comments.map((comment) => {
                               const body = comment.body ?? "";
-                              const { preview, truncated } = makePreview(body, 240);
-                              const expanded = !!expandedComments[String(comment.id)];
-                              const showNew = isRecentDate(comment.dateCreated, 7);
+                              const { preview, truncated } = makePreview(
+                                body,
+                                240,
+                              );
+                              const expanded =
+                                !!expandedComments[String(comment.id)];
+                              const showNew = isRecentDate(
+                                comment.dateCreated,
+                                7,
+                              );
 
                               const avatarId = comment.userAvatar || "default";
-                              const avatarEmail = comment.userEmail || "guest@example.com";
-                              const displayName = comment.userName || "Sandwich Fan";
+                              const avatarEmail =
+                                comment.userEmail || "guest@example.com";
+                              const displayName =
+                                comment.userName || "Sandwich Fan";
 
-                              const isOwnComment = userMetadata?.id === comment.userId;
+                              const isOwnComment =
+                                userMetadata?.id === comment.userId;
                               const isEditing = editingCommentId === comment.id;
-                              const isDeleting = deletingCommentId === comment.id;
+                              const isDeleting =
+                                deletingCommentId === comment.id;
 
                               return (
                                 <div
@@ -851,7 +939,11 @@ const MapSidebar = () => {
                                 >
                                   <div className="flex items-start gap-3 p-3">
                                     {avatarId ? (
-                                      <UserAvatar avatarId={avatarId} userEmail={avatarEmail} size="sm" />
+                                      <UserAvatar
+                                        avatarId={avatarId}
+                                        userEmail={avatarEmail}
+                                        size="sm"
+                                      />
                                     ) : (
                                       <div className="h-9 w-9 rounded-full bg-surface-muted dark:bg-surface-dark flex items-center justify-center text-primary">
                                         <FiUser size={16} />
@@ -871,21 +963,29 @@ const MapSidebar = () => {
                                         )}
 
                                         <span className="text-xs text-text-muted dark:text-text-inverted">
-                                          {formatRelativeTime(comment.dateCreated)}
+                                          {formatRelativeTime(
+                                            comment.dateCreated,
+                                          )}
                                         </span>
 
-                                        {comment.dateModified && comment.dateModified !== comment.dateCreated && (
-                                          <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
-                                            (edited)
-                                          </span>
-                                        )}
+                                        {comment.dateModified &&
+                                          comment.dateModified !==
+                                            comment.dateCreated && (
+                                            <span className="text-[11px] text-text-muted dark:text-text-inverted italic">
+                                              (edited)
+                                            </span>
+                                          )}
                                       </div>
 
                                       {isEditing ? (
                                         <div className="mt-2 space-y-2">
                                           <textarea
                                             value={editingCommentBody}
-                                            onChange={(e) => setEditingCommentBody(e.target.value)}
+                                            onChange={(e) =>
+                                              setEditingCommentBody(
+                                                e.target.value,
+                                              )
+                                            }
                                             maxLength={5000}
                                             className="w-full rounded-lg border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
                                             rows={3}
@@ -893,12 +993,20 @@ const MapSidebar = () => {
                                           <div className="flex gap-2">
                                             <button
                                               type="button"
-                                              onClick={() => handleUpdateComment(comment.id)}
-                                              disabled={updatingComment || editingCommentBody.trim().length === 0}
+                                              onClick={() =>
+                                                handleUpdateComment(comment.id)
+                                              }
+                                              disabled={
+                                                updatingComment ||
+                                                editingCommentBody.trim()
+                                                  .length === 0
+                                              }
                                               className="flex items-center gap-1 px-3 py-1 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:bg-brand-secondary hover:text-text-base transition-colors disabled:bg-surface-dark disabled:text-text-muted disabled:cursor-not-allowed"
                                             >
                                               <FiCheck size={14} />
-                                              {updatingComment ? "Saving..." : "Save"}
+                                              {updatingComment
+                                                ? "Saving..."
+                                                : "Save"}
                                             </button>
                                             <button
                                               type="button"
@@ -914,13 +1022,19 @@ const MapSidebar = () => {
                                       ) : (
                                         <>
                                           <p className="mt-1 text-sm text-text-base dark:text-text-inverted leading-relaxed whitespace-pre-wrap break-words">
-                                            {expanded || !truncated ? body : preview}
+                                            {expanded || !truncated
+                                              ? body
+                                              : preview}
                                           </p>
 
                                           {truncated && (
                                             <button
                                               type="button"
-                                              onClick={() => toggleCommentExpanded(String(comment.id))}
+                                              onClick={() =>
+                                                toggleCommentExpanded(
+                                                  String(comment.id),
+                                                )
+                                              }
                                               className="mt-2 text-xs text-primary underline"
                                             >
                                               {expanded ? "Show less" : "More"}
@@ -932,16 +1046,22 @@ const MapSidebar = () => {
                                       <div className="mt-2 flex items-center gap-3">
                                         <span
                                           className="text-[11px] text-text-muted dark:text-text-inverted"
-                                          title={new Date(comment.dateCreated).toLocaleString()}
+                                          title={new Date(
+                                            comment.dateCreated,
+                                          ).toLocaleString()}
                                         >
-                                          {new Date(comment.dateCreated).toLocaleDateString()}
+                                          {new Date(
+                                            comment.dateCreated,
+                                          ).toLocaleDateString()}
                                         </span>
 
                                         {isOwnComment && !isEditing && (
                                           <div className="flex items-center gap-2">
                                             <button
                                               type="button"
-                                              onClick={() => handleEditComment(comment)}
+                                              onClick={() =>
+                                                handleEditComment(comment)
+                                              }
                                               className="text-text-muted dark:text-text-inverted hover:text-primary dark:hover:text-brand-secondary transition-colors"
                                               title="Edit comment"
                                             >
@@ -949,7 +1069,9 @@ const MapSidebar = () => {
                                             </button>
                                             <button
                                               type="button"
-                                              onClick={() => handleDeleteComment(comment.id)}
+                                              onClick={() =>
+                                                handleDeleteComment(comment.id)
+                                              }
                                               disabled={isDeleting}
                                               className="text-text-muted dark:text-text-inverted hover:text-red-600 dark:hover:text-red-500 transition-colors disabled:opacity-50"
                                               title="Delete comment"
@@ -968,7 +1090,10 @@ const MapSidebar = () => {
                         </div>
 
                         <div className="pt-3 border-t border-surface-dark/10 dark:border-surface-muted/20">
-                          <form onSubmit={handleCommentSubmit} className="space-y-2">
+                          <form
+                            onSubmit={handleCommentSubmit}
+                            className="space-y-2"
+                          >
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-text-muted dark:text-text-inverted">
                                 Share your experience
@@ -980,7 +1105,9 @@ const MapSidebar = () => {
 
                             <textarea
                               value={commentBody}
-                              onChange={(event) => setCommentBody(event.target.value)}
+                              onChange={(event) =>
+                                setCommentBody(event.target.value)
+                              }
                               placeholder="What should other sandwich fans know?"
                               maxLength={5000}
                               className="w-full rounded-xl border border-surface-dark/20 dark:border-surface-muted/20 bg-white dark:bg-surface-darker text-text-base dark:text-text-inverted p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-secondary"
@@ -990,10 +1117,15 @@ const MapSidebar = () => {
                             <div className="flex justify-end">
                               <button
                                 type="submit"
-                                disabled={submittingComment || commentBody.trim().length === 0}
+                                disabled={
+                                  submittingComment ||
+                                  commentBody.trim().length === 0
+                                }
                                 className="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-primary text-white hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors disabled:opacity-50 disabled:bg-brand-primary/40 dark:disabled:bg-brand-primary/30 disabled:cursor-not-allowed"
                               >
-                                {submittingComment ? "Posting..." : "Post Comment"}
+                                {submittingComment
+                                  ? "Posting..."
+                                  : "Post Comment"}
                               </button>
                             </div>
                           </form>
@@ -1006,7 +1138,9 @@ const MapSidebar = () => {
             </>
           ) : (
             <div className="px-5 py-6">
-              <p className="text-text-base dark:text-text-inverted text-center">No shop selected</p>
+              <p className="text-text-base dark:text-text-inverted text-center">
+                No shop selected
+              </p>
             </div>
           )}
         </div>
@@ -1016,7 +1150,10 @@ const MapSidebar = () => {
             className="w-full px-4 py-3 rounded-lg bg-brand-primary text-white font-semibold hover:bg-brand-secondary hover:text-text-base focus:outline-none focus:ring-2 focus:ring-brand-secondary focus:ring-opacity-50 transition-colors"
             onClick={() => {
               if (!googleMapsDirectionsUrl) {
-                addToast("Cannot open directions. Address/coordinates missing.", "error");
+                addToast(
+                  "Cannot open directions. Address/coordinates missing.",
+                  "error",
+                );
                 return;
               }
               window.open(googleMapsDirectionsUrl, "_blank");

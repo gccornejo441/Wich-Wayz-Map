@@ -279,10 +279,7 @@ export const SearchShops = async (
     }
   }
 
-  const candidateLimit = Math.min(
-    Math.max(limit * 25, 200),
-    totalEntries,
-  );
+  const candidateLimit = Math.min(Math.max(limit * 25, 200), totalEntries);
 
   let fuseResults = await searchWithFuse(q, candidateLimit);
 
@@ -320,11 +317,19 @@ export const SearchShops = async (
   let geoRadiusKm = options?.geo?.radiusKm ?? 25;
   let geoWeight = options?.geo?.weight ?? 0.15;
 
-  if (typeof geoRadiusKm !== "number" || !Number.isFinite(geoRadiusKm) || geoRadiusKm <= 0) {
+  if (
+    typeof geoRadiusKm !== "number" ||
+    !Number.isFinite(geoRadiusKm) ||
+    geoRadiusKm <= 0
+  ) {
     geoRadiusKm = 25;
   }
 
-  if (typeof geoWeight !== "number" || !Number.isFinite(geoWeight) || geoWeight < 0) {
+  if (
+    typeof geoWeight !== "number" ||
+    !Number.isFinite(geoWeight) ||
+    geoWeight < 0
+  ) {
     geoWeight = 0.15;
   }
 
