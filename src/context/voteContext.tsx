@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import { useAuth } from "./authContext";
 import { VoteContextData } from "../types/dataTypes";
 import { GetVotesForShop, InsertVote } from "../services/vote";
@@ -38,23 +38,24 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [loadingVotes, setLoadingVotes] = useState<boolean>(false);
 
-  const addVote = (shopId: number, isUpvote: boolean): UserVote => {
+  const addVote = useCallback((shopId: number, isUpvote: boolean): UserVote => {
     const direction: UserVote = isUpvote ? "up" : "down";
-    const current = votes[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
-    const nextUserVote: UserVote = current.userVote === direction ? null : direction;
+    let nextUserVote: UserVote;
 
     setVotes((prev) => {
-      const cur = prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
+      const current = prev[shopId] || { upvotes: 0, downvotes: 0, userVote: null };
+      nextUserVote = current.userVote === direction ? null : direction;
+      
       return {
         ...prev,
-        [shopId]: applyVoteTransition(cur, nextUserVote),
+        [shopId]: applyVoteTransition(current, nextUserVote),
       };
     });
 
-    return nextUserVote;
-  };
+    return nextUserVote!;
+  }, []);
 
-  const getVotesForShop = async (shopId: number) => {
+  const getVotesForShop = useCallback(async (shopId: number) => {
     setLoadingVotes(true);
 
     // Set placeholder while loading
@@ -84,9 +85,9 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoadingVotes(false);
     }
-  };
+  }, [userMetadata?.id]);
 
-  const submitVote = async (shopId: number, nextUserVote: UserVote) => {
+  const submitVote = useCallback(async (shopId: number, nextUserVote: UserVote) => {
     if (!user || !userMetadata) return;
 
     try {
@@ -100,7 +101,7 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       console.error(`Error submitting vote for shopId ${shopId}:`, error);
       throw new Error("Failed to submit vote.");
     }
-  };
+  }, [user, userMetadata]);
 
   return (
     <VoteContext.Provider

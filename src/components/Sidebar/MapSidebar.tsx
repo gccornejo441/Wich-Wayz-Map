@@ -212,10 +212,12 @@ const MapSidebar = () => {
     try {
       const nextUserVote = addVote(selectedShop.shopId, isUpvote);
       await submitVote(selectedShop.shopId, nextUserVote);
-      await getVotesForShop(selectedShop.shopId);
+      // Don't refetch - the optimistic update from addVote is sufficient
     } catch (error) {
       console.error("Failed to submit vote:", error);
       addToast("Failed to submit vote.", "error");
+      // Refetch on error to restore correct state
+      await getVotesForShop(selectedShop.shopId);
     }
   };
 
