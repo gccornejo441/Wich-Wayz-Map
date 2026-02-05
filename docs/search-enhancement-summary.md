@@ -11,18 +11,21 @@ This document outlines the comprehensive search system enhancements implemented 
 **Purpose**: Centralized search index management with cached Fuse.js instance.
 
 **Key Features**:
+
 - **Cached Search Index**: Builds search entries once and reuses them
 - **Lazy Initialization**: Index built on first search, not on app load
 - **Efficient Flattening**: Pre-processes shop-location pairs with normalized text
 - **Memory Management**: Provides `invalidateSearchIndex()` to clear cache when data changes
 
 **Exported Functions**:
+
 - `ensureSearchIndex(force?: boolean)` - Ensures index is built (force rebuild if needed)
 - `getAllEntries()` - Returns all cached search entries
 - `searchWithFuse(query, limit)` - Performs fuzzy search using cached Fuse instance
 - `invalidateSearchIndex()` - Clears cache (call after shop updates)
 
 **Performance Impact**:
+
 - ✅ **Before**: New Fuse instance + entry building on every keystroke
 - ✅ **After**: Single cached instance, instant subsequent searches
 
@@ -31,17 +34,20 @@ This document outlines the comprehensive search system enhancements implemented 
 **Key Improvements**:
 
 #### A. Entry-Based Filtering
+
 - New function: `filterEntries(filters, entries)` - Filters entries directly
 - More efficient than filtering shops then rebuilding entries
 - Operates on the already-flattened search index
 
 #### B. Shop Deduplication
+
 - Groups results by `shop.id`
 - Keeps best location per shop (lowest score)
 - Prevents duplicate shop entries in autocomplete
 - Tie-breaker: Uses geo-distance when scores are equal
 
 #### C. Geo-Bias Ranking (Optional)
+
 - Accepts `geo: { center, radiusKm?, weight? }` in options
 - Calculates haversine distance from center
 - Applies distance penalty: `finalScore += (distKm / radiusKm) * weight`
@@ -49,6 +55,7 @@ This document outlines the comprehensive search system enhancements implemented 
 - Gracefully handles missing coordinates
 
 #### D. Viewport Constraints (Optional)
+
 - Accepts `viewport: { bounds, mode }` in options
 - Two modes:
   - **"restrict"**: Only return results within bounds
@@ -56,11 +63,13 @@ This document outlines the comprehensive search system enhancements implemented 
 - Enables "Search this area" feature
 
 #### E. Backward Compatibility
+
 - `FilterShops()` function maintained unchanged
 - Same public API for `SearchShops()`
 - All new features are opt-in via `options` parameter
 
 **Search Pipeline**:
+
 ```
 1. Normalize query
 2. Get cached entries (ensureSearchIndex)
@@ -77,12 +86,14 @@ This document outlines the comprehensive search system enhancements implemented 
 ### 3. Updated: `src/components/Search/SearchBar.tsx`
 
 **Changes**:
+
 - Added `center` from `useMap()` hook
 - Passes geo-bias options to `SearchShops()` when map center available
 - Automatically uses current map center for relevance ranking
 - No UI changes - enhancement is transparent to users
 
 **Geo-Bias Integration**:
+
 ```typescript
 if (center && Array.isArray(center) && center.length === 2) {
   searchOptions.geo = {
@@ -96,12 +107,14 @@ if (center && Array.isArray(center) && center.length === 2) {
 ## Performance Improvements
 
 ### Before
+
 - **Search latency**: ~100-200ms per keystroke
 - **Memory**: New Fuse instance created each search
 - **CPU**: Rebuilding entries + normalization every time
 - **Result quality**: No geo-awareness, duplicate shops
 
 ### After
+
 - **Search latency**: ~10-50ms per keystroke (80% reduction)
 - **Memory**: Single cached Fuse instance
 - **CPU**: Index built once, reused indefinitely
@@ -110,12 +123,14 @@ if (center && Array.isArray(center) && center.length === 2) {
 ## API Stability
 
 ### Maintained Compatibility
+
 ✅ All existing imports work unchanged
 ✅ `FilterShops(filters, updateCache)` - unchanged
 ✅ `SearchShops(query, filters?, updateCache?, options?)` - extended, not changed
 ✅ Existing callers continue to work without modification
 
 ### New Optional Parameters
+
 ```typescript
 // New options fields (all optional)
 options?: {
@@ -136,7 +151,9 @@ options?: {
 ## Technical Details
 
 ### Normalization
+
 Consistent across all modules:
+
 ```typescript
 normalize(text) {
   return text
@@ -148,41 +165,48 @@ normalize(text) {
 ```
 
 **Examples**:
+
 - "café" → "cafe"
 - "São Paulo" → "sao paulo"
 - "Naïve" → "naive"
 
 ### Distance Calculation
+
 Uses existing `distanceMiles()` from `@utils/geo`:
+
 - Haversine formula for great-circle distance
 - Returns miles (converted to km for search scoring)
 - Returns `Infinity` for invalid coordinates
 
 ### Score Blending Formula
+
 ```typescript
-finalScore = fuseScore + (distanceKm / radiusKm) * weight
+finalScore = fuseScore + (distanceKm / radiusKm) * weight;
 ```
 
 **Example**:
+
 - Fuse score: 0.20 (lower = better match)
 - Distance: 10km from center
 - Radius: 25km, Weight: 0.15
-- Distance penalty: (10 / 25) * 0.15 = 0.06
+- Distance penalty: (10 / 25) \* 0.15 = 0.06
 - Final score: 0.20 + 0.06 = 0.26
 
 Nearby shops rank higher when text match quality is similar.
 
 ### Deduplication Strategy
+
 ```typescript
 // For each shop, keep location with lowest finalScore
 shopMap.set(shopId, {
   bestLocation: locationWithLowestScore,
-  finalScore: lowestScore
+  finalScore: lowestScore,
 });
 ```
 
 **Example**:
 Shop "Subway" has 3 locations:
+
 - Location A: score 0.15, 5km away → finalScore 0.18
 - Location B: score 0.15, 20km away → finalScore 0.27
 - Location C: score 0.20, 2km away → finalScore 0.21
@@ -202,6 +226,7 @@ Result: Location A (best overall score) is returned.
 ## Future Enhancements (Not Implemented)
 
 Potential future additions:
+
 - **"Search this area" UI toggle**: Wire to viewport restrict mode
 - **Distance display**: Show "2.3 mi away" in suggestions
 - **Recent searches**: LocalStorage cache of recent queries
@@ -212,6 +237,7 @@ Potential future additions:
 ## Testing Recommendations
 
 ### Manual Testing
+
 1. **Basic Search**: Type "pizza" - should show results
 2. **Geo-Bias**: Compare results from different map positions
 3. **Deduplication**: Search for chain (e.g., "Subway") - should show once
@@ -219,6 +245,7 @@ Potential future additions:
 5. **Performance**: Type quickly - should debounce smoothly
 
 ### Integration Points to Monitor
+
 - Shop creation: Call `invalidateSearchIndex()` after adding shops
 - Shop updates: Call `invalidateSearchIndex()` after editing shops
 - Map center changes: Geo-bias updates automatically
@@ -236,13 +263,16 @@ docs/search-enhancement-summary.md   [NEW]     - This document
 ## Migration Notes
 
 ### For Developers
+
 - **No action required** for existing code
 - To use geo-bias: Pass `center` in options
 - To use viewport: Pass `bounds` and `mode` in options
 - To invalidate cache: Import and call `invalidateSearchIndex()`
 
 ### For Future Features
+
 When implementing "Search this area":
+
 ```typescript
 // Example usage
 const mapBounds = map.getBounds();
@@ -250,26 +280,27 @@ const results = await SearchShops(query, filters, false, {
   viewport: {
     bounds: [
       [mapBounds.getWest(), mapBounds.getSouth()],
-      [mapBounds.getEast(), mapBounds.getNorth()]
+      [mapBounds.getEast(), mapBounds.getNorth()],
     ],
-    mode: "restrict"
-  }
+    mode: "restrict",
+  },
 });
 ```
 
 ## Performance Benchmarks (Estimated)
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| First search (cold) | 150ms | 120ms | 20% faster |
-| Subsequent searches | 120ms | 25ms | 80% faster |
-| Memory per search | ~2MB alloc | ~0.1MB | 95% reduction |
-| Duplicate shops | 3-5 per chain | 1 per shop | 100% deduped |
-| Geo-awareness | None | Full | New feature |
+| Metric              | Before        | After      | Improvement   |
+| ------------------- | ------------- | ---------- | ------------- |
+| First search (cold) | 150ms         | 120ms      | 20% faster    |
+| Subsequent searches | 120ms         | 25ms       | 80% faster    |
+| Memory per search   | ~2MB alloc    | ~0.1MB     | 95% reduction |
+| Duplicate shops     | 3-5 per chain | 1 per shop | 100% deduped  |
+| Geo-awareness       | None          | Full       | New feature   |
 
 ## Conclusion
 
 This implementation delivers:
+
 - ✅ **60-80% performance improvement** in search responsiveness
 - ✅ **Better result relevance** with geo-bias and deduplication
 - ✅ **100% backward compatible** - no breaking changes
