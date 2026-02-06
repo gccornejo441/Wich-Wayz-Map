@@ -1,5 +1,6 @@
 import { UserMetadata } from "@context/authContext";
 import { Category } from "@models/Category";
+import { getFirebaseIdToken } from "./firebaseAuth";
 
 type ApiError = Error & { status?: number };
 
@@ -20,6 +21,12 @@ export const apiRequest = async <T>(
 
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  // Add Firebase ID token to Authorization header (just-in-time, never stored)
+  const token = await getFirebaseIdToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(buildUrl(path), { ...options, headers });

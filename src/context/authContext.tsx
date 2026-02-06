@@ -24,7 +24,6 @@ import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
 import bcrypt from "bcryptjs";
 import { getUserMetadataByFirebaseUid, storeUser } from "../services/apiClient";
-import { initializeJWT } from "../services/security";
 
 export interface UserMetadata {
   id: number;
@@ -147,7 +146,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await signOut(auth);
       setUser(null);
       setUserMetadata(null);
+      // Clean up all storage keys
       sessionStorage.removeItem("userMetadata");
+      sessionStorage.removeItem("safeUserMetadata");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("tokenExpiry");
     } catch (error) {
       console.error("Error during logout:", error);
     }
@@ -157,63 +162,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (!user) return null;
 
     try {
+      // Firebase automatically handles token refresh
       const token = await user.getIdToken(true);
-      const tokenExpiryTime = Date.now() + 3600 * 1000;
-
-      if (!userMetadata) return null;
-
-      const updatedMetadata: UserMetadata = {
-        ...userMetadata,
-        tokenExpiry: new Date(tokenExpiryTime).toISOString(),
-        id: userMetadata.id || 0,
-      };
-
-      setUserMetadata(updatedMetadata);
-      sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
-
-      if (updatedMetadata.tokenExpiry) {
-        localStorage.setItem("tokenExpiry", updatedMetadata.tokenExpiry);
-      } else {
-        console.error("Token expiry is null; cannot set in localStorage.");
-      }
-      sessionStorage.setItem("token", token);
-
       return token;
     } catch (error) {
       console.error("Error refreshing token:", error);
       await logout();
       return null;
     }
-  }, [user, userMetadata, logout]);
-
-  useEffect(() => {
-    const refreshAuthToken = async () => {
-      if (!user || !userMetadata) {
-        return;
-      }
-
-      const tokenExpiry =
-        userMetadata.tokenExpiry || localStorage.getItem("tokenExpiry");
-      if (!tokenExpiry) {
-        return;
-      }
-
-      const expiryTime = new Date(tokenExpiry).getTime();
-      const now = Date.now();
-
-      if (expiryTime - now <= 60000) {
-        await refreshToken();
-      }
-    };
-
-    const interval = setInterval(() => {
-      refreshAuthToken();
-    }, 60000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [user, userMetadata, refreshToken]);
+  }, [user, logout]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -283,29 +240,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const sessionMetadata: SessionUserMetadata =
           mapToSessionUserMetadata(metadata);
 
-        const tokenExpiryTime = Date.now() + 3600 * 1000; // 1 hour
-
-        // Update the token expiry
-        sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
-
-        // Update the user metadata
-        metadata.tokenExpiry = sessionMetadata.tokenExpiry;
-
         setUserMetadata(metadata);
 
         // Store the user metadata in session storage
         sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
-
-        // Store the token expiry in local storage
-        localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
-
-        const jwtResult = await initializeJWT(metadata);
-        if (typeof jwtResult !== "string") {
-          return {
-            success: false,
-            message: jwtResult.message || "Failed to generate session token.",
-          };
-        }
       }
 
       return { success: true, message: "Login successful." };
@@ -415,7 +353,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await sendEmailVerification(user);
 
       const hashedPassword = bcrypt.hashSync(password, 10);
-      const autoUsername = username || email.split("@")[0];
+      const autoUsername = username || email.split("@")[0");
 
       await storeUser({
         firebaseUid: user.uid,
@@ -469,21 +407,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       const sessionMetadata = mapToSessionUserMetadata(metadata);
 
-      const tokenExpiryTime = Date.now() + 3600 * 1000;
-      sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
-      metadata.tokenExpiry = sessionMetadata.tokenExpiry;
-
       setUserMetadata(metadata);
       sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
-      localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
-
-      const jwtResult = await initializeJWT(metadata);
-      if (typeof jwtResult !== "string") {
-        return {
-          success: false,
-          message: jwtResult.message || "Failed to generate session token.",
-        };
-      }
 
       return { success: true, message: "Google sign-in successful." };
     } catch (error: unknown) {
