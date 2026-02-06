@@ -1,6 +1,0 @@
-{
-  "release-type": "node",
-  "package-name": "wich-wayz",
-  "include-v-in-tag": true,
-  "changelog-path": "CHANGELOG.md"
-}
