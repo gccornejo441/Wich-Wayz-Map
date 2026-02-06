@@ -353,7 +353,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await sendEmailVerification(user);
 
       const hashedPassword = bcrypt.hashSync(password, 10);
-      const autoUsername = username || email.split("@")[0");
+      const autoUsername = username || email.split("@")[0];
 
       await storeUser({
         firebaseUid: user.uid,
