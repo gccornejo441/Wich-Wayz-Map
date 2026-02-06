@@ -24,76 +24,68 @@ import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
 import bcrypt from "bcryptjs";
 import { getUserMetadataByFirebaseUid, storeUser } from "../services/apiClient";
+import { SafeUserMetadata } from "@models/SafeUserMetadata";
 import { initializeJWT } from "../services/security";
 
+/**
+ * Backend user model - may contain sensitive fields
+ * This type represents what the backend database stores, but we should
+ * never persist this full object on the client side.
+ * @deprecated For type safety only - use SafeUserMetadata for client state
+ */
 export interface UserMetadata {
   id: number;
   firebaseUid: string;
   email: string;
-  hashedPassword: string;
+  hashedPassword?: string; // Backend only - never send to client
   username: string | null;
   verified: boolean;
-  verificationToken: string | null;
-  modifiedBy: string | null;
-  dateCreated: string;
-  dateModified: string;
+  verificationToken?: string | null; // Backend only - never send to client
+  modifiedBy?: string | null;
+  dateCreated?: string;
+  dateModified?: string;
   membershipStatus: string;
   firstName: string | null;
   lastName: string | null;
   role: string;
   accountStatus: string;
-  lastLogin: string | null;
+  lastLogin?: string | null;
   avatar: string | null;
-  tokenExpiry: string | null;
-  resetToken: string | null;
-}
-
-export interface SessionUserMetadata {
-  id: number;
-  firebaseUid: string;
-  email: string;
-  username: string | null;
-  verified: boolean;
-  verificationToken: string | null;
-  dateModified: string;
-  membershipStatus: string;
-  firstName: string | null;
-  lastName: string | null;
-  role: string;
-  accountStatus: string;
-  avatar: string | null;
-  tokenExpiry: string | null;
-  resetToken: string | null;
+  tokenExpiry?: string | null; // Deprecated - no longer used
+  resetToken?: string | null; // Backend only - never send to client
 }
 
 /**
- * Utility function to map full UserMetadata to SessionUserMetadata.
+ * Maps backend user metadata to safe client metadata.
+ * Only includes fields safe for client-side storage and display.
  */
-export const mapToSessionUserMetadata = (
+export const toSafeUserMetadata = (
   metadata: UserMetadata,
-): SessionUserMetadata => ({
+): SafeUserMetadata => ({
   id: metadata.id,
   firebaseUid: metadata.firebaseUid,
   email: metadata.email,
   username: metadata.username,
   verified: metadata.verified,
-  dateModified: metadata.dateModified,
-  membershipStatus: metadata.membershipStatus,
   firstName: metadata.firstName,
   lastName: metadata.lastName,
   role: metadata.role,
+  membershipStatus: metadata.membershipStatus,
   accountStatus: metadata.accountStatus,
   avatar: metadata.avatar,
-  verificationToken: metadata.verificationToken,
-  tokenExpiry: metadata.tokenExpiry,
-  resetToken: metadata.resetToken,
+  dateCreated: metadata.dateCreated,
+  lastLogin: metadata.lastLogin,
+  // Explicitly exclude all sensitive fields:
+  // hashedPassword, verificationToken, resetToken, tokenExpiry
 });
 
 interface AuthContextData {
   user: FirebaseUser | null;
-  userMetadata: UserMetadata | null;
+  userMetadata: SafeUserMetadata | null;
   setUser: React.Dispatch<React.SetStateAction<FirebaseUser | null>>;
-  setUserMetadata: React.Dispatch<React.SetStateAction<UserMetadata | null>>;
+  setUserMetadata: React.Dispatch<
+    React.SetStateAction<SafeUserMetadata | null>
+  >;
   isAuthenticated: boolean;
   login: (
     email: string,
@@ -105,7 +97,6 @@ interface AuthContextData {
     email: string,
   ) => Promise<{ success: boolean; message: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; message: string }>;
-  refreshToken: () => Promise<string | null>;
   register: (
     email: string | null,
     password: string | null,
@@ -123,125 +114,59 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
 
-  // Initialize userMetadata.tokenExpiry from localStorage
-  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(() => {
-    const storedMetadata = sessionStorage.getItem("userMetadata");
-    const metadata = storedMetadata ? JSON.parse(storedMetadata) : null;
-
-    if (metadata) {
-      const tokenExpiry = localStorage.getItem("tokenExpiry");
-      if (tokenExpiry) {
-        metadata.tokenExpiry = tokenExpiry;
-      } else {
-        console.warn(
-          "Token expiry missing in localStorage during initialization.",
-        );
-      }
-    }
-
-    return metadata;
-  });
+  // Initialize from sessionStorage - only safe metadata
+  const [userMetadata, setUserMetadata] = useState<SafeUserMetadata | null>(
+    () => {
+      const storedMetadata = sessionStorage.getItem("safeUserMetadata");
+      return storedMetadata ? JSON.parse(storedMetadata) : null;
+    },
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       await signOut(auth);
       setUser(null);
       setUserMetadata(null);
-      sessionStorage.removeItem("userMetadata");
+      // Clean up all auth-related storage keys
+      sessionStorage.removeItem("safeUserMetadata");
+      sessionStorage.removeItem("userMetadata"); // Legacy key
+      sessionStorage.removeItem("token"); // Legacy key
+      localStorage.removeItem("token"); // Legacy key
+      localStorage.removeItem("refreshToken"); // Legacy key
+      localStorage.removeItem("tokenExpiry"); // Legacy key
     } catch (error) {
       console.error("Error during logout:", error);
     }
   }, []);
-
-  const refreshToken = useCallback(async (): Promise<string | null> => {
-    if (!user) return null;
-
-    try {
-      const token = await user.getIdToken(true);
-      const tokenExpiryTime = Date.now() + 3600 * 1000;
-
-      if (!userMetadata) return null;
-
-      const updatedMetadata: UserMetadata = {
-        ...userMetadata,
-        tokenExpiry: new Date(tokenExpiryTime).toISOString(),
-        id: userMetadata.id || 0,
-      };
-
-      setUserMetadata(updatedMetadata);
-      sessionStorage.setItem("userMetadata", JSON.stringify(updatedMetadata));
-
-      if (updatedMetadata.tokenExpiry) {
-        localStorage.setItem("tokenExpiry", updatedMetadata.tokenExpiry);
-      } else {
-        console.error("Token expiry is null; cannot set in localStorage.");
-      }
-      sessionStorage.setItem("token", token);
-
-      return token;
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-      await logout();
-      return null;
-    }
-  }, [user, userMetadata, logout]);
-
-  useEffect(() => {
-    const refreshAuthToken = async () => {
-      if (!user || !userMetadata) {
-        return;
-      }
-
-      const tokenExpiry =
-        userMetadata.tokenExpiry || localStorage.getItem("tokenExpiry");
-      if (!tokenExpiry) {
-        return;
-      }
-
-      const expiryTime = new Date(tokenExpiry).getTime();
-      const now = Date.now();
-
-      if (expiryTime - now <= 60000) {
-        await refreshToken();
-      }
-    };
-
-    const interval = setInterval(() => {
-      refreshAuthToken();
-    }, 60000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [user, userMetadata, refreshToken]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        if (!sessionStorage.getItem("userMetadata")) {
+        // Only fetch if we don't have metadata in storage
+        if (!sessionStorage.getItem("safeUserMetadata")) {
           try {
             const metadata = await getUserMetadataByFirebaseUid(
               firebaseUser.uid,
             );
             if (metadata) {
-              const sessionMetadata = mapToSessionUserMetadata(metadata);
-              setUserMetadata(metadata);
+              const safeMetadata = toSafeUserMetadata(metadata);
+              setUserMetadata(safeMetadata);
               sessionStorage.setItem(
-                "userMetadata",
-                JSON.stringify(sessionMetadata),
+                "safeUserMetadata",
+                JSON.stringify(safeMetadata),
               );
             }
           } catch (error) {
             console.error("Error fetching user metadata:", error);
             setUserMetadata(null);
-            sessionStorage.removeItem("userMetadata");
+            sessionStorage.removeItem("safeUserMetadata");
           }
         }
       } else {
         setUserMetadata(null);
-        sessionStorage.removeItem("userMetadata");
+        sessionStorage.removeItem("safeUserMetadata");
       }
     });
 
@@ -279,26 +204,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const metadata = await getUserMetadataByFirebaseUid(user.uid);
 
       if (metadata) {
-        // Map the UserMetadata to SessionUserMetadata
-        const sessionMetadata: SessionUserMetadata =
-          mapToSessionUserMetadata(metadata);
+        // Map to safe metadata (removes sensitive fields)
+        const safeMetadata = toSafeUserMetadata(metadata);
 
-        const tokenExpiryTime = Date.now() + 3600 * 1000; // 1 hour
+        setUserMetadata(safeMetadata);
 
-        // Update the token expiry
-        sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
+        // Store only safe metadata in session storage
+        sessionStorage.setItem(
+          "safeUserMetadata",
+          JSON.stringify(safeMetadata),
+        );
 
-        // Update the user metadata
-        metadata.tokenExpiry = sessionMetadata.tokenExpiry;
-
-        setUserMetadata(metadata);
-
-        // Store the user metadata in session storage
-        sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
-
-        // Store the token expiry in local storage
-        localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
-
+        // Keep initializeJWT for now (will be removed in PR6)
         const jwtResult = await initializeJWT(metadata);
         if (typeof jwtResult !== "string") {
           return {
@@ -467,16 +384,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         );
       }
 
-      const sessionMetadata = mapToSessionUserMetadata(metadata);
+      // Map to safe metadata (removes sensitive fields)
+      const safeMetadata = toSafeUserMetadata(metadata);
 
-      const tokenExpiryTime = Date.now() + 3600 * 1000;
-      sessionMetadata.tokenExpiry = new Date(tokenExpiryTime).toISOString();
-      metadata.tokenExpiry = sessionMetadata.tokenExpiry;
+      setUserMetadata(safeMetadata);
+      sessionStorage.setItem("safeUserMetadata", JSON.stringify(safeMetadata));
 
-      setUserMetadata(metadata);
-      sessionStorage.setItem("userMetadata", JSON.stringify(sessionMetadata));
-      localStorage.setItem("tokenExpiry", sessionMetadata.tokenExpiry);
-
+      // Keep initializeJWT for now (will be removed in PR6)
       const jwtResult = await initializeJWT(metadata);
       if (typeof jwtResult !== "string") {
         return {
@@ -526,7 +440,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         login,
         signInWithGoogle,
         logout,
-        refreshToken,
         resetPassword: async (email) => {
           try {
             await sendPasswordResetEmail(auth, email);
