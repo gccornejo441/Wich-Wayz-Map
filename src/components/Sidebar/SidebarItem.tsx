@@ -58,7 +58,8 @@ export const SidebarItem = ({
       onKeyDown={(e) => {
         if (!disabled && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
-          handleClick(e);
+          close("nav");
+          onClick?.();
         }
       }}
     >
