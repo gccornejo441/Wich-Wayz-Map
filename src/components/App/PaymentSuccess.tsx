@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { mapToSessionUserMetadata, useAuth } from "../../context/authContext";
+import { useAuth } from "../../context/authContext";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../services/apiClient";
 import Confetti from "react-confetti";
@@ -20,7 +20,24 @@ const PaymentSuccess = () => {
       try {
         const userMetadata = await getUserById(userId);
         if (userMetadata) {
-          const sessionMetadata = mapToSessionUserMetadata(userMetadata);
+          // Map to safe session metadata (exclude sensitive fields)
+          const sessionMetadata = {
+            id: userMetadata.id,
+            firebaseUid: userMetadata.firebaseUid,
+            email: userMetadata.email,
+            username: userMetadata.username,
+            verified: userMetadata.verified,
+            verificationToken: userMetadata.verificationToken,
+            dateModified: userMetadata.dateModified,
+            membershipStatus: userMetadata.membershipStatus,
+            firstName: userMetadata.firstName,
+            lastName: userMetadata.lastName,
+            role: userMetadata.role,
+            accountStatus: userMetadata.accountStatus,
+            avatar: userMetadata.avatar,
+            tokenExpiry: userMetadata.tokenExpiry,
+            resetToken: userMetadata.resetToken,
+          };
           setUserMetadata(userMetadata);
           sessionStorage.setItem(
             "userMetadata",
