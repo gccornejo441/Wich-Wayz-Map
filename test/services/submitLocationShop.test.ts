@@ -4,6 +4,8 @@ import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
 import { createLocationShopPayload } from "../../src/services/submitLocationShop";
 import { GetShops } from "../../src/services/shopService";
+import { getCurrentUser } from "../../src/services/security";
+import { apiRequest } from "../../src/services/apiClient";
 
 vi.mock("../../src/services/security");
 vi.mock("../../src/services/indexedDB");
@@ -12,6 +14,19 @@ vi.mock("../../src/services/apiClient");
 
 describe("handleLocationSubmit", () => {
   it("should submit location and shop successfully", async () => {
+    // Mock getCurrentUser to return a valid member user
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      sub: "123",
+      membershipStatus: "member",
+      email: "test@example.com",
+    });
+
+    // Mock apiRequest to return a successful response
+    vi.mocked(apiRequest).mockResolvedValue({
+      shopId: 2,
+      locationId: 1,
+    });
+
     const mockShops = [
       {
         id: 2,
