@@ -1,5 +1,29 @@
 import { executeQuery } from "../../lib/db.js";
 
+/**
+ * Returns a safe projection of user metadata without sensitive fields
+ * @param {Object} user - Raw user object from database
+ * @returns {Object} Safe user metadata for client consumption
+ */
+const toSafeUserMetadata = (user) => {
+  return {
+    id: user.id,
+    firebaseUid: user.firebase_uid,
+    email: user.email,
+    username: user.username,
+    verified: user.verified,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    role: user.role,
+    membershipStatus: user.membership_status,
+    accountStatus: user.account_status,
+    avatar: user.avatar,
+    dateCreated: user.date_created,
+    lastLogin: user.last_login,
+    // Explicitly exclude: hashed_password, verification_token, reset_token, token_expiry
+  };
+};
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.status(405).json({ message: "Method Not Allowed" });
@@ -24,31 +48,9 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Transform snake_case to camelCase for frontend
-    const user = rows[0];
-    const transformedUser = {
-      id: user.id,
-      firebaseUid: user.firebase_uid,
-      email: user.email,
-      hashedPassword: user.hashed_password,
-      username: user.username,
-      verified: user.verified,
-      verificationToken: user.verification_token,
-      modifiedBy: user.modified_by,
-      dateCreated: user.date_created,
-      dateModified: user.date_modified,
-      membershipStatus: user.membership_status,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      role: user.role,
-      accountStatus: user.account_status,
-      lastLogin: user.last_login,
-      avatar: user.avatar,
-      tokenExpiry: user.token_expiry,
-      resetToken: user.reset_token,
-    };
-
-    res.status(200).json(transformedUser);
+    // Return only safe metadata (no sensitive fields)
+    const safeUser = toSafeUserMetadata(rows[0]);
+    res.status(200).json(safeUser);
   } catch (error) {
     console.error("Failed to fetch user by firebase uid:", error);
     res.status(500).json({ message: "Failed to fetch user" });
