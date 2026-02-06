@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from "vitest";
-import { getCurrentUser } from "../../src/services/security";
 import { handleLocationSubmit } from "../../src/services/submitLocationShop";
 import { cacheData } from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
@@ -13,13 +12,6 @@ vi.mock("../../src/services/apiClient");
 
 describe("handleLocationSubmit", () => {
   it("should submit location and shop successfully", async () => {
-    // Mock user metadata (Firebase auth is already mocked in tests)
-    const mockUserMetadata = {
-      id: 123,
-      firebaseUid: "test-firebase-uid",
-      membershipStatus: "member",
-    };
-
     const mockShops = [
       {
         id: 2,
