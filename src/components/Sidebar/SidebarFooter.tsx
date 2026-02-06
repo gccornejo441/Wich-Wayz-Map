@@ -139,8 +139,18 @@ const SidebarFooter = () => {
                       user.email?.split("@")[0] ||
                       "User"}
                 </p>
-                {!user.emailVerified && (
+                {!user.emailVerified ? (
                   <p className="text-xs text-white/50">Email not verified</p>
+                ) : (
+                  <p className="text-xs text-white/50 capitalize">
+                    {userMetadata.membershipStatus === "member" ? (
+                      <span className="text-brand-secondary font-medium">
+                        Club Member
+                      </span>
+                    ) : (
+                      <span>Basic Member</span>
+                    )}
+                  </p>
                 )}
               </>
             ) : (
