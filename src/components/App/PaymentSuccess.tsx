@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import { mapToSessionUserMetadata, useAuth } from "../../context/authContext";
+import { toSafeUserMetadata, useAuth } from "../../context/authContext";
 import { useEffect, useState } from "react";
 import { getUserById } from "../../services/apiClient";
 import Confetti from "react-confetti";
@@ -20,11 +20,11 @@ const PaymentSuccess = () => {
       try {
         const userMetadata = await getUserById(userId);
         if (userMetadata) {
-          const sessionMetadata = mapToSessionUserMetadata(userMetadata);
-          setUserMetadata(userMetadata);
+          const safeMetadata = toSafeUserMetadata(userMetadata);
+          setUserMetadata(safeMetadata);
           sessionStorage.setItem(
-            "userMetadata",
-            JSON.stringify(sessionMetadata),
+            "safeUserMetadata",
+            JSON.stringify(safeMetadata),
           );
           setMembershipStatus(userMetadata.membershipStatus);
           setUserName(userMetadata.username);
