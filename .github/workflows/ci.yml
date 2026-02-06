@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    tags: ["v*"]
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -25,6 +26,15 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - name: Compute build version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "VITE_BUILD_VERSION=${VERSION}+${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          else
+            echo "VITE_BUILD_VERSION=0.0.0-ci.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -42,6 +52,7 @@ jobs:
         run: npm run build
         env:
           VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          VITE_BUILD_VERSION: ${{ env.VITE_BUILD_VERSION }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

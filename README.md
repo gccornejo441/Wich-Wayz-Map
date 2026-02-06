@@ -13,6 +13,7 @@
   - [Running the app](#running-the-app)
   - [Testing](#testing)
 - [Project structure](#project-structure)
+- [How to release](#how-to-release)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -133,6 +134,13 @@ The key directories/files include:
 - **`services/apiClient.ts`** – server‑side helper for executing SQL queries against Turso and performing CRUD operations.
 
 - **`test/`** – unit tests for components and services.
+
+## How to release
+
+- Use conventional commits (e.g. `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `ci:`). Mark breaking changes with `!` in the type/scope or add `BREAKING CHANGE:` in the body.
+- On every push to `main`, release-please opens or updates a Release PR with version bumps in `package.json` and `package-lock.json`, plus an updated `CHANGELOG.md`.
+- Merge the Release PR to create a tag like `vX.Y.Z` and a GitHub Release with generated notes.
+- Every CI build sets `VITE_BUILD_VERSION` for Vite. Tagged builds use `X.Y.Z+<run_number>`, other builds use `0.0.0-ci.<run_number>`. This value is available at runtime via `import.meta.env.VITE_BUILD_VERSION`.
 
 ## Contributing
 
