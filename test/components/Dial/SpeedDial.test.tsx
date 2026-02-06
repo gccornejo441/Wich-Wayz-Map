@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { BrowserRouter } from "react-router-dom";
 import SpeedDial from "@/components/Dial/SpeedDial";
+import { OverlayProvider } from "@context/overlayContext";
 
 // Mock the auth context
 vi.mock("@context/authContext", () => ({
@@ -30,23 +31,25 @@ describe("SpeedDial", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the speed dial button", () => {
-    render(
+  const renderSpeedDial = () => {
+    return render(
       <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
+        <OverlayProvider>
+          <SpeedDial onLocateUser={mockOnLocateUser} />
+        </OverlayProvider>
       </BrowserRouter>,
     );
+  };
+
+  it("renders the speed dial button", () => {
+    renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
     expect(button).toBeInTheDocument();
   });
 
   it("has pointer-events-none on the container to allow map gestures", () => {
-    const { container } = render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    const { container } = renderSpeedDial();
 
     // Find the fixed container div (first child of the root)
     const speedDialContainer = container.firstChild as HTMLElement;
@@ -54,11 +57,7 @@ describe("SpeedDial", () => {
   });
 
   it("has pointer-events-auto on the menu to receive interactions", () => {
-    const { container } = render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    const { container } = renderSpeedDial();
 
     // Find the menu div (second child of the container)
     const speedDialContainer = container.firstChild as HTMLElement;
@@ -67,11 +66,7 @@ describe("SpeedDial", () => {
   });
 
   it("has pointer-events-auto and touch-manipulation on the main button", () => {
-    render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
     expect(button).toHaveClass("pointer-events-auto");
@@ -79,20 +74,9 @@ describe("SpeedDial", () => {
   });
 
   it("opens the menu when button is clicked", () => {
-    render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    const { container } = renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
-
-    // Menu should initially be hidden (opacity-0)
-    const { container } = render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
     const speedDialContainer = container.firstChild as HTMLElement;
     const menuDiv = speedDialContainer.firstChild as HTMLElement;
     expect(menuDiv).toHaveClass("opacity-0");
@@ -105,11 +89,7 @@ describe("SpeedDial", () => {
   });
 
   it("displays menu items when opened", () => {
-    render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
     fireEvent.click(button);
@@ -123,11 +103,7 @@ describe("SpeedDial", () => {
   });
 
   it("calls onLocateUser when My Location is clicked", () => {
-    render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
     fireEvent.click(button);
@@ -139,11 +115,7 @@ describe("SpeedDial", () => {
   });
 
   it("closes the menu when button is clicked again", () => {
-    const { container } = render(
-      <BrowserRouter>
-        <SpeedDial onLocateUser={mockOnLocateUser} />
-      </BrowserRouter>,
-    );
+    const { container } = renderSpeedDial();
 
     const button = screen.getByRole("button", { name: /open actions menu/i });
     const speedDialContainer = container.firstChild as HTMLElement;

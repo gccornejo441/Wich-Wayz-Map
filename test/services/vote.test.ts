@@ -10,7 +10,9 @@ describe("GetVotesForShop", () => {
     (axios.get as jest.Mock).mockResolvedValue({ data: mockData });
 
     const result = await GetVotesForShop(1);
-    expect(axios.get).toHaveBeenCalledWith("/api/votes/1");
+    expect(axios.get).toHaveBeenCalledWith("/api/votes/1", {
+      params: undefined,
+    });
     expect(result).toEqual(mockData);
   });
 
