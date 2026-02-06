@@ -13,8 +13,12 @@ vi.mock("../../src/services/apiClient");
 
 describe("handleLocationSubmit", () => {
   it("should submit location and shop successfully", async () => {
-    const mockUser = { sub: "123", membershipStatus: "member" };
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+    // Mock user metadata (Firebase auth is already mocked in tests)
+    const mockUserMetadata = {
+      id: 123,
+      firebaseUid: "test-firebase-uid",
+      membershipStatus: "member",
+    };
 
     const mockShops = [
       {
