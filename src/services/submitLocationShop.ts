@@ -7,9 +7,10 @@ import { auth } from "./firebase";
 import { cleanString } from "@/utils/stringUtils";
 import { Shop } from "@/models/Shop";
 import { Location } from "@/models/Location";
-import { GetShops, fetchShopById } from "./shopService";
-import { apiRequest } from "./apiClient";
+import { GetShops } from "./shopService";
+import { authApiRequest } from "./apiClient";
 import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
+import { buildStreetAddress } from "@/utils/address";
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -31,13 +32,13 @@ export async function handleLocationSubmit(
 
     const payload = createLocationShopPayload(addAShopPayload, address);
 
-    const response = await apiRequest<{ shopId: number; locationId: number }>(
-      "/add-new-shop",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-    );
+    const response = await authApiRequest<{
+      shopId: number;
+      locationId: number;
+    }>("/add-new-shop", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
@@ -52,13 +53,53 @@ export async function handleLocationSubmit(
 
     addToast("Location and shop submitted successfully!", "success");
 
-    // Fetch and select the newly created shop if selectShop callback provided
+    // Select the newly created shop if selectShop callback provided
     if (selectShop && response.shopId) {
       try {
-        const newShop = await fetchShopById(response.shopId);
-        selectShop(newShop);
+        // Find the newly created shop from the already fetched shops
+        const newShopData = fetchedShops.find(
+          (shop) => shop.id === response.shopId,
+        );
+
+        if (newShopData && newShopData.locations?.[0]) {
+          const location = newShopData.locations[0];
+
+          // Build the shop object for sidebar display
+          const shopForSidebar: ShopGeoJsonProperties = {
+            shopId: newShopData.id!,
+            shopName: newShopData.name,
+            categories:
+              newShopData.categories?.map((c) => c.category_name).join(", ") ||
+              "",
+            categoryIds:
+              newShopData.categories
+                ?.map((c) => c.id)
+                .filter((id): id is number => typeof id === "number") || [],
+            description: newShopData.description || undefined,
+            address: buildStreetAddress(
+              location.street_address,
+              location.street_address_second,
+            ),
+            city: location.city,
+            state: location.state,
+            postalCode: location.postal_code,
+            country: location.country,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            phone: location.phone || undefined,
+            website: location.website || undefined,
+            website_url: location.website || undefined,
+            createdBy: newShopData.created_by_username || undefined,
+            created_by: newShopData.created_by,
+            usersAvatarId: newShopData.users_avatar_id || undefined,
+            locationStatus: location.locationStatus || "open",
+            locationId: location.id,
+          };
+
+          selectShop(shopForSidebar);
+        }
       } catch (error) {
-        console.error("Failed to fetch newly created shop:", error);
+        console.error("Failed to select newly created shop:", error);
         // Don't throw - shop was created successfully, just couldn't open sidebar
       }
     }
