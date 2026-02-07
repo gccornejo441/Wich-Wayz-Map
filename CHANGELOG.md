@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.2.0...wich-wayz-v1.3.0) (2026-02-07)
+
+
+### Features
+
+* **auth:** add metadata error handling with retry logic and user feedback ([ebce4c9](https://github.com/gccornejo441/Wich-Wayz-Map/commit/ebce4c9ce3ade225f038311de4ee4756a8acf953))
+* **auth:** improve error handling and form accessibility ([3e70a53](https://github.com/gccornejo441/Wich-Wayz-Map/commit/3e70a5344418e5f18caedb77688a895acee0eedc))
+
 ## [1.2.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.1.0...wich-wayz-v1.2.0) (2026-02-07)
 
 
