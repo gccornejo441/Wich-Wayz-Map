@@ -33,6 +33,15 @@ export const getFirebaseAdmin = () => {
 };
 
 export const verifyFirebaseToken = async (idToken) => {
-  const admin = getFirebaseAdmin();
-  return await admin.auth().verifyIdToken(idToken);
+  try {
+    const admin = getFirebaseAdmin();
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    return decodedToken;
+  } catch (error) {
+    console.error("Token verification failed:");
+    console.error("- Error code:", error.code);
+    console.error("- Error message:", error.message);
+    console.error("- Token preview:", idToken?.substring(0, 50) + "...");
+    throw error;
+  }
 };
