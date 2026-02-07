@@ -4,6 +4,14 @@ import {
   toggleSavedShop,
 } from "../../src/services/savedService";
 
+vi.mock("../../src/services/firebase", () => ({
+  auth: {
+    currentUser: {
+      getIdToken: vi.fn().mockResolvedValue("mock-token"),
+    },
+  },
+}));
+
 const mockFetch = (data: unknown, status = 200) => {
   global.fetch = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
@@ -15,11 +23,11 @@ const mockFetch = (data: unknown, status = 200) => {
 
 describe("savedService", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("maps saved items with snake_case fields", async () => {
@@ -33,16 +41,17 @@ describe("savedService", () => {
     expect(items[0].dateCreated).toBe("2026-01-30T10:00:00Z");
   });
 
-  it("sends user id when toggling saved shop", async () => {
+  it("sends shop id when toggling saved shop", async () => {
     mockFetch({ saved: true });
 
-    const saved = await toggleSavedShop(7, 42);
+    const saved = await toggleSavedShop(7);
     expect(saved).toBe(true);
 
     const call = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0];
     const body = JSON.parse(call[1].body as string);
-    expect(body).toMatchObject({ shopId: 7, userId: 42, user_id: 42 });
+    expect(body).toMatchObject({ shopId: 7 });
     expect(call[0]).toContain("/api/saved/toggle");
+    expect(call[1].headers).toBeDefined();
   });
 });

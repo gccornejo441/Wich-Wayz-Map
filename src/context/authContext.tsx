@@ -7,7 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import {
-  onAuthStateChanged,
+  onIdTokenChanged,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
@@ -22,10 +22,8 @@ import {
 } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
-import bcrypt from "bcryptjs";
-import { getUserMetadataByFirebaseUid, storeUser } from "../services/apiClient";
+import { getMyUserMetadata } from "../services/apiClient";
 import { SafeUserMetadata } from "@models/SafeUserMetadata";
-import { initializeJWT } from "../services/security";
 
 /**
  * Backend user model - may contain sensitive fields
@@ -100,9 +98,6 @@ interface AuthContextData {
   register: (
     email: string | null,
     password: string | null,
-    username?: string | null,
-    firstName?: string | null,
-    lastName?: string | null,
     useGoogle?: boolean,
   ) => Promise<{ success: boolean; message: string }>;
 }
@@ -140,29 +135,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // Only fetch if we don't have metadata in storage
-        if (!sessionStorage.getItem("safeUserMetadata")) {
+        const cached = sessionStorage.getItem("safeUserMetadata");
+        if (cached) {
           try {
-            const metadata = await getUserMetadataByFirebaseUid(
-              firebaseUser.uid,
-            );
-            if (metadata) {
-              const safeMetadata = toSafeUserMetadata(metadata);
-              setUserMetadata(safeMetadata);
-              sessionStorage.setItem(
-                "safeUserMetadata",
-                JSON.stringify(safeMetadata),
-              );
-            }
-          } catch (error) {
-            console.error("Error fetching user metadata:", error);
-            setUserMetadata(null);
-            sessionStorage.removeItem("safeUserMetadata");
+            setUserMetadata(JSON.parse(cached));
+          } catch (e) {
+            console.error("Failed to parse cached metadata:", e);
           }
+        }
+
+        try {
+          const freshMetadata = await getMyUserMetadata();
+          setUserMetadata(freshMetadata);
+          sessionStorage.setItem(
+            "safeUserMetadata",
+            JSON.stringify(freshMetadata),
+          );
+        } catch (error) {
+          console.error("Error fetching user metadata:", error);
         }
       } else {
         setUserMetadata(null);
@@ -184,46 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         : browserSessionPersistence;
 
       await setPersistence(auth, persistence);
-
-      // Sign in with email and password using the firebase api
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-
-      // Get the firebase user
-      const { user } = userCredential;
-
-      // Check if the user exists
-      if (!user) {
-        return { success: false, message: "Failed to authenticate user." };
-      }
-
-      // Get the user metadata
-      const metadata = await getUserMetadataByFirebaseUid(user.uid);
-
-      if (metadata) {
-        // Map to safe metadata (removes sensitive fields)
-        const safeMetadata = toSafeUserMetadata(metadata);
-
-        setUserMetadata(safeMetadata);
-
-        // Store only safe metadata in session storage
-        sessionStorage.setItem(
-          "safeUserMetadata",
-          JSON.stringify(safeMetadata),
-        );
-
-        // Keep initializeJWT for now (will be removed in PR6)
-        const jwtResult = await initializeJWT(metadata);
-        if (typeof jwtResult !== "string") {
-          return {
-            success: false,
-            message: jwtResult.message || "Failed to generate session token.",
-          };
-        }
-      }
+      await signInWithEmailAndPassword(auth, email, password);
 
       return { success: true, message: "Login successful." };
     } catch (error: unknown) {
@@ -231,22 +186,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.error("Firebase login error:", error.code);
 
         const errorMessages: Record<string, string> = {
-          "auth/user-not-found":
-            "No account found with this email. Please sign up or check your email address.",
-          "auth/wrong-password":
-            "The password you entered is incorrect. Please try again.",
+          "auth/user-not-found": "No account found with this email.",
+          "auth/wrong-password": "Incorrect password.",
           "auth/too-many-requests":
-            "Too many failed attempts. Please wait a few minutes and try again.",
+            "Too many failed attempts. Please try again later.",
           "auth/network-request-failed":
-            "Network error. Please check your connection and try again.",
+            "Network error. Check your connection.",
           "auth/invalid-email": "Invalid email or password",
           "auth/invalid-credential": "Invalid email or password",
         };
 
-        const userFriendlyMessage =
-          errorMessages[error.code] ||
-          "An error occurred. Please try again later.";
-        return { success: false, message: userFriendlyMessage };
+        return {
+          success: false,
+          message:
+            errorMessages[error.code] || "Login failed. Please try again.",
+        };
       }
 
       console.error("Unexpected error during login:", error);
@@ -257,57 +211,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const registerWithGoogle = async (): Promise<{
-    success: boolean;
-    message: string;
-  }> => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      if (!user || !user.email) {
-        throw new Error("Google sign-in failed. Email is required.");
-      }
-
-      const email = user.email.trim();
-      const username = email.split("@")[0];
-
-      if (!user.uid) {
-        throw new Error("Firebase UID is required and cannot be empty.");
-      }
-
-      await storeUser({
-        firebaseUid: user.uid,
-        email,
-        hashedPassword: "",
-        username: username.trim(),
-        membershipStatus: "basic",
-        firstName: null,
-        lastName: "",
-      });
-
-      return { success: true, message: "Google sign-in successful." };
-    } catch (error: unknown) {
-      console.error("Error during Google sign-in:", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.";
-      return { success: false, message };
-    }
-  };
-
   const register = async (
     email: string | null,
     password: string | null,
-    username: string | null = null,
-    firstName: string | null = null,
-    lastName: string | null = null,
     useGoogle: boolean = false,
   ): Promise<{ success: boolean; message: string }> => {
     if (useGoogle) {
-      return registerWithGoogle();
+      return signInWithGoogle();
     }
 
     try {
@@ -331,22 +241,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       await sendEmailVerification(user);
 
-      const hashedPassword = bcrypt.hashSync(password, 10);
-      const autoUsername = username || email.split("@")[0];
-
-      await storeUser({
-        firebaseUid: user.uid,
-        email: email.trim(),
-        hashedPassword,
-        username: autoUsername.trim(),
-        membershipStatus: "basic",
-        firstName,
-        lastName,
-      });
-
       return {
         success: true,
-        message: "User registered successfully. Please check your email.",
+        message: "Registration successful! Check your email to verify.",
       };
     } catch (error: unknown) {
       console.error("Error during registration:", error);
@@ -364,68 +261,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }> => {
     try {
       const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
 
-      const result = await signInWithPopup(auth, provider);
+      return { success: true, message: "Google sign-in successful" };
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        const errorMessages: Record<string, string> = {
+          "auth/popup-closed-by-user": "Sign-in canceled",
+          "auth/cancelled-popup-request": "Another sign-in ongoing",
+        };
 
-      const user = result.user;
-
-      if (!user || !user.email) {
-        throw new Error("Google sign-in failed. Email is required.");
-      }
-
-      if (!user.uid) {
-        throw new Error("Firebase UID is required and cannot be empty.");
-      }
-
-      const metadata = await getUserMetadataByFirebaseUid(user.uid);
-      if (!metadata) {
-        throw new Error(
-          "No account found for this Google account. Please register first.",
-        );
-      }
-
-      // Map to safe metadata (removes sensitive fields)
-      const safeMetadata = toSafeUserMetadata(metadata);
-
-      setUserMetadata(safeMetadata);
-      sessionStorage.setItem("safeUserMetadata", JSON.stringify(safeMetadata));
-
-      // Keep initializeJWT for now (will be removed in PR6)
-      const jwtResult = await initializeJWT(metadata);
-      if (typeof jwtResult !== "string") {
         return {
           success: false,
-          message: jwtResult.message || "Failed to generate session token.",
+          message: errorMessages[error.code] || "Sign-in failed",
         };
       }
 
-      return { success: true, message: "Google sign-in successful." };
-    } catch (error: unknown) {
-      if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/popup-closed-by-user":
-            return {
-              success: false,
-              message: "Sign-in process was canceled. Please try again.",
-            };
-          case "auth/cancelled-popup-request":
-            return {
-              success: false,
-              message: "Another sign-in process is ongoing. Please wait.",
-            };
-          default:
-            return {
-              success: false,
-              message: "An error occurred during sign-in. Please try again.",
-            };
-        }
-      }
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred. Please try again.";
-      return { success: false, message };
+      return { success: false, message: "Sign-in failed" };
     }
   };
 

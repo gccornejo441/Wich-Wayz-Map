@@ -1,74 +1,72 @@
-import axios from "axios";
+import { authApiRequest } from "./apiClient";
 import { Comment } from "@models/Comment";
-import { AddCommentPayload } from "../types/dataTypes";
 
-const apiBase = (import.meta.env.VITE_API_BASE as string | undefined) ?? "/api";
-const client = axios.create({ baseURL: apiBase });
+export async function getComments(shopId: number): Promise<Comment[]> {
+  try {
+    const response = await authApiRequest<{ comments: Comment[] }>(
+      `/comments/${shopId}`,
+    );
+    return response.comments || [];
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    throw new Error("Failed to fetch comments");
+  }
+}
 
-const mapComment = (data: Record<string, unknown>): Comment => ({
-  id: Number(data.id),
-  shopId: Number(data.shop_id ?? data.shopId),
-  userId: Number(data.user_id ?? data.userId),
-  body: String(data.body ?? ""),
-  dateCreated: String(data.date_created ?? data.dateCreated ?? ""),
-  dateModified:
-    (data.date_modified as string | null | undefined) ??
-    (data.dateModified as string | null | undefined) ??
-    null,
-  userName:
-    (data.user_name as string | null | undefined) ??
-    (data.userName as string | null | undefined) ??
-    null,
-  userAvatar:
-    (data.user_avatar as string | null | undefined) ??
-    (data.userAvatar as string | null | undefined) ??
-    null,
-  userEmail:
-    (data.user_email as string | null | undefined) ??
-    (data.userEmail as string | null | undefined) ??
-    null,
-});
+export async function getCommentsForShop(shopId: number): Promise<Comment[]> {
+  return getComments(shopId);
+}
 
-export const getCommentsForShop = async (
+export async function addComment(
   shopId: number,
-): Promise<Comment[]> => {
-  const response = await client.get(`/comments/${shopId}`);
-  const comments = Array.isArray(response.data) ? response.data : [];
-  return comments.map((comment) =>
-    mapComment(comment as Record<string, unknown>),
-  );
-};
-
-export const createComment = async (
-  payload: AddCommentPayload,
-): Promise<Comment> => {
-  const response = await client.post("/comments", {
-    shop_id: payload.shopId,
-    user_id: payload.userId,
-    body: payload.body,
-  });
-
-  return mapComment(response.data as Record<string, unknown>);
-};
-
-export const updateComment = async (
-  commentId: number,
-  userId: number,
   body: string,
-): Promise<Comment> => {
-  const response = await client.put(`/comments/${commentId}`, {
-    user_id: userId,
-    body,
-  });
+): Promise<Comment> {
+  try {
+    const response = await authApiRequest<Comment>("/comments", {
+      method: "POST",
+      body: JSON.stringify({
+        shop_id: shopId,
+        body,
+      }),
+    });
+    return response;
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    throw new Error("Failed to add comment");
+  }
+}
 
-  return mapComment(response.data as Record<string, unknown>);
-};
+export async function createComment(payload: {
+  shopId: number;
+  userId: number;
+  body: string;
+}): Promise<Comment> {
+  return addComment(payload.shopId, payload.body);
+}
 
-export const deleteComment = async (
+export async function updateComment(
   commentId: number,
-  userId: number,
-): Promise<void> => {
-  await client.delete(`/comments/${commentId}`, {
-    data: { user_id: userId },
-  });
-};
+  body: string,
+): Promise<Comment> {
+  try {
+    const response = await authApiRequest<Comment>(`/comments/${commentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ body }),
+    });
+    return response;
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    throw new Error("Failed to update comment");
+  }
+}
+
+export async function deleteComment(commentId: number): Promise<void> {
+  try {
+    await authApiRequest(`/comments/${commentId}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    throw new Error("Failed to delete comment");
+  }
+}

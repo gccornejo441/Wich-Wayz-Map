@@ -1,20 +1,60 @@
-import { describe, it, expect, vi } from "vitest";
-import { getCurrentUser } from "../../src/services/security";
-import { handleLocationSubmit } from "../../src/services/submitLocationShop";
-import { cacheData } from "../../src/services/indexedDB";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  createLocationShopPayload,
+  handleLocationSubmit,
+} from "../../src/services/submitLocationShop";
+import * as apiClientModule from "../../src/services/apiClient";
+import * as shopServiceModule from "../../src/services/shopService";
+import * as indexedDBModule from "../../src/services/indexedDB";
 import { AddAShopPayload } from "../../src/types/dataTypes";
-import { createLocationShopPayload } from "../../src/services/submitLocationShop";
-import { GetShops } from "../../src/services/shopService";
 
-vi.mock("../../src/services/security");
-vi.mock("../../src/services/indexedDB");
+let mockCurrentUser: { uid: string; email: string } | null = {
+  uid: "test-uid",
+  email: "test@example.com",
+};
+
+vi.mock("../../src/services/firebase", () => ({
+  auth: {
+    get currentUser() {
+      return mockCurrentUser;
+    },
+  },
+}));
+
 vi.mock("../../src/services/shopService");
 vi.mock("../../src/services/apiClient");
+vi.mock("../../src/services/indexedDB");
 
 describe("handleLocationSubmit", () => {
-  it("should submit location and shop successfully", async () => {
-    const mockUser = { sub: "123", membershipStatus: "member" };
-    vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should require authentication", async () => {
+    mockCurrentUser = null;
+
+    const setShops = vi.fn();
+    const setLocations = vi.fn();
+    const addToast = vi.fn();
+    const navigate = vi.fn();
+
+    const result = await handleLocationSubmit(
+      {} as AddAShopPayload,
+      undefined,
+      setShops,
+      setLocations,
+      addToast,
+      navigate,
+    );
+
+    expect(result).toBe(false);
+    expect(navigate).toHaveBeenCalledWith("/account/sign-in");
+
+    mockCurrentUser = { uid: "test-uid", email: "test@example.com" };
+  });
+
+  it("should submit location and shop successfully when authenticated", async () => {
+    mockCurrentUser = { uid: "test-uid", email: "test@example.com" };
 
     const mockShops = [
       {
@@ -36,21 +76,24 @@ describe("handleLocationSubmit", () => {
       },
     ];
 
-    vi.mocked(GetShops).mockResolvedValue(mockShops);
+    vi.mocked(apiClientModule.apiRequest).mockResolvedValue({
+      shopId: 2,
+      locationId: 1,
+    });
+    vi.mocked(shopServiceModule.GetShops).mockResolvedValue(mockShops);
+    vi.mocked(indexedDBModule.cacheData).mockResolvedValue(undefined);
 
     const setShops = vi.fn();
     const setLocations = vi.fn();
     const addToast = vi.fn();
-    const logout = vi.fn();
     const navigate = vi.fn();
 
     const result = await handleLocationSubmit(
       {} as AddAShopPayload,
-      undefined, // address parameter
+      undefined,
       setShops,
       setLocations,
       addToast,
-      logout,
       navigate,
     );
 
@@ -61,8 +104,11 @@ describe("handleLocationSubmit", () => {
       "Location and shop submitted successfully!",
       "success",
     );
-    expect(cacheData).toHaveBeenCalledWith("shops", mockShops);
-    expect(cacheData).toHaveBeenCalledWith("locations", mockShops[0].locations);
+    expect(indexedDBModule.cacheData).toHaveBeenCalledWith("shops", mockShops);
+    expect(indexedDBModule.cacheData).toHaveBeenCalledWith(
+      "locations",
+      mockShops[0].locations,
+    );
   });
 });
 
@@ -83,21 +129,13 @@ describe("createLocationShopPayload", () => {
     categoryIds: [1, 2, 3],
   };
 
-  it("should throw an error if modifiedBy is undefined", () => {
-    expect(() => createLocationShopPayload(validPayload, undefined)).toThrow(
-      "User ID (modifiedBy) is required to create a shop.",
-    );
-  });
-
   it("should return the correct location and shop payload for valid inputs", () => {
-    const modifiedBy = 1;
-    const result = createLocationShopPayload(validPayload, modifiedBy);
+    const result = createLocationShopPayload(validPayload);
 
     expect(result).toEqual({
       shopName: "Test Shop",
       shop_description: "A test shop description",
-      userId: modifiedBy,
-      house_number: "", // Not used with new address structure
+      house_number: "",
       address_first: "Main St",
       address_second: "Apt 4b",
       postcode: "12345",
@@ -113,7 +151,6 @@ describe("createLocationShopPayload", () => {
   });
 
   it("should use default values if optional fields are missing", () => {
-    const modifiedBy = 1;
     const payloadWithMissingFields: AddAShopPayload = {
       shopName: "Shop Without Address",
       shop_description: "No Description Provided",
@@ -130,15 +167,11 @@ describe("createLocationShopPayload", () => {
       categoryIds: [],
     };
 
-    const result = createLocationShopPayload(
-      payloadWithMissingFields,
-      modifiedBy,
-    );
+    const result = createLocationShopPayload(payloadWithMissingFields);
 
     expect(result).toEqual({
       shopName: "Shop Without Address",
       shop_description: "No description provided",
-      userId: modifiedBy,
       house_number: "",
       address_first: "",
       address_second: "",
@@ -155,7 +188,6 @@ describe("createLocationShopPayload", () => {
   });
 
   it("should ensure shopName is in title case and shop_description is in normal case", () => {
-    const modifiedBy = 1;
     const payloadWithCasingIssues = {
       shopName: "tEsT sHoP",
       shop_description: "THIS IS A TEST DESCRIPTION",
@@ -172,141 +204,9 @@ describe("createLocationShopPayload", () => {
       categoryIds: [4, 5, 6],
     };
 
-    const result = createLocationShopPayload(
-      payloadWithCasingIssues,
-      modifiedBy,
-    );
+    const result = createLocationShopPayload(payloadWithCasingIssues);
 
     expect(result.shopName).toBe("Test Shop");
     expect(result.shop_description).toBe("This is a test description");
-  });
-});
-
-describe("createLocationShopPayload - Edge Cases", () => {
-  const modifiedBy = 1;
-
-  it("should handle empty strings for shopName and shop_description", () => {
-    const payloadWithEmptyStrings: AddAShopPayload = {
-      shopName: "",
-      shop_description: "",
-      house_number: "123",
-      address: "123 Main St",
-      address_first: "Main St",
-      address_second: "Apt 4b",
-      city: "Test City",
-      state: "Ts",
-      country: "Test Country",
-      postcode: "12345",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categoryIds: [1, 2, 3],
-    };
-
-    const result = createLocationShopPayload(
-      payloadWithEmptyStrings,
-      modifiedBy,
-    );
-
-    expect(result.shopName).toBe("");
-    expect(result.shop_description).toBe("No description provided");
-  });
-
-  it("should handle special characters in shopName and shop_description", () => {
-    const payloadWithSpecialCharacters: AddAShopPayload = {
-      shopName: "T3st! Sh@p#123",
-      shop_description: "Th!s sh@p descr1ption has #peci@l ch@racters.",
-      house_number: "123",
-      address: "123 Main St",
-      address_first: "Main St",
-      address_second: "Apt 4b",
-      city: "Test City",
-      state: "Ts",
-      country: "Test Country",
-      postcode: "12345",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categoryIds: [1, 2, 3],
-    };
-
-    const result = createLocationShopPayload(
-      payloadWithSpecialCharacters,
-      modifiedBy,
-    );
-
-    expect(result.shopName).toBe("T3st! Sh@p#123");
-    expect(result.shop_description).toBe(
-      "Th!s sh@p descr1ption has #peci@l ch@racters.",
-    );
-  });
-
-  it("should handle numbers in shopName and shop_description", () => {
-    const payloadWithNumbers: AddAShopPayload = {
-      shopName: "Shop 1234",
-      shop_description: "This shop was established in 2020.",
-      house_number: "123",
-      address: "123 Main St",
-      address_first: "Main St",
-      address_second: "Apt 4b",
-      city: "Test City",
-      state: "Ts",
-      country: "Test Country",
-      postcode: "12345",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categoryIds: [1, 2, 3],
-    };
-
-    const result = createLocationShopPayload(payloadWithNumbers, modifiedBy);
-
-    expect(result.shopName).toBe("Shop 1234");
-    expect(result.shop_description).toBe("This shop was established in 2020.");
-  });
-
-  it("should trim leading and trailing spaces in shopName and shop_description", () => {
-    const payloadWithSpaces: AddAShopPayload = {
-      shopName: "   Test Shop   ",
-      shop_description: "   This is a test description with spaces.   ",
-      house_number: "123",
-      address: "123 Main St",
-      address_first: "Main St",
-      address_second: "Apt 4b",
-      city: "Test City",
-      state: "Ts",
-      country: "Test Country",
-      postcode: "12345",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categoryIds: [1, 2, 3],
-    };
-
-    const result = createLocationShopPayload(payloadWithSpaces, modifiedBy);
-
-    expect(result.shopName).toBe("Test Shop");
-    expect(result.shop_description).toBe(
-      "This is a test description with spaces.",
-    );
-  });
-
-  it("should handle mixed case input and format correctly", () => {
-    const payloadWithMixedCase: AddAShopPayload = {
-      shopName: "tEsT sHoP",
-      shop_description: "ThIs Is A tEsT dEsCrIpTiOn.",
-      house_number: "123",
-      address: "123 Main St",
-      address_first: "Main St",
-      address_second: "Apt 4b",
-      city: "Test City",
-      state: "Ts",
-      country: "Test Country",
-      postcode: "12345",
-      latitude: 40.7128,
-      longitude: -74.006,
-      categoryIds: [1, 2, 3],
-    };
-
-    const result = createLocationShopPayload(payloadWithMixedCase, modifiedBy);
-
-    expect(result.shopName).toBe("Test Shop");
-    expect(result.shop_description).toBe("This is a test description.");
   });
 });

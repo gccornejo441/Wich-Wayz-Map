@@ -4,7 +4,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
 import { useShops } from "@context/shopContext";
 import { useToast } from "@context/toastContext";
-import { useAuth } from "@context/authContext";
 import { useShopSidebar } from "@context/ShopSidebarContext";
 import { handleLocationSubmit } from "@/services/submitLocationShop";
 import { GetCategories } from "@/services/categoryService";
@@ -92,7 +91,6 @@ export const useAddShopForm = (
 ) => {
   const { setShops, setLocations, updateShopInContext } = useShops();
   const { addToast } = useToast();
-  const { logout } = useAuth();
   const { selectShop } = useShopSidebar();
   const navigate = useNavigate();
 
@@ -425,7 +423,6 @@ export const useAddShopForm = (
       setShops,
       setLocations,
       addToast,
-      logout,
       navigate,
       selectShop,
     );

@@ -1,12 +1,12 @@
 import { executeQuery } from "../../lib/db.js";
-import { extractAuthUser } from "../../lib/auth.js";
+import { withDbUser } from "../../lib/withAuth.js";
 
 const parseId = (value) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
@@ -15,12 +15,6 @@ export default async function handler(req, res) {
   const collectionId = parseId(req.query.id);
   if (!collectionId) {
     res.status(400).json({ message: "Invalid collection id" });
-    return;
-  }
-
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
     return;
   }
 
@@ -39,7 +33,7 @@ export default async function handler(req, res) {
       res.status(404).json({ message: "Collection not found" });
       return;
     }
-    if (owner[0].user_id !== userId) {
+    if (owner[0].user_id !== req.dbUser.id) {
       res.status(403).json({ message: "Forbidden" });
       return;
     }
@@ -88,3 +82,5 @@ export default async function handler(req, res) {
     res.status(500).json({ message: "Failed to add shop to collection" });
   }
 }
+
+export default withDbUser(handler);

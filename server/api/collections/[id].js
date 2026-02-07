@@ -1,5 +1,5 @@
 import { executeQuery } from "../lib/db.js";
-import { extractAuthUser } from "../lib/auth.js";
+import { withDbUser } from "../lib/withAuth.js";
 
 const validVisibility = (value) => {
   if (value === "public" || value === "unlisted" || value === "private") {
@@ -25,18 +25,12 @@ const mapCollectionRow = (row) => ({
     : [],
 });
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const { id } = req.query;
   const collectionId = Number(id);
 
   if (!Number.isInteger(collectionId) || collectionId <= 0) {
     res.status(400).json({ message: "Invalid collection id" });
-    return;
-  }
-
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
     return;
   }
 
@@ -94,7 +88,7 @@ export default async function handler(req, res) {
             (SELECT COUNT(*) FROM collection_shops cs WHERE cs.collection_id = collections.id) AS shop_count,
             (SELECT GROUP_CONCAT(cs.shop_id) FROM collection_shops cs WHERE cs.collection_id = collections.id) AS shop_ids;
         `,
-        [...params, collectionId, userId],
+        [...params, collectionId, req.dbUser.id],
       );
 
       const updated = rows?.[0];
@@ -115,7 +109,7 @@ export default async function handler(req, res) {
     try {
       const existing = await executeQuery(
         `SELECT id FROM collections WHERE id = ? AND user_id = ? LIMIT 1`,
-        [collectionId, userId],
+        [collectionId, req.dbUser.id],
       );
 
       if (!existing?.length) {
@@ -125,7 +119,7 @@ export default async function handler(req, res) {
 
       await executeQuery(
         `DELETE FROM collections WHERE id = ? AND user_id = ?`,
-        [collectionId, userId],
+        [collectionId, req.dbUser.id],
       );
 
       res.status(204).end();
@@ -138,3 +132,5 @@ export default async function handler(req, res) {
 
   res.status(405).json({ message: "Method Not Allowed" });
 }
+
+export default withDbUser(handler);

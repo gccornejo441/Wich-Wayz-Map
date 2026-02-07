@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { reload } from "firebase/auth";
+import { reload, getIdToken } from "firebase/auth";
 import Account from "@components/Profile/Account";
 import AvatarUploader from "@components/Profile/AvatarUploader";
 import { useAuth } from "@context/authContext";
@@ -102,19 +102,36 @@ const UserProfile = () => {
 
     try {
       setIsRefreshingVerification(true);
+
       await reload(user);
 
-      if (user.emailVerified) {
-        addToast("Email verification confirmed.", "success");
-      } else {
-        addToast(
-          "Not verified yet. After clicking the link, come back and refresh.",
-          "info",
+      const idToken = await getIdToken(user, true);
+      const response = await fetch("/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const updatedMetadata = await response.json();
+        setUserMetadata(updatedMetadata);
+        sessionStorage.setItem(
+          "safeUserMetadata",
+          JSON.stringify(updatedMetadata),
         );
+
+        if (user.emailVerified) {
+          addToast("Email verified!", "success");
+        } else {
+          addToast("Not verified yet. Check your email.", "info");
+        }
+      } else {
+        throw new Error("Failed to sync metadata");
       }
     } catch (error) {
-      addToast("Failed to refresh verification status.", "error");
-      console.error("Error refreshing verification status:", error);
+      addToast("Failed to refresh", "error");
+      console.error("Refresh error:", error);
     } finally {
       setIsRefreshingVerification(false);
     }

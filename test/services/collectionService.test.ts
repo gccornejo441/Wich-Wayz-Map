@@ -1,29 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  getMyCollections,
-  getPublicCollection,
-} from "../../src/services/collectionService";
 
-const mockFetch = (data: unknown, status = 200) => {
-  global.fetch = vi.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => data,
-    headers: new Headers(),
-  } as Response);
-};
+const mockAuthApiRequest = vi.fn();
+
+vi.mock("../../src/services/apiClient", () => ({
+  authApiRequest: mockAuthApiRequest,
+  apiRequest: vi.fn(),
+}));
+
+const { getMyCollections, getPublicCollection } =
+  await import("../../src/services/collectionService");
 
 describe("collectionService", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("parses shop ids and counts from my collections", async () => {
-    mockFetch([
+    mockAuthApiRequest.mockResolvedValue([
       {
         id: 1,
         user_id: 9,
@@ -34,14 +31,14 @@ describe("collectionService", () => {
       },
     ]);
 
-    const collections = await getMyCollections(9);
+    const collections = await getMyCollections();
     expect(collections).toHaveLength(1);
     expect(collections[0].shopIds).toEqual([2, 3, 5]);
     expect(collections[0].shopCount).toBe(3);
   });
 
   it("maps public collection shops with coordinates", async () => {
-    mockFetch({
+    mockAuthApiRequest.mockResolvedValue({
       id: 12,
       user_id: 2,
       name: "Downtown",

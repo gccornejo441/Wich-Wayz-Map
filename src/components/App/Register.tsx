@@ -38,7 +38,7 @@ const Register = () => {
     setMessage(null);
 
     try {
-      const response = await registerUser(null, null, null, null, null, true);
+      const response = await registerUser(null, null, true);
       if (!response.success) {
         setError(response.message);
       } else {
@@ -46,7 +46,6 @@ const Register = () => {
       }
     } catch (error) {
       console.error("Registration error:", error);
-
       setError("An unexpected error occurred.");
     }
   };

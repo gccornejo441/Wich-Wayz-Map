@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { authApiRequest } from "./apiClient";
 
 export type SavedShopItem = {
   shopId: number;
@@ -15,18 +15,11 @@ const mapSavedItem = (raw: Record<string, unknown>): SavedShopItem => ({
         : null,
 });
 
-export const toggleSavedShop = async (
-  shopId: number,
-  userId?: number,
-): Promise<boolean> => {
+export const toggleSavedShop = async (shopId: number): Promise<boolean> => {
   try {
-    const response = await apiRequest<{ saved: boolean }>("/saved/toggle", {
+    const response = await authApiRequest<{ saved: boolean }>("/saved/toggle", {
       method: "POST",
-      body: JSON.stringify({
-        shopId,
-        userId,
-        user_id: userId,
-      }),
+      body: JSON.stringify({ shopId }),
     });
     return response.saved;
   } catch (error) {
@@ -35,15 +28,12 @@ export const toggleSavedShop = async (
   }
 };
 
-export const getSavedShopIds = async (
-  userId?: number,
-): Promise<SavedShopItem[]> => {
-  const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+export const getSavedShopIds = async (): Promise<SavedShopItem[]> => {
   try {
-    const response = await apiRequest<{
+    const response = await authApiRequest<{
       savedShopIds?: number[];
       items?: Record<string, unknown>[];
-    }>(`/saved${query}`);
+    }>("/saved");
 
     if (Array.isArray(response.items)) {
       return response.items.map((item) => mapSavedItem(item));

@@ -1,25 +1,20 @@
+import { withActiveAccount } from "./lib/withAuth.js";
 import { executeQuery } from "./lib/db.js";
 
-export default async function createComment(req, res) {
+async function createComment(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
   }
 
-  const { shop_id, user_id, body } = req.body ?? {};
+  const { shop_id, body } = req.body ?? {};
   const parsedShopId = parseInt(shop_id, 10);
-  const parsedUserId = parseInt(user_id, 10);
+  const parsedUserId = req.dbUser.id;
   const trimmedBody =
     typeof body === "string" ? body.trim().slice(0, 5000) : "";
 
-  if (
-    Number.isNaN(parsedShopId) ||
-    Number.isNaN(parsedUserId) ||
-    trimmedBody.length === 0
-  ) {
-    res
-      .status(400)
-      .json({ message: "shop_id, user_id, and body are required" });
+  if (Number.isNaN(parsedShopId) || trimmedBody.length === 0) {
+    res.status(400).json({ message: "shop_id and body are required" });
     return;
   }
 
@@ -71,3 +66,5 @@ export default async function createComment(req, res) {
     res.status(500).json({ message: "Failed to add comment." });
   }
 }
+
+export default withActiveAccount(createComment);

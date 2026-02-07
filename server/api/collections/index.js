@@ -1,5 +1,5 @@
 import { db, executeQuery } from "../lib/db.js";
-import { extractAuthUser } from "../lib/auth.js";
+import { withDbUser } from "../lib/withAuth.js";
 
 const validVisibility = (value) => {
   if (value === "public" || value === "unlisted" || value === "private") {
@@ -25,13 +25,7 @@ const mapCollectionRow = (row) => ({
     : [],
 });
 
-export default async function handler(req, res) {
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
-    return;
-  }
-
+async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const rows = await executeQuery(
@@ -52,7 +46,7 @@ export default async function handler(req, res) {
           GROUP BY c.id
           ORDER BY c.date_created DESC;
         `,
-        [userId],
+        [req.dbUser.id],
       );
 
       res.status(200).json(rows.map(mapCollectionRow));
@@ -82,7 +76,12 @@ export default async function handler(req, res) {
           INSERT INTO collections (user_id, name, description, visibility)
           VALUES (?, ?, ?, ?)
         `,
-        args: [userId, trimmedName, description ?? null, visibilityValue],
+        args: [
+          req.dbUser.id,
+          trimmedName,
+          description ?? null,
+          visibilityValue,
+        ],
       });
 
       const newId = Number(insert.lastInsertRowid);
@@ -116,3 +115,5 @@ export default async function handler(req, res) {
 
   res.status(405).json({ message: "Method Not Allowed" });
 }
+
+export default withDbUser(handler);

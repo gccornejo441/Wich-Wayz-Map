@@ -284,7 +284,7 @@ const MapSidebar = () => {
 
     setUpdatingComment(true);
     try {
-      const updated = await updateComment(commentId, userMetadata.id, trimmed);
+      const updated = await updateComment(commentId, trimmed);
       setComments((prev) =>
         prev.map((c) => (c.id === commentId ? updated : c)),
       );
@@ -309,7 +309,7 @@ const MapSidebar = () => {
 
     setDeletingCommentId(commentId);
     try {
-      await deleteComment(commentId, userMetadata.id);
+      await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
       addToast("Comment deleted!", "success");
     } catch (error) {

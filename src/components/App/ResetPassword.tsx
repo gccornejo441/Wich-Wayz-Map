@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { resetPasswordSchema } from "../../constants/validators";
-import { resetPassword } from "../../services/security";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../../services/firebase";
 
 interface ResetPasswordFormData {
   password: string;
@@ -26,7 +27,7 @@ const ResetPassword = () => {
     resolver: yupResolver(resetPasswordSchema),
   });
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
+  const onSubmit = async () => {
     if (!token) {
       setResponseType("error");
       setResponseMessage("Invalid or missing reset token.");
@@ -34,16 +35,16 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await resetPassword(token, data.password);
-
-      if (response.success) {
-        setResponseType("success");
-        setResponseMessage(response.message);
-        setTimeout(() => navigate("/"), 3000);
-      } else {
+      if (!auth.currentUser?.email) {
         setResponseType("error");
-        setResponseMessage(response.message);
+        setResponseMessage("No authenticated user found.");
+        return;
       }
+
+      await sendPasswordResetEmail(auth, auth.currentUser.email);
+      setResponseType("success");
+      setResponseMessage("Password reset email sent. Check your inbox.");
+      setTimeout(() => navigate("/"), 3000);
     } catch (error) {
       console.error("Error resetting password:", error);
       setResponseType("error");

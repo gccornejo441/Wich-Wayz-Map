@@ -1,5 +1,8 @@
 import { UserMetadata } from "@context/authContext";
+import { SafeUserMetadata } from "@models/SafeUserMetadata";
 import { Category } from "@models/Category";
+import { getIdToken } from "firebase/auth";
+import { auth } from "./firebase";
 
 type ApiError = Error & { status?: number };
 
@@ -9,6 +12,19 @@ const buildUrl = (path: string) => {
   const normalizedBase = apiBase.endsWith("/") ? apiBase.slice(0, -1) : apiBase;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${normalizedBase}${normalizedPath}`;
+};
+
+export const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
+  const idToken = await getIdToken(user, true);
+  return {
+    Authorization: `Bearer ${idToken}`,
+    "Content-Type": "application/json",
+  };
 };
 
 export const apiRequest = async <T>(
@@ -28,8 +44,8 @@ export const apiRequest = async <T>(
     let message = `Request failed with status ${response.status}`;
     try {
       const data = await response.json();
-      if (data?.message) {
-        message = data.message;
+      if (data?.message || data?.error) {
+        message = data.message || data.error;
       }
     } catch (parseError) {
       console.error("Failed to parse error response", parseError);
@@ -47,6 +63,21 @@ export const apiRequest = async <T>(
   return (await response.json()) as T;
 };
 
+export const authApiRequest = async <T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> => {
+  const authHeaders = await getAuthHeaders();
+
+  return apiRequest<T>(path, {
+    ...options,
+    headers: {
+      ...authHeaders,
+      ...options.headers,
+    },
+  });
+};
+
 export const getLocationCount = async (): Promise<number> => {
   const result = await apiRequest<{ count: number }>("/locations/count");
   return result.count;
@@ -56,20 +87,8 @@ export const getAllCategories = async (): Promise<Category[]> => {
   return apiRequest<Category[]>("/categories");
 };
 
-export const getUserMetadataByFirebaseUid = async (
-  firebaseUid: string,
-): Promise<UserMetadata | null> => {
-  try {
-    const user = await apiRequest<UserMetadata>(
-      `/users/firebase/${firebaseUid}`,
-    );
-    return user;
-  } catch (error) {
-    if ((error as ApiError).status === 404) {
-      return null;
-    }
-    throw error;
-  }
+export const getMyUserMetadata = async (): Promise<SafeUserMetadata> => {
+  return authApiRequest<SafeUserMetadata>("/users/me");
 };
 
 export const storeUser = async (userDetails: {

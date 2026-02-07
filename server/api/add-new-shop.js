@@ -1,6 +1,7 @@
+import { withActiveAccount } from "./lib/withAuth.js";
 import { db } from "./lib/db.js";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -27,7 +28,6 @@ export default async function handler(req, res) {
   const {
     shopName,
     shop_description,
-    userId,
     house_number,
     address_first,
     address_second,
@@ -39,6 +39,8 @@ export default async function handler(req, res) {
     longitude,
     selectedCategoryIds = [],
   } = body;
+
+  const userId = req.dbUser.id;
 
   console.error("[add-new-shop] Extracted fields:", {
     shopName,
@@ -213,3 +215,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+export default withActiveAccount(handler);

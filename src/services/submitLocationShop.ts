@@ -2,8 +2,8 @@ import axios from "axios";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { cacheData } from "./indexedDB";
-import { getCurrentUser } from "./security";
 import { ROUTES } from "../constants/routes";
+import { auth } from "./firebase";
 import { cleanString } from "@/utils/stringUtils";
 import { Shop } from "@/models/Shop";
 import { Location } from "@/models/Location";
@@ -20,29 +20,16 @@ export async function handleLocationSubmit(
   setShops: React.Dispatch<React.SetStateAction<Shop[]>>,
   setLocations: React.Dispatch<React.SetStateAction<Location[]>>,
   addToast: (message: string, type: "success" | "error") => void,
-  logout: () => Promise<void>,
   navigate: (path: string) => void,
   selectShop?: (shop: ShopGeoJsonProperties) => void,
 ): Promise<boolean> {
   try {
-    const currentUser = await getCurrentUser(logout);
-    if (!currentUser) {
+    if (!auth.currentUser) {
       navigate(ROUTES.ACCOUNT.SIGN_IN);
       return false;
     }
 
-    if (!currentUser || currentUser.membershipStatus !== "member") {
-      addToast("Only members can submit locations.", "error");
-      return false;
-    }
-
-    const userId = currentUser.sub ? parseInt(currentUser.sub, 10) : undefined;
-    if (userId === undefined || isNaN(userId)) {
-      addToast("Invalid user ID.", "error");
-      return false;
-    }
-
-    const payload = createLocationShopPayload(addAShopPayload, userId, address);
+    const payload = createLocationShopPayload(addAShopPayload, address);
 
     const response = await apiRequest<{ shopId: number; locationId: number }>(
       "/add-new-shop",
@@ -98,13 +85,8 @@ export async function handleLocationSubmit(
  */
 export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
-  modifiedBy: number | undefined,
   address?: AddressDraft,
 ) {
-  if (modifiedBy === undefined || modifiedBy === null) {
-    throw new Error("User ID (modifiedBy) is required to create a shop.");
-  }
-
   const cleanedShopName = cleanString(addAShopPayload.shopName, "title");
   const cleanedDescription = cleanString(
     addAShopPayload.shop_description || "No description provided",
@@ -175,7 +157,6 @@ export function createLocationShopPayload(
   return {
     shopName: cleanedShopName,
     shop_description: cleanedDescription,
-    userId: modifiedBy,
     ...location,
     selectedCategoryIds: addAShopPayload.categoryIds ?? [],
   };

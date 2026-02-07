@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { authApiRequest } from "./apiClient";
 import {
   Collection,
   CollectionVisibility,
@@ -155,22 +155,15 @@ const mapShop = (raw: Record<string, unknown>): ShopWithUser => ({
     : [],
 });
 
-export const createCollection = async (
-  payload: {
-    name: string;
-    description?: string;
-    visibility?: CollectionVisibility;
-  },
-  userId?: number,
-): Promise<Collection> => {
+export const createCollection = async (payload: {
+  name: string;
+  description?: string;
+  visibility?: CollectionVisibility;
+}): Promise<Collection> => {
   try {
-    const data = await apiRequest<Record<string, unknown>>("/collections", {
+    const data = await authApiRequest<Record<string, unknown>>("/collections", {
       method: "POST",
-      body: JSON.stringify({
-        ...payload,
-        userId,
-        user_id: userId,
-      }),
+      body: JSON.stringify(payload),
     });
     return mapCollection(data);
   } catch (error) {
@@ -179,14 +172,10 @@ export const createCollection = async (
   }
 };
 
-export const getMyCollections = async (
-  userId?: number,
-): Promise<Collection[]> => {
-  const query = userId ? `?userId=${encodeURIComponent(userId)}` : "";
+export const getMyCollections = async (): Promise<Collection[]> => {
   try {
-    const data = await apiRequest<Record<string, unknown>[]>(
-      `/collections${query}`,
-    );
+    const data =
+      await authApiRequest<Record<string, unknown>[]>("/collections");
     return data.map((item) => mapCollection(item));
   } catch (error) {
     console.error("Failed to load collections:", error);
@@ -201,18 +190,13 @@ export const updateCollection = async (
     description: string | null;
     visibility: CollectionVisibility;
   }>,
-  userId?: number,
 ): Promise<Collection> => {
   try {
-    const data = await apiRequest<Record<string, unknown>>(
+    const data = await authApiRequest<Record<string, unknown>>(
       `/collections/${id}`,
       {
         method: "PATCH",
-        body: JSON.stringify({
-          ...payload,
-          userId,
-          user_id: userId,
-        }),
+        body: JSON.stringify(payload),
       },
     );
     return mapCollection(data);
@@ -222,14 +206,10 @@ export const updateCollection = async (
   }
 };
 
-export const deleteCollection = async (
-  id: number,
-  userId?: number,
-): Promise<void> => {
+export const deleteCollection = async (id: number): Promise<void> => {
   try {
-    await apiRequest(`/collections/${id}`, {
+    await authApiRequest(`/collections/${id}`, {
       method: "DELETE",
-      body: JSON.stringify({ userId, user_id: userId }),
     });
   } catch (error) {
     console.error("Failed to delete collection:", error);
@@ -240,14 +220,13 @@ export const deleteCollection = async (
 export const addShopToCollection = async (
   id: number,
   shopId: number,
-  userId?: number,
 ): Promise<boolean> => {
   try {
-    const result = await apiRequest<{ added?: boolean }>(
+    const result = await authApiRequest<{ added?: boolean }>(
       `/collections/${id}/shops`,
       {
         method: "POST",
-        body: JSON.stringify({ shopId, userId, user_id: userId }),
+        body: JSON.stringify({ shopId }),
       },
     );
     return Boolean(result.added);
@@ -260,14 +239,12 @@ export const addShopToCollection = async (
 export const removeShopFromCollection = async (
   id: number,
   shopId: number,
-  userId?: number,
 ): Promise<boolean> => {
   try {
-    const result = await apiRequest<{ removed?: boolean }>(
+    const result = await authApiRequest<{ removed?: boolean }>(
       `/collections/${id}/shops/${shopId}`,
       {
         method: "DELETE",
-        body: JSON.stringify({ userId, user_id: userId }),
       },
     );
     return Boolean(result?.removed ?? true);
@@ -281,7 +258,7 @@ export const getPublicCollection = async (
   id: number,
 ): Promise<CollectionWithShops> => {
   try {
-    const data = await apiRequest<Record<string, unknown>>(
+    const data = await authApiRequest<Record<string, unknown>>(
       `/collections/public/${id}`,
     );
 

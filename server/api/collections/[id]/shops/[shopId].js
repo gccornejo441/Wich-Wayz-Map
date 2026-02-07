@@ -1,12 +1,12 @@
 import { executeQuery } from "../../../lib/db.js";
-import { extractAuthUser } from "../../../lib/auth.js";
+import { withDbUser } from "../../../lib/withAuth.js";
 
 const parseId = (value) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "DELETE") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
@@ -20,12 +20,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
-    return;
-  }
-
   try {
     const owner = await executeQuery(
       `SELECT user_id FROM collections WHERE id = ? LIMIT 1`,
@@ -35,7 +29,7 @@ export default async function handler(req, res) {
       res.status(404).json({ message: "Collection not found" });
       return;
     }
-    if (owner[0].user_id !== userId) {
+    if (owner[0].user_id !== req.dbUser.id) {
       res.status(403).json({ message: "Forbidden" });
       return;
     }
@@ -71,3 +65,5 @@ export default async function handler(req, res) {
     res.status(500).json({ message: "Failed to remove shop from collection" });
   }
 }
+
+export default withDbUser(handler);

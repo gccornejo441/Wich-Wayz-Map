@@ -1,23 +1,12 @@
 import { executeQuery } from "../lib/db.js";
-import { extractAuthUser } from "../lib/auth.js";
+import { withDbUser } from "../lib/withAuth.js";
 
 const mapRow = (row) => ({
   shopId: Number(row.shop_id ?? row.shopId),
   dateCreated: String(row.date_created ?? row.dateCreated ?? ""),
 });
 
-export default async function handler(req, res) {
-  if (req.method !== "GET") {
-    res.status(405).json({ message: "Method Not Allowed" });
-    return;
-  }
-
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
-    return;
-  }
-
+async function getSavedShops(req, res) {
   try {
     const rows = await executeQuery(
       `
@@ -26,7 +15,7 @@ export default async function handler(req, res) {
         WHERE user_id = ?
         ORDER BY date_created DESC
       `,
-      [userId],
+      [req.dbUser.id],
     );
 
     const items = Array.isArray(rows) ? rows.map(mapRow) : [];
@@ -39,3 +28,5 @@ export default async function handler(req, res) {
     res.status(500).json({ message: "Failed to load saved shops" });
   }
 }
+
+export default withDbUser(getSavedShops);

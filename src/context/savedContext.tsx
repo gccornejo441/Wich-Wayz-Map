@@ -169,7 +169,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
     try {
-      const items = await getSavedShopIds(userId);
+      const items = await getSavedShopIds();
       setSavedItems(items);
     } catch (error) {
       console.error("Failed to refresh saved shops:", error);
@@ -183,7 +183,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
     try {
-      const list = await getMyCollections(userId);
+      const list = await getMyCollections();
       setCollections(list);
     } catch (error) {
       console.error("Failed to refresh collections:", error);
@@ -209,7 +209,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       try {
-        const saved = await toggleSavedShop(shopId, userId);
+        const saved = await toggleSavedShop(shopId);
         setSavedItems((prev) => {
           const exists = prev.some((item) => item.shopId === shopId);
           if (saved && !exists) {
@@ -241,7 +241,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Not authenticated");
       }
 
-      const created = await createCollectionApi(payload, userId);
+      const created = await createCollectionApi(payload);
       setCollections((prev) => [created, ...prev]);
       return created;
     },
@@ -261,7 +261,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         addToast("Sign in to update lists", "error");
         throw new Error("Not authenticated");
       }
-      const updated = await updateCollectionApi(id, payload, userId);
+      const updated = await updateCollectionApi(id, payload);
       setCollections((prev) =>
         prev.map((col) => (col.id === id ? { ...col, ...updated } : col)),
       );
@@ -276,7 +276,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         addToast("Sign in to delete lists", "error");
         throw new Error("Not authenticated");
       }
-      await deleteCollectionApi(id, userId);
+      await deleteCollectionApi(id);
       setCollections((prev) => prev.filter((col) => col.id !== id));
       setActiveCollectionId((prev) => (prev === id ? null : prev));
     },
@@ -290,7 +290,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Not authenticated");
       }
 
-      const added = await addShopToCollectionApi(collectionId, shopId, userId);
+      const added = await addShopToCollectionApi(collectionId, shopId);
       if (!added) return false;
 
       setCollections((prev) =>
@@ -308,7 +308,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (!savedShopIds.has(shopId)) {
         try {
-          await toggleSavedShop(shopId, userId);
+          await toggleSavedShop(shopId);
           setSavedItems((prev) => [
             { shopId, dateCreated: new Date().toISOString() },
             ...prev,
@@ -333,11 +333,7 @@ export const SavedProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Not authenticated");
       }
 
-      const removed = await removeShopFromCollectionApi(
-        collectionId,
-        shopId,
-        userId,
-      );
+      const removed = await removeShopFromCollectionApi(collectionId, shopId);
       if (!removed) return false;
 
       setCollections((prev) =>

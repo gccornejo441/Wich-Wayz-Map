@@ -1,18 +1,7 @@
 import { executeQuery } from "../lib/db.js";
-import { extractAuthUser } from "../lib/auth.js";
+import { withDbUser } from "../lib/withAuth.js";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.status(405).json({ message: "Method Not Allowed" });
-    return;
-  }
-
-  const { userId } = await extractAuthUser(req);
-  if (!userId) {
-    res.status(401).json({ message: "Authentication required" });
-    return;
-  }
-
+async function toggleSavedShop(req, res) {
   const shopIdRaw = req.body?.shopId ?? req.body?.shop_id;
   const shopId = Number(shopIdRaw);
 
@@ -24,13 +13,13 @@ export default async function handler(req, res) {
   try {
     const existing = await executeQuery(
       `SELECT 1 FROM saved_shops WHERE user_id = ? AND shop_id = ? LIMIT 1`,
-      [userId, shopId],
+      [req.dbUser.id, shopId],
     );
 
     if (existing?.length) {
       await executeQuery(
         `DELETE FROM saved_shops WHERE user_id = ? AND shop_id = ?`,
-        [userId, shopId],
+        [req.dbUser.id, shopId],
       );
       res.status(200).json({ saved: false });
       return;
@@ -42,7 +31,7 @@ export default async function handler(req, res) {
         VALUES (?, ?)
         ON CONFLICT(user_id, shop_id) DO NOTHING
       `,
-      [userId, shopId],
+      [req.dbUser.id, shopId],
     );
     res.status(200).json({ saved: true });
   } catch (error) {
@@ -50,3 +39,5 @@ export default async function handler(req, res) {
     res.status(500).json({ message: "Failed to toggle saved shop" });
   }
 }
+
+export default withDbUser(toggleSavedShop);
