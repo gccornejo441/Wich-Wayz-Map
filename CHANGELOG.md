@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.1.0...wich-wayz-v1.2.0) (2026-02-07)
+
+
+### Features
+
+* implement Firebase Admin SDK for server-side authentication ([61b5112](https://github.com/gccornejo441/Wich-Wayz-Map/commit/61b51126ad084daafbe9597809d1db516623c7da))
+* **profile:** add email verification refresh and improve UX ([5633e1e](https://github.com/gccornejo441/Wich-Wayz-Map/commit/5633e1e66559733b4df7a85844d805cb6228c296))
+* **sidebar:** display membership status for verified users ([11e2f19](https://github.com/gccornejo441/Wich-Wayz-Map/commit/11e2f19a62d1b6815ddf7b128a1acec9a59183a1))
+
 ## [1.1.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.0.0...wich-wayz-v1.1.0) (2026-02-06)
 
 
