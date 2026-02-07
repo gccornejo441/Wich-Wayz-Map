@@ -3,6 +3,23 @@ import { screen, fireEvent, render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 
+vi.mock("../../src/services/firebase", () => ({
+  auth: {},
+  resendVerification: vi.fn(),
+}));
+
+vi.mock("firebase/auth", () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  updateProfile: vi.fn(),
+  sendEmailVerification: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+}));
+
 const mockNavigate = vi.fn();
 const mockRemoveShopFromContext = vi.fn();
 const mockAddToast = vi.fn();

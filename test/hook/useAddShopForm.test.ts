@@ -3,6 +3,23 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useAddShopForm } from "../../src/hooks/useAddShopForm";
 import type { AddAShopPayload } from "../../src/types/dataTypes";
 
+vi.mock("../../src/services/firebase", () => ({
+  auth: {},
+  resendVerification: vi.fn(),
+}));
+
+vi.mock("firebase/auth", () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  updateProfile: vi.fn(),
+  sendEmailVerification: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+}));
+
 const addToast = vi.fn();
 const navigate = vi.fn();
 

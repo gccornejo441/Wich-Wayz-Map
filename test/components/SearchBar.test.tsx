@@ -6,6 +6,23 @@ import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
+vi.mock("../../src/services/firebase", () => ({
+  auth: {},
+  resendVerification: vi.fn(),
+}));
+
+vi.mock("firebase/auth", () => ({
+  getAuth: vi.fn(() => ({})),
+  onAuthStateChanged: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  updateProfile: vi.fn(),
+  sendEmailVerification: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+}));
+
 // Mock search service
 vi.mock("../../src/services/search", () => ({
   SearchShops: vi.fn(),
