@@ -5,13 +5,15 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { ROUTES } from "../../constants/routes";
 import { registerSchema } from "../../constants/validators";
 import GoogleButton from "../Utilites/GoogleButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Logo from "../Logo/Logo";
 
 const Register = () => {
   const { register: registerUser } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     handleSubmit,
@@ -36,17 +38,22 @@ const Register = () => {
   const handleGoogleRegister = async () => {
     setError(null);
     setMessage(null);
+    setIsGoogleLoading(true);
 
     try {
       const response = await registerUser(null, null, true);
       if (!response.success) {
         setError(response.message);
+        setIsGoogleLoading(false);
       } else {
-        setMessage("Google sign-in successful! You are now registered.");
+        // Success - redirect to home page
+        // The authContext will handle metadata loading with retry logic
+        navigate(ROUTES.HOME);
       }
     } catch (error) {
       console.error("Registration error:", error);
       setError("An unexpected error occurred.");
+      setIsGoogleLoading(false);
     }
   };
 
@@ -146,8 +153,13 @@ const Register = () => {
         </form>
         <div className="mt-4">
           <GoogleButton
-            title="Sign up with Google"
+            title={
+              isGoogleLoading
+                ? "Signing in with Google..."
+                : "Sign up with Google"
+            }
             handleClick={handleGoogleRegister}
+            disabled={isGoogleLoading}
           />
         </div>
 

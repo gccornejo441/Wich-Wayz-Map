@@ -9,6 +9,7 @@ import { UserLeaderboardProvider } from "./context/userLeaderboardContext";
 import { ShopSidebarProvider } from "./context/ShopSidebarContext";
 import { SavedProvider } from "./context/savedContext";
 import { OverlayProvider } from "./context/overlayContext";
+import { MetadataErrorBanner } from "./components/Utilites/MetadataErrorBanner";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
                 <UserLeaderboardProvider>
                   <ShopSidebarProvider>
                     <SavedProvider>
+                      <MetadataErrorBanner />
                       <Suspense fallback={<div>Loading...</div>}>
                         <MainRoutes />
                       </Suspense>

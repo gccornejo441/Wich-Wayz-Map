@@ -80,6 +80,8 @@ export const toSafeUserMetadata = (
 interface AuthContextData {
   user: FirebaseUser | null;
   userMetadata: SafeUserMetadata | null;
+  metadataError: string | null;
+  isLoadingMetadata: boolean;
   setUser: React.Dispatch<React.SetStateAction<FirebaseUser | null>>;
   setUserMetadata: React.Dispatch<
     React.SetStateAction<SafeUserMetadata | null>
@@ -100,6 +102,7 @@ interface AuthContextData {
     password: string | null,
     useGoogle?: boolean,
   ) => Promise<{ success: boolean; message: string }>;
+  retryFetchMetadata: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData | undefined>(undefined);
@@ -108,6 +111,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
 
   // Initialize from sessionStorage - only safe metadata
   const [userMetadata, setUserMetadata] = useState<SafeUserMetadata | null>(
@@ -122,6 +127,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await signOut(auth);
       setUser(null);
       setUserMetadata(null);
+      setMetadataError(null);
+      setIsLoadingMetadata(false);
       // Clean up all auth-related storage keys
       sessionStorage.removeItem("safeUserMetadata");
       sessionStorage.removeItem("userMetadata"); // Legacy key
@@ -134,11 +141,69 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
+  /**
+   * Fetches user metadata with retry logic and exponential backoff.
+   * Prevents split-brain state where user is authenticated but has no database record.
+   */
+  const fetchUserMetadataWithRetry = useCallback(
+    async (maxRetries: number = 3): Promise<void> => {
+      setIsLoadingMetadata(true);
+      setMetadataError(null);
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const freshMetadata = await getMyUserMetadata();
+          setUserMetadata(freshMetadata);
+          sessionStorage.setItem(
+            "safeUserMetadata",
+            JSON.stringify(freshMetadata),
+          );
+          setMetadataError(null);
+          setIsLoadingMetadata(false);
+          return; // Success - exit retry loop
+        } catch (error) {
+          console.error(
+            `Error fetching user metadata (attempt ${attempt}/${maxRetries}):`,
+            error,
+          );
+
+          // If this was the last attempt, set error state
+          if (attempt === maxRetries) {
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Failed to load user profile. Please try again.";
+            setMetadataError(errorMessage);
+            setIsLoadingMetadata(false);
+            return;
+          }
+
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    },
+    [],
+  );
+
+  /**
+   * Manual retry function exposed to components for user-initiated recovery.
+   */
+  const retryFetchMetadata = useCallback(async (): Promise<void> => {
+    if (!user) {
+      setMetadataError("Please log in first.");
+      return;
+    }
+    await fetchUserMetadataWithRetry(3);
+  }, [user, fetchUserMetadataWithRetry]);
+
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
 
       if (firebaseUser) {
+        // Load cached metadata immediately for better UX
         const cached = sessionStorage.getItem("safeUserMetadata");
         if (cached) {
           try {
@@ -148,24 +213,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           }
         }
 
-        try {
-          const freshMetadata = await getMyUserMetadata();
-          setUserMetadata(freshMetadata);
-          sessionStorage.setItem(
-            "safeUserMetadata",
-            JSON.stringify(freshMetadata),
-          );
-        } catch (error) {
-          console.error("Error fetching user metadata:", error);
-        }
+        // Fetch fresh metadata with retry logic
+        await fetchUserMetadataWithRetry(3);
       } else {
         setUserMetadata(null);
+        setMetadataError(null);
+        setIsLoadingMetadata(false);
         sessionStorage.removeItem("safeUserMetadata");
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [fetchUserMetadataWithRetry]);
 
   const login = async (
     email: string,
@@ -261,6 +320,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }> => {
     try {
       const provider = new GoogleAuthProvider();
+      // Force account selection every time - prevents auto-login with cached account
+      provider.setCustomParameters({
+        prompt: "select_account",
+      });
       await signInWithPopup(auth, provider);
 
       return { success: true, message: "Google sign-in successful" };
@@ -286,6 +349,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         user,
         userMetadata,
+        metadataError,
+        isLoadingMetadata,
         setUser,
         setUserMetadata,
         isAuthenticated: !!user,
@@ -308,6 +373,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           }
         },
         register,
+        retryFetchMetadata,
       }}
     >
       {children}
