@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { useAuth } from "../../context/authContext";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { ROUTES } from "../../constants/routes";
-import { registerSchema } from "../../constants/validators";
-import GoogleButton from "../Utilites/GoogleButton";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../Logo/Logo";
+
+import { useAuth } from "@context/authContext";
+import { useModal } from "@context/modalContext";
+import { ROUTES } from "@constants/routes";
+import { registerSchema } from "@constants/validators";
+import GoogleButton from "@components/Utilites/GoogleButton";
+import Logo from "@components/Logo/Logo";
 
 const Register = () => {
   const { register: registerUser } = useAuth();
+  const { openEmailVerificationModal } = useModal();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
@@ -21,23 +23,26 @@ const Register = () => {
     formState: { errors },
   } = useForm({
     resolver: yupResolver(registerSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   const onSubmit = async (data: { email: string; password: string }) => {
     setError(null);
-    setMessage(null);
 
     const response = await registerUser(data.email, data.password);
     if (!response.success) {
       setError(response.message);
     } else {
-      setMessage("Registration successful! Please log in.");
+      openEmailVerificationModal(data.email);
     }
   };
 
   const handleGoogleRegister = async () => {
     setError(null);
-    setMessage(null);
     setIsGoogleLoading(true);
 
     try {
@@ -142,7 +147,6 @@ const Register = () => {
           </div>
 
           {error && <p className="text-primary text-sm">{error}</p>}
-          {message && <p className="text-secondary text-sm">{message}</p>}
 
           <button
             type="submit"

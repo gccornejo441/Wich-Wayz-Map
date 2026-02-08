@@ -308,6 +308,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       };
     } catch (error: unknown) {
       console.error("Error during registration:", error);
+
+      if (error instanceof FirebaseError) {
+        const errorMessages: Record<string, string> = {
+          "auth/email-already-in-use":
+            "This email is already registered. Please sign in or use a different email.",
+          "auth/invalid-email": "Please enter a valid email address.",
+          "auth/weak-password": "Password must be at least 6 characters long.",
+          "auth/network-request-failed":
+            "Network error. Please check your connection and try again.",
+          "auth/too-many-requests":
+            "Too many attempts. Please try again later.",
+        };
+
+        return {
+          success: false,
+          message:
+            errorMessages[error.code] ||
+            "Registration failed. Please try again.",
+        };
+      }
+
       const message =
         error instanceof Error
           ? error.message

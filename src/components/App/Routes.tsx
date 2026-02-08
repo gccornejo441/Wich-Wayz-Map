@@ -12,6 +12,9 @@ import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
 import AppLayout from "./AppLayout";
 import PublicCollection from "./PublicCollection";
+import Register from "./Register";
+import SignIn from "./SignIn";
+import EmailVerification from "./EmailVerification";
 
 function MainRoutes() {
   return (
@@ -33,6 +36,12 @@ function MainRoutes() {
           element={<TearmsOfService />}
         />
         <Route path={ROUTES.ANALYTICS} element={<Analytics />} />
+        <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />
+        <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
+        <Route
+          path={ROUTES.ACCOUNT.EMAIL_VERIFICATION}
+          element={<EmailVerification />}
+        />
         <Route path={ROUTES.ACCOUNT.PROFILE} element={<UserProfile />} />
         <Route
           path={ROUTES.ACCOUNT.ADMIN_SETTINGS}

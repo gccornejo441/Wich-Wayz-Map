@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/authContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Logo from "../Logo/Logo";
 import { HiEye, HiEyeOff } from "react-icons/hi";
 import { ROUTES } from "../../constants/routes";
@@ -9,6 +9,7 @@ import { Checkbox, Label } from "flowbite-react";
 
 const SignIn = () => {
   const { login, resetPassword, user, signInWithGoogle } = useAuth();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -16,7 +17,15 @@ const SignIn = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
   const navigate = useNavigate();
+
+  // Check if user came from email verification
+  useEffect(() => {
+    if (searchParams.get("verified") === "pending") {
+      setShowVerificationBanner(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -102,6 +111,52 @@ const SignIn = () => {
           <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold">
             Sign in
           </h2>
+
+          {/* Email Verification Banner */}
+          {showVerificationBanner && (
+            <div className="mt-4 p-4 bg-secondary/10 border border-secondary/30 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-dark dark:text-white">
+                    Please verify your email first
+                  </p>
+                  <p className="text-sm text-dark dark:text-text-muted mt-1">
+                    Check your inbox for the verification link before signing
+                    in.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowVerificationBanner(false)}
+                  className="text-dark dark:text-text-muted hover:text-brand-primary"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <form className="mt-8 space-y-4" onSubmit={handleLogin}>
             <div>
               <label
