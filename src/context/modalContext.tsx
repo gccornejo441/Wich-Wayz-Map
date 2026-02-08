@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-import { Callback, UpdateShopPayload } from "@types/dataTypes";
+import type { Callback, UpdateShopPayload } from "@/types/dataTypes";
 
 interface ModalContextProps {
   isLoginModalOpen: boolean;
