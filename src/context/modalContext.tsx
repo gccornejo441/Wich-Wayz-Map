@@ -1,19 +1,22 @@
 import React, { createContext, useContext, useState } from "react";
-import { Callback, UpdateShopPayload } from "../types/dataTypes";
+
+import type { Callback, UpdateShopPayload } from "@/types/dataTypes";
 
 interface ModalContextProps {
   isLoginModalOpen: boolean;
   loginMode: boolean;
-  currentModal: "login" | "signup" | "updateShop" | null;
+  currentModal: "login" | "signup" | "updateShop" | "emailVerification" | null;
   onSearchModal: Callback;
   openLoginModal: Callback;
   openSignupModal: Callback;
+  openEmailVerificationModal: (email: string) => void;
   switchToLogin: Callback;
   switchToSignup: Callback;
   isSearchModalOpen: boolean;
   closeModal: Callback;
   openUpdateShopModal: (data: UpdateShopModalProps) => void;
   updateShopData: UpdateShopModalProps | null;
+  verificationEmail: string | null;
 }
 
 interface UpdateShopModalProps {
@@ -37,11 +40,14 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
   const [loginMode, setLoginMode] = useState(true);
   const [currentModal, setCurrentModal] = useState<
-    "login" | "signup" | "updateShop" | null
+    "login" | "signup" | "updateShop" | "emailVerification" | null
   >(null);
   const [isSearchModalOpen, setSearchModalOpen] = useState(false);
   const [updateShopData, setUpdateShopData] =
     useState<UpdateShopModalProps | null>(null);
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(
+    null,
+  );
 
   const openLoginModal = () => {
     setCurrentModal("login");
@@ -52,6 +58,12 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
   const openSignupModal = () => {
     setCurrentModal("signup");
     setLoginMode(false);
+    setLoginModalOpen(true);
+  };
+
+  const openEmailVerificationModal = (email: string) => {
+    setVerificationEmail(email);
+    setCurrentModal("emailVerification");
     setLoginModalOpen(true);
   };
 
@@ -75,6 +87,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     setSearchModalOpen(false);
     setCurrentModal(null);
     setUpdateShopData(null);
+    setVerificationEmail(null);
   };
 
   const onSearchModal = () => {
@@ -90,12 +103,14 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         currentModal,
         openLoginModal,
         openSignupModal,
+        openEmailVerificationModal,
         switchToLogin,
         switchToSignup,
         onSearchModal,
         openUpdateShopModal,
         updateShopData,
         closeModal,
+        verificationEmail,
       }}
     >
       {children}

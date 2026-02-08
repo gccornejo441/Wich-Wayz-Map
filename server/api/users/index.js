@@ -13,6 +13,7 @@ const toSafeUserMetadata = (user) => ({
   membershipStatus: user.membership_status,
   accountStatus: user.account_status,
   avatar: user.avatar,
+  authProvider: user.auth_provider || "password",
   dateCreated: user.date_created,
   lastLogin: user.last_login,
 });
@@ -39,11 +40,15 @@ async function handler(req, res) {
       firstName = null,
       lastName = null,
       role = "user",
-      verified = 0,
       membershipStatus = "basic",
       accountStatus = "active",
       avatar = null,
+      authProvider = "password",
     } = req.body || {};
+
+    // SECURITY: Never trust 'verified' from client - always set to 0 for manual user creation
+    // Only Firebase OAuth flow in users/me.js should set verified=1 based on emailVerified
+    const verified = 0;
 
     if (!firebaseUid || !email || !username) {
       return res.status(400).json({
@@ -55,9 +60,9 @@ async function handler(req, res) {
       await turso.execute({
         sql: `INSERT INTO users (
           firebase_uid, email, username, 
-          first_name, last_name, role, verified, 
+          first_name, last_name, role, verified, auth_provider,
           membership_status, account_status, avatar
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           firebaseUid,
           email,
@@ -66,6 +71,7 @@ async function handler(req, res) {
           lastName,
           role,
           verified,
+          authProvider,
           membershipStatus,
           accountStatus,
           avatar,

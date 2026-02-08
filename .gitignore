@@ -94,3 +94,4 @@ tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
 tsconfig.app.tsbuildinfo
 tsconfig.app.tsbuildinfo
+migrations/004_add_auth_provider.sql

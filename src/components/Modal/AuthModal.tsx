@@ -1,19 +1,29 @@
-import { useState } from "react";
-import { useAuth } from "@/context/authContext";
-import { useModal } from "@/context/modalContext";
-import { useToast } from "@/context/toastContext";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { registerSchema } from "@/constants/validators";
-import GoogleButton from "../Utilites/GoogleButton";
-import Logo from "../Logo/Logo";
 import { HiEye, HiEyeOff, HiX } from "react-icons/hi";
 import { Checkbox, Label } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
+import { sendEmailVerification } from "firebase/auth";
+
+import { useAuth } from "@/context/authContext";
+import { useModal } from "@/context/modalContext";
+import { useToast } from "@/context/toastContext";
+import { registerSchema } from "@/constants/validators";
+import { auth } from "@services/firebase";
+import GoogleButton from "@components/Utilites/GoogleButton";
+import Logo from "@components/Logo/Logo";
 
 const AuthModal = () => {
-  const { currentModal, loginMode, closeModal, switchToLogin, switchToSignup } =
-    useModal();
+  const {
+    currentModal,
+    loginMode,
+    closeModal,
+    switchToLogin,
+    switchToSignup,
+    openEmailVerificationModal,
+    verificationEmail,
+  } = useModal();
   const {
     login,
     register: registerUser,
@@ -27,6 +37,9 @@ const AuthModal = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [isResending, setIsResending] = useState(false);
+  const [canResend, setCanResend] = useState(false);
 
   // Sign In specific state
   const [email, setEmail] = useState("");
@@ -44,12 +57,38 @@ const AuthModal = () => {
     resolver: yupResolver(registerSchema),
   });
 
-  const isOpen = currentModal === "login" || currentModal === "signup";
+  const isEmailVerification = currentModal === "emailVerification";
+  const isOpen =
+    currentModal === "login" ||
+    currentModal === "signup" ||
+    isEmailVerification;
+
+  useEffect(() => {
+    if (!isEmailVerification) return;
+
+    setCountdown(60);
+    setCanResend(false);
+    setIsResending(false);
+  }, [isEmailVerification, verificationEmail]);
+
+  useEffect(() => {
+    if (!isEmailVerification) return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+
+    setCanResend(true);
+  }, [countdown, isEmailVerification]);
 
   const handleClose = () => {
     closeModal();
     setError(null);
     setMessage(null);
+    setCountdown(60);
+    setCanResend(false);
+    setIsResending(false);
     setEmail("");
     setPassword("");
     setRememberMe(false);
@@ -94,9 +133,8 @@ const AuthModal = () => {
     if (!response.success) {
       setError(response.message);
     } else {
-      setMessage(
-        "Registration successful! Please check your email to verify your account.",
-      );
+      reset();
+      openEmailVerificationModal(data.email);
     }
   };
 
@@ -146,6 +184,46 @@ const AuthModal = () => {
     }
   };
 
+  const handleResendEmail = async () => {
+    if (isResending || !canResend) return;
+
+    if (!auth.currentUser) {
+      addToast(
+        "Please sign in again to resend the verification email.",
+        "error",
+      );
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      await sendEmailVerification(auth.currentUser);
+      addToast("Verification email sent! Check your inbox.", "success");
+      setCountdown(60);
+      setCanResend(false);
+    } catch (error) {
+      console.error("Error resending verification email:", error);
+      addToast("Failed to resend email. Please try again.", "error");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleGoToSignIn = () => {
+    setError(null);
+    setMessage(null);
+    if (verificationEmail) {
+      setEmail(verificationEmail);
+    }
+    switchToLogin();
+  };
+
+  const handleGoToRegister = () => {
+    setError(null);
+    setMessage(null);
+    switchToSignup();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -187,11 +265,96 @@ const AuthModal = () => {
               className="h-15 w-60 mx-auto mb-4"
             />
 
-            <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold mb-6">
-              {loginMode ? "Sign in" : "Register"}
-            </h2>
+            {!isEmailVerification && (
+              <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold mb-6">
+                {loginMode ? "Sign in" : "Register"}
+              </h2>
+            )}
 
-            {loginMode ? (
+            {isEmailVerification ? (
+              <div className="space-y-6">
+                <div className="flex justify-center">
+                  <div className="w-20 h-20 bg-brand-secondary/10 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-10 h-10 text-brand-secondary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <h2 className="text-text-base dark:text-white text-center text-2xl font-poppins font-bold">
+                  Check Your Email
+                </h2>
+
+                <div className="space-y-4">
+                  <p className="text-dark dark:text-white text-center text-sm">
+                    We've sent a verification email to:
+                  </p>
+                  <p className="text-brand-primary dark:text-brand-secondary font-semibold text-center break-all text-sm">
+                    {verificationEmail || "your email address"}
+                  </p>
+                  <div className="bg-brand-secondary/10 border border-brand-secondary/20 rounded-lg p-4">
+                    <p className="text-dark dark:text-white text-sm mb-2">
+                      <strong>Next steps:</strong>
+                    </p>
+                    <ol className="text-dark dark:text-white text-sm list-decimal list-inside space-y-1">
+                      <li>Open the email we just sent</li>
+                      <li>Click the verification link</li>
+                      <li>Return here to sign in</li>
+                    </ol>
+                  </div>
+                  <p className="text-dark dark:text-text-muted text-sm text-center">
+                    Didn't receive the email? Check your spam folder or request
+                    a new one below.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={!canResend || isResending}
+                  className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                    canResend && !isResending
+                      ? "bg-brand-secondary text-dark hover:bg-brand-secondary/90"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {isResending
+                    ? "Sending..."
+                    : canResend
+                      ? "Resend Verification Email"
+                      : `Resend in ${countdown}s`}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGoToSignIn}
+                  className="w-full py-3 text-center bg-brand-primary text-text-inverted rounded-lg hover:bg-brand-primary/90 transition-colors"
+                >
+                  Go to Sign In
+                </button>
+
+                <p className="text-dark dark:text-white text-sm text-center">
+                  Wrong email?{" "}
+                  <button
+                    type="button"
+                    onClick={handleGoToRegister}
+                    className="text-brand-primary dark:text-brand-secondary font-semibold hover:underline"
+                  >
+                    Register again
+                  </button>
+                </p>
+              </div>
+            ) : loginMode ? (
               // SIGN IN FORM
               <form className="space-y-4" onSubmit={handleLogin}>
                 <div>

@@ -13,6 +13,7 @@ const toSafeUserMetadata = (user) => ({
   membershipStatus: user.membership_status,
   accountStatus: user.account_status,
   avatar: user.avatar,
+  authProvider: user.auth_provider || "password",
   dateCreated: user.date_created,
   lastLogin: user.last_login,
 });
@@ -22,7 +23,14 @@ async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { uid, email, emailVerified } = req.firebaseUser;
+  const { uid, email, emailVerified, signInProvider } = req.firebaseUser;
+
+  // Determine auth provider: 'google' for Google OAuth, 'password' for email/password
+  const isGoogleUser = signInProvider === "google.com";
+  const authProvider = isGoogleUser ? "google" : "password";
+
+  // Backend is the single source of truth: trust Firebase emailVerified
+  const verified = emailVerified ? 1 : 0;
 
   try {
     const turso = await getTursoClient();
@@ -49,9 +57,9 @@ async function handler(req, res) {
           );
           await turso.execute({
             sql: `UPDATE users 
-                 SET firebase_uid = ?, verified = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
+                 SET firebase_uid = ?, verified = ?, auth_provider = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
                  WHERE email = ? AND firebase_uid IS NULL`,
-            args: [uid, emailVerified ? 1 : 0, email],
+            args: [uid, verified, authProvider, email],
           });
 
           result = await turso.execute({
@@ -65,9 +73,9 @@ async function handler(req, res) {
           );
           await turso.execute({
             sql: `UPDATE users 
-                 SET firebase_uid = ?, verified = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
+                 SET firebase_uid = ?, verified = ?, auth_provider = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
                  WHERE email = ?`,
-            args: [uid, emailVerified ? 1 : 0, email],
+            args: [uid, verified, authProvider, email],
           });
 
           result = await turso.execute({
@@ -87,15 +95,16 @@ async function handler(req, res) {
             await turso.execute({
               sql: `INSERT INTO users (
                 firebase_uid, email, username, 
-                role, verified, membership_status, account_status, 
+                role, verified, auth_provider, membership_status, account_status, 
                 date_created, date_modified, last_login
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
               args: [
                 uid,
                 email,
                 username,
                 "user",
-                emailVerified ? 1 : 0,
+                verified,
+                authProvider,
                 "basic",
                 "active",
               ],
@@ -119,9 +128,9 @@ async function handler(req, res) {
     } else {
       await turso.execute({
         sql: `UPDATE users 
-             SET email = ?, verified = ?, last_login = CURRENT_TIMESTAMP 
+             SET email = ?, verified = ?, auth_provider = ?, last_login = CURRENT_TIMESTAMP 
              WHERE firebase_uid = ?`,
-        args: [email, emailVerified ? 1 : 0, uid],
+        args: [email, verified, authProvider, uid],
       });
 
       result = await turso.execute({

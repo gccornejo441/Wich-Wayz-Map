@@ -15,6 +15,7 @@ export interface SafeUserMetadata {
   email: string;
   username: string | null;
   verified: boolean;
+  authProvider: string;
   firstName: string | null;
   lastName: string | null;
   role: string;

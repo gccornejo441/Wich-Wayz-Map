@@ -10,6 +10,7 @@ export interface Routes {
   ACCOUNT: {
     SIGN_IN: string;
     REGISTER: string;
+    EMAIL_VERIFICATION: string;
     PROFILE: string;
     ADMIN_SETTINGS: string;
   };
@@ -37,6 +38,7 @@ export const ROUTES: Routes = {
   ACCOUNT: {
     SIGN_IN: "/account/sign-in",
     REGISTER: "/account/register",
+    EMAIL_VERIFICATION: "/account/email-verification",
     PROFILE: "/account/profile",
     ADMIN_SETTINGS: "/account/admin-settings",
   },

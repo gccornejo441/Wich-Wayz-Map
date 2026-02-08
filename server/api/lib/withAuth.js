@@ -16,6 +16,7 @@ export const withAuth = (handler) => {
         uid: decoded.uid,
         email: decoded.email ?? null,
         emailVerified: !!decoded.email_verified,
+        signInProvider: decoded.firebase?.sign_in_provider ?? null,
       };
 
       return handler(req, res);
