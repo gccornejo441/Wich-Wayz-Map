@@ -33,42 +33,89 @@ async function handler(req, res) {
     });
 
     if (result.rows.length === 0) {
-      const baseUsername = email.split("@")[0];
-      let username = baseUsername;
-      let attempt = 0;
+      // Check if email exists at all (for account linking or conflict detection)
+      const existingUserByEmail = await turso.execute({
+        sql: "SELECT * FROM users WHERE email = ?",
+        args: [email],
+      });
 
-      while (attempt < 10) {
-        try {
+      if (existingUserByEmail.rows.length > 0) {
+        const existingUser = existingUserByEmail.rows[0];
+
+        // If email exists with no Firebase UID, link it
+        if (!existingUser.firebase_uid) {
+          console.log(
+            `Linking Firebase UID ${uid} to existing email account: ${email}`,
+          );
           await turso.execute({
-            sql: `INSERT INTO users (
-              firebase_uid, email, username, 
-              role, verified, membership_status, account_status, last_login
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            args: [
-              uid,
-              email,
-              username,
-              "user",
-              emailVerified ? 1 : 0,
-              "basic",
-              "active",
-            ],
+            sql: `UPDATE users 
+                 SET firebase_uid = ?, verified = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
+                 WHERE email = ? AND firebase_uid IS NULL`,
+            args: [uid, emailVerified ? 1 : 0, email],
           });
-          break;
-        } catch (error) {
-          if (error.message?.includes("UNIQUE constraint") && attempt < 9) {
-            attempt++;
-            username = `${baseUsername}-${Math.floor(1000 + Math.random() * 9000)}`;
-          } else {
-            throw error;
+
+          result = await turso.execute({
+            sql: "SELECT * FROM users WHERE firebase_uid = ?",
+            args: [uid],
+          });
+        } else if (existingUser.firebase_uid !== uid) {
+          // Email exists with a different Firebase UID - update it (Firebase project may have been recreated)
+          console.log(
+            `Updating Firebase UID for ${email} from ${existingUser.firebase_uid} to ${uid}`,
+          );
+          await turso.execute({
+            sql: `UPDATE users 
+                 SET firebase_uid = ?, verified = ?, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
+                 WHERE email = ?`,
+            args: [uid, emailVerified ? 1 : 0, email],
+          });
+
+          result = await turso.execute({
+            sql: "SELECT * FROM users WHERE firebase_uid = ?",
+            args: [uid],
+          });
+        }
+      } else {
+        // Create new Firebase user (no hashed_password needed)
+        console.log(`Creating new Firebase user for email: ${email}`);
+        const baseUsername = email.split("@")[0];
+        let username = baseUsername;
+        let attempt = 0;
+
+        while (attempt < 10) {
+          try {
+            await turso.execute({
+              sql: `INSERT INTO users (
+                firebase_uid, email, username, 
+                role, verified, membership_status, account_status, 
+                date_created, date_modified, last_login
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              args: [
+                uid,
+                email,
+                username,
+                "user",
+                emailVerified ? 1 : 0,
+                "basic",
+                "active",
+              ],
+            });
+            break;
+          } catch (error) {
+            if (error.message?.includes("UNIQUE constraint") && attempt < 9) {
+              attempt++;
+              username = `${baseUsername}-${Math.floor(1000 + Math.random() * 9000)}`;
+            } else {
+              throw error;
+            }
           }
         }
-      }
 
-      result = await turso.execute({
-        sql: "SELECT * FROM users WHERE firebase_uid = ?",
-        args: [uid],
-      });
+        result = await turso.execute({
+          sql: "SELECT * FROM users WHERE firebase_uid = ?",
+          args: [uid],
+        });
+      }
     } else {
       await turso.execute({
         sql: `UPDATE users 

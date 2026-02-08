@@ -47,6 +47,17 @@ data/*.db-wal
 data/*.db-shm
 data/backups/
 data/*.dump.sql
+*.dump.sql
+*.dump
+*.bak
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.db-wal
+*.db-shm
+turso*.sql
 
 # TypeScript build info
 *.tsbuildinfo

@@ -1,25 +1,53 @@
-import { db, executeQuery } from "./lib/db.js";
+import { db } from "./lib/db.js";
 
 const BATCH_SIZE = 450;
 
+const ALLOWED = {
+  votes: ["user_id", "shop_id"],
+  comments: ["user_id", "shop_id"],
+  shops: ["created_by"],
+  shop_locations: ["shop_id"],
+  shop_categories: ["shop_id"],
+  saved_shops: ["user_id", "shop_id"],
+  collections: ["user_id"],
+  collection_shops: ["collection_id", "shop_id"],
+};
+
+const assertAllowed = (table, field) => {
+  if (!ALLOWED[table]?.includes(field)) {
+    throw new Error(`Invalid delete target: ${table}.${field}`);
+  }
+};
+
 const deleteBatch = async (
+  executor,
   table,
-  userIdField,
-  userId,
+  field,
+  value,
   batchSize = BATCH_SIZE,
 ) => {
-  let deletedCount = 0;
-  let hasMore = true;
+  assertAllowed(table, field);
 
-  while (hasMore) {
-    const result = await db.execute({
-      sql: `DELETE FROM ${table} WHERE ${userIdField} = ? LIMIT ?`,
-      args: [userId, batchSize],
+  let deletedCount = 0;
+
+  while (true) {
+    const result = await executor.execute({
+      sql: `
+        DELETE FROM ${table}
+        WHERE rowid IN (
+          SELECT rowid
+          FROM ${table}
+          WHERE ${field} = ?
+          LIMIT ?
+        )
+      `,
+      args: [value, batchSize],
     });
 
     const deleted = result.rowsAffected || 0;
     deletedCount += deleted;
-    hasMore = deleted === batchSize;
+
+    if (deleted === 0) break;
   }
 
   return deletedCount;
@@ -31,22 +59,29 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { userId } = req.body;
+  const userIdRaw = req.body?.userId;
+  const userId = Number(userIdRaw);
 
-  if (!userId) {
+  if (!Number.isInteger(userId) || userId <= 0) {
     res.status(400).json({
       code: "invalid-argument",
-      message: "userId is required",
+      message: "userId is required and must be a positive integer",
     });
     return;
   }
 
-  try {
-    const userRows = await executeQuery("SELECT id FROM users WHERE id = ?", [
-      userId,
-    ]);
+  const tx = await db.transaction("write");
 
-    if (!userRows || userRows.length === 0) {
+  try {
+    await tx.execute({ sql: "PRAGMA foreign_keys = ON", args: [] });
+
+    const userResult = await tx.execute({
+      sql: "SELECT id FROM users WHERE id = ? LIMIT 1",
+      args: [userId],
+    });
+
+    if (!userResult.rows || userResult.rows.length === 0) {
+      await tx.rollback();
       res.status(404).json({
         code: "not-found",
         message: "User not found",
@@ -54,33 +89,74 @@ export default async function handler(req, res) {
       return;
     }
 
-    const votesDeleted = await deleteBatch("votes", "user_id", userId);
+    const votesDeleted = await deleteBatch(tx, "votes", "user_id", userId);
     console.log(`Deleted ${votesDeleted} votes for user ${userId}`);
 
-    const commentsDeleted = await deleteBatch("comments", "user_id", userId);
+    const commentsDeleted = await deleteBatch(
+      tx,
+      "comments",
+      "user_id",
+      userId,
+    );
     console.log(`Deleted ${commentsDeleted} comments for user ${userId}`);
 
-    const shopsRows = await executeQuery(
-      "SELECT id FROM shops WHERE created_by = ?",
-      [userId],
+    const savedDeleted = await deleteBatch(
+      tx,
+      "saved_shops",
+      "user_id",
+      userId,
     );
+    console.log(`Deleted ${savedDeleted} saved_shops rows for user ${userId}`);
 
-    for (const shop of shopsRows) {
-      await deleteBatch("votes", "shop_id", shop.id);
-      await deleteBatch("comments", "shop_id", shop.id);
-      await executeQuery("DELETE FROM shop_categories WHERE shop_id = ?", [
-        shop.id,
-      ]);
+    await tx.execute({
+      sql: `
+        DELETE FROM collection_shops
+        WHERE collection_id IN (SELECT id FROM collections WHERE user_id = ?)
+      `,
+      args: [userId],
+    });
+
+    const collectionsDeleted = await deleteBatch(
+      tx,
+      "collections",
+      "user_id",
+      userId,
+    );
+    console.log(`Deleted ${collectionsDeleted} collections for user ${userId}`);
+
+    const shopsResult = await tx.execute({
+      sql: "SELECT id FROM shops WHERE created_by = ?",
+      args: [userId],
+    });
+
+    const shopIds = (shopsResult.rows || []).map((r) => r.id);
+
+    for (const shopId of shopIds) {
+      await deleteBatch(tx, "votes", "shop_id", String(shopId));
+      await deleteBatch(tx, "comments", "shop_id", shopId);
+      await deleteBatch(tx, "saved_shops", "shop_id", shopId);
+
+      await deleteBatch(tx, "shop_locations", "shop_id", shopId);
+      await deleteBatch(tx, "shop_categories", "shop_id", shopId);
+
+      await deleteBatch(tx, "collection_shops", "shop_id", shopId);
     }
 
-    await deleteBatch("shops", "created_by", userId);
-    console.log(`Deleted ${shopsRows.length} shops for user ${userId}`);
+    const shopsDeleted = await deleteBatch(tx, "shops", "created_by", userId);
+    console.log(`Deleted ${shopsDeleted} shops for user ${userId}`);
 
-    await executeQuery("DELETE FROM users WHERE id = ?", [userId]);
-    console.log(`Deleted user ${userId} from database`);
+    await tx.execute({
+      sql: "DELETE FROM users WHERE id = ?",
+      args: [userId],
+    });
 
+    await tx.commit();
     res.status(200).json({ ok: true });
   } catch (error) {
+    try {
+      await tx.rollback();
+    } catch {}
+
     console.error("Error deleting account:", error);
     res.status(500).json({
       code: "internal",
