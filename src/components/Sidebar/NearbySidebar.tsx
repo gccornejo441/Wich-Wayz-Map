@@ -242,7 +242,9 @@ const NearbySidebar = () => {
 
               return (
                 <button
-                  key={`${props.locationId ?? props.shopId}-${distanceMiles.toFixed(3)}`}
+                  key={
+                    props.shopId ?? `tmp-${props.locationId}-${props.shopName}`
+                  }
                   type="button"
                   className="w-full text-left p-4 hover:bg-surface-muted dark:hover:bg-surface-darker cursor-pointer transition-colors"
                   onMouseEnter={() => {
