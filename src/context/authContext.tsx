@@ -38,6 +38,7 @@ export interface UserMetadata {
   hashedPassword?: string; // Backend only - never send to client
   username: string | null;
   verified: boolean;
+  authProvider?: string;
   verificationToken?: string | null; // Backend only - never send to client
   modifiedBy?: string | null;
   dateCreated?: string;
@@ -65,6 +66,7 @@ export const toSafeUserMetadata = (
   email: metadata.email,
   username: metadata.username,
   verified: metadata.verified,
+  authProvider: metadata.authProvider || "password",
   firstName: metadata.firstName,
   lastName: metadata.lastName,
   role: metadata.role,
