@@ -180,13 +180,14 @@ const MapSidebar = () => {
 
   useEffect(() => {
     const loadComments = async () => {
-      if (!selectedShop?.shopId) {
+      const shopId = selectedShop?.shopId;
+      if (!shopId) {
         setComments([]);
         return;
       }
       setCommentsLoading(true);
       try {
-        const shopComments = await getCommentsForShop(selectedShop.shopId);
+        const shopComments = await getCommentsForShop(shopId);
         setComments(shopComments);
       } catch (error) {
         console.error("Failed to fetch comments:", error);
@@ -197,7 +198,7 @@ const MapSidebar = () => {
     };
 
     loadComments();
-  }, [selectedShop, addToast]);
+  }, [selectedShop?.shopId, addToast]);
 
   // Derive vote state from context for the selected shop
   const shopVote =
