@@ -29,7 +29,7 @@ const dbClient = createClient(
 let initPromise = null;
 
 /**
- * Initialize database schema for favorites and collections.
+ * Initialize database schema for favorites, collections, and reports.
  * Only auto-runs in development. In production, requires manual migration.
  * Uses CREATE TABLE IF NOT EXISTS for idempotency.
  */
@@ -60,7 +60,7 @@ const initSchema = async () => {
   }
 
   console.warn(
-    "[DEV] Auto-initializing database schema for collections and saved shops...",
+    "[DEV] Auto-initializing database schema for collections, saved shops, and reports...",
   );
 
   try {
@@ -131,6 +131,48 @@ const initSchema = async () => {
 
     await dbClient.execute({
       sql: "CREATE INDEX IF NOT EXISTS idx_collection_shops_collection ON collection_shops(collection_id, sort_order, date_created DESC)",
+      args: [],
+    });
+
+    // Create shop_reports table
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS shop_reports (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shop_id INTEGER NOT NULL,
+          reporter_user_id INTEGER NOT NULL,
+          reason TEXT NOT NULL CHECK (
+            reason IN ('spam', 'wrong_location', 'closed', 'duplicate')
+          ),
+          details TEXT,
+          moderator_outcome TEXT NOT NULL DEFAULT 'needs_more_information' CHECK (
+            moderator_outcome IN ('action_taken', 'no_action_needed', 'needs_more_information')
+          ),
+          moderation_actions TEXT NOT NULL,
+          report_status TEXT NOT NULL DEFAULT 'open' CHECK (
+            report_status IN ('open', 'reviewed', 'resolved', 'dismissed')
+          ),
+          date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          date_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
+          FOREIGN KEY (reporter_user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_shop ON shop_reports(shop_id, date_created DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_reporter ON shop_reports(reporter_user_id, date_created DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_status ON shop_reports(report_status, moderator_outcome)",
       args: [],
     });
 

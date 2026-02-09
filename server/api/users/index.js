@@ -1,5 +1,6 @@
 import { withRole } from "../lib/withAuth.js";
 import { getTursoClient } from "../lib/turso.js";
+import { getUsersTableCapabilities } from "../lib/usersTable.js";
 
 const toSafeUserMetadata = (user) => ({
   id: user.id,
@@ -39,15 +40,13 @@ async function handler(req, res) {
       username,
       firstName = null,
       lastName = null,
-      role = "user",
-      membershipStatus = "basic",
+      role = "member",
+      membershipStatus = "unverified",
       accountStatus = "active",
       avatar = null,
       authProvider = "password",
     } = req.body || {};
 
-    // SECURITY: Never trust 'verified' from client - always set to 0 for manual user creation
-    // Only Firebase OAuth flow in users/me.js should set verified=1 based on emailVerified
     const verified = 0;
 
     if (!firebaseUid || !email || !username) {
@@ -57,25 +56,49 @@ async function handler(req, res) {
     }
 
     try {
+      const usersTable = await getUsersTableCapabilities(turso);
+
+      const insertColumns = [
+        "firebase_uid",
+        "email",
+        "username",
+        "first_name",
+        "last_name",
+        "role",
+        "verified",
+        "membership_status",
+        "account_status",
+        "avatar",
+      ];
+
+      const insertArgs = [
+        firebaseUid,
+        email,
+        username,
+        firstName,
+        lastName,
+        role,
+        verified,
+        membershipStatus,
+        accountStatus,
+        avatar,
+      ];
+
+      if (usersTable.hasAuthProvider) {
+        insertColumns.push("auth_provider");
+        insertArgs.push(authProvider);
+      }
+
+      if (usersTable.hashedPasswordRequired) {
+        insertColumns.push("hashed_password");
+        insertArgs.push(`firebase-auth-${firebaseUid}-${Date.now()}`);
+      }
+
+      const placeholders = insertColumns.map(() => "?").join(", ");
+
       await turso.execute({
-        sql: `INSERT INTO users (
-          firebase_uid, email, username, 
-          first_name, last_name, role, verified, auth_provider,
-          membership_status, account_status, avatar
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          firebaseUid,
-          email,
-          username,
-          firstName,
-          lastName,
-          role,
-          verified,
-          authProvider,
-          membershipStatus,
-          accountStatus,
-          avatar,
-        ],
+        sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
+        args: insertArgs,
       });
 
       const result = await turso.execute({
@@ -90,7 +113,7 @@ async function handler(req, res) {
     } catch (error) {
       console.error("Error creating user:", error);
 
-      if (error.message?.includes("UNIQUE constraint")) {
+      if (error?.message?.includes("UNIQUE constraint")) {
         return res.status(409).json({ message: "User already exists" });
       }
 

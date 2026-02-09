@@ -17,6 +17,7 @@ export interface Routes {
   LEGAL: {
     PRIVACY_POLICY: string;
     TERMS_OF_SERVICE: string;
+    COMMUNITY_GUIDELINES: string;
   };
   PAYMENT: {
     SUCCESS: string;
@@ -45,6 +46,7 @@ export const ROUTES: Routes = {
   LEGAL: {
     PRIVACY_POLICY: "/privacy-policy",
     TERMS_OF_SERVICE: "/terms-of-service",
+    COMMUNITY_GUIDELINES: "/community-guidelines",
   },
   PAYMENT: {
     SUCCESS: "/payment/success",
@@ -85,9 +87,10 @@ export const useRouteCheck = (routes: Routes) => {
   const isAddShopPage = location.pathname === ROUTES.SHOPS.ADD;
   const isSignInPage = location.pathname === ROUTES.ACCOUNT.SIGN_IN;
 
-  const isPrivacyOrTOS =
+  const isLegalOrAuxPage =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
     location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE ||
+    location.pathname === ROUTES.LEGAL.COMMUNITY_GUIDELINES ||
     location.pathname === ROUTES.ANALYTICS ||
     location.pathname === ROUTES.USER_LEADERBOARD;
 
@@ -98,7 +101,7 @@ export const useRouteCheck = (routes: Routes) => {
     showUserProfile: isHomePage,
     showMap:
       (!isHomePage && isAccountProfile) ||
-      isPrivacyOrTOS ||
+      isLegalOrAuxPage ||
       isAddShopPage ||
       isSignInPage,
   };

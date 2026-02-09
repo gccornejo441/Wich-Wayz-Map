@@ -1,6 +1,7 @@
 import * as yup from "yup";
 import { isValidZipCode } from "@/utils/address";
 import { normalizeZip, normalizeState } from "@/utils/normalizers";
+import { REPORT_REASON_ORDER } from "@constants/moderationPolicy";
 
 /**
  * Validation schema for user credentials.
@@ -165,4 +166,16 @@ export const registerSchema = yup.object().shape({
     .string()
     .oneOf([yup.ref("password"), undefined], "Passwords do not match")
     .required("Please confirm your password"),
+});
+
+export const shopReportSchema = yup.object().shape({
+  reason: yup
+    .string()
+    .required("Report reason is required")
+    .oneOf([...REPORT_REASON_ORDER], "Select a valid report reason"),
+  details: yup
+    .string()
+    .trim()
+    .max(1000, "Details must be 1000 characters or fewer")
+    .optional(),
 });

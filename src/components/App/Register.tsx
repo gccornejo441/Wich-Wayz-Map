@@ -169,12 +169,12 @@ const Register = () => {
 
         <p className="text-dark text-sm text-center mt-4">
           Already have an account?{" "}
-          <a
-            href={ROUTES.ACCOUNT.SIGN_IN}
+          <Link
+            to={ROUTES.ACCOUNT.SIGN_IN}
             className="text-primary font-semibold hover:underline"
           >
             Sign in
-          </a>
+          </Link>
         </p>
       </div>
     </div>

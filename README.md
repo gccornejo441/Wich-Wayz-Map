@@ -5,7 +5,6 @@
 ## Table of contents
 
 - [Features](#features)
-- [Technology stack](#technology-stack)
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -28,26 +27,6 @@
 - **IndexedDB caching** of shops and locations for faster subsequent load times
 - **PWA service worker** enables offline-capable app shell (after first load) and runtime caching for map tiles and API responses
 - **Admin functions** (planned) for managing users, roles and categories.
-
-## Technology stack
-
-- **Frontend:**
-  - React with TypeScript
-  - Vite (development/build tooling)
-  - Mapbox GL JS for maps and markers
-  - React Context API for state management
-  - Tailwind CSS or custom styles (depending on project configuration)
-  - Fuse.js for fuzzy search
-
-- **Backend:**
-  - Turso (`@libsql/client`) as a hosted SQLite database
-  - Node.js/TypeScript server (configured as API routes)
-  - Stripe for payment processing and webhooks
-
-- **Testing & tooling:**
-  - Vitest/Jest for unit tests (included but limited)
-  - Playwright/Cypress (recommended for end‑to‑end tests)
-  - ESLint and Prettier (recommended for code linting and formatting)
 
 ## Getting started
 
@@ -112,7 +91,7 @@ pnpm test
 yarn test
 ```
 
-Additional tests for APIs and end‑to‑end scenarios are recommended (e.g., using Playwright or Cypress). Continuous integration workflows can be configured in `.github/workflows/` to run tests and linting on pull requests.
+Additional tests for APIs and end‑to‑end scenarios using Playwright or Cypress. Continuous integration workflows can be configured in `.github/workflows/` to run tests and linting on pull requests.
 
 ## Project structure
 
