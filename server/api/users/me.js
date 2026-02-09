@@ -27,9 +27,7 @@ async function handler(req, res) {
   }
 
   const uid =
-    typeof req.firebaseUser?.uid === "string"
-      ? req.firebaseUser.uid.trim()
-      : "";
+    typeof req.firebaseUser?.uid === "string" ? req.firebaseUser.uid.trim() : "";
   const email =
     typeof req.firebaseUser?.email === "string"
       ? req.firebaseUser.email.trim()
@@ -40,6 +38,7 @@ async function handler(req, res) {
   if (!uid) {
     return res.status(401).json({ error: "Invalid authentication token" });
   }
+
   if (!email) {
     return res.status(400).json({
       error:
@@ -47,11 +46,8 @@ async function handler(req, res) {
     });
   }
 
-  // Determine auth provider: 'google' for Google OAuth, 'password' for email/password
   const isGoogleUser = signInProvider === GOOGLE_SIGN_IN_PROVIDER;
   const authProvider = isGoogleUser ? "google" : "password";
-
-  // Backend is the single source of truth: trust Firebase emailVerified
   const verified = emailVerified ? 1 : 0;
 
   try {
@@ -64,7 +60,6 @@ async function handler(req, res) {
     });
 
     if (result.rows.length === 0) {
-      // Check if email exists at all (for account linking or conflict detection)
       const existingUserByEmail = await turso.execute({
         sql: "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
         args: [email],
@@ -73,14 +68,11 @@ async function handler(req, res) {
       if (existingUserByEmail.rows.length > 0) {
         const existingUser = existingUserByEmail.rows[0];
 
-        // If email exists with no Firebase UID, link it
-        if (!existingUser.firebase_uid) {
-          console.warn(
-            `Linking Firebase UID ${uid} to existing email account: ${email}`,
-          );
+        if (!existingUser.firebase_uid || String(existingUser.firebase_uid).trim() === "") {
+          console.warn(`Linking Firebase UID ${uid} to existing email account: ${email}`);
+
           const args = [uid, verified];
-          let sql = `UPDATE users 
-                 SET firebase_uid = ?, verified = ?`;
+          let sql = `UPDATE users SET firebase_uid = ?, verified = ?`;
 
           if (usersTable.hasAuthProvider) {
             sql += ", auth_provider = ?";
@@ -88,26 +80,22 @@ async function handler(req, res) {
           }
 
           sql += `, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
-                 WHERE LOWER(email) = LOWER(?) AND (firebase_uid IS NULL OR TRIM(firebase_uid) = '')`;
+                  WHERE LOWER(email) = LOWER(?) AND (firebase_uid IS NULL OR TRIM(firebase_uid) = '')`;
           args.push(email);
 
-          await turso.execute({
-            sql,
-            args,
-          });
+          await turso.execute({ sql, args });
 
           result = await turso.execute({
             sql: "SELECT * FROM users WHERE firebase_uid = ?",
             args: [uid],
           });
         } else if (existingUser.firebase_uid !== uid) {
-          // Email exists with a different Firebase UID - update it (Firebase project may have been recreated)
           console.warn(
             `Updating Firebase UID for ${email} from ${existingUser.firebase_uid} to ${uid}`,
           );
+
           const args = [uid, verified];
-          let sql = `UPDATE users 
-                 SET firebase_uid = ?, verified = ?`;
+          let sql = `UPDATE users SET firebase_uid = ?, verified = ?`;
 
           if (usersTable.hasAuthProvider) {
             sql += ", auth_provider = ?";
@@ -115,13 +103,10 @@ async function handler(req, res) {
           }
 
           sql += `, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
-                 WHERE LOWER(email) = LOWER(?)`;
+                  WHERE LOWER(email) = LOWER(?)`;
           args.push(email);
 
-          await turso.execute({
-            sql,
-            args,
-          });
+          await turso.execute({ sql, args });
 
           result = await turso.execute({
             sql: "SELECT * FROM users WHERE firebase_uid = ?",
@@ -129,8 +114,8 @@ async function handler(req, res) {
           });
         }
       } else {
-        // Create new Firebase user (no hashed_password needed)
         console.warn(`Creating new Firebase user for email: ${email}`);
+
         const baseUsername = email.split("@")[0];
         let username = baseUsername;
         let attempt = 0;
@@ -146,56 +131,59 @@ async function handler(req, res) {
               "membership_status",
               "account_status",
             ];
-            const insertValues = ["?", "?", "?", "?", "?", "?", "?"];
             const insertArgs = [
               uid,
               email,
               username,
-              "user",
+              "member",
               verified,
-              "basic",
+              "unverified",
               "active",
             ];
 
             if (usersTable.hasAuthProvider) {
               insertColumns.push("auth_provider");
-              insertValues.push("?");
               insertArgs.push(authProvider);
             }
 
             if (usersTable.hashedPasswordRequired) {
               insertColumns.push("hashed_password");
-              insertValues.push("?");
               insertArgs.push(`firebase-auth-${uid}-${Date.now()}`);
             }
 
             insertColumns.push("date_created", "date_modified", "last_login");
-            insertValues.push(
-              "CURRENT_TIMESTAMP",
-              "CURRENT_TIMESTAMP",
-              "CURRENT_TIMESTAMP",
-            );
+
+            const placeholders = insertColumns
+              .map((col) =>
+                col === "date_created" ||
+                col === "date_modified" ||
+                col === "last_login"
+                  ? "CURRENT_TIMESTAMP"
+                  : "?",
+              )
+              .join(", ");
 
             await turso.execute({
-              sql: `INSERT INTO users (
-                ${insertColumns.join(", ")}
-              ) VALUES (${insertValues.join(", ")})`,
+              sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
               args: insertArgs,
             });
+
             break;
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
+
             const isUsernameConflict =
               errorMessage.includes("UNIQUE constraint") &&
               errorMessage.includes("users.username");
 
             if (isUsernameConflict && attempt < 9) {
-              attempt++;
+              attempt += 1;
               username = `${baseUsername}-${Math.floor(1000 + Math.random() * 9000)}`;
-            } else {
-              throw error;
+              continue;
             }
+
+            throw error;
           }
         }
 
@@ -206,22 +194,17 @@ async function handler(req, res) {
       }
     } else {
       const args = [email, verified];
-      let sql = `UPDATE users 
-             SET email = ?, verified = ?`;
+      let sql = `UPDATE users SET email = ?, verified = ?`;
 
       if (usersTable.hasAuthProvider) {
         sql += ", auth_provider = ?";
         args.push(authProvider);
       }
 
-      sql += `, last_login = CURRENT_TIMESTAMP 
-             WHERE firebase_uid = ?`;
+      sql += `, last_login = CURRENT_TIMESTAMP WHERE firebase_uid = ?`;
       args.push(uid);
 
-      await turso.execute({
-        sql,
-        args,
-      });
+      await turso.execute({ sql, args });
 
       result = await turso.execute({
         sql: "SELECT * FROM users WHERE firebase_uid = ?",

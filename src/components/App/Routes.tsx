@@ -15,7 +15,7 @@ import PublicCollection from "./PublicCollection";
 import Register from "./Register";
 import SignIn from "./SignIn";
 import EmailVerification from "./EmailVerification";
-import CommunityGuidelines from "@components/App/CommunityGuidelines";
+import CommunityGuidelines from "./CommunityGuidelines";
 
 function MainRoutes() {
   return (
