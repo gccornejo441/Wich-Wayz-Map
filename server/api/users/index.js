@@ -106,7 +106,9 @@ async function handler(req, res) {
         args: [firebaseUid],
       });
 
-      const safeUser = result.rows[0] ? toSafeUserMetadata(result.rows[0]) : null;
+      const safeUser = result.rows[0]
+        ? toSafeUserMetadata(result.rows[0])
+        : null;
       return res.status(201).json(safeUser);
     } catch (error) {
       console.error("Error creating user:", error);

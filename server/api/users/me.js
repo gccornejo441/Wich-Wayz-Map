@@ -27,7 +27,9 @@ async function handler(req, res) {
   }
 
   const uid =
-    typeof req.firebaseUser?.uid === "string" ? req.firebaseUser.uid.trim() : "";
+    typeof req.firebaseUser?.uid === "string"
+      ? req.firebaseUser.uid.trim()
+      : "";
   const email =
     typeof req.firebaseUser?.email === "string"
       ? req.firebaseUser.email.trim()
@@ -68,8 +70,13 @@ async function handler(req, res) {
       if (existingUserByEmail.rows.length > 0) {
         const existingUser = existingUserByEmail.rows[0];
 
-        if (!existingUser.firebase_uid || String(existingUser.firebase_uid).trim() === "") {
-          console.warn(`Linking Firebase UID ${uid} to existing email account: ${email}`);
+        if (
+          !existingUser.firebase_uid ||
+          String(existingUser.firebase_uid).trim() === ""
+        ) {
+          console.warn(
+            `Linking Firebase UID ${uid} to existing email account: ${email}`,
+          );
 
           const args = [uid, verified];
           let sql = `UPDATE users SET firebase_uid = ?, verified = ?`;
