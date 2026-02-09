@@ -19,6 +19,7 @@ import {
   FiHeart,
   FiMoreVertical,
   FiExternalLink,
+  FiFlag,
 } from "react-icons/fi";
 import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
@@ -39,6 +40,7 @@ import { buildCityStateZip, buildFullAddressForMaps } from "@utils/address";
 import { useSaved } from "@context/savedContext";
 import { useOverlay } from "@/context/overlayContext";
 import CollectionModal from "@/components/Modal/CollectionModal";
+import ReportShopModal from "@components/Modal/ReportShopModal";
 
 const getVoteMessage = (upvotes: number, downvotes: number) => {
   const totalVotes = upvotes + downvotes;
@@ -136,6 +138,7 @@ const MapSidebar = () => {
   const [shareUrl, setShareUrl] = useState("");
 
   const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showFavoriteTip, setShowFavoriteTip] = useState(false);
   const [headerHasBg, setHeaderHasBg] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
@@ -419,6 +422,20 @@ const MapSidebar = () => {
     }
   };
 
+  const handleOpenReportModal = () => {
+    if (!isAuthenticated) {
+      openSignupModal();
+      return;
+    }
+
+    if (!selectedShop?.shopId) {
+      addToast("No shop selected.", "error");
+      return;
+    }
+
+    setIsReportModalOpen(true);
+  };
+
   const displayMessage = getVoteMessage(upvotes, downvotes);
 
   const sanitizePhone = (phone: string): string =>
@@ -648,6 +665,17 @@ const MapSidebar = () => {
                           >
                             <FiList size={16} className="flex-shrink-0" />
                             <span>Add to List</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setShowActionsMenu(false);
+                              handleOpenReportModal();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-surface-dark transition-colors"
+                          >
+                            <FiFlag size={16} className="flex-shrink-0" />
+                            <span>Report Shop</span>
                           </button>
                         </div>
                       )}
@@ -1179,6 +1207,13 @@ const MapSidebar = () => {
         shopName={selectedShop?.shopName}
         onCopySuccess={() => addToast("Link copied to clipboard!", "success")}
         onCopyError={() => addToast("Failed to copy link.", "error")}
+      />
+
+      <ReportShopModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        shopId={selectedShop?.shopId}
+        shopName={selectedShop?.shopName}
       />
     </aside>
   );

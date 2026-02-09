@@ -15,6 +15,7 @@ import PublicCollection from "./PublicCollection";
 import Register from "./Register";
 import SignIn from "./SignIn";
 import EmailVerification from "./EmailVerification";
+import CommunityGuidelines from "@components/App/CommunityGuidelines";
 
 function MainRoutes() {
   return (
@@ -34,6 +35,10 @@ function MainRoutes() {
         <Route
           path={ROUTES.LEGAL.TERMS_OF_SERVICE}
           element={<TearmsOfService />}
+        />
+        <Route
+          path={ROUTES.LEGAL.COMMUNITY_GUIDELINES}
+          element={<CommunityGuidelines />}
         />
         <Route path={ROUTES.ANALYTICS} element={<Analytics />} />
         <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />

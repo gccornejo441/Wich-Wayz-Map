@@ -15,6 +15,7 @@ import {
   HiMail,
   HiShieldCheck,
   HiDocumentText,
+  HiFlag,
 } from "react-icons/hi";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { createPaymentLink } from "../../services/stripe";
@@ -313,6 +314,18 @@ const SidebarFooter = () => {
                     <span className={menuItemLeft}>
                       <HiDocumentText className="w-4 h-4" />
                       Terms of Service
+                    </span>
+                    <span />
+                  </Link>
+
+                  <Link
+                    to={ROUTES.LEGAL.COMMUNITY_GUIDELINES}
+                    onClick={closeAllMenus}
+                    className={menuItemRow}
+                  >
+                    <span className={menuItemLeft}>
+                      <HiFlag className="w-4 h-4" />
+                      Community Guidelines
                     </span>
                     <span />
                   </Link>

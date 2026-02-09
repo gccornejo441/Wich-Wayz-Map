@@ -74,10 +74,11 @@ export const withActiveAccount = (handler) => {
 };
 
 export const withRole = (allowedRoles) => {
-  return withDbUser(async (req, res) => {
-    if (!allowedRoles.includes(req.dbUser.role)) {
-      return res.status(403).json({ error: "Insufficient permissions" });
-    }
-    return handler(req, res);
-  });
+  return (handler) =>
+    withDbUser(async (req, res) => {
+      if (!allowedRoles.includes(req.dbUser.role)) {
+        return res.status(403).json({ error: "Insufficient permissions" });
+      }
+      return handler(req, res);
+    });
 };

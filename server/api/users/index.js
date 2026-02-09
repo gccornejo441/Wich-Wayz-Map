@@ -1,5 +1,6 @@
 import { withRole } from "../lib/withAuth.js";
 import { getTursoClient } from "../lib/turso.js";
+import { getUsersTableCapabilities } from "../lib/usersTable.js";
 
 const toSafeUserMetadata = (user) => ({
   id: user.id,
@@ -57,25 +58,50 @@ async function handler(req, res) {
     }
 
     try {
+      const usersTable = await getUsersTableCapabilities(turso);
+      const insertColumns = [
+        "firebase_uid",
+        "email",
+        "username",
+        "first_name",
+        "last_name",
+        "role",
+        "verified",
+        "membership_status",
+        "account_status",
+        "avatar",
+      ];
+      const insertValues = ["?", "?", "?", "?", "?", "?", "?", "?", "?", "?"];
+      const insertArgs = [
+        firebaseUid,
+        email,
+        username,
+        firstName,
+        lastName,
+        role,
+        verified,
+        membershipStatus,
+        accountStatus,
+        avatar,
+      ];
+
+      if (usersTable.hasAuthProvider) {
+        insertColumns.push("auth_provider");
+        insertValues.push("?");
+        insertArgs.push(authProvider);
+      }
+
+      if (usersTable.hashedPasswordRequired) {
+        insertColumns.push("hashed_password");
+        insertValues.push("?");
+        insertArgs.push(`firebase-auth-${firebaseUid}-${Date.now()}`);
+      }
+
       await turso.execute({
         sql: `INSERT INTO users (
-          firebase_uid, email, username, 
-          first_name, last_name, role, verified, auth_provider,
-          membership_status, account_status, avatar
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          firebaseUid,
-          email,
-          username,
-          firstName,
-          lastName,
-          role,
-          verified,
-          authProvider,
-          membershipStatus,
-          accountStatus,
-          avatar,
-        ],
+          ${insertColumns.join(", ")}
+        ) VALUES (${insertValues.join(", ")})`,
+        args: insertArgs,
       });
 
       const result = await turso.execute({

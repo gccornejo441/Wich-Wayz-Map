@@ -6,6 +6,8 @@ import CategoryActions from "../Utilites/CategoryActions";
 import UserTable from "../Utilites/UserTable";
 import { useAdminPage } from "@hooks/useAdminPage";
 import { DuplicateLocationsTable } from "../Utilites/DuplicateLocationsTable";
+import { useModerationReports } from "@hooks/useModerationReports";
+import ModerationReportsTable from "@components/Utilites/ModerationReportsTable";
 
 const AdminPage = () => {
   const { isAuthenticated, userMetadata } = useAuth();
@@ -25,6 +27,17 @@ const AdminPage = () => {
     handleAddCategory,
     handleDownloadCategories,
   } = useAdminPage();
+  const {
+    reports,
+    isLoadingReports,
+    statusFilter,
+    outcomeFilter,
+    updatingReportId,
+    setStatusFilter,
+    setOutcomeFilter,
+    refreshReports,
+    updateReport,
+  } = useModerationReports();
 
   const [description, setDescription] = useState("");
 
@@ -41,6 +54,18 @@ const AdminPage = () => {
           Manage application users, their roles, and access.
         </p>
       </div>
+
+      <ModerationReportsTable
+        reports={reports}
+        isLoading={isLoadingReports}
+        statusFilter={statusFilter}
+        outcomeFilter={outcomeFilter}
+        updatingReportId={updatingReportId}
+        setStatusFilter={setStatusFilter}
+        setOutcomeFilter={setOutcomeFilter}
+        onRefresh={refreshReports}
+        onUpdateReport={updateReport}
+      />
 
       {isLoading ? (
         <p className="p-4 text-center text-text-base dark:text-text-inverted">
