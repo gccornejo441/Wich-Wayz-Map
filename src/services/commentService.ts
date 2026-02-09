@@ -1,12 +1,10 @@
-import { authApiRequest } from "./apiClient";
+import { apiRequest, authApiRequest } from "./apiClient";
 import { Comment } from "@models/Comment";
 
 export async function getComments(shopId: number): Promise<Comment[]> {
   try {
-    const response = await authApiRequest<{ comments: Comment[] }>(
-      `/comments/${shopId}`,
-    );
-    return response.comments || [];
+    const response = await apiRequest<Comment[]>(`/comments/${shopId}`);
+    return response || [];
   } catch (error) {
     console.error("Error fetching comments:", error);
     throw new Error("Failed to fetch comments");
