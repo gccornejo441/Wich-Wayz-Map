@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.3.0...wich-wayz-v1.4.0) (2026-02-08)
+
+
+### Features
+
+* **auth:** add authentication provider tracking for OAuth and email/… ([#29](https://github.com/gccornejo441/Wich-Wayz-Map/issues/29)) ([cc0cdd0](https://github.com/gccornejo441/Wich-Wayz-Map/commit/cc0cdd04a6463f9588a50fe890a65242c6ffa802))
+
 ## [1.3.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.2.0...wich-wayz-v1.3.0) (2026-02-07)
 
 
