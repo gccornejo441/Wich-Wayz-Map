@@ -28,8 +28,39 @@ const dbClient = createClient(
 // Module-level flag to ensure schema initialization runs only once
 let initPromise = null;
 
+const tableExists = async (tableName) => {
+  const result = await dbClient.execute({
+    sql: "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+    args: [tableName],
+  });
+
+  return Array.isArray(result.rows) && result.rows.length > 0;
+};
+
+const getTableColumns = async (tableName) => {
+  const result = await dbClient.execute({
+    sql: `PRAGMA table_info(${tableName})`,
+    args: [],
+  });
+
+  return new Set(result.rows.map((row) => String(row.name)));
+};
+
+const ensureColumn = async ({ tableName, columnName, columnDefinition }) => {
+  const exists = await tableExists(tableName);
+  if (!exists) return;
+
+  const columns = await getTableColumns(tableName);
+  if (columns.has(columnName)) return;
+
+  await dbClient.execute({
+    sql: `ALTER TABLE ${tableName} ADD COLUMN ${columnDefinition}`,
+    args: [],
+  });
+};
+
 /**
- * Initialize database schema for favorites, collections, and reports.
+ * Initialize database schema for favorites, collections, reports, and moderation audit.
  * Only auto-runs in development. In production, requires manual migration.
  * Uses CREATE TABLE IF NOT EXISTS for idempotency.
  */
@@ -59,9 +90,7 @@ const initSchema = async () => {
     return;
   }
 
-  console.warn(
-    "[DEV] Auto-initializing database schema for collections, saved shops, and reports...",
-  );
+  console.warn("[DEV] Auto-initializing database schema...");
 
   try {
     // Create saved_shops table
@@ -173,6 +202,116 @@ const initSchema = async () => {
 
     await dbClient.execute({
       sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_status ON shop_reports(report_status, moderator_outcome)",
+      args: [],
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "content_status",
+      columnDefinition:
+        "content_status TEXT NOT NULL DEFAULT 'active' CHECK (content_status IN ('active', 'hidden', 'duplicate'))",
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "duplicate_of_shop_id",
+      columnDefinition:
+        "duplicate_of_shop_id INTEGER REFERENCES shops(id) ON DELETE SET NULL",
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shops_content_status ON shops(content_status)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shops_duplicate_of ON shops(duplicate_of_shop_id)",
+      args: [],
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "location_id",
+      columnDefinition:
+        "location_id INTEGER REFERENCES locations(id) ON DELETE SET NULL",
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "duplicate_shop_id",
+      columnDefinition:
+        "duplicate_shop_id INTEGER REFERENCES shops(id) ON DELETE SET NULL",
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "suggested_latitude",
+      columnDefinition: "suggested_latitude REAL",
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "suggested_longitude",
+      columnDefinition: "suggested_longitude REAL",
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "resolved_by",
+      columnDefinition:
+        "resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL",
+    });
+
+    await ensureColumn({
+      tableName: "shop_reports",
+      columnName: "resolved_at",
+      columnDefinition: "resolved_at TIMESTAMP",
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_queue ON shop_reports(report_status, reason, date_created DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_resolved_by ON shop_reports(resolved_by, resolved_at DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_reports_duplicate_target ON shop_reports(duplicate_shop_id)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE UNIQUE INDEX IF NOT EXISTS ux_shop_reports_open_by_target ON shop_reports(reporter_user_id, shop_id, IFNULL(location_id, -1), reason) WHERE report_status IN ('open', 'reviewed')",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS report_actions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          report_id INTEGER NOT NULL,
+          moderator_user_id INTEGER,
+          action_type TEXT NOT NULL,
+          action_payload TEXT,
+          notes TEXT,
+          date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (report_id) REFERENCES shop_reports(id) ON DELETE CASCADE,
+          FOREIGN KEY (moderator_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_report_actions_report ON report_actions(report_id, date_created DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_report_actions_moderator ON report_actions(moderator_user_id, date_created DESC)",
       args: [],
     });
 
