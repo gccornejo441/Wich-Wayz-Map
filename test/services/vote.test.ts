@@ -1,8 +1,12 @@
 import axios from "axios";
 import { vi } from "vitest";
 import { GetVotesForShop, InsertVote } from "../../src/services/vote";
+import * as apiClient from "../../src/services/apiClient";
 
 vi.mock("axios");
+vi.mock("../../src/services/apiClient", () => ({
+  authApiRequest: vi.fn(),
+}));
 
 describe("GetVotesForShop", () => {
   it("calls the correct API endpoint and returns data", async () => {
@@ -26,16 +30,21 @@ describe("GetVotesForShop", () => {
 describe("InsertVote", () => {
   it("calls the correct API endpoint with the right payload", async () => {
     const vote = { shop_id: 1, user_id: 123, upvote: true, downvote: false };
-    const mockResponse = { success: true };
-    (axios.post as jest.Mock).mockResolvedValue({ data: mockResponse });
+    const mockResponse = { message: "Vote submitted successfully" };
+    vi.spyOn(apiClient, "authApiRequest").mockResolvedValue(mockResponse);
 
     const result = await InsertVote(vote);
-    expect(axios.post).toHaveBeenCalledWith("/api/vote", vote);
+    expect(apiClient.authApiRequest).toHaveBeenCalledWith("/vote", {
+      method: "POST",
+      body: JSON.stringify(vote),
+    });
     expect(result).toEqual(mockResponse);
   });
 
   it("throws an error when the API call fails", async () => {
-    (axios.post as jest.Mock).mockRejectedValue(new Error("Network Error"));
+    vi.spyOn(apiClient, "authApiRequest").mockRejectedValue(
+      new Error("Network Error"),
+    );
 
     await expect(
       InsertVote({ shop_id: 1, user_id: 123, upvote: true, downvote: false }),

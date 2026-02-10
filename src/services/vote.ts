@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authApiRequest } from "@services/apiClient";
 
 export type ShopVoteResponse = {
   upvotes: number;
@@ -21,6 +22,7 @@ export const GetVotesForShop = async (shopId: number, userId?: number) => {
 /**
  * Submits a user's vote on a shop.
  *  POST /api/vote endpoint
+ * Requires authentication - automatically includes Firebase ID token.
  */
 export const InsertVote = async (vote: {
   shop_id: number;
@@ -28,6 +30,8 @@ export const InsertVote = async (vote: {
   upvote: boolean;
   downvote: boolean;
 }) => {
-  const response = await axios.post("/api/vote", vote);
-  return response.data;
+  return authApiRequest<{ message: string }>("/vote", {
+    method: "POST",
+    body: JSON.stringify(vote),
+  });
 };
