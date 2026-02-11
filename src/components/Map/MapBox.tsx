@@ -20,7 +20,6 @@ import {
   type ShopFeatureCollection,
   type ShopGeoJsonProperties,
 } from "@utils/shopGeoJson";
-// import SpeedDial from "../Dial/SpeedDial";
 
 const INITIAL_CENTER: [number, number] = [-74.0242, 40.6941];
 const INITIAL_ZOOM = 10.12;
@@ -93,7 +92,6 @@ const buildPopupHtml = (props: ShopGeoJsonProperties) => {
   const state = props.state ?? "";
   const postalCode = props.postalCode ?? "";
 
-  // Build city/state/zip line using helper
   const cityStateZip = buildCityStateZip(city, state, postalCode);
   const cityStateZipEscaped = cityStateZip ? escapeHtml(cityStateZip) : "";
 
@@ -164,7 +162,7 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       paint: {
         "circle-color": POINT_COLOR,
         "circle-stroke-color": POINT_STROKE_COLOR,
-        "circle-radius": 14, // Increased from 8 to 14 for better mobile touch targets (28px diameter)
+        "circle-radius": 14,
         "circle-stroke-width": 2,
         "circle-opacity": 0.9,
       },
@@ -184,7 +182,7 @@ const ensureShopSourceAndLayers = (map: Map, data: ShopFeatureCollection) => {
       paint: {
         "circle-color": "#FFC72C",
         "circle-stroke-color": "#111827",
-        "circle-radius": 18, // Increased from 11 to 18 to maintain proportion with regular markers
+        "circle-radius": 18,
         "circle-stroke-width": 3,
         "circle-opacity": 0.95,
       },
@@ -212,30 +210,29 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   const { isOpen, close } = useOverlay();
   const location = useLocation();
 
-  // Derive stable overlay states for effect dependencies
   const shopOpen = isOpen("shop");
 
   const mapRef = useRef<Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Refs for tracking rehydration and suppressing programmatic saves
   const hydratedKeyRef = useRef<string | null>(null);
   const suppressNextSaveRef = useRef(0);
 
-  // Make viewerKey always explicit (no undefined)
-  const viewerKey = userMetadata?.id ? String(userMetadata.id) : "anon";
+  const geolocateRef = useRef<mapboxgl.GeolocateControl | null>(null);
+  const didAutoGeolocateRef = useRef(false);
 
-  // Load persisted preferences
+  const viewerKey = userMetadata?.id ? String(userMetadata.id) : "anon";
+  const viewerKeyRef = useLatest(viewerKey);
+
   const initialPrefs = useMemo(() => loadMapViewPrefs(viewerKey), [viewerKey]);
 
   const [userPosition, setUserPosition] = useState<[number, number] | null>(
     () => initialPrefs?.userPosition ?? null,
   );
+
   useEffect(() => {
     setUserPositionInContext(userPosition);
   }, [userPosition, setUserPositionInContext]);
-
-  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -283,6 +280,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as
       | string
       | undefined;
+
     if (!token) {
       throw new Error(
         "Missing VITE_MAPBOX_ACCESS_TOKEN in environment variables.",
@@ -293,6 +291,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     const initialStyle =
       theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+
     appliedStyleRef.current = initialStyle;
 
     const map = new mapboxgl.Map({
@@ -307,6 +306,68 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     const closeHoverPopup = () => {
       hoverPopupRef.current?.remove();
       hoverPopupRef.current = null;
+    };
+
+    const ensureGeolocateControl = () => {
+      if (!isLoggedIn) return;
+      if (!navigator.geolocation) return;
+      if (geolocateRef.current) return;
+
+      const control = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+        showAccuracyCircle: true,
+        fitBoundsOptions: {
+          maxZoom: 13,
+        },
+      });
+
+      geolocateRef.current = control;
+      map.addControl(control, "bottom-right");
+
+      control.on("geolocate", (pos: GeolocationPosition) => {
+        const newPosition: [number, number] = [
+          pos.coords.longitude,
+          pos.coords.latitude,
+        ];
+
+        setUserPosition(newPosition);
+        setUserPositionInContext(newPosition);
+
+        try {
+          saveMapViewPrefs(
+            {
+              center: newPosition,
+              zoom: Math.max(map.getZoom(), 13),
+              userPosition: newPosition,
+              ts: Date.now(),
+            },
+            viewerKeyRef.current,
+          );
+        } catch (error) {
+          console.error("Error saving map view preferences:", error);
+        }
+      });
+
+      control.on("error", (error: GeolocationPositionError) => {
+        console.error("Geolocation error:", error);
+      });
+    };
+
+    const tryAutoGeolocateOnce = () => {
+      if (!isLoggedIn) return;
+      if (!navigator.geolocation) return;
+      if (!geolocateRef.current) return;
+      if (didAutoGeolocateRef.current) return;
+
+      didAutoGeolocateRef.current = true;
+      suppressNextSaveRef.current += 1;
+      geolocateRef.current.trigger();
     };
 
     const onLoad = () => {
@@ -328,8 +389,10 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       }
 
       loadingSeqRef.current += 1;
-
       hideLoadingWhenMapReady(map, loadingSeqRef.current);
+
+      ensureGeolocateControl();
+      tryAutoGeolocateOnce();
 
       map.on("click", CLUSTERS_LAYER_ID, (e) => {
         stopMapClick(e);
@@ -419,6 +482,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       map.on("mouseenter", CLUSTERS_LAYER_ID, () => {
         map.getCanvas().style.cursor = "pointer";
       });
+
       map.on("mouseleave", CLUSTERS_LAYER_ID, () => {
         map.getCanvas().style.cursor = "";
       });
@@ -428,17 +492,19 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     return () => {
       setMapLoaded(false);
+
       hoverPopupRef.current?.remove();
       hoverPopupRef.current = null;
+
       selectedPopupRef.current?.remove();
       selectedPopupRef.current = null;
-
-      userMarkerRef.current?.remove();
-      userMarkerRef.current = null;
 
       map.off("load", onLoad);
       map.remove();
       mapRef.current = null;
+
+      geolocateRef.current = null;
+      didAutoGeolocateRef.current = false;
     };
   }, [
     openSidebarRef,
@@ -451,6 +517,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     setPendingCenterCoords,
     hoveredLocationIdRef,
     initialPrefs,
+    isLoggedIn,
+    viewerKeyRef,
+    setUserPositionInContext,
   ]);
 
   useEffect(() => {
@@ -473,10 +542,12 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     const desiredStyle =
       theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT;
+
     if (appliedStyleRef.current === desiredStyle) return;
 
     appliedStyleRef.current = desiredStyle;
     styleSeqRef.current += 1;
+
     const expectedStyleSeq = styleSeqRef.current;
 
     setLoading(true);
@@ -494,6 +565,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       map.setZoom(currentZoom);
 
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
+
       if (map.getLayer(HOVERED_LAYER_ID)) {
         map.setFilter(HOVERED_LAYER_ID, [
           "all",
@@ -516,7 +588,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
-    // Only show popup when shop panel is actually open
     if (!shopOpen || !selectedShop) {
       selectedPopupRef.current?.remove();
       selectedPopupRef.current = null;
@@ -560,6 +631,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     if (!map.getLayer(HOVERED_LAYER_ID)) return;
 
     const hoveredId = hoveredLocationId ?? -1;
+
     map.setFilter(HOVERED_LAYER_ID, [
       "all",
       ["!", ["has", "point_count"]],
@@ -584,11 +656,13 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     processedDeepLinkRef.current = paramsKey;
 
     suppressNextSaveRef.current += 1;
+
     map.flyTo({
       center: [lng, lat],
       zoom: zoomValue,
       essential: true,
     });
+
     closeRef.current("nearby");
 
     if (typeof shopId === "number" && Number.isFinite(shopId)) {
@@ -599,68 +673,12 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
   }, [location.search, mapLoaded, selectShopByIdRef, closeRef]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapLoaded) return;
-    if (!userPosition) return;
-
-    if (!userMarkerRef.current) {
-      userMarkerRef.current = new mapboxgl.Marker()
-        .setLngLat(userPosition)
-        .addTo(map);
-    } else {
-      userMarkerRef.current.setLngLat(userPosition);
-    }
-  }, [userPosition, mapLoaded]);
-
-  // Listen for locateUser event from SpeedDial
-  useEffect(() => {
     if (!isLoggedIn) return;
-    if (!navigator.geolocation) return;
 
     const handleLocateUser = () => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const newPosition: [number, number] = [
-            pos.coords.longitude,
-            pos.coords.latitude,
-          ];
-          setUserPosition(newPosition);
-          setUserPositionInContext(newPosition);
-
-          const map = mapRef.current;
-          if (map) {
-            suppressNextSaveRef.current += 1;
-            map.flyTo({
-              center: newPosition,
-              zoom: 13,
-              essential: true,
-            });
-
-            // Save preferences after flying to user location
-            try {
-              saveMapViewPrefs(
-                {
-                  center: newPosition,
-                  zoom: 13,
-                  userPosition: newPosition,
-                  ts: Date.now(),
-                },
-                viewerKey,
-              );
-            } catch (error) {
-              console.error("Error saving map view preferences:", error);
-            }
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 60000,
-        },
-      );
+      if (!geolocateRef.current) return;
+      suppressNextSaveRef.current += 1;
+      geolocateRef.current.trigger();
     };
 
     window.addEventListener("locateUser", handleLocateUser);
@@ -668,15 +686,15 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     return () => {
       window.removeEventListener("locateUser", handleLocateUser);
     };
-  }, [isLoggedIn, viewerKey, setUserPositionInContext]);
+  }, [isLoggedIn]);
 
-  // Handle flyToLocation trigger from context
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
     if (!flyToTrigger) return;
 
     suppressNextSaveRef.current += 1;
+
     map.flyTo({
       center: [flyToTrigger.lng, flyToTrigger.lat],
       zoom: flyToTrigger.zoom,
@@ -684,7 +702,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     });
   }, [flyToTrigger, mapLoaded]);
 
-  // Rehydrate when viewerKey becomes known
   useEffect(() => {
     const map = mapRef.current;
     if (!mapLoaded || !map) return;
@@ -696,12 +713,19 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     if (!prefs) return;
 
     suppressNextSaveRef.current += 1;
+
     map.jumpTo({ center: prefs.center, zoom: prefs.zoom });
+
     setUserPosition(prefs.userPosition ?? null);
     setContextCenter(prefs.center);
     setContextZoom(prefs.zoom);
     setUserPositionInContext(prefs.userPosition ?? null);
     setPendingCenterCoords([prefs.center[0], prefs.center[1]]);
+
+    if (isLoggedIn && geolocateRef.current) {
+      suppressNextSaveRef.current += 1;
+      geolocateRef.current.trigger();
+    }
   }, [
     viewerKey,
     mapLoaded,
@@ -709,9 +733,9 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     setContextZoom,
     setPendingCenterCoords,
     setUserPositionInContext,
+    isLoggedIn,
   ]);
 
-  // Save map view preferences on moveend (debounced)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
@@ -780,12 +804,6 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       )}
 
       <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
-
-      {/* <SpeedDial
-        onLocateUser={() => {
-          window.dispatchEvent(new Event("locateUser"));
-        }}
-      /> */}
     </div>
   );
 };
