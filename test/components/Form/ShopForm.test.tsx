@@ -121,11 +121,11 @@ vi.mock("@/utils/shops", () => ({
   applyLocationStatusToShop: vi.fn((shop) => shop),
 }));
 
-vi.mock("../Map/MapPreview", () => ({
+vi.mock("@components/Map/MapPreview", () => ({
   default: () => <div data-testid="map-preview">Map Preview</div>,
 }));
 
-vi.mock("../Modal/AddCategoryModal", () => ({
+vi.mock("@components/Modal/AddCategoryModal", () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     isOpen ? (
       <div data-testid="add-category-modal">
