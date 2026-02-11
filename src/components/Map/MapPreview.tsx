@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Map, {
-  Marker,
-  NavigationControl,
-  FullscreenControl,
-  MarkerDragEvent,
-  MapRef,
-} from "react-map-gl";
 import { HiClipboard } from "react-icons/hi";
+import Map, {
+  FullscreenControl,
+  MapLayerMouseEvent,
+  MapRef,
+  Marker,
+  MarkerDragEvent,
+  NavigationControl,
+} from "react-map-gl";
+
 import "mapbox-gl/dist/mapbox-gl.css";
+
+import { getStateCode } from "@constants/usStates";
 import { useTheme } from "@hooks/useTheme";
 import { AddressDraft } from "@/types/address";
-import { getStateCode } from "@constants/usStates";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
@@ -29,12 +32,67 @@ interface Coordinates {
   longitude: number;
 }
 
-const isFiniteNumber = (v: unknown): v is number =>
-  typeof v === "number" && Number.isFinite(v);
+interface MapboxContextEntry {
+  id?: string;
+  text?: string;
+  short_code?: string;
+}
 
-// Styles (fix 404s by using dark-v11)
+interface MapboxFeature {
+  address?: string;
+  text?: string;
+  context?: MapboxContextEntry[];
+}
+
+interface MapboxGeocodeResponse {
+  features?: MapboxFeature[];
+}
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
 const MAPBOX_STYLE_LIGHT = "mapbox://styles/mapbox/streets-v12";
 const MAPBOX_STYLE_DARK = "mapbox://styles/mapbox/dark-v11";
+
+const parseReverseGeocode = (json: MapboxGeocodeResponse) => {
+  const feature = json.features?.[0];
+  if (!feature) return null;
+
+  const context = feature.context ?? [];
+  let streetAddress = "";
+  let city = "";
+  let state = "";
+  let postalCode = "";
+  let country = "";
+
+  if (feature.address && feature.text) {
+    streetAddress = `${feature.address} ${feature.text}`;
+  } else if (feature.text) {
+    streetAddress = feature.text;
+  }
+
+  for (const entry of context) {
+    const id = entry.id ?? "";
+    if (id.startsWith("postcode")) {
+      postalCode = entry.text ?? "";
+      continue;
+    }
+    if (id.startsWith("place")) {
+      city = entry.text ?? "";
+      continue;
+    }
+    if (id.startsWith("region")) {
+      const rawState = entry.short_code?.replace("US-", "") || entry.text || "";
+      state = getStateCode(rawState);
+      continue;
+    }
+    if (id.startsWith("country")) {
+      country = entry.short_code?.toUpperCase() || entry.text || "";
+    }
+  }
+
+  return { streetAddress, city, state, postalCode, country };
+};
 
 const MapPreview: React.FC<MapPreviewProps> = ({
   address,
@@ -44,19 +102,22 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   containerClassName,
 }) => {
   const { theme } = useTheme();
-
   const [coords, setCoords] = useState<Coordinates | null>(() => {
-    if (isFiniteNumber(address.latitude) && isFiniteNumber(address.longitude)) {
-      return { latitude: address.latitude, longitude: address.longitude };
+    if (
+      !isFiniteNumber(address.latitude) ||
+      !isFiniteNumber(address.longitude)
+    ) {
+      return null;
     }
-    return null;
+    return {
+      latitude: address.latitude,
+      longitude: address.longitude,
+    };
   });
-
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const mapRef = useRef<MapRef | null>(null);
   const fullAddressRef = useRef(fullAddressForMaps);
-  const addressRef = useRef(address);
   const onAddressUpdateRef = useRef(onAddressUpdate);
 
   useEffect(() => {
@@ -64,38 +125,56 @@ const MapPreview: React.FC<MapPreviewProps> = ({
   }, [fullAddressForMaps]);
 
   useEffect(() => {
-    addressRef.current = address;
-  }, [address]);
-
-  useEffect(() => {
     onAddressUpdateRef.current = onAddressUpdate;
   }, [onAddressUpdate]);
 
-  // ✅ Map style (fix 404s)
   const mapStyle = useMemo(
     () => (theme === "dark" ? MAPBOX_STYLE_DARK : MAPBOX_STYLE_LIGHT),
     [theme],
   );
 
-  // ✅ Update style without recreating map
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
     map.setStyle(mapStyle);
   }, [mapStyle]);
 
-  // ✅ Keep state in sync if address props get lat/lon later
   useEffect(() => {
-    if (isFiniteNumber(address.latitude) && isFiniteNumber(address.longitude)) {
-      setCoords({ latitude: address.latitude, longitude: address.longitude });
+    if (
+      !isFiniteNumber(address.latitude) ||
+      !isFiniteNumber(address.longitude)
+    ) {
+      return;
+    }
+
+    const nextCoords = {
+      latitude: address.latitude,
+      longitude: address.longitude,
+    };
+    setCoords(nextCoords);
+
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const center = map.getCenter();
+    const moved =
+      Math.abs(center.lat - nextCoords.latitude) > 0.0001 ||
+      Math.abs(center.lng - nextCoords.longitude) > 0.0001;
+
+    if (moved) {
+      map.flyTo({
+        center: [nextCoords.longitude, nextCoords.latitude],
+        zoom: Math.max(map.getZoom(), 14),
+        duration: 650,
+        essential: true,
+      });
     }
   }, [address.latitude, address.longitude]);
 
-  // Prefill address -> forward geocode -> set coords -> flyTo
   useEffect(() => {
     if (prefillFlyToNonce <= 0) return;
 
-    const query = fullAddressRef.current;
+    const query = fullAddressRef.current.trim();
     if (!query) return;
 
     const controller = new AbortController();
@@ -106,119 +185,95 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           query,
         )}.json?access_token=${MAPBOX_TOKEN}`;
 
-        const r = await fetch(url, { signal: controller.signal });
-        const json = await r.json();
+        const response = await fetch(url, { signal: controller.signal });
+        const json = (await response.json()) as {
+          features?: Array<{ geometry?: { coordinates?: [number, number] } }>;
+        };
 
-        if (!json.features?.length) return;
+        const coordsFromSearch = json.features?.[0]?.geometry?.coordinates;
+        if (!coordsFromSearch) return;
 
-        const [lon, lat] = json.features[0].geometry.coordinates;
-
-        setCoords({ latitude: lat, longitude: lon });
+        const [longitude, latitude] = coordsFromSearch;
+        setCoords({ latitude, longitude });
         onAddressUpdateRef.current((prev) => ({
           ...prev,
-          latitude: lat,
-          longitude: lon,
+          latitude,
+          longitude,
         }));
 
-        const m = mapRef.current?.getMap();
-        if (m) {
-          m.flyTo({
-            center: [lon, lat],
-            zoom: 14,
-            duration: 900,
-            essential: true,
-          });
-        }
-      } catch (err) {
-        if ((err as { name?: string })?.name === "AbortError") return;
+        const map = mapRef.current?.getMap();
+        if (!map) return;
+        map.flyTo({
+          center: [longitude, latitude],
+          zoom: 14,
+          duration: 900,
+          essential: true,
+        });
+      } catch (error) {
+        if ((error as { name?: string }).name === "AbortError") return;
       }
     })();
 
     return () => controller.abort();
   }, [prefillFlyToNonce]);
 
-  const handleDragEnd = (e: MarkerDragEvent) => {
-    const { lat, lng } = e.lngLat;
-    const newCoords = { latitude: lat, longitude: lng };
-    setCoords(newCoords);
+  const updateAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number,
+  ) => {
+    setCoords({ latitude, longitude });
 
-    fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`,
-    )
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.features?.length) {
-          const feature = json.features[0];
-          const context = feature.context || [];
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_TOKEN}`,
+      );
+      const json = (await response.json()) as MapboxGeocodeResponse;
+      const parsed = parseReverseGeocode(json);
 
-          let street = "";
-          let city = "";
-          let state = "";
-          let postalCode = "";
-          let country = "";
-
-          if (feature.address && feature.text) {
-            street = `${feature.address} ${feature.text}`;
-          } else if (feature.text) {
-            street = feature.text;
-          }
-
-          for (const ctx of context) {
-            const id = ctx.id || "";
-            if (id.startsWith("postcode")) {
-              postalCode = ctx.text || "";
-            } else if (id.startsWith("place")) {
-              city = ctx.text || "";
-            } else if (id.startsWith("region")) {
-              const stateValue =
-                ctx.short_code?.replace("US-", "") || ctx.text || "";
-              state = getStateCode(stateValue);
-            } else if (id.startsWith("country")) {
-              country = ctx.short_code?.toUpperCase() || ctx.text || "";
-            }
-          }
-
-          onAddressUpdateRef.current((prev) => ({
-            ...prev,
-            streetAddress: street || prev.streetAddress,
-            city: city || prev.city,
-            state: state || prev.state,
-            postalCode: postalCode || prev.postalCode,
-            country: country || prev.country,
-            latitude: lat,
-            longitude: lng,
-          }));
-        } else {
-          onAddressUpdateRef.current((prev) => ({
-            ...prev,
-            latitude: lat,
-            longitude: lng,
-          }));
-        }
-      })
-      .catch(() => {
+      if (parsed) {
         onAddressUpdateRef.current((prev) => ({
           ...prev,
-          latitude: lat,
-          longitude: lng,
+          streetAddress: parsed.streetAddress || prev.streetAddress,
+          city: parsed.city || prev.city,
+          state: parsed.state || prev.state,
+          postalCode: parsed.postalCode || prev.postalCode,
+          country: parsed.country || prev.country,
+          latitude,
+          longitude,
         }));
-      });
+        return;
+      }
+    } catch {
+      // Fall back to coordinates-only update below.
+    }
+
+    onAddressUpdateRef.current((prev) => ({
+      ...prev,
+      latitude,
+      longitude,
+    }));
+  };
+
+  const handleDragEnd = (event: MarkerDragEvent) => {
+    const { lat, lng } = event.lngLat;
+    void updateAddressFromCoordinates(lat, lng);
+  };
+
+  const handleMapClick = (event: MapLayerMouseEvent) => {
+    const { lat, lng } = event.lngLat;
+    void updateAddressFromCoordinates(lat, lng);
   };
 
   const copyToClipboard = () => {
     if (!coords) return;
     const text = `Lat: ${coords.latitude.toFixed(5)} | Lng: ${coords.longitude.toFixed(5)}`;
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text);
   };
 
-  // Initialize with user's current location if no coordinates provided
   useEffect(() => {
-    if (coords) return;
-    if (!navigator.geolocation) return;
-    if (isLoadingLocation) return;
+    if (coords || !navigator.geolocation || isLoadingLocation) return;
 
     setIsLoadingLocation(true);
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userCoords = {
@@ -226,13 +281,11 @@ const MapPreview: React.FC<MapPreviewProps> = ({
           longitude: position.coords.longitude,
         };
         setCoords(userCoords);
-
         onAddressUpdateRef.current((prev) => ({
           ...prev,
           latitude: userCoords.latitude,
           longitude: userCoords.longitude,
         }));
-
         setIsLoadingLocation(false);
       },
       (error) => {
@@ -260,22 +313,18 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     <div
       id="map-preview-root"
       data-map-preview
-      className={`relative isolate w-full h-full overflow-hidden dark:bg-surface-dark flex flex-col min-h-0 ${
-        containerClassName ?? ""
-      }`}
+      className={`relative isolate h-full w-full min-h-0 overflow-hidden dark:bg-surface-dark ${containerClassName ?? ""}`}
     >
       {coords ? (
-        <div className="relative flex-1 min-h-0">
-          {/* Map container with pointer-events-none to prevent blocking form clicks.
-              To enable interactive map preview (pan, zoom controls), remove pointer-events-none,
-              but ensure the preview container never overlaps the form area to avoid click conflicts. */}
-          <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="relative h-full min-h-0">
+          <div className="absolute inset-0 z-0">
             <Map
               ref={mapRef}
               mapboxAccessToken={MAPBOX_TOKEN}
               initialViewState={initialViewState}
               mapStyle={mapStyle}
               style={{ width: "100%", height: "100%" }}
+              onClick={handleMapClick}
             >
               <NavigationControl position="bottom-right" />
               <FullscreenControl position="bottom-right" />
@@ -286,14 +335,17 @@ const MapPreview: React.FC<MapPreviewProps> = ({
                 onDragEnd={handleDragEnd}
                 anchor="bottom"
               >
-                <div className="text-xl cursor-pointer">📍</div>
+                <div className="h-5 w-5 rounded-full border-2 border-white bg-brand-primary shadow-md" />
               </Marker>
             </Map>
           </div>
 
-          {/* ✅ Overlay on top */}
-          <div className="absolute left-2 bottom-8 z-10">
-            <div className="bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-2 text-xs text-text-base dark:text-text-inverted shadow-md">
+          <div className="absolute left-2 top-2 z-10 rounded-lg bg-white/90 px-2 py-1 text-xs text-text-base shadow-md dark:bg-black/60 dark:text-text-inverted">
+            Click map to place pin. Drag pin to fine-tune.
+          </div>
+
+          <div className="absolute bottom-8 left-2 z-10">
+            <div className="flex items-center gap-2 rounded-lg bg-white/90 px-2 py-1 text-xs text-text-base shadow-md backdrop-blur-sm dark:bg-black/60 dark:text-text-inverted">
               <span className="whitespace-nowrap">
                 Lat: {coords.latitude.toFixed(5)} | Lng:{" "}
                 {coords.longitude.toFixed(5)}
@@ -302,22 +354,22 @@ const MapPreview: React.FC<MapPreviewProps> = ({
                 type="button"
                 onClick={copyToClipboard}
                 aria-label="Copy coordinates to clipboard"
-                className="ml-2 hover:text-primary transition flex-shrink-0"
+                className="ml-2 flex-shrink-0 transition hover:text-primary"
               >
-                <HiClipboard className="w-4 h-4" />
+                <HiClipboard className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 flex items-center justify-center text-sm italic px-2 text-center text-text-base dark:text-text-inverted">
+        <div className="flex h-full min-h-0 items-center justify-center px-2 text-center text-sm italic text-text-base dark:text-text-inverted">
           {isLoadingLocation ? (
             <div className="flex flex-col items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary" />
+              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-brand-primary" />
               <span>Getting your location...</span>
             </div>
           ) : (
-            <span>Click Prefill Address to set the map location.</span>
+            <span>Search an address or click the map to set location.</span>
           )}
         </div>
       )}
