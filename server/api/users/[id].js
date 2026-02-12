@@ -27,7 +27,15 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PATCH" || req.method === "PUT") {
-    const { role, membershipStatus, accountStatus } = req.body || {};
+    const {
+      role,
+      membershipStatus,
+      accountStatus,
+      first_name,
+      last_name,
+      username,
+      avatar,
+    } = req.body || {};
 
     const updates = [];
     const args = [];
@@ -50,6 +58,26 @@ export default async function handler(req, res) {
     if (accountStatus) {
       updates.push("account_status = ?");
       args.push(accountStatus);
+    }
+
+    if (first_name !== undefined) {
+      updates.push("first_name = ?");
+      args.push(first_name);
+    }
+
+    if (last_name !== undefined) {
+      updates.push("last_name = ?");
+      args.push(last_name);
+    }
+
+    if (username !== undefined) {
+      updates.push("username = ?");
+      args.push(username);
+    }
+
+    if (avatar !== undefined) {
+      updates.push("avatar = ?");
+      args.push(avatar);
     }
 
     if (!updates.length) {
