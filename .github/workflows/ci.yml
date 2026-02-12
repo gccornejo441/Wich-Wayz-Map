@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main, develop]
-    tags: ["v*"]
+    tags:
+      - "v*"
+      - "wich-wayz-v*"
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
@@ -26,11 +28,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+
       - name: Compute build version
         shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
+            VERSION="${GITHUB_REF_NAME}"
+            VERSION="${VERSION#wich-wayz-v}"
+            VERSION="${VERSION#v}"
             echo "VITE_BUILD_VERSION=${VERSION}+${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           else
             echo "VITE_BUILD_VERSION=0.0.0-ci.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
