@@ -10,6 +10,12 @@ vi.mock("../../src/services/apiClient", () => ({
   authApiRequest: vi.fn(),
 }));
 
+vi.mock("../../src/services/firebase", () => ({
+  auth: {
+    currentUser: null,
+  },
+}));
+
 describe("commentService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
