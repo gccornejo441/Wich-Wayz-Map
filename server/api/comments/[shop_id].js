@@ -1,4 +1,141 @@
 import { executeQuery } from "../lib/db.js";
+import { verifyFirebaseToken } from "../lib/firebaseAdmin.js";
+
+const REACTION_TYPES = new Set([
+  "like",
+  "love",
+  "care",
+  "haha",
+  "wow",
+  "angry",
+  "sad",
+]);
+
+const extractBearerToken = (req) => {
+  const authHeader = req.headers?.authorization || req.headers?.Authorization;
+  if (typeof authHeader !== "string" || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.slice(7).trim();
+  return token.length > 0 ? token : null;
+};
+
+const isMissingCommentReactionsTableError = (error) => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "";
+  return /no such table:\s*comment_reactions/i.test(message);
+};
+
+async function resolveAuthenticatedUserId(req) {
+  const token = extractBearerToken(req);
+  if (!token) return null;
+
+  try {
+    const decodedToken = await verifyFirebaseToken(token);
+    const firebaseUid = decodedToken?.uid;
+    if (!firebaseUid) return null;
+
+    const result = await executeQuery(
+      `SELECT id FROM users WHERE firebase_uid = ? LIMIT 1`,
+      [firebaseUid],
+    );
+    const parsedUserId = Number(result?.[0]?.id);
+
+    return Number.isInteger(parsedUserId) && parsedUserId > 0
+      ? parsedUserId
+      : null;
+  } catch (error) {
+    console.warn("Unable to resolve authenticated user for comments GET.");
+    console.warn(error);
+    return null;
+  }
+}
+
+async function getReactionSummaryForComments(commentIds) {
+  if (!Array.isArray(commentIds) || commentIds.length === 0) {
+    return new Map();
+  }
+
+  const placeholders = commentIds.map(() => "?").join(", ");
+
+  const rows = await executeQuery(
+    `
+      SELECT comment_id, reaction_type, COUNT(*) AS count
+      FROM comment_reactions
+      WHERE comment_id IN (${placeholders})
+      GROUP BY comment_id, reaction_type;
+    `,
+    commentIds,
+  );
+
+  const reactionSummary = new Map();
+
+  for (const row of rows ?? []) {
+    const commentId = Number(row.comment_id);
+    const reactionType = String(row.reaction_type || "").toLowerCase();
+    const count = Number(row.count);
+
+    if (
+      !Number.isInteger(commentId) ||
+      commentId <= 0 ||
+      !REACTION_TYPES.has(reactionType) ||
+      !Number.isFinite(count) ||
+      count <= 0
+    ) {
+      continue;
+    }
+
+    const existing = reactionSummary.get(commentId) ?? {};
+    existing[reactionType] = Math.floor(count);
+    reactionSummary.set(commentId, existing);
+  }
+
+  return reactionSummary;
+}
+
+async function getUserReactionByComment(commentIds, userId) {
+  if (
+    !Array.isArray(commentIds) ||
+    commentIds.length === 0 ||
+    !Number.isInteger(userId) ||
+    userId <= 0
+  ) {
+    return new Map();
+  }
+
+  const placeholders = commentIds.map(() => "?").join(", ");
+  const rows = await executeQuery(
+    `
+      SELECT comment_id, reaction_type
+      FROM comment_reactions
+      WHERE user_id = ?
+        AND comment_id IN (${placeholders});
+    `,
+    [userId, ...commentIds],
+  );
+
+  const userReactionByComment = new Map();
+
+  for (const row of rows ?? []) {
+    const commentId = Number(row.comment_id);
+    const reactionType = String(row.reaction_type || "").toLowerCase();
+
+    if (
+      Number.isInteger(commentId) &&
+      commentId > 0 &&
+      REACTION_TYPES.has(reactionType)
+    ) {
+      userReactionByComment.set(commentId, reactionType);
+    }
+  }
+
+  return userReactionByComment;
+}
 
 export default async function handleComments(req, res) {
   const { shop_id } = req.query;
@@ -51,8 +188,7 @@ async function getCommentsForShop(req, res, shop_id) {
 
   try {
     const result = await executeQuery(query, [parsedShopId]);
-
-    const comments =
+    const commentsBase =
       result?.map((row) => ({
         id: Number(row.id),
         shop_id: Number(row.shop_id),
@@ -64,6 +200,40 @@ async function getCommentsForShop(req, res, shop_id) {
         user_avatar: row.user_avatar || null,
         user_email: row.user_email || null,
       })) ?? [];
+
+    if (commentsBase.length === 0) {
+      res.status(200).json([]);
+      return;
+    }
+
+    const commentIds = commentsBase.map((comment) => comment.id);
+    const authenticatedUserId = await resolveAuthenticatedUserId(req);
+
+    let reactionSummaryByComment = new Map();
+    let userReactionByComment = new Map();
+
+    try {
+      reactionSummaryByComment =
+        await getReactionSummaryForComments(commentIds);
+      userReactionByComment = await getUserReactionByComment(
+        commentIds,
+        authenticatedUserId,
+      );
+    } catch (reactionError) {
+      if (isMissingCommentReactionsTableError(reactionError)) {
+        console.warn(
+          "comment_reactions table missing. Run migration 006_comment_reactions.sql.",
+        );
+      } else {
+        throw reactionError;
+      }
+    }
+
+    const comments = commentsBase.map((comment) => ({
+      ...comment,
+      reaction_counts: reactionSummaryByComment.get(comment.id) ?? {},
+      user_reaction: userReactionByComment.get(comment.id) ?? null,
+    }));
 
     res.status(200).json(comments);
   } catch (err) {
@@ -82,12 +252,16 @@ async function updateComment(req, res, comment_id) {
   }
 
   const { user_id, body } = req.body ?? {};
-  const parsedUserId = parseInt(user_id, 10);
+  const bodyUserId = parseInt(user_id, 10);
+  const authenticatedUserId = await resolveAuthenticatedUserId(req);
+  const parsedUserId =
+    authenticatedUserId ??
+    (Number.isNaN(bodyUserId) ? null : Number(bodyUserId));
   const trimmedBody =
     typeof body === "string" ? body.trim().slice(0, 5000) : "";
 
-  if (Number.isNaN(parsedUserId) || trimmedBody.length === 0) {
-    res.status(400).json({ message: "user_id and body are required" });
+  if (!Number.isInteger(parsedUserId) || trimmedBody.length === 0) {
+    res.status(400).json({ message: "user_id/auth and body are required" });
     return;
   }
 
@@ -166,10 +340,14 @@ async function deleteComment(req, res, comment_id) {
   }
 
   const { user_id } = req.body ?? {};
-  const parsedUserId = parseInt(user_id, 10);
+  const bodyUserId = parseInt(user_id, 10);
+  const authenticatedUserId = await resolveAuthenticatedUserId(req);
+  const parsedUserId =
+    authenticatedUserId ??
+    (Number.isNaN(bodyUserId) ? null : Number(bodyUserId));
 
-  if (Number.isNaN(parsedUserId)) {
-    res.status(400).json({ message: "user_id is required" });
+  if (!Number.isInteger(parsedUserId)) {
+    res.status(400).json({ message: "user_id/auth is required" });
     return;
   }
 

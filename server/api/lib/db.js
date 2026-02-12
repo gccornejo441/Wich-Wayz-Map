@@ -119,6 +119,36 @@ const initSchema = async () => {
       args: [],
     });
 
+    // Create comment_reactions table
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS comment_reactions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          comment_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          reaction_type TEXT NOT NULL CHECK (
+            reaction_type IN ('like', 'love', 'care', 'haha', 'wow', 'angry', 'sad')
+          ),
+          date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          date_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (comment_id, user_id),
+          FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_comment_reactions_comment_type ON comment_reactions(comment_id, reaction_type)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_comment_reactions_user ON comment_reactions(user_id, date_created DESC)",
+      args: [],
+    });
+
     // Create collections table
     await dbClient.execute({
       sql: `

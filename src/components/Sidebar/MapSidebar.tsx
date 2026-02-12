@@ -32,8 +32,14 @@ import {
   createComment,
   updateComment,
   deleteComment,
+  setCommentReaction,
 } from "@services/commentService";
-import { Comment } from "@models/Comment";
+import {
+  REACTION_TYPES,
+  type Comment,
+  type ReactionCounts,
+  type ReactionType,
+} from "@models/Comment";
 import { useModal } from "@/context/modalContext";
 import { ShareLinkModal } from "@/components/Modal/ShareLinkModal";
 import { buildCityStateZip, buildFullAddressForMaps } from "@utils/address";
@@ -91,6 +97,51 @@ const makePreview = (text: string, maxChars = 220) => {
   };
 };
 
+const REACTION_META: Record<ReactionType, { label: string; emoji: string }> = {
+  like: { label: "Like", emoji: "\uD83D\uDC4D" },
+  love: { label: "Love", emoji: "\u2764\uFE0F" },
+  care: { label: "Care", emoji: "\uD83E\uDD70" },
+  haha: { label: "Haha", emoji: "\uD83D\uDE06" },
+  wow: { label: "Wow", emoji: "\uD83D\uDE2E" },
+  angry: { label: "Angry", emoji: "\uD83D\uDE21" },
+  sad: { label: "Sad", emoji: "\uD83D\uDE22" },
+};
+
+const getReactionCount = (
+  counts: ReactionCounts | undefined,
+  reactionType: ReactionType,
+) => Math.max(0, Number(counts?.[reactionType] ?? 0));
+
+const buildReactionRows = (counts: ReactionCounts | undefined) => {
+  const rows = REACTION_TYPES.map((reactionType) => ({
+    type: reactionType,
+    count: getReactionCount(counts, reactionType),
+  }))
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
+
+  const total = rows.reduce((acc, row) => acc + row.count, 0);
+  return { rows, total };
+};
+
+const applyReactionOptimistic = (
+  comment: Comment,
+  next: ReactionType | null,
+): Comment => {
+  const previous = comment.userReaction ?? null;
+  const counts: ReactionCounts = { ...(comment.reactionCounts ?? {}) };
+
+  if (previous) {
+    counts[previous] = Math.max(0, getReactionCount(counts, previous) - 1);
+  }
+
+  if (next) {
+    counts[next] = getReactionCount(counts, next) + 1;
+  }
+
+  return { ...comment, reactionCounts: counts, userReaction: next };
+};
+
 const MapSidebar = () => {
   const { selectedShop, sidebarOpen, closeSidebar } = useShopSidebar();
   const { addToast } = useToast();
@@ -133,6 +184,12 @@ const MapSidebar = () => {
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(
     null,
   );
+  const [openReactForCommentId, setOpenReactForCommentId] = useState<
+    number | null
+  >(null);
+  const [openMoreForCommentId, setOpenMoreForCommentId] = useState<
+    number | null
+  >(null);
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -145,6 +202,7 @@ const MapSidebar = () => {
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const reactionsPopoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -169,6 +227,27 @@ const MapSidebar = () => {
         document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showActionsMenu]);
+
+  useEffect(() => {
+    if (openReactForCommentId === null && openMoreForCommentId === null) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target;
+      if (
+        reactionsPopoverRef.current &&
+        target instanceof Node &&
+        !reactionsPopoverRef.current.contains(target)
+      ) {
+        setOpenReactForCommentId(null);
+        setOpenMoreForCommentId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openReactForCommentId, openMoreForCommentId]);
 
   useEffect(() => {
     if (!selectedShop?.shopId) return;
@@ -199,6 +278,11 @@ const MapSidebar = () => {
 
     loadComments();
   }, [selectedShop?.shopId, addToast]);
+
+  useEffect(() => {
+    setOpenReactForCommentId(null);
+    setOpenMoreForCommentId(null);
+  }, [selectedShop?.shopId]);
 
   // Derive vote state from context for the selected shop
   const shopVote =
@@ -290,7 +374,19 @@ const MapSidebar = () => {
     try {
       const updated = await updateComment(commentId, trimmed);
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? updated : c)),
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...updated,
+                reactionCounts:
+                  updated.reactionCounts ?? comment.reactionCounts,
+                userReaction:
+                  updated.userReaction !== undefined
+                    ? updated.userReaction
+                    : comment.userReaction,
+              }
+            : comment,
+        ),
       );
       setEditingCommentId(null);
       setEditingCommentBody("");
@@ -321,6 +417,56 @@ const MapSidebar = () => {
       addToast("Could not delete comment.", "error");
     } finally {
       setDeletingCommentId(null);
+    }
+  };
+
+  const handleSetCommentReaction = async (
+    commentId: number,
+    next: ReactionType | null,
+  ) => {
+    if (!isMember) {
+      openSignupModal();
+      return;
+    }
+
+    setOpenReactForCommentId(null);
+    setOpenMoreForCommentId(null);
+
+    setComments((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId
+          ? applyReactionOptimistic(comment, next)
+          : comment,
+      ),
+    );
+
+    try {
+      const updated = await setCommentReaction(commentId, next);
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                reactionCounts: updated.reactionCounts,
+                userReaction: updated.userReaction,
+              }
+            : comment,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to set comment reaction:", error);
+      addToast("Could not react to comment.", "error");
+      if (selectedShop?.shopId) {
+        try {
+          const shopComments = await getCommentsForShop(selectedShop.shopId);
+          setComments(shopComments);
+        } catch (refreshError) {
+          console.error(
+            "Failed to refresh comments after reaction:",
+            refreshError,
+          );
+        }
+      }
     }
   };
 
@@ -898,7 +1044,7 @@ const MapSidebar = () => {
                     </span>
                   </div>
 
-                  <div className="bg-surface-muted dark:bg-surface-dark p-3 rounded-lg space-y-3 border border-surface-dark/10 dark:border-surface-muted/20">
+                  <div className="bg-surface-muted dark:bg-surface-dark p-3 rounded-lg space-y-3 border border-surface-dark/10 dark:border-surface-muted/20 overflow-visible">
                     {commentsLoading ? (
                       <div className="space-y-3">
                         <div className="flex items-center justify-center text-primary">
@@ -926,7 +1072,7 @@ const MapSidebar = () => {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        <div className="space-y-3">
                           {comments.length === 0 ? (
                             <p className="text-xs text-text-muted dark:text-text-inverted/70 flex items-center gap-1.5 py-1">
                               <FiAlertCircle
@@ -960,6 +1106,16 @@ const MapSidebar = () => {
                               const isEditing = editingCommentId === comment.id;
                               const isDeleting =
                                 deletingCommentId === comment.id;
+                              const userReaction = comment.userReaction ?? null;
+                              const {
+                                rows: reactionRows,
+                                total: reactionTotal,
+                              } = buildReactionRows(comment.reactionCounts);
+                              const topReactions = reactionRows.slice(0, 3);
+                              const remainingReactions = reactionRows.slice(3);
+                              const hasReactionPopoverOpen =
+                                openReactForCommentId === comment.id ||
+                                openMoreForCommentId === comment.id;
 
                               return (
                                 <div
@@ -1110,6 +1266,193 @@ const MapSidebar = () => {
                                           </div>
                                         )}
                                       </div>
+
+                                      {!isEditing && (
+                                        <div className="mt-3 flex items-center justify-between gap-3">
+                                          <div className="flex items-center gap-2">
+                                            {reactionTotal > 0 && (
+                                              <div className="flex items-center gap-1">
+                                                {topReactions.map(
+                                                  (reaction) => (
+                                                    <button
+                                                      key={reaction.type}
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setOpenMoreForCommentId(
+                                                          comment.id,
+                                                        );
+                                                        setOpenReactForCommentId(
+                                                          null,
+                                                        );
+                                                      }}
+                                                      className="inline-flex items-center gap-1 rounded-full bg-surface-muted/60 dark:bg-surface-dark/60 px-2 py-1 text-xs text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-surface-dark"
+                                                      aria-label={`${REACTION_META[reaction.type].label}: ${reaction.count}`}
+                                                      title={`${REACTION_META[reaction.type].label}: ${reaction.count}`}
+                                                    >
+                                                      <span>
+                                                        {
+                                                          REACTION_META[
+                                                            reaction.type
+                                                          ].emoji
+                                                        }
+                                                      </span>
+                                                      <span className="font-semibold">
+                                                        {reaction.count}
+                                                      </span>
+                                                    </button>
+                                                  ),
+                                                )}
+
+                                                {remainingReactions.length >
+                                                  0 && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setOpenMoreForCommentId(
+                                                        comment.id,
+                                                      );
+                                                      setOpenReactForCommentId(
+                                                        null,
+                                                      );
+                                                    }}
+                                                    className="inline-flex items-center rounded-full bg-surface-muted/60 dark:bg-surface-dark/60 px-2 py-1 text-xs text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-surface-dark"
+                                                  >
+                                                    More
+                                                  </button>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          <div
+                                            className="relative"
+                                            ref={
+                                              hasReactionPopoverOpen
+                                                ? reactionsPopoverRef
+                                                : null
+                                            }
+                                          >
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setOpenReactForCommentId(
+                                                  (previous) =>
+                                                    previous === comment.id
+                                                      ? null
+                                                      : comment.id,
+                                                );
+                                                setOpenMoreForCommentId(null);
+                                              }}
+                                              className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80"
+                                            >
+                                              <span>
+                                                {userReaction
+                                                  ? REACTION_META[userReaction]
+                                                      .emoji
+                                                  : "\uD83D\uDE42"}
+                                              </span>
+                                              <span>
+                                                {userReaction
+                                                  ? REACTION_META[userReaction]
+                                                      .label
+                                                  : "React"}
+                                              </span>
+                                            </button>
+
+                                            {openReactForCommentId ===
+                                              comment.id && (
+                                              <div className="absolute right-0 bottom-full mb-2 z-[200] rounded-xl border border-surface-dark/10 dark:border-surface-muted/20 bg-surface-light dark:bg-surface-darker shadow-lg p-2">
+                                                <div className="flex flex-col items-center gap-1">
+                                                  {REACTION_TYPES.map(
+                                                    (reactionType) => {
+                                                      const isActive =
+                                                        userReaction ===
+                                                        reactionType;
+                                                      return (
+                                                        <button
+                                                          key={reactionType}
+                                                          type="button"
+                                                          onClick={() => {
+                                                            const nextReaction =
+                                                              isActive
+                                                                ? null
+                                                                : reactionType;
+                                                            setOpenReactForCommentId(
+                                                              null,
+                                                            );
+                                                            handleSetCommentReaction(
+                                                              comment.id,
+                                                              nextReaction,
+                                                            );
+                                                          }}
+                                                          className={`h-9 w-9 rounded-lg text-lg flex items-center justify-center hover:bg-surface-muted dark:hover:bg-surface-dark ${
+                                                            isActive
+                                                              ? "bg-surface-muted dark:bg-surface-dark"
+                                                              : ""
+                                                          }`}
+                                                          aria-label={
+                                                            REACTION_META[
+                                                              reactionType
+                                                            ].label
+                                                          }
+                                                          title={
+                                                            REACTION_META[
+                                                              reactionType
+                                                            ].label
+                                                          }
+                                                        >
+                                                          {
+                                                            REACTION_META[
+                                                              reactionType
+                                                            ].emoji
+                                                          }
+                                                        </button>
+                                                      );
+                                                    },
+                                                  )}
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            {openMoreForCommentId ===
+                                              comment.id &&
+                                              remainingReactions.length > 0 && (
+                                                <div className="absolute right-0 bottom-full mb-2 z-[200] w-40 rounded-xl border border-surface-dark/10 dark:border-surface-muted/20 bg-surface-light dark:bg-surface-darker shadow-lg p-2">
+                                                  <div className="space-y-1">
+                                                    {remainingReactions.map(
+                                                      (reaction) => (
+                                                        <div
+                                                          key={reaction.type}
+                                                          className="flex items-center justify-between rounded-lg px-2 py-1 text-xs text-text-base dark:text-text-inverted"
+                                                        >
+                                                          <span className="flex items-center gap-2">
+                                                            <span>
+                                                              {
+                                                                REACTION_META[
+                                                                  reaction.type
+                                                                ].emoji
+                                                              }
+                                                            </span>
+                                                            <span>
+                                                              {
+                                                                REACTION_META[
+                                                                  reaction.type
+                                                                ].label
+                                                              }
+                                                            </span>
+                                                          </span>
+                                                          <span className="font-semibold">
+                                                            {reaction.count}
+                                                          </span>
+                                                        </div>
+                                                      ),
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
