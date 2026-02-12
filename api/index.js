@@ -59,11 +59,16 @@ async function buildRouteMap() {
 
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
-      const routePath = prefix + "/" + entry.name;
 
       if (entry.isDirectory()) {
-        await scan(fullPath, routePath);
+        const segment =
+          entry.name.startsWith("[") && entry.name.endsWith("]")
+            ? `:${entry.name.slice(1, -1)}`
+            : entry.name;
+        const nextPrefix = prefix + "/" + segment;
+        await scan(fullPath, nextPrefix);
       } else if (entry.name.endsWith(".js") && entry.name !== "db.js") {
+        const routePath = prefix + "/" + entry.name;
         if (routePath.includes("/lib/")) continue;
 
         const fileName = entry.name.replace(/\.js$/, "");
