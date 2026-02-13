@@ -10,10 +10,12 @@ import { ShopSidebarProvider } from "./context/ShopSidebarContext";
 import { SavedProvider } from "./context/savedContext";
 import { OverlayProvider } from "./context/overlayContext";
 import { MetadataErrorBanner } from "./components/Utilites/MetadataErrorBanner";
+import { UpdatePrompt } from "./components/Utilites/UpdatePrompt";
 
 function App() {
   return (
     <Router>
+      <UpdatePrompt />
       <OverlayProvider>
         <MapProvider>
           <ToastProvider>
