@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.4.0...wich-wayz-v1.4.1) (2026-02-12)
+
+
+### Bug Fixes
+
+* correct release versioning ([#40](https://github.com/gccornejo441/Wich-Wayz-Map/issues/40)) ([c7d9eaf](https://github.com/gccornejo441/Wich-Wayz-Map/commit/c7d9eaf2d7c1f8b7a7ecae44b35bf0bcdec81125))
+
 ## [1.4.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.3.0...wich-wayz-v1.4.0) (2026-02-08)
 
 
