@@ -95,7 +95,7 @@ export const storeUser = async (userDetails: {
   firebaseUid: string;
   email: string;
   hashedPassword: string;
-  username: string;
+  username?: string;
   membershipStatus: string;
   firstName: string | null;
   lastName: string | null;

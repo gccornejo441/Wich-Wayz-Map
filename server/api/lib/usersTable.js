@@ -14,6 +14,8 @@ export const getUsersTableCapabilities = async (turso) => {
 
         return {
           hasAuthProvider: columns.has("auth_provider"),
+          hasDeletedAt: columns.has("deleted_at"),
+          hasUsernameFinalizedAt: columns.has("username_finalized_at"),
           hashedPasswordRequired:
             Number(columns.get("hashed_password")?.notnull ?? 0) === 1,
         };

@@ -1,6 +1,7 @@
 import { withAuth } from "../lib/withAuth.js";
 import { getTursoClient } from "../lib/turso.js";
 import { getUsersTableCapabilities } from "../lib/usersTable.js";
+import { reserveUniqueGeneratedUsername } from "../lib/usernameReservation.js";
 
 const GOOGLE_SIGN_IN_PROVIDER = "google.com";
 
@@ -9,6 +10,7 @@ const toSafeUserMetadata = (user) => ({
   firebaseUid: user.firebase_uid,
   email: user.email,
   username: user.username,
+  usernameFinalizedAt: user.username_finalized_at ?? null,
   verified: Boolean(user.verified),
   firstName: user.first_name,
   lastName: user.last_name,
@@ -20,6 +22,90 @@ const toSafeUserMetadata = (user) => ({
   dateCreated: user.date_created,
   lastLogin: user.last_login,
 });
+
+const isDeletedUser = (user, hasDeletedAt) => {
+  const hasDeletedTimestamp =
+    hasDeletedAt &&
+    user.deleted_at !== null &&
+    user.deleted_at !== undefined &&
+    String(user.deleted_at).trim() !== "";
+  return user.account_status === "deleted" || hasDeletedTimestamp;
+};
+
+const getActiveUserByFirebaseUid = async (turso, uid, hasDeletedAt) => {
+  const deletedFilter = hasDeletedAt ? " AND deleted_at IS NULL" : "";
+  return turso.execute({
+    sql: `SELECT * FROM users WHERE firebase_uid = ?${deletedFilter} LIMIT 1`,
+    args: [uid],
+  });
+};
+
+const createFirebaseUser = async ({
+  turso,
+  usersTable,
+  uid,
+  email,
+  verified,
+  authProvider,
+}) => {
+  const insertColumns = [
+    "firebase_uid",
+    "email",
+    "username",
+    "role",
+    "verified",
+    "membership_status",
+    "account_status",
+  ];
+
+  if (usersTable.hasAuthProvider) {
+    insertColumns.push("auth_provider");
+  }
+
+  if (usersTable.hashedPasswordRequired) {
+    insertColumns.push("hashed_password");
+  }
+
+  insertColumns.push("date_created", "date_modified", "last_login");
+
+  await reserveUniqueGeneratedUsername(
+    async (username) => {
+      const insertArgs = [
+        uid,
+        email,
+        username,
+        "member",
+        verified,
+        "unverified",
+        "active",
+      ];
+
+      if (usersTable.hasAuthProvider) {
+        insertArgs.push(authProvider);
+      }
+
+      if (usersTable.hashedPasswordRequired) {
+        insertArgs.push(`firebase-auth-${uid}-${Date.now()}`);
+      }
+
+      const placeholders = insertColumns
+        .map((column) =>
+          column === "date_created" ||
+          column === "date_modified" ||
+          column === "last_login"
+            ? "CURRENT_TIMESTAMP"
+            : "?",
+        )
+        .join(", ");
+
+      await turso.execute({
+        sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
+        args: insertArgs,
+      });
+    },
+    { maxAttempts: 10, fallbackAttempts: 5 },
+  );
+};
 
 async function handler(req, res) {
   if (req.method !== "GET") {
@@ -57,13 +143,24 @@ async function handler(req, res) {
     const usersTable = await getUsersTableCapabilities(turso);
 
     let result = await turso.execute({
-      sql: "SELECT * FROM users WHERE firebase_uid = ?",
+      sql: "SELECT * FROM users WHERE firebase_uid = ? LIMIT 1",
       args: [uid],
     });
 
+    if (
+      result.rows[0] &&
+      isDeletedUser(result.rows[0], usersTable.hasDeletedAt)
+    ) {
+      return res.status(410).json({ error: "Account deleted" });
+    }
+
     if (result.rows.length === 0) {
+      const emailDeletedFilter = usersTable.hasDeletedAt
+        ? " AND deleted_at IS NULL"
+        : "";
+
       const existingUserByEmail = await turso.execute({
-        sql: "SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
+        sql: `SELECT * FROM users WHERE LOWER(email) = LOWER(?)${emailDeletedFilter} LIMIT 1`,
         args: [email],
       });
 
@@ -88,14 +185,18 @@ async function handler(req, res) {
 
           sql += `, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
                   WHERE LOWER(email) = LOWER(?) AND (firebase_uid IS NULL OR TRIM(firebase_uid) = '')`;
+          if (usersTable.hasDeletedAt) {
+            sql += " AND deleted_at IS NULL";
+          }
           args.push(email);
 
           await turso.execute({ sql, args });
 
-          result = await turso.execute({
-            sql: "SELECT * FROM users WHERE firebase_uid = ?",
-            args: [uid],
-          });
+          result = await getActiveUserByFirebaseUid(
+            turso,
+            uid,
+            usersTable.hasDeletedAt,
+          );
         } else if (existingUser.firebase_uid !== uid) {
           console.warn(
             `Updating Firebase UID for ${email} from ${existingUser.firebase_uid} to ${uid}`,
@@ -111,93 +212,36 @@ async function handler(req, res) {
 
           sql += `, last_login = CURRENT_TIMESTAMP, date_modified = CURRENT_TIMESTAMP
                   WHERE LOWER(email) = LOWER(?)`;
+          if (usersTable.hasDeletedAt) {
+            sql += " AND deleted_at IS NULL";
+          }
           args.push(email);
 
           await turso.execute({ sql, args });
 
-          result = await turso.execute({
-            sql: "SELECT * FROM users WHERE firebase_uid = ?",
-            args: [uid],
-          });
+          result = await getActiveUserByFirebaseUid(
+            turso,
+            uid,
+            usersTable.hasDeletedAt,
+          );
         }
       } else {
         console.warn(`Creating new Firebase user for email: ${email}`);
 
-        const baseUsername = email.split("@")[0];
-        let username = baseUsername;
-        let attempt = 0;
-
-        while (attempt < 10) {
-          try {
-            const insertColumns = [
-              "firebase_uid",
-              "email",
-              "username",
-              "role",
-              "verified",
-              "membership_status",
-              "account_status",
-            ];
-            const insertArgs = [
-              uid,
-              email,
-              username,
-              "member",
-              verified,
-              "unverified",
-              "active",
-            ];
-
-            if (usersTable.hasAuthProvider) {
-              insertColumns.push("auth_provider");
-              insertArgs.push(authProvider);
-            }
-
-            if (usersTable.hashedPasswordRequired) {
-              insertColumns.push("hashed_password");
-              insertArgs.push(`firebase-auth-${uid}-${Date.now()}`);
-            }
-
-            insertColumns.push("date_created", "date_modified", "last_login");
-
-            const placeholders = insertColumns
-              .map((col) =>
-                col === "date_created" ||
-                col === "date_modified" ||
-                col === "last_login"
-                  ? "CURRENT_TIMESTAMP"
-                  : "?",
-              )
-              .join(", ");
-
-            await turso.execute({
-              sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
-              args: insertArgs,
-            });
-
-            break;
-          } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-
-            const isUsernameConflict =
-              errorMessage.includes("UNIQUE constraint") &&
-              errorMessage.includes("users.username");
-
-            if (isUsernameConflict && attempt < 9) {
-              attempt += 1;
-              username = `${baseUsername}-${Math.floor(1000 + Math.random() * 9000)}`;
-              continue;
-            }
-
-            throw error;
-          }
-        }
-
-        result = await turso.execute({
-          sql: "SELECT * FROM users WHERE firebase_uid = ?",
-          args: [uid],
+        await createFirebaseUser({
+          turso,
+          usersTable,
+          uid,
+          email,
+          verified,
+          authProvider,
         });
+
+        result = await getActiveUserByFirebaseUid(
+          turso,
+          uid,
+          usersTable.hasDeletedAt,
+        );
       }
     } else {
       const args = [email, verified];
@@ -209,14 +253,18 @@ async function handler(req, res) {
       }
 
       sql += `, last_login = CURRENT_TIMESTAMP WHERE firebase_uid = ?`;
+      if (usersTable.hasDeletedAt) {
+        sql += " AND deleted_at IS NULL";
+      }
       args.push(uid);
 
       await turso.execute({ sql, args });
 
-      result = await turso.execute({
-        sql: "SELECT * FROM users WHERE firebase_uid = ?",
-        args: [uid],
-      });
+      result = await getActiveUserByFirebaseUid(
+        turso,
+        uid,
+        usersTable.hasDeletedAt,
+      );
     }
 
     if (!result.rows[0]) {

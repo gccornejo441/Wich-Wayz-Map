@@ -1,12 +1,14 @@
 import { withRole } from "../lib/withAuth.js";
 import { getTursoClient } from "../lib/turso.js";
 import { getUsersTableCapabilities } from "../lib/usersTable.js";
+import { reserveUniqueGeneratedUsername } from "../lib/usernameReservation.js";
 
 const toSafeUserMetadata = (user) => ({
   id: user.id,
   firebaseUid: user.firebase_uid,
   email: user.email,
   username: user.username,
+  usernameFinalizedAt: user.username_finalized_at ?? null,
   verified: Boolean(user.verified),
   firstName: user.first_name,
   lastName: user.last_name,
@@ -21,10 +23,14 @@ const toSafeUserMetadata = (user) => ({
 
 async function handler(req, res) {
   const turso = await getTursoClient();
+  const usersTable = await getUsersTableCapabilities(turso);
 
   if (req.method === "GET") {
     try {
-      const result = await turso.execute("SELECT * FROM users");
+      const deletedFilter = usersTable.hasDeletedAt
+        ? " WHERE deleted_at IS NULL"
+        : "";
+      const result = await turso.execute(`SELECT * FROM users${deletedFilter}`);
       const safeUsers = result.rows.map(toSafeUserMetadata);
       return res.status(200).json(safeUsers);
     } catch (error) {
@@ -37,7 +43,6 @@ async function handler(req, res) {
     const {
       firebaseUid,
       email,
-      username,
       firstName = null,
       lastName = null,
       role = "member",
@@ -49,15 +54,13 @@ async function handler(req, res) {
 
     const verified = 0;
 
-    if (!firebaseUid || !email || !username) {
+    if (!firebaseUid || !email) {
       return res.status(400).json({
-        message: "Missing required fields: firebaseUid, email, username",
+        message: "Missing required fields: firebaseUid, email",
       });
     }
 
     try {
-      const usersTable = await getUsersTableCapabilities(turso);
-
       const insertColumns = [
         "firebase_uid",
         "email",
@@ -74,7 +77,7 @@ async function handler(req, res) {
       const insertArgs = [
         firebaseUid,
         email,
-        username,
+        null,
         firstName,
         lastName,
         role,
@@ -96,13 +99,21 @@ async function handler(req, res) {
 
       const placeholders = insertColumns.map(() => "?").join(", ");
 
-      await turso.execute({
-        sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
-        args: insertArgs,
+      await reserveUniqueGeneratedUsername(async (username) => {
+        const args = [...insertArgs];
+        args[2] = username;
+
+        await turso.execute({
+          sql: `INSERT INTO users (${insertColumns.join(", ")}) VALUES (${placeholders})`,
+          args,
+        });
       });
 
+      const deletedFilter = usersTable.hasDeletedAt
+        ? " AND deleted_at IS NULL"
+        : "";
       const result = await turso.execute({
-        sql: "SELECT * FROM users WHERE firebase_uid = ? LIMIT 1",
+        sql: `SELECT * FROM users WHERE firebase_uid = ?${deletedFilter} LIMIT 1`,
         args: [firebaseUid],
       });
 

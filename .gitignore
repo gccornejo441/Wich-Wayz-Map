@@ -72,6 +72,8 @@ coverage
 .continuerules
 .crush.json
 data/*
+migrations/*
+!migrations/009_username_finalization.sql
 data/wich-wayz-map.db
 data/wich-wayz-map.db-shm
 data/wich-wayz-map.db-wal

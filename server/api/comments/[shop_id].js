@@ -41,7 +41,7 @@ async function resolveAuthenticatedUserId(req) {
     if (!firebaseUid) return null;
 
     const result = await executeQuery(
-      `SELECT id FROM users WHERE firebase_uid = ? LIMIT 1`,
+      `SELECT id FROM users WHERE firebase_uid = ? AND deleted_at IS NULL LIMIT 1`,
       [firebaseUid],
     );
     const parsedUserId = Number(result?.[0]?.id);
