@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.5.0...wich-wayz-v1.6.0) (2026-02-14)
+
+
+### Features
+
+* username finalization ([#45](https://github.com/gccornejo441/Wich-Wayz-Map/issues/45)) ([b58cbed](https://github.com/gccornejo441/Wich-Wayz-Map/commit/b58cbed6985d25e2bdbf68425f43b66c9bbde20c))
+
 ## [1.5.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.4.1...wich-wayz-v1.5.0) (2026-02-13)
 
 
