@@ -16,8 +16,8 @@ export const checkCategoryExistsInDatabase = async (
 export const addCategoryToDatabase = async (
   categoryName: string,
   description: string,
-): Promise<void> => {
-  await apiRequest("/categories", {
+): Promise<Category> => {
+  return await apiRequest<Category>("/categories", {
     method: "POST",
     body: JSON.stringify({ categoryName, description }),
   });
@@ -58,7 +58,7 @@ export const synchronizeLocalStorageWithDatabase = async (): Promise<void> => {
 export const addCategoryIfNotExists = async (
   categoryName: string,
   description: string,
-): Promise<void> => {
+): Promise<Category> => {
   await synchronizeLocalStorageWithDatabase();
 
   const categoryExistsInDatabase =
@@ -67,7 +67,7 @@ export const addCategoryIfNotExists = async (
     throw new Error("Category already exists in the database");
   }
 
-  await addCategoryToDatabase(categoryName, description);
+  const newCategory = await addCategoryToDatabase(categoryName, description);
 
   const categories = readCategoriesFromLocalStorage();
   const categoryExistsInLocalStorage = categories.some(
@@ -75,9 +75,11 @@ export const addCategoryIfNotExists = async (
   );
 
   if (!categoryExistsInLocalStorage) {
-    categories.push({ category_name: categoryName, description });
+    categories.push(newCategory);
     writeCategoriesToLocalStorage(categories);
   }
+
+  return newCategory;
 };
 
 /**
