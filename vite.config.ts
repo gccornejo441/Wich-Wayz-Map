@@ -13,10 +13,10 @@ export default defineConfig({
     svgr(),
     VitePWA({
       strategies: "generateSW",
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: "auto",
       filename: "sw.js",
-      manifest: false,
+      manifestFilename: "site.webmanifest",
       includeAssets: [
         "favicon.ico",
         "favicon.svg",
@@ -32,42 +32,17 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.mapbox\.com\/.*/i,
-            handler: "CacheFirst",
+            urlPattern: /^\/api\//,
+            handler: "NetworkFirst",
             options: {
-              cacheName: "mapbox-cache",
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 8,
               expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
+                maxEntries: 100,
+                maxAgeSeconds: 60,
               },
               cacheableResponse: {
                 statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/events\.mapbox\.com\/.*/i,
-            handler: "NetworkOnly",
-          },
-          {
-            urlPattern: /\/api\/(shops|locations|categories).*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5,
-              },
-            },
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "image-cache",
-              expiration: {
-                maxEntries: 150,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
               },
             },
           },
@@ -75,8 +50,8 @@ export default defineConfig({
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/],
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
+        skipWaiting: false,
+        clientsClaim: false,
       },
       devOptions: {
         enabled: false,
