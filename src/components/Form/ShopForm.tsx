@@ -877,17 +877,11 @@ const ShopForm = ({
           onClose={() => setShowCategoryModal(false)}
           onSubmit={async (name, desc) => {
             try {
-              await addCategoryIfNotExists(name, desc);
+              const newCategory = await addCategoryIfNotExists(name, desc);
               await refreshCategories();
 
-              const updated = await GetCategories();
-              const newCategory = updated.find(
-                (cat) => cat.category_name === name,
-              );
-              const newCategoryId = newCategory?.id;
-
-              if (typeof newCategoryId === "number") {
-                setSelectedCategories((prev) => [...prev, newCategoryId]);
+              if (newCategory?.id && typeof newCategory.id === "number") {
+                setSelectedCategories((prev) => [...prev, newCategory.id!]);
               }
 
               setShowCategoryModal(false);
