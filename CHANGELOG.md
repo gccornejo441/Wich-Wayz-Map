@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.0...wich-wayz-v1.6.1) (2026-02-14)
+
+
+### Bug Fixes
+
+* category null constraint error ([#47](https://github.com/gccornejo441/Wich-Wayz-Map/issues/47)) ([4e4c969](https://github.com/gccornejo441/Wich-Wayz-Map/commit/4e4c9699fd6b22aa9e63553f803295c6f47e2722))
+
 ## [1.6.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.5.0...wich-wayz-v1.6.0) (2026-02-14)
 
 
