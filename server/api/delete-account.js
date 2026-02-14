@@ -1,6 +1,8 @@
 import { db } from "./lib/db.js";
 
 const BATCH_SIZE = 450;
+const buildDeletedEmail = (userId) =>
+  `deleted-user-${userId}-${Date.now()}@deleted.local`;
 
 const ALLOWED = {
   votes: ["user_id", "shop_id"],
@@ -76,7 +78,7 @@ export default async function handler(req, res) {
     await tx.execute({ sql: "PRAGMA foreign_keys = ON", args: [] });
 
     const userResult = await tx.execute({
-      sql: "SELECT id FROM users WHERE id = ? LIMIT 1",
+      sql: "SELECT id FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1",
       args: [userId],
     });
 
@@ -89,24 +91,11 @@ export default async function handler(req, res) {
       return;
     }
 
-    const votesDeleted = await deleteBatch(tx, "votes", "user_id", userId);
-    console.log(`Deleted ${votesDeleted} votes for user ${userId}`);
+    await deleteBatch(tx, "votes", "user_id", userId);
 
-    const commentsDeleted = await deleteBatch(
-      tx,
-      "comments",
-      "user_id",
-      userId,
-    );
-    console.log(`Deleted ${commentsDeleted} comments for user ${userId}`);
+    await deleteBatch(tx, "comments", "user_id", userId);
 
-    const savedDeleted = await deleteBatch(
-      tx,
-      "saved_shops",
-      "user_id",
-      userId,
-    );
-    console.log(`Deleted ${savedDeleted} saved_shops rows for user ${userId}`);
+    await deleteBatch(tx, "saved_shops", "user_id", userId);
 
     await tx.execute({
       sql: `
@@ -116,13 +105,7 @@ export default async function handler(req, res) {
       args: [userId],
     });
 
-    const collectionsDeleted = await deleteBatch(
-      tx,
-      "collections",
-      "user_id",
-      userId,
-    );
-    console.log(`Deleted ${collectionsDeleted} collections for user ${userId}`);
+    await deleteBatch(tx, "collections", "user_id", userId);
 
     const shopsResult = await tx.execute({
       sql: "SELECT id FROM shops WHERE created_by = ?",
@@ -142,12 +125,32 @@ export default async function handler(req, res) {
       await deleteBatch(tx, "collection_shops", "shop_id", shopId);
     }
 
-    const shopsDeleted = await deleteBatch(tx, "shops", "created_by", userId);
-    console.log(`Deleted ${shopsDeleted} shops for user ${userId}`);
+    await deleteBatch(tx, "shops", "created_by", userId);
 
     await tx.execute({
-      sql: "DELETE FROM users WHERE id = ?",
-      args: [userId],
+      sql: `
+        UPDATE users
+        SET
+          email = ?,
+          first_name = NULL,
+          last_name = NULL,
+          avatar = NULL,
+          verification_token = NULL,
+          token_expiry = NULL,
+          reset_token = NULL,
+          verified = 0,
+          hashed_password = ?,
+          membership_status = 'deleted',
+          account_status = 'deleted',
+          deleted_at = CURRENT_TIMESTAMP,
+          date_modified = CURRENT_TIMESTAMP
+        WHERE id = ? AND deleted_at IS NULL
+      `,
+      args: [
+        buildDeletedEmail(userId),
+        `deleted-account-${userId}-${Date.now()}`,
+        userId,
+      ],
     });
 
     await tx.commit();

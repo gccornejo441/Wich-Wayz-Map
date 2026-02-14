@@ -1,5 +1,6 @@
 import { verifyFirebaseToken } from "./firebaseAdmin.js";
 import { getTursoClient } from "./turso.js";
+import { getUsersTableCapabilities } from "./usersTable.js";
 
 export const withAuth = (handler) => {
   return async (req, res) => {
@@ -30,13 +31,27 @@ export const withAuth = (handler) => {
 export const withDbUser = (handler) => {
   return withAuth(async (req, res) => {
     const turso = await getTursoClient();
+    const usersTable = await getUsersTableCapabilities(turso);
+    const deletedFilter = usersTable.hasDeletedAt
+      ? " AND deleted_at IS NULL"
+      : "";
 
     const result = await turso.execute({
-      sql: "SELECT * FROM users WHERE firebase_uid = ?",
+      sql: `SELECT * FROM users WHERE firebase_uid = ?${deletedFilter}`,
       args: [req.firebaseUser.uid],
     });
 
     if (result.rows.length === 0) {
+      if (usersTable.hasDeletedAt) {
+        const deletedResult = await turso.execute({
+          sql: "SELECT id FROM users WHERE firebase_uid = ? AND deleted_at IS NOT NULL LIMIT 1",
+          args: [req.firebaseUser.uid],
+        });
+        if (deletedResult.rows.length > 0) {
+          return res.status(410).json({ error: "Account deleted" });
+        }
+      }
+
       return res.status(404).json({ error: "User not found" });
     }
 

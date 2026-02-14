@@ -137,7 +137,16 @@ export const updateShopSchema = yup.object().shape({
 export const userProfileSchema = yup.object({
   firstName: yup.string().nullable().max(50, "First name is too long"),
   lastName: yup.string().nullable().max(50, "Last name is too long"),
-  username: yup.string().nullable().max(30, "Username is too long"),
+  username: yup
+    .string()
+    .nullable()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .matches(
+      /^[A-Za-z0-9_-]+$/,
+      "Username may only contain letters, numbers, underscores, or hyphens",
+    ),
   avatar: yup.string().nullable(),
 });
 

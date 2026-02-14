@@ -13,6 +13,8 @@ export interface AccountProps {
   lastName: string;
   setLastName: (value: string) => void;
   username: string;
+  setUsername: (value: string) => void;
+  isUsernameEditable: boolean;
   handleUpdateProfile: Callback;
   onAccountDeleted?: Callback;
   userId: number;
@@ -24,6 +26,8 @@ const Account = ({
   lastName,
   setLastName,
   username,
+  setUsername,
+  isUsernameEditable,
   email,
   handleUpdateProfile,
   onAccountDeleted,
@@ -135,10 +139,26 @@ const Account = ({
               id="username"
               type="text"
               value={username || ""}
-              readOnly
-              className="px-2 py-1 bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-brand-secondary dark:border-gray-600 rounded-lg cursor-not-allowed focus:outline-none"
-              title="Username cannot be changed"
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setUsername(e.target.value)
+              }
+              readOnly={!isUsernameEditable}
+              className={
+                isUsernameEditable
+                  ? "px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                  : "px-2 py-1 bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-brand-secondary dark:border-gray-600 rounded-lg cursor-not-allowed focus:outline-none"
+              }
+              title={
+                isUsernameEditable
+                  ? "Username can be changed once"
+                  : "Username cannot be changed"
+              }
             />
+            <span className="mt-1 text-xs text-text-muted dark:text-text-inverted">
+              {isUsernameEditable
+                ? "You can change this once. Choose carefully."
+                : "Usernames are final once set."}
+            </span>
           </div>
           <div className="flex flex-col relative">
             <label htmlFor="email" className="text-sm">

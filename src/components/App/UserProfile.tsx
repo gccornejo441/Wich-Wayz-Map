@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { reload, getIdToken } from "firebase/auth";
 import Account from "@components/Profile/Account";
@@ -17,9 +17,19 @@ const UserProfile = () => {
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [isRefreshingVerification, setIsRefreshingVerification] =
     useState(false);
+  const originalUsernameRef = useRef<string | null>(null);
+  const originalUserIdRef = useRef<number | null>(null);
 
   const navigate = useNavigate();
   const { isAuthenticated, user, userMetadata, setUserMetadata } = useAuth();
+
+  useEffect(() => {
+    if (!userMetadata) return;
+    if (originalUserIdRef.current !== userMetadata.id) {
+      originalUserIdRef.current = userMetadata.id;
+      originalUsernameRef.current = userMetadata.username ?? null;
+    }
+  }, [userMetadata]);
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -39,29 +49,55 @@ const UserProfile = () => {
     try {
       setValidationErrors([]);
 
+      const isUsernameEditable = !userMetadata.usernameFinalizedAt;
       const validatedData = await userProfileSchema.validate(
         {
           firstName: userMetadata.firstName,
           lastName: userMetadata.lastName,
-          username: userMetadata.username,
+          username: isUsernameEditable ? userMetadata.username : undefined,
           avatar: userMetadata.avatar,
         },
         { abortEarly: false },
       );
 
-      const updates = {
+      const updates: Record<string, unknown> = {
         first_name: validatedData.firstName ?? null,
         last_name: validatedData.lastName ?? null,
-        username: validatedData.username ?? null,
         avatar: validatedData.avatar ?? null,
       };
 
+      const normalizedUsername =
+        typeof validatedData.username === "string"
+          ? validatedData.username.trim()
+          : null;
+      const originalUsername = originalUsernameRef.current ?? "";
+      const isUsernameChangeRequested =
+        isUsernameEditable &&
+        typeof normalizedUsername === "string" &&
+        normalizedUsername.length > 0 &&
+        normalizedUsername.toLowerCase() !== originalUsername.toLowerCase();
+
+      if (isUsernameChangeRequested) {
+        updates.username = normalizedUsername;
+      }
+
       await updateUserProfile(userMetadata.id, updates);
 
-      setUserMetadata({
+      const nextMetadata = {
         ...userMetadata,
-        ...validatedData,
-      });
+        firstName: validatedData.firstName ?? null,
+        lastName: validatedData.lastName ?? null,
+        avatar: validatedData.avatar ?? null,
+      };
+
+      if (isUsernameChangeRequested) {
+        nextMetadata.username = normalizedUsername;
+        nextMetadata.usernameFinalizedAt =
+          userMetadata.usernameFinalizedAt ?? new Date().toISOString();
+        originalUsernameRef.current = normalizedUsername;
+      }
+
+      setUserMetadata(nextMetadata);
 
       addToast("Profile updated successfully.", "success");
     } catch (error) {
@@ -287,6 +323,10 @@ const UserProfile = () => {
                     setUserMetadata({ ...userMetadata, lastName })
                   }
                   username={userMetadata.username || ""}
+                  setUsername={(username) =>
+                    setUserMetadata({ ...userMetadata, username })
+                  }
+                  isUsernameEditable={!userMetadata.usernameFinalizedAt}
                   handleUpdateProfile={handleUpdateProfile}
                   userId={userMetadata.id}
                   onAccountDeleted={handleAccountDeleted}

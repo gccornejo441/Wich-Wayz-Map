@@ -243,6 +243,12 @@ const initSchema = async () => {
     });
 
     await ensureColumn({
+      tableName: "users",
+      columnName: "deleted_at",
+      columnDefinition: "deleted_at TIMESTAMP",
+    });
+
+    await ensureColumn({
       tableName: "shops",
       columnName: "duplicate_of_shop_id",
       columnDefinition:

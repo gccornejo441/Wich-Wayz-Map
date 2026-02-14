@@ -1,4 +1,15 @@
 import { executeQuery } from "../lib/db.js";
+import { sanitizeUsername, validateUsername } from "../lib/username.js";
+
+const hasUsernameFinalizedAt = async () => {
+  const columns = await executeQuery("PRAGMA table_info(users)");
+  return columns.some(
+    (column) => String(column.name) === "username_finalized_at",
+  );
+};
+
+const buildDeletedEmail = (userId) =>
+  `deleted-user-${userId}-${Date.now()}@deleted.local`;
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -11,9 +22,10 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const rows = await executeQuery("SELECT * FROM users WHERE id = ?", [
-        userId,
-      ]);
+      const rows = await executeQuery(
+        "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL",
+        [userId],
+      );
       if (!rows.length) {
         res.status(404).json({ message: "User not found" });
         return;
@@ -39,6 +51,7 @@ export default async function handler(req, res) {
 
     const updates = [];
     const args = [];
+    let requestedUsername = null;
 
     if (role) {
       const validRoles = ["admin", "editor", "member", "viewer"];
@@ -71,8 +84,20 @@ export default async function handler(req, res) {
     }
 
     if (username !== undefined) {
-      updates.push("username = ?");
-      args.push(username);
+      if (typeof username !== "string") {
+        res.status(400).json({ message: "Username must be a string" });
+        return;
+      }
+
+      requestedUsername = username.trim();
+
+      const validation = validateUsername(requestedUsername);
+      if (!validation.ok) {
+        res
+          .status(400)
+          .json({ message: validation.reason || "Invalid username" });
+        return;
+      }
     }
 
     if (avatar !== undefined) {
@@ -80,19 +105,57 @@ export default async function handler(req, res) {
       args.push(avatar);
     }
 
-    if (!updates.length) {
-      res.status(400).json({ message: "No updates provided" });
-      return;
-    }
-
     try {
+      if (requestedUsername !== null && !(await hasUsernameFinalizedAt())) {
+        res.status(409).json({
+          message:
+            "Username updates are unavailable until migrations are applied",
+        });
+        return;
+      }
+
+      const existing = await executeQuery(
+        "SELECT id, username, username_finalized_at FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1",
+        [userId],
+      );
+
+      if (!existing.length) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      if (requestedUsername !== null) {
+        const normalizedUsername = sanitizeUsername(requestedUsername);
+        const currentUsername = String(existing[0].username ?? "");
+        const hasFinalized = Boolean(existing[0].username_finalized_at);
+
+        if (hasFinalized) {
+          res.status(400).json({ message: "Username is already finalized" });
+          return;
+        }
+
+        if (
+          currentUsername.toLowerCase() !== normalizedUsername.toLowerCase()
+        ) {
+          updates.push("username = ?");
+          args.push(normalizedUsername);
+          updates.push("username_finalized_at = CURRENT_TIMESTAMP");
+        }
+      }
+
+      if (!updates.length) {
+        res.status(400).json({ message: "No updates provided" });
+        return;
+      }
+
       await executeQuery(
-        `UPDATE users SET ${updates.join(", ")}, date_modified = CURRENT_TIMESTAMP WHERE id = ?`,
+        `UPDATE users SET ${updates.join(", ")}, date_modified = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL`,
         [...args, userId],
       );
-      const rows = await executeQuery("SELECT * FROM users WHERE id = ?", [
-        userId,
-      ]);
+      const rows = await executeQuery(
+        "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL",
+        [userId],
+      );
       res.status(200).json(rows[0] || null);
     } catch (error) {
       console.error("Failed to update user:", error);
@@ -103,7 +166,41 @@ export default async function handler(req, res) {
 
   if (req.method === "DELETE") {
     try {
-      await executeQuery("DELETE FROM users WHERE id = ?", [userId]);
+      const existing = await executeQuery(
+        "SELECT id FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1",
+        [userId],
+      );
+
+      if (!existing.length) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      await executeQuery(
+        `
+          UPDATE users
+          SET
+            email = ?,
+            first_name = NULL,
+            last_name = NULL,
+            avatar = NULL,
+            verification_token = NULL,
+            token_expiry = NULL,
+            reset_token = NULL,
+            verified = 0,
+            hashed_password = ?,
+            membership_status = 'deleted',
+            account_status = 'deleted',
+            deleted_at = CURRENT_TIMESTAMP,
+            date_modified = CURRENT_TIMESTAMP
+          WHERE id = ? AND deleted_at IS NULL
+        `,
+        [
+          buildDeletedEmail(userId),
+          `deleted-account-${userId}-${Date.now()}`,
+          userId,
+        ],
+      );
       res.status(204).end();
     } catch (error) {
       console.error("Failed to delete user:", error);

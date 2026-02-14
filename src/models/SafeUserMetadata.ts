@@ -14,6 +14,7 @@ export interface SafeUserMetadata {
   firebaseUid: string;
   email: string;
   username: string | null;
+  usernameFinalizedAt?: string | null;
   verified: boolean;
   authProvider: string;
   firstName: string | null;

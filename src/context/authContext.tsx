@@ -37,6 +37,7 @@ export interface UserMetadata {
   email: string;
   hashedPassword?: string; // Backend only - never send to client
   username: string | null;
+  usernameFinalizedAt?: string | null;
   verified: boolean;
   authProvider?: string;
   verificationToken?: string | null; // Backend only - never send to client
@@ -65,6 +66,7 @@ export const toSafeUserMetadata = (
   firebaseUid: metadata.firebaseUid,
   email: metadata.email,
   username: metadata.username,
+  usernameFinalizedAt: metadata.usernameFinalizedAt ?? null,
   verified: metadata.verified,
   authProvider: metadata.authProvider || "password",
   firstName: metadata.firstName,
