@@ -510,15 +510,24 @@ const ShopForm = ({
                   htmlFor="shop_description"
                   className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
                 >
-                  Description
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="shop_description"
                   rows={3}
-                  placeholder="Describe your shop..."
+                  placeholder="Describe your shop... (minimum 20 characters)"
                   {...register("shop_description")}
-                  className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors resize-none border-gray-300 dark:border-gray-600"
+                  className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors resize-none ${
+                    errors.shop_description
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-600"
+                  }`}
                 />
+                {errors.shop_description && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.shop_description.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -526,7 +535,7 @@ const ShopForm = ({
           <div>
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
               <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
-                Categories
+                Categories <span className="text-red-500">*</span>
               </h4>
               {selectedCategories.length > 0 && (
                 <span className="text-xs px-2 py-0.5 bg-brand-primary text-white rounded">
@@ -535,23 +544,30 @@ const ShopForm = ({
               )}
             </div>
             <div className="space-y-3">
-              <Select<CategoryOption, true, GroupBase<CategoryOption>>
-                placeholder="Select categories..."
-                isMulti
-                value={selectedOptions}
-                options={categoryOptions}
-                onChange={(selected: MultiValue<CategoryOption>) => {
-                  setSelectedCategories(selected.map((opt) => opt.value));
-                }}
-                styles={getCustomSelectStyles(isDark)}
-                menuPortalTarget={
-                  typeof window !== "undefined" ? document.body : null
-                }
-                menuPosition="fixed"
-                menuPlacement="auto"
-                isClearable
-                isSearchable
-              />
+              <div>
+                <Select<CategoryOption, true, GroupBase<CategoryOption>>
+                  placeholder="Select categories..."
+                  isMulti
+                  value={selectedOptions}
+                  options={categoryOptions}
+                  onChange={(selected: MultiValue<CategoryOption>) => {
+                    setSelectedCategories(selected.map((opt) => opt.value));
+                  }}
+                  styles={getCustomSelectStyles(isDark)}
+                  menuPortalTarget={
+                    typeof window !== "undefined" ? document.body : null
+                  }
+                  menuPosition="fixed"
+                  menuPlacement="auto"
+                  isClearable
+                  isSearchable
+                />
+                {errors.categoryIds && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.categoryIds.message}
+                  </p>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowCategoryModal(true)}
@@ -696,7 +712,7 @@ const ShopForm = ({
                       htmlFor="city"
                       className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
                     >
-                      City
+                      City <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="city"
@@ -704,8 +720,17 @@ const ShopForm = ({
                       placeholder="City"
                       {...register("city")}
                       readOnly={addressLocked}
-                      className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                      className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors ${
+                        errors.city
+                          ? "border-red-500"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
                     />
+                    {errors.city && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {errors.city.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -714,12 +739,16 @@ const ShopForm = ({
                         htmlFor="state"
                         className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
                       >
-                        State
+                        State <span className="text-red-500">*</span>
                       </label>
                       <select
                         id="state"
                         {...register("state")}
-                        className="w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors border-gray-300 dark:border-gray-600"
+                        className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors ${
+                          errors.state
+                            ? "border-red-500"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
                       >
                         <option value="">Select...</option>
                         {US_STATES.map((s) => (
@@ -728,6 +757,11 @@ const ShopForm = ({
                           </option>
                         ))}
                       </select>
+                      {errors.state && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.state.message}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -735,7 +769,7 @@ const ShopForm = ({
                         htmlFor="postcode"
                         className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
                       >
-                        ZIP
+                        ZIP <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="postcode"

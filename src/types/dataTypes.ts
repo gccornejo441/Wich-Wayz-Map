@@ -22,8 +22,8 @@ export interface LocationData {
   address_first?: string;
   address_second?: string;
   house_number?: string;
-  city?: string;
-  state?: string;
+  city: string;
+  state: string;
   postcode: string;
   country?: string;
   latitude: number;
