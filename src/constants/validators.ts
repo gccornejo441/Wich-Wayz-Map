@@ -66,10 +66,10 @@ export const locationSchema = yup.object().shape({
   address_first: yup.string().optional(),
   address_second: yup.string().optional(),
   house_number: yup.string().optional(),
-  city: yup.string().optional(),
+  city: yup.string().required("City is required"),
   state: yup
     .string()
-    .optional()
+    .required("State is required")
     .transform((value) => normalizeState(value)),
   postcode: yup
     .string()
@@ -100,7 +100,8 @@ export const locationSchema = yup.object().shape({
         .typeError("Each category must be a number")
         .required("Each category must be a valid ID"),
     )
-    .default([]),
+    .min(1, "Please select at least one category")
+    .required("Category selection is required"),
 });
 
 export const userLoginSchema = yup.object().shape({
