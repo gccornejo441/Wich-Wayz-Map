@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.1...wich-wayz-v1.6.2) (2026-02-15)
+
+
+### Bug Fixes
+
+* form validation required fields ([#49](https://github.com/gccornejo441/Wich-Wayz-Map/issues/49)) ([5a1d5d0](https://github.com/gccornejo441/Wich-Wayz-Map/commit/5a1d5d0564f607a888d724324c433897cb0d17f8))
+
 ## [1.6.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.0...wich-wayz-v1.6.1) (2026-02-14)
 
 
