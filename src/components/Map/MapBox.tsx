@@ -206,6 +206,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     hoveredLocationId,
     setCenter: setContextCenter,
     setZoom: setContextZoom,
+    setMapReady,
   } = useMap();
   const { isOpen, close } = useOverlay();
   const location = useLocation();
@@ -372,6 +373,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     const onLoad = () => {
       setMapLoaded(true);
+      setMapReady(true);
 
       ensureShopSourceAndLayers(map, shopGeoJsonRef.current);
 
@@ -492,6 +494,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
 
     return () => {
       setMapLoaded(false);
+      setMapReady(false);
 
       hoverPopupRef.current?.remove();
       hoverPopupRef.current = null;
@@ -520,6 +523,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     isLoggedIn,
     viewerKeyRef,
     setUserPositionInContext,
+    setMapReady,
   ]);
 
   useEffect(() => {
