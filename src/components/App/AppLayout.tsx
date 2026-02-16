@@ -6,6 +6,7 @@ import { useModal } from "../../context/modalContext";
 import UpdateShop from "../Modal/UpdateShop";
 import AuthModal from "../Modal/AuthModal";
 import MapSidebar from "../Sidebar/MapSidebar";
+import { OnboardingModal } from "@/features/onboarding/OnboardingModal";
 import NearbySidebar from "../Sidebar/NearbySidebar";
 import SavedSidebar from "../Sidebar/SavedSidebar";
 import { useOverlay } from "@/context/overlayContext";
@@ -91,6 +92,7 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
 
       {currentModal === "updateShop" && <UpdateShop />}
       <AuthModal />
+      <OnboardingModal />
     </div>
   );
 };

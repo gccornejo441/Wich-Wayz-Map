@@ -49,6 +49,9 @@ type MapContextType = {
 
   hoveredLocationId: number | null;
   setHoveredLocationId: React.Dispatch<React.SetStateAction<number | null>>;
+
+  mapReady: boolean;
+  setMapReady: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -123,6 +126,7 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
   const [hoveredLocationId, setHoveredLocationId] = useState<number | null>(
     null,
   );
+  const [mapReady, setMapReady] = useState<boolean>(false);
 
   const flyToLocation = (lng: number, lat: number, zoomValue: number) => {
     setFlyToTrigger({ lng, lat, zoom: zoomValue, timestamp: Date.now() });
@@ -175,6 +179,8 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
         setPendingCenterCoords,
         hoveredLocationId,
         setHoveredLocationId,
+        mapReady,
+        setMapReady,
       }}
     >
       {children}
