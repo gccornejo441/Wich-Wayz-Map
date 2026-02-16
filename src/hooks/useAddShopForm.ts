@@ -157,6 +157,14 @@ export const useAddShopForm = (
     setIsAddressValid(Boolean(a) && hasValidCoords(lat, lon));
   }, [addressVal, latVal, lonVal]);
 
+  // Sync selectedCategories with the form's categoryIds field for validation
+  useEffect(() => {
+    setValue("categoryIds", selectedCategories, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  }, [selectedCategories, setValue]);
+
   const applyParsedAddressToForm = (parsed: {
     coordinates: { latitude: number; longitude: number };
     components: {
@@ -371,7 +379,6 @@ export const useAddShopForm = (
       return;
     }
 
-    data.categoryIds = selectedCategories;
     data.postcode = normalizeZip(data.postcode);
     data.state = normalizeState(data.state);
 
