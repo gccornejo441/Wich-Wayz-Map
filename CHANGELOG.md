@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.2...wich-wayz-v1.7.0) (2026-02-16)
+
+
+### Features
+
+* onboarding modal ([#51](https://github.com/gccornejo441/Wich-Wayz-Map/issues/51)) ([530b7b1](https://github.com/gccornejo441/Wich-Wayz-Map/commit/530b7b136e062cb260cf6fd360977cd8616066b2))
+
 ## [1.6.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.1...wich-wayz-v1.6.2) (2026-02-15)
 
 
