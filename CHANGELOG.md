@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.0...wich-wayz-v1.7.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* sync category selections with form validation ([#53](https://github.com/gccornejo441/Wich-Wayz-Map/issues/53)) ([7e6e798](https://github.com/gccornejo441/Wich-Wayz-Map/commit/7e6e798c918d4d2768f6e7c12f1b8c0335970abb))
+
 ## [1.7.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.2...wich-wayz-v1.7.0) (2026-02-16)
 
 
