@@ -5,7 +5,7 @@
   "private": true,
   "description": "Find the best sandwich shops near you! Discover your next favorite sandwich with Wich Wayz.",
   "author": "Gabe Cornejo <wich.wayz.map@gmail.com>",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "engines": {
     "node": "20.x"
   },

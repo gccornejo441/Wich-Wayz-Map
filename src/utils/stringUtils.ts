@@ -17,11 +17,21 @@ export function toTitleCase(str: string): string {
       const parts = word.split(/([-''])/g);
 
       return parts
-        .map((part) => {
+        .map((part, index) => {
           if (!part) return part;
 
           // Preserve delimiters
           if (part === "-" || part === "'" || part === "'") return part;
+
+          // Check if this part is after an apostrophe
+          const previousPart = index > 0 ? parts[index - 1] : "";
+          const isAfterApostrophe =
+            previousPart === "'" || previousPart === "'";
+
+          // Keep possessive 's' lowercase (e.g., "Alexander's", "McDonald's")
+          if (isAfterApostrophe && part === "s") {
+            return part.toLowerCase();
+          }
 
           // Capitalize first letter of every word part (handles O'Neal, Mary-Jane correctly)
           return part.charAt(0).toUpperCase() + part.slice(1);
