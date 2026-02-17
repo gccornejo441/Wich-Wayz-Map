@@ -16,6 +16,7 @@ import Register from "./Register";
 import SignIn from "./SignIn";
 import EmailVerification from "./EmailVerification";
 import CommunityGuidelines from "./CommunityGuidelines";
+import About from "./About";
 
 function MainRoutes() {
   return (
@@ -31,6 +32,7 @@ function MainRoutes() {
       <Route element={<AppLayout />}>
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
         <Route path={ROUTES.SHOPS.ADD} element={<AddShop />} />
+        <Route path={ROUTES.ABOUT} element={<About />} />
         <Route path={ROUTES.LEGAL.PRIVACY_POLICY} element={<PrivacyPolicy />} />
         <Route
           path={ROUTES.LEGAL.TERMS_OF_SERVICE}
