@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.1...wich-wayz-v1.8.0) (2026-02-17)
+
+
+### Features
+
+* Remove about features ([#56](https://github.com/gccornejo441/Wich-Wayz-Map/issues/56)) ([90630af](https://github.com/gccornejo441/Wich-Wayz-Map/commit/90630af2d0f0541e6d00dcbd6691009f6722376b))
+
 ## [1.7.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.0...wich-wayz-v1.7.1) (2026-02-16)
 
 
