@@ -284,19 +284,17 @@ const SidebarFooter = () => {
                   role="menu"
                   tabIndex={-1}
                 >
-                  <a
-                    href="https://en.wikipedia.org/wiki/Sandwich"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    to={ROUTES.ABOUT}
                     onClick={closeAllMenus}
                     className={menuItemRow}
                   >
                     <span className={menuItemLeft}>
                       <HiInformationCircle className="w-4 h-4" />
-                      About
+                      About Wich Wayz
                     </span>
                     <span />
-                  </a>
+                  </Link>
 
                   <button
                     type="button"
