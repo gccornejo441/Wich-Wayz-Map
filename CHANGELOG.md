@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.0...wich-wayz-v1.8.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* security dependabot vulnerabilities ([#59](https://github.com/gccornejo441/Wich-Wayz-Map/issues/59)) ([244c145](https://github.com/gccornejo441/Wich-Wayz-Map/commit/244c145ece90d1e88cabc7ccffd0c22318cf8302))
+
 ## [1.8.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.1...wich-wayz-v1.8.0) (2026-02-17)
 
 
