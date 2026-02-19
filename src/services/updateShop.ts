@@ -1,5 +1,6 @@
 import { apiRequest } from "./apiClient";
 import { cacheData } from "./indexedDB";
+import { invalidateSearchIndex } from "./searchIndex";
 import { Shop } from "@/models/Shop";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
@@ -46,6 +47,9 @@ export const updateShop = async (
     const allLocations = allShops.flatMap((shop) => shop.locations || []);
     await cacheData("shops", allShops as Shop[]);
     await cacheData("locations", allLocations);
+
+    // Invalidate the search index so updated shops appear correctly in search
+    invalidateSearchIndex();
 
     return allShops.find((s) => s.id === Number(shopId)) || null;
   } catch (error) {
