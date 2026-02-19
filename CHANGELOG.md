@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.1...wich-wayz-v1.8.2) (2026-02-19)
+
+
+### Bug Fixes
+
+* search index invalidation ([#61](https://github.com/gccornejo441/Wich-Wayz-Map/issues/61)) ([7c82b07](https://github.com/gccornejo441/Wich-Wayz-Map/commit/7c82b0703b7584657e04111e2460ce92421fb194))
+
 ## [1.8.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.0...wich-wayz-v1.8.1) (2026-02-18)
 
 
