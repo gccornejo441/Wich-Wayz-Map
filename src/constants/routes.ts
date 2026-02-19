@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 
 export interface Routes {
   HOME: string;
+  ABOUT: string;
   NOT_FOUND: string;
   SHOPS: {
     ADD: string;
@@ -31,6 +32,7 @@ export interface Routes {
 
 export const ROUTES: Routes = {
   HOME: "/",
+  ABOUT: "/about",
   NOT_FOUND: "*",
   SHOPS: {
     ADD: "/shops/add",
@@ -91,6 +93,7 @@ export const useRouteCheck = (routes: Routes) => {
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
     location.pathname === ROUTES.LEGAL.TERMS_OF_SERVICE ||
     location.pathname === ROUTES.LEGAL.COMMUNITY_GUIDELINES ||
+    location.pathname === ROUTES.ABOUT ||
     location.pathname === ROUTES.ANALYTICS ||
     location.pathname === ROUTES.USER_LEADERBOARD;
 

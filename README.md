@@ -1,5 +1,7 @@
 # Wich‑Wayz‑Map
 
+[![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg)](LICENSE.md)
+
 **Wich‑Wayz‑Map** is a full‑stack web application for discovering, rating and managing sandwich shops. It combines an interactive Mapbox map with a database‑driven backend, allowing users to search for shops, view details, vote on them and (for members) submit new locations. The project is built with **React**, **TypeScript**, **Mapbox GL JS**, **Turso** (hosted SQLite) and **Stripe** for membership payments.
 
 ## Table of contents
@@ -135,7 +137,7 @@ Before contributing code, please discuss significant changes (like large feature
 
 ## License
 
-MIT
+GNU Affero General Public License v3.0 only (`AGPL-3.0-only`). See `LICENSE.md`.
 
 ---
 

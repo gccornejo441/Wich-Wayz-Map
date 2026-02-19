@@ -16,6 +16,7 @@ import {
   HiShieldCheck,
   HiDocumentText,
   HiFlag,
+  HiCode,
 } from "react-icons/hi";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { createPaymentLink } from "../../services/stripe";
@@ -23,6 +24,7 @@ import { useModal } from "../../context/modalContext";
 import { useTheme } from "@/hooks/useTheme";
 
 const CONTACT_EMAIL = "wich.wayz.map@gmail.com";
+const SOURCE_REPO_URL = "https://github.com/gccornejo441/Wich-Wayz-Map";
 
 const SidebarFooter = () => {
   const { addToast } = useToast();
@@ -245,6 +247,20 @@ const SidebarFooter = () => {
 
             <div className={menuDivider} />
 
+            <a
+              href={SOURCE_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeAllMenus}
+              className={menuItemRow}
+            >
+              <span className={menuItemLeft}>
+                <HiCode className="w-4 h-4" />
+                Source Code
+              </span>
+              <span />
+            </a>
+
             <div className="relative">
               <button
                 type="button"
@@ -268,19 +284,17 @@ const SidebarFooter = () => {
                   role="menu"
                   tabIndex={-1}
                 >
-                  <a
-                    href="https://en.wikipedia.org/wiki/Sandwich"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    to={ROUTES.ABOUT}
                     onClick={closeAllMenus}
                     className={menuItemRow}
                   >
                     <span className={menuItemLeft}>
                       <HiInformationCircle className="w-4 h-4" />
-                      About
+                      About Wich Wayz
                     </span>
                     <span />
-                  </a>
+                  </Link>
 
                   <button
                     type="button"

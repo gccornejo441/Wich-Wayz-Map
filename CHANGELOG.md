@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.9.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.2...wich-wayz-v1.9.0) (2026-02-19)
+
+
+### Features
+
+* about page minimalist redesign ([#63](https://github.com/gccornejo441/Wich-Wayz-Map/issues/63)) ([9f58c86](https://github.com/gccornejo441/Wich-Wayz-Map/commit/9f58c863cd72aa127955dd447ac17ca3b646556e))
+
+## [1.8.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.1...wich-wayz-v1.8.2) (2026-02-19)
+
+
+### Bug Fixes
+
+* search index invalidation ([#61](https://github.com/gccornejo441/Wich-Wayz-Map/issues/61)) ([7c82b07](https://github.com/gccornejo441/Wich-Wayz-Map/commit/7c82b0703b7584657e04111e2460ce92421fb194))
+
+## [1.8.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.0...wich-wayz-v1.8.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* security dependabot vulnerabilities ([#59](https://github.com/gccornejo441/Wich-Wayz-Map/issues/59)) ([244c145](https://github.com/gccornejo441/Wich-Wayz-Map/commit/244c145ece90d1e88cabc7ccffd0c22318cf8302))
+
+## [1.8.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.1...wich-wayz-v1.8.0) (2026-02-17)
+
+
+### Features
+
+* Remove about features ([#56](https://github.com/gccornejo441/Wich-Wayz-Map/issues/56)) ([90630af](https://github.com/gccornejo441/Wich-Wayz-Map/commit/90630af2d0f0541e6d00dcbd6691009f6722376b))
+
+## [1.7.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.7.0...wich-wayz-v1.7.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* sync category selections with form validation ([#53](https://github.com/gccornejo441/Wich-Wayz-Map/issues/53)) ([7e6e798](https://github.com/gccornejo441/Wich-Wayz-Map/commit/7e6e798c918d4d2768f6e7c12f1b8c0335970abb))
+
 ## [1.7.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.6.2...wich-wayz-v1.7.0) (2026-02-16)
 
 

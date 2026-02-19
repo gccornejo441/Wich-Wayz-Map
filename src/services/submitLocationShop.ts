@@ -2,6 +2,7 @@ import axios from "axios";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { cacheData } from "./indexedDB";
+import { invalidateSearchIndex } from "./searchIndex";
 import { ROUTES } from "../constants/routes";
 import { auth } from "./firebase";
 import { cleanString } from "@/utils/stringUtils";
@@ -50,6 +51,9 @@ export async function handleLocationSubmit(
 
     setLocations(fetchedLocations);
     cacheData("locations", fetchedLocations);
+
+    // Invalidate the search index so the new shop appears in search results
+    invalidateSearchIndex();
 
     addToast("Location and shop submitted successfully!", "success");
 
