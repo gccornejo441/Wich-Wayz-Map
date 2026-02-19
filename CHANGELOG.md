@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.2...wich-wayz-v1.9.0) (2026-02-19)
+
+
+### Features
+
+* about page minimalist redesign ([#63](https://github.com/gccornejo441/Wich-Wayz-Map/issues/63)) ([9f58c86](https://github.com/gccornejo441/Wich-Wayz-Map/commit/9f58c863cd72aa127955dd447ac17ca3b646556e))
+
 ## [1.8.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.1...wich-wayz-v1.8.2) (2026-02-19)
 
 
