@@ -6,6 +6,7 @@ import {
   SHOPS_STORE,
   LOCATIONS_STORE,
 } from "@/services/indexedDB";
+import { invalidateSearchIndex } from "@/services/searchIndex";
 import { getLocationCount } from "@/services/apiClient";
 import { Location } from "@models/Location";
 import { ShopWithUser } from "@models/ShopWithUser";
@@ -116,6 +117,8 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
       cacheData(LOCATIONS_STORE, next);
       return next;
     });
+    // Invalidate the search index so updated shops appear correctly in search
+    invalidateSearchIndex();
   };
 
   const removeShopFromContext = (shopId: number) => {
@@ -130,6 +133,8 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
       sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
       return next;
     });
+    // Invalidate the search index so removed shops don't appear in search
+    invalidateSearchIndex();
   };
 
   return (
