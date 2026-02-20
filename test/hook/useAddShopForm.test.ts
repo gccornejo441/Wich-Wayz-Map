@@ -133,6 +133,9 @@ describe("useAddShopForm hook", () => {
       country: "",
       latitude: 0,
       longitude: 0,
+      chain_attestation: "no",
+      estimated_location_count: "lt10",
+      eligibility_confirmed: false,
       categoryIds: [],
     };
     await act(async () => {

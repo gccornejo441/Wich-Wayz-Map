@@ -351,6 +351,129 @@ const initSchema = async () => {
       args: [],
     });
 
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS brands (
+          brand_key TEXT PRIMARY KEY,
+          display_name TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'unknown'
+            CHECK (status IN ('unknown', 'allowed', 'blocked', 'needs_review')),
+          known_location_count INTEGER,
+          last_chain_score REAL,
+          last_signals_json TEXT,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_by_user_id INTEGER
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_brands_status ON brands(status)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS brand_actions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          brand_key TEXT NOT NULL,
+          action TEXT NOT NULL CHECK (
+            action IN ('block', 'unblock', 'set_review', 'set_allowed')
+          ),
+          reason TEXT,
+          payload_json TEXT,
+          actor_user_id INTEGER,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (brand_key) REFERENCES brands(brand_key) ON DELETE CASCADE
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_brand_actions_brand_key_created ON brand_actions(brand_key, created_at DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: `
+        CREATE TABLE IF NOT EXISTS shop_submissions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          submitted_by_user_id INTEGER NOT NULL,
+          submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending', 'approved', 'rejected')),
+          brand_key TEXT,
+          chain_score REAL NOT NULL DEFAULT 0,
+          signals_json TEXT,
+          payload_json TEXT NOT NULL,
+          reviewed_by_user_id INTEGER,
+          reviewed_at TIMESTAMP,
+          review_note TEXT,
+          approved_shop_id INTEGER,
+          FOREIGN KEY (brand_key) REFERENCES brands(brand_key),
+          FOREIGN KEY (approved_shop_id) REFERENCES shops(id)
+        )
+      `,
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_submissions_queue ON shop_submissions(status, submitted_at DESC)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shop_submissions_user ON shop_submissions(submitted_by_user_id, submitted_at DESC)",
+      args: [],
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "brand_key",
+      columnDefinition: "brand_key TEXT",
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "hidden_source",
+      columnDefinition: "hidden_source TEXT",
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "hidden_reason",
+      columnDefinition: "hidden_reason TEXT",
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "hidden_at",
+      columnDefinition: "hidden_at TIMESTAMP",
+    });
+
+    await ensureColumn({
+      tableName: "shops",
+      columnName: "hidden_by_user_id",
+      columnDefinition: "hidden_by_user_id INTEGER",
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shops_brand_key ON shops(brand_key)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shops_hidden_source ON shops(hidden_source)",
+      args: [],
+    });
+
+    await dbClient.execute({
+      sql: "CREATE INDEX IF NOT EXISTS idx_shops_content_status_brand ON shops(content_status, brand_key)",
+      args: [],
+    });
+
     console.warn("[DEV] Schema initialization complete.");
   } catch (error) {
     console.error("[DEV] Failed to initialize schema:", error);

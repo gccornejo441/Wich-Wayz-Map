@@ -1,4 +1,3 @@
-import axios from "axios";
 import { AddAShopPayload } from "@/types/dataTypes";
 import { AddressDraft } from "@/types/address";
 import { cacheData } from "./indexedDB";
@@ -12,6 +11,17 @@ import { GetShops } from "./shopService";
 import { authApiRequest } from "./apiClient";
 import { ShopGeoJsonProperties } from "@utils/shopGeoJson";
 import { buildStreetAddress } from "@/utils/address";
+
+type AddShopApiResponse = {
+  shopId?: number;
+  locationId?: number;
+  status?: "pending_review";
+  message?: string;
+};
+
+type ApiError = Error & {
+  status?: number;
+};
 
 /**
  * Handles submitting location and shop data with multiple locations.
@@ -33,13 +43,18 @@ export async function handleLocationSubmit(
 
     const payload = createLocationShopPayload(addAShopPayload, address);
 
-    const response = await authApiRequest<{
-      shopId: number;
-      locationId: number;
-    }>("/add-new-shop", {
+    const response = await authApiRequest<AddShopApiResponse>("/add-new-shop", {
       method: "POST",
       body: JSON.stringify(payload),
     });
+
+    if (response.status === "pending_review") {
+      addToast(
+        response.message || "Submission received and queued for admin review.",
+        "success",
+      );
+      return true;
+    }
 
     const fetchedShops = await GetShops();
     const fetchedLocations = fetchedShops.flatMap(
@@ -52,15 +67,15 @@ export async function handleLocationSubmit(
     setLocations(fetchedLocations);
     cacheData("locations", fetchedLocations);
 
-    // Invalidate the search index so the new shop appears in search results
+    // Invalidate the search index so the new shop appears in search results.
     invalidateSearchIndex();
 
     addToast("Location and shop submitted successfully!", "success");
 
-    // Select the newly created shop if selectShop callback provided
+    // Select the newly created shop if selectShop callback provided.
     if (selectShop && response.shopId) {
       try {
-        // Find the newly created shop from the already fetched shops
+        // Find the newly created shop from the already fetched shops.
         const newShopData = fetchedShops.find(
           (shop) => shop.id === response.shopId,
         );
@@ -68,7 +83,7 @@ export async function handleLocationSubmit(
         if (newShopData && newShopData.locations?.[0]) {
           const location = newShopData.locations[0];
 
-          // Build the shop object for sidebar display
+          // Build the shop object for sidebar display.
           const shopForSidebar: ShopGeoJsonProperties = {
             shopId: newShopData.id!,
             shopName: newShopData.name,
@@ -104,17 +119,22 @@ export async function handleLocationSubmit(
         }
       } catch (error) {
         console.error("Failed to select newly created shop:", error);
-        // Don't throw - shop was created successfully, just couldn't open sidebar
+        // Do not throw. Shop creation succeeded even if sidebar selection failed.
       }
     }
 
     return true;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Axios error:", error.response?.data || error.message);
-      addToast("Server error: Unable to submit location and shop.", "error");
+    const apiError = error as ApiError;
+    console.error("Failed to submit location and shop:", error);
+
+    if (
+      apiError.status === 400 ||
+      apiError.status === 409 ||
+      apiError.status === 429
+    ) {
+      addToast(apiError.message, "error");
     } else {
-      console.error("Unexpected error:", error);
       addToast(
         "An unexpected error occurred while submitting the location and shop.",
         "error",
@@ -126,7 +146,7 @@ export async function handleLocationSubmit(
 
 /**
  * Creates payload for location and shop submission.
- * Uses buildStreetAddress to construct the address field from street lines only.
+ * Uses buildStreetAddress-compatible fields for location formatting.
  */
 export function createLocationShopPayload(
   addAShopPayload: AddAShopPayload,
@@ -138,7 +158,7 @@ export function createLocationShopPayload(
     "sentence",
   );
 
-  // Use AddressDraft if provided (new flow), otherwise fall back to old fields
+  // Use AddressDraft if provided (new flow), otherwise fall back to old fields.
   let addressFirst = "";
   let addressSecond = "";
   let city = "";
@@ -149,9 +169,6 @@ export function createLocationShopPayload(
   let longitude = 0;
 
   if (address) {
-    // New structured address flow - maps to schema fields
-    // streetAddress → street_address (via address_first)
-    // streetAddressSecond → street_address_second (via address_second)
     addressFirst = address.streetAddress || "";
     addressSecond = address.streetAddressSecond || "";
     city = address.city || "Unknown City";
@@ -161,7 +178,7 @@ export function createLocationShopPayload(
     latitude = address.latitude ?? 0;
     longitude = address.longitude ?? 0;
   } else {
-    // Legacy fallback for old address fields
+    // Legacy fallback for old address fields.
     const cleanedHouseNumber = cleanString(addAShopPayload.house_number);
     const cleanedAddress = cleanString(addAShopPayload.address);
     const cleanedAddressFirst = cleanString(addAShopPayload.address_first);
@@ -183,20 +200,22 @@ export function createLocationShopPayload(
 
   const cleanedCity = cleanString(city, "title");
 
-  // Schema-compliant payload structure
-  // Maps to locations table fields (schema lines 23-40)
   const location = {
-    house_number: "", // Not used with new address structure
-    address_first: addressFirst, // → street_address
-    address_second: addressSecond, // → street_address_second
-    postcode: postcode.trim(), // → postal_code
-    city: cleanedCity, // → city
-    state: state.toUpperCase().trim(), // → state (keep uppercase for state codes)
-    country: country.toUpperCase().trim(), // → country (keep uppercase for country codes)
-    latitude, // → latitude
-    longitude, // → longitude
-    phone: addAShopPayload.phone || "", // → phone (optional)
-    website_url: addAShopPayload.website_url || "", // → website_url (optional)
+    house_number: "",
+    address_first: addressFirst,
+    address_second: addressSecond,
+    postcode: postcode.trim(),
+    city: cleanedCity,
+    state: state.toUpperCase().trim(),
+    country: country.toUpperCase().trim(),
+    latitude,
+    longitude,
+    phone: addAShopPayload.phone || "",
+    website_url: addAShopPayload.website_url || "",
+    chain_attestation: addAShopPayload.chain_attestation ?? "no",
+    estimated_location_count:
+      addAShopPayload.estimated_location_count ?? "lt10",
+    eligibility_confirmed: addAShopPayload.eligibility_confirmed ?? false,
   };
 
   return {

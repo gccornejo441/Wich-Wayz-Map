@@ -52,7 +52,8 @@ export default async function handler(req, res) {
       LEFT JOIN shop_categories sc ON s.id = sc.shop_id
       LEFT JOIN categories c ON sc.category_id = c.id
       LEFT JOIN locations l ON s.id_location = l.id
-      LEFT JOIN shop_locations sl ON sl.shop_id = s.id AND sl.location_id = l.id;
+      LEFT JOIN shop_locations sl ON sl.shop_id = s.id AND sl.location_id = l.id
+      WHERE COALESCE(s.content_status, 'active') = 'active';
     `);
 
     const shopMap = new Map();

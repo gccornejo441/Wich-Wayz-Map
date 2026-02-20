@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   const filters = req.body || {};
 
-  const where = [];
+  const where = ["COALESCE(shops.content_status, 'active') = 'active'"];
   const joinArgs = [];
   const whereArgs = [];
   const havingArgs = [];

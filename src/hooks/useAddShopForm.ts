@@ -34,7 +34,10 @@ const hasValidCoords = (lat: number, lon: number): boolean => {
 
 const normalizeInitialData = (
   initialData?: ShopInitialData,
+  mode: "add" | "edit" = "add",
 ): AddAShopPayload => {
+  const defaultEligibilityConfirmed = mode === "edit";
+
   if (!initialData) {
     return {
       shopName: "",
@@ -51,6 +54,9 @@ const normalizeInitialData = (
       country: "",
       latitude: 0,
       longitude: 0,
+      chain_attestation: "no",
+      estimated_location_count: "lt10",
+      eligibility_confirmed: defaultEligibilityConfirmed,
       categoryIds: [],
     };
   }
@@ -81,6 +87,20 @@ const normalizeInitialData = (
     country: initialData.country ?? "",
     latitude: lat,
     longitude: lon,
+    chain_attestation:
+      initialData.chain_attestation === "yes" ||
+      initialData.chain_attestation === "unsure"
+        ? initialData.chain_attestation
+        : "no",
+    estimated_location_count:
+      initialData.estimated_location_count === "gte10" ||
+      initialData.estimated_location_count === "unsure"
+        ? initialData.estimated_location_count
+        : "lt10",
+    eligibility_confirmed:
+      typeof initialData.eligibility_confirmed === "boolean"
+        ? initialData.eligibility_confirmed
+        : defaultEligibilityConfirmed,
     categoryIds,
   };
 };
@@ -109,7 +129,7 @@ export const useAddShopForm = (
     formState: { errors },
   } = useForm<AddAShopPayload>({
     resolver: yupResolver(locationSchema),
-    defaultValues: normalizeInitialData(initialData),
+    defaultValues: normalizeInitialData(initialData, mode),
   });
 
   useEffect(() => {
@@ -122,7 +142,7 @@ export const useAddShopForm = (
 
   useEffect(() => {
     if (initialData) {
-      const normalized = normalizeInitialData(initialData);
+      const normalized = normalizeInitialData(initialData, mode);
       reset(normalized, { keepDefaultValues: false });
 
       if (
@@ -144,7 +164,7 @@ export const useAddShopForm = (
         setSelectedCategories(initialData.categoryIds);
       }
     }
-  }, [initialData, categories, reset]);
+  }, [initialData, categories, mode, reset]);
 
   const addressVal = watch("address");
   const latVal = watch("latitude");
