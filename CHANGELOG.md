@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.9.0...wich-wayz-v1.10.0) (2026-02-20)
+
+
+### Features
+
+* removing unwanted locations ([#65](https://github.com/gccornejo441/Wich-Wayz-Map/issues/65)) ([f0314ed](https://github.com/gccornejo441/Wich-Wayz-Map/commit/f0314ed2dc88654acb92297d744a0e451b23da3c))
+
 ## [1.9.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.8.2...wich-wayz-v1.9.0) (2026-02-19)
 
 
