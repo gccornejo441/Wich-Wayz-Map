@@ -112,6 +112,38 @@ describe("handleLocationSubmit", () => {
     );
   });
 
+  it("should handle pending-review responses without fetching shops", async () => {
+    mockCurrentUser = { uid: "test-uid", email: "test@example.com" };
+
+    vi.mocked(apiClientModule.authApiRequest).mockResolvedValue({
+      status: "pending_review",
+      message: "Submission queued for admin review.",
+    });
+
+    const setShops = vi.fn();
+    const setLocations = vi.fn();
+    const addToast = vi.fn();
+    const navigate = vi.fn();
+
+    const result = await handleLocationSubmit(
+      {} as AddAShopPayload,
+      undefined,
+      setShops,
+      setLocations,
+      addToast,
+      navigate,
+    );
+
+    expect(result).toBe(true);
+    expect(addToast).toHaveBeenCalledWith(
+      "Submission queued for admin review.",
+      "success",
+    );
+    expect(shopServiceModule.GetShops).not.toHaveBeenCalled();
+    expect(setShops).not.toHaveBeenCalled();
+    expect(setLocations).not.toHaveBeenCalled();
+  });
+
   // REGRESSION TEST: Ensure authApiRequest is used, not apiRequest
   it("should use authApiRequest with authorization headers", async () => {
     mockCurrentUser = { uid: "test-uid", email: "test@example.com" };
@@ -434,6 +466,9 @@ describe("createLocationShopPayload", () => {
     postcode: "12345",
     latitude: 40.7128,
     longitude: -74.006,
+    chain_attestation: "no",
+    estimated_location_count: "lt10",
+    eligibility_confirmed: true,
     categoryIds: [1, 2, 3],
   };
 
@@ -455,6 +490,9 @@ describe("createLocationShopPayload", () => {
       selectedCategoryIds: [1, 2, 3],
       phone: "",
       website_url: "",
+      chain_attestation: "no",
+      estimated_location_count: "lt10",
+      eligibility_confirmed: true,
     });
   });
 
@@ -472,6 +510,9 @@ describe("createLocationShopPayload", () => {
       postcode: "",
       latitude: 0,
       longitude: 0,
+      chain_attestation: "unsure",
+      estimated_location_count: "unsure",
+      eligibility_confirmed: false,
       categoryIds: [],
     };
 
@@ -492,6 +533,9 @@ describe("createLocationShopPayload", () => {
       selectedCategoryIds: [],
       phone: "",
       website_url: "",
+      chain_attestation: "unsure",
+      estimated_location_count: "unsure",
+      eligibility_confirmed: false,
     });
   });
 
@@ -509,6 +553,9 @@ describe("createLocationShopPayload", () => {
       postcode: "67890",
       latitude: 34.0522,
       longitude: -118.2437,
+      chain_attestation: "no" as const,
+      estimated_location_count: "lt10" as const,
+      eligibility_confirmed: true,
       categoryIds: [4, 5, 6],
     };
 

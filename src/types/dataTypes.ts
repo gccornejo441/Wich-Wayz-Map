@@ -5,6 +5,8 @@ export type LocationStatus =
   | "open"
   | "temporarily_closed"
   | "permanently_closed";
+export type ChainAttestation = "no" | "yes" | "unsure";
+export type EstimatedLocationCount = "lt10" | "gte10" | "unsure";
 export type ShopWithId = AddAShopPayload & { shopId: string | number };
 
 export interface ShopLocation {
@@ -28,11 +30,17 @@ export interface LocationData {
   country?: string;
   latitude: number;
   longitude: number;
+  chain_attestation?: ChainAttestation;
+  estimated_location_count?: EstimatedLocationCount;
+  eligibility_confirmed?: boolean;
 }
 
 export interface AddAShopPayload extends LocationData {
   shop_description: string;
   categoryIds: number[];
+  chain_attestation: ChainAttestation;
+  estimated_location_count: EstimatedLocationCount;
+  eligibility_confirmed: boolean;
 }
 
 export interface UpdateShopPayload {

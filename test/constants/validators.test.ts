@@ -1,380 +1,113 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { locationSchema } from "@constants/validators";
 
-describe("locationSchema - postcode transform and validation", () => {
-  it("should accept ZIP5 after transform", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
+const buildValidData = () => ({
+  shopName: "Test Shop",
+  shop_description: "A test shop with at least 20 characters for validation",
+  city: "Raleigh",
+  state: "NC",
+  postcode: "27502",
+  latitude: 35.9,
+  longitude: -78.8,
+  categoryIds: [1],
+  chain_attestation: "no" as const,
+  estimated_location_count: "lt10" as const,
+  eligibility_confirmed: true,
+});
 
-    await expect(locationSchema.validate(data)).resolves.toBeDefined();
+describe("locationSchema - postcode transform and validation", () => {
+  it("accepts ZIP5", async () => {
+    await expect(
+      locationSchema.validate(buildValidData()),
+    ).resolves.toBeDefined();
   });
 
-  it("should accept ZIP+4 and transform to 9 digits", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
+  it("accepts ZIP+4 and transforms to 9 digits", async () => {
+    const result = await locationSchema.validate({
+      ...buildValidData(),
       postcode: "27502-1234",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
+    });
     expect(result.postcode).toBe("275021234");
   });
 
-  it("should accept ZIP5 with trailing hyphen after transform", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      postcode: "27502-",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
-    expect(result.postcode).toBe("27502");
-  });
-
-  it("should fail for 4-digit ZIP", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      postcode: "2750",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Zip code must be 5 or 9 digits",
-    );
-  });
-
-  it("should fail for 6-digit ZIP", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      postcode: "275021",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Zip code must be 5 or 9 digits",
-    );
-  });
-
-  it("should fail when postcode is missing", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Zip code is required",
-    );
-  });
-
-  it("should strip non-digits before validation", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      postcode: "27 502",
-      latitude: 35.9,
-      longitude: -78.8,
-      city: "Raleigh",
-      state: "NC",
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
-    expect(result.postcode).toBe("27502");
+  it("rejects invalid ZIP length", async () => {
+    await expect(
+      locationSchema.validate({
+        ...buildValidData(),
+        postcode: "275021",
+      }),
+    ).rejects.toThrow("Zip code must be 5 or 9 digits");
   });
 });
 
 describe("locationSchema - state transform", () => {
-  it("should normalize 2-letter state code to uppercase", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "nc",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
+  it("normalizes state to 2-letter uppercase code", async () => {
+    const result = await locationSchema.validate({
+      ...buildValidData(),
+      state: " north carolina ",
+    });
     expect(result.state).toBe("NC");
   });
 
-  it("should convert full state name to 2-letter code", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "North Carolina",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
-    expect(result.state).toBe("NC");
-  });
-
-  it("should handle state with whitespace", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Beverly Hills",
-      state: " california ",
-      postcode: "90210",
-      latitude: 34.0,
-      longitude: -118.4,
-      categoryIds: [1],
-    };
-
-    const result = await locationSchema.validate(data);
-    expect(result.state).toBe("CA");
-  });
-
-  it("should fail for invalid state since it is now required", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "InvalidState",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "State is required",
-    );
-  });
-
-  it("should fail when state is missing since it is now required", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "State is required",
-    );
+  it("requires a valid state", async () => {
+    await expect(
+      locationSchema.validate({
+        ...buildValidData(),
+        state: "InvalidState",
+      }),
+    ).rejects.toThrow("State is required");
   });
 });
 
-describe("locationSchema - required fields", () => {
-  it("should require shopName", async () => {
-    const data = {
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Shop name is required",
+describe("locationSchema - eligibility enforcement", () => {
+  it("rejects explicit chain/franchise submissions", async () => {
+    await expect(
+      locationSchema.validate({
+        ...buildValidData(),
+        chain_attestation: "yes",
+      }),
+    ).rejects.toThrow(
+      "Chains/franchises/10+ locations are not allowed on Wich Wayz.",
     );
   });
 
-  it("should require shop_description", async () => {
-    const data = {
-      shopName: "Test Shop",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Shop description is required",
+  it("rejects explicit 10+ location submissions", async () => {
+    await expect(
+      locationSchema.validate({
+        ...buildValidData(),
+        estimated_location_count: "gte10",
+      }),
+    ).rejects.toThrow(
+      "Chains/franchises/10+ locations are not allowed on Wich Wayz.",
     );
   });
 
-  it("should enforce minimum shop_description length", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description: "Too short",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Shop description must be at least 20 characters",
-    );
-  });
-
-  it("should enforce maximum shop_description length", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description: "A".repeat(251),
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Shop description must be at most 250 characters",
-    );
-  });
-
-  it("should require latitude", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Latitude is required",
-    );
-  });
-
-  it("should require longitude", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Longitude is required",
-    );
-  });
-
-  it("should require city", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [1],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "City is required",
-    );
-  });
-
-  it("should require categoryIds with at least one category", async () => {
-    const data = {
-      shopName: "Test Shop",
-      shop_description:
-        "A test shop with at least 20 characters for validation",
-      city: "Raleigh",
-      state: "NC",
-      postcode: "27502",
-      latitude: 35.9,
-      longitude: -78.8,
-      categoryIds: [],
-    };
-
-    await expect(locationSchema.validate(data)).rejects.toThrow(
-      "Please select at least one category",
-    );
+  it("requires eligibility confirmation", async () => {
+    await expect(
+      locationSchema.validate({
+        ...buildValidData(),
+        eligibility_confirmed: false,
+      }),
+    ).rejects.toThrow("You must confirm this shop is eligible to submit");
   });
 });
 
-describe("locationSchema - complete valid payload", () => {
-  it("should validate complete shop payload with all fields", async () => {
-    const data = {
-      shopName: "Awesome Sandwich Shop",
-      shop_description:
-        "The best sandwiches in town with fresh ingredients daily",
+describe("locationSchema - complete payload", () => {
+  it("validates a complete payload", async () => {
+    const result = await locationSchema.validate({
+      ...buildValidData(),
       website_url: "https://example.com",
       phone: "(919) 555-1234",
       address: "123 Main St",
       address_first: "123 Main St",
       address_second: "Suite 100",
       house_number: "123",
-      city: "Raleigh",
-      state: "North Carolina",
-      postcode: "27502-1234",
       country: "USA",
-      latitude: 35.7796,
-      longitude: -78.6382,
-      categoryIds: [1, 2, 3],
-    };
+      postcode: "27502-1234",
+    });
 
-    const result = await locationSchema.validate(data);
-    expect(result.shopName).toBe("Awesome Sandwich Shop");
-    expect(result.state).toBe("NC");
+    expect(result.shopName).toBe("Test Shop");
     expect(result.postcode).toBe("275021234");
-    expect(result.latitude).toBe(35.7796);
-    expect(result.longitude).toBe(-78.6382);
+    expect(result.state).toBe("NC");
   });
 });

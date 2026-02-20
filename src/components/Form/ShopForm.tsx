@@ -174,6 +174,7 @@ const ShopForm = ({
     selectedCategories,
     setSelectedCategories,
     setValue,
+    watch,
     control,
   } = useAddShopForm(initialData, mode);
 
@@ -259,6 +260,12 @@ const ShopForm = ({
   }, [isAuthenticated, userMetadata, initialData]);
 
   const isEditMode = mode === "edit";
+  const chainAttestation = watch("chain_attestation");
+  const estimatedLocationCount = watch("estimated_location_count");
+
+  const isExplicitlyIneligible =
+    mode === "add" &&
+    (chainAttestation === "yes" || estimatedLocationCount === "gte10");
 
   const categoryOptions: CategoryOption[] = categories.map((cat) => ({
     value: cat.id!,
@@ -412,7 +419,11 @@ const ShopForm = ({
     });
   };
 
-  const canSubmit = isAddressValid && !errors.shopName && !errors.address;
+  const canSubmit =
+    isAddressValid &&
+    !errors.shopName &&
+    !errors.address &&
+    !isExplicitlyIneligible;
 
   if (layoutMode === "form-section") {
     const isAdmin = userMetadata?.role === "admin";
@@ -531,6 +542,95 @@ const ShopForm = ({
               </div>
             </div>
           </div>
+
+          {!isEditMode && (
+            <div>
+              <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                Eligibility
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="chain_attestation"
+                    className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Is this shop part of a chain or franchise?
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <select
+                    id="chain_attestation"
+                    {...register("chain_attestation")}
+                    className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors ${
+                      errors.chain_attestation
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                    <option value="unsure">Not sure</option>
+                  </select>
+                  {errors.chain_attestation && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.chain_attestation.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="estimated_location_count"
+                    className="block mb-1.5 text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Do you believe this brand has 10+ locations?
+                    <span className="text-red-500"> *</span>
+                  </label>
+                  <select
+                    id="estimated_location_count"
+                    {...register("estimated_location_count")}
+                    className={`w-full text-sm px-3 py-2 border-2 rounded-md bg-white dark:bg-surface-dark text-text-base dark:text-text-inverted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors ${
+                      errors.estimated_location_count
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  >
+                    <option value="lt10">No</option>
+                    <option value="gte10">Yes</option>
+                    <option value="unsure">Not sure</option>
+                  </select>
+                  {errors.estimated_location_count && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.estimated_location_count.message}
+                    </p>
+                  )}
+                </div>
+
+                <label className="flex items-start gap-2 text-xs text-text-base dark:text-text-inverted">
+                  <input
+                    type="checkbox"
+                    {...register("eligibility_confirmed")}
+                    className="mt-0.5 h-4 w-4 rounded border border-gray-300 dark:border-gray-600 text-brand-primary focus:ring-brand-primary"
+                  />
+                  <span>
+                    I confirm this shop is independently owned or has fewer than
+                    10 locations.
+                  </span>
+                </label>
+                {errors.eligibility_confirmed && (
+                  <p className="text-xs text-red-500">
+                    {errors.eligibility_confirmed.message}
+                  </p>
+                )}
+
+                {isExplicitlyIneligible && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-300">
+                    Chains, franchises, and brands with 10+ locations cannot be
+                    submitted.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">

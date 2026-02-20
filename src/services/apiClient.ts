@@ -123,7 +123,7 @@ export const updateMembershipStatus = async (
   userId: number,
   status: string,
 ) => {
-  await apiRequest(`/users/${userId}`, {
+  await authApiRequest(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ membershipStatus: status }),
   });
@@ -133,25 +133,25 @@ export const updateUserProfile = async (
   userId: number,
   updates: Record<string, unknown>,
 ) => {
-  await apiRequest(`/users/${userId}`, {
+  await authApiRequest(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify(updates),
   });
 };
 
 export const getAllUsers = async (): Promise<UserMetadata[]> => {
-  return apiRequest<UserMetadata[]>("/users");
+  return authApiRequest<UserMetadata[]>("/users");
 };
 
 export const updateUserRole = async (userId: number, role: string) => {
-  await apiRequest(`/users/${userId}`, {
+  await authApiRequest(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
   });
 };
 
 export const deleteUserAccount = async (userId: number) => {
-  await apiRequest(`/users/${userId}`, {
+  await authApiRequest(`/users/${userId}`, {
     method: "DELETE",
   });
 };

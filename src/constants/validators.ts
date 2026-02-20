@@ -3,6 +3,9 @@ import { isValidZipCode } from "@/utils/address";
 import { normalizeZip, normalizeState } from "@/utils/normalizers";
 import { REPORT_REASON_ORDER } from "@constants/moderationPolicy";
 
+const CHAIN_POLICY_ERROR =
+  "Chains/franchises/10+ locations are not allowed on Wich Wayz.";
+
 /**
  * Validation schema for user credentials.
  * Ensures email is valid and password meets complexity requirements.
@@ -87,6 +90,24 @@ export const locationSchema = yup.object().shape({
     .number()
     .required("Longitude is required")
     .typeError("Longitude must be a valid number"),
+  chain_attestation: yup
+    .string()
+    .oneOf(["no", "yes", "unsure"], "Select a valid chain/franchise option")
+    .required("Please confirm whether this is a chain or franchise")
+    .test("chain-not-allowed", CHAIN_POLICY_ERROR, (value) => value !== "yes"),
+  estimated_location_count: yup
+    .string()
+    .oneOf(["lt10", "gte10", "unsure"], "Select a valid location count option")
+    .required("Please estimate the brand location count")
+    .test(
+      "ten-plus-not-allowed",
+      CHAIN_POLICY_ERROR,
+      (value) => value !== "gte10",
+    ),
+  eligibility_confirmed: yup
+    .boolean()
+    .required("Eligibility confirmation is required")
+    .oneOf([true], "You must confirm this shop is eligible to submit"),
   shop_description: yup
     .string()
     .required("Shop description is required")
