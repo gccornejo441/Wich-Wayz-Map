@@ -7,7 +7,7 @@ import {
 } from "@services/apiClient";
 import { useToast } from "@context/toastContext";
 import * as yup from "yup";
-import { UserMetadata } from "@context/authContext";
+import type { SafeUserMetadata } from "@models/SafeUserMetadata";
 import { addCategoryIfNotExists } from "@/services/categoryService";
 
 const userRoleSchema = yup.object().shape({
@@ -20,7 +20,7 @@ const userRoleSchema = yup.object().shape({
 export const useAdminPage = () => {
   const { addToast } = useToast();
 
-  const [users, setUsers] = useState<UserMetadata[]>([]);
+  const [users, setUsers] = useState<SafeUserMetadata[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [roleInput, setRoleInput] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
