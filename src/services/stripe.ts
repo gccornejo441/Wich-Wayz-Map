@@ -6,6 +6,30 @@
  * @returns A URL to a payment link for the user.
  * @throws An error if the payment link cannot be created.
  */
+interface PaymentLinkResponse {
+  url?: string;
+  error?: string;
+  message?: string;
+}
+
+const getPaymentLinkErrorMessage = async (response: Response) => {
+  try {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const payload = (await response.json()) as PaymentLinkResponse;
+      return (
+        payload.message || payload.error || "Failed to create payment link."
+      );
+    }
+
+    const text = await response.text();
+    return text || "Failed to create payment link.";
+  } catch {
+    return "Failed to create payment link.";
+  }
+};
+
 export const createPaymentLink = async (
   userId: number | undefined,
   email: string | undefined,
@@ -20,10 +44,15 @@ export const createPaymentLink = async (
     });
 
     if (!response.ok) {
-      throw new Error("Failed to create payment link.");
+      const message = await getPaymentLinkErrorMessage(response);
+      throw new Error(message);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as PaymentLinkResponse;
+    if (!data.url) {
+      throw new Error("Payment link response did not include a URL.");
+    }
+
     return data.url;
   } catch (error) {
     console.error("Error creating payment link:", error);

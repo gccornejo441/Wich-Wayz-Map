@@ -34,6 +34,7 @@ const SidebarFooter = () => {
   const { openLoginModal, openSignupModal } = useModal();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showHelpSubmenu, setShowHelpSubmenu] = useState(false);
+  const [isCreatingPaymentLink, setIsCreatingPaymentLink] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const menuItemBase =
@@ -94,16 +95,27 @@ const SidebarFooter = () => {
   };
 
   const handleBecomeMember = async () => {
-    closeAllMenus();
+    if (isCreatingPaymentLink) {
+      return;
+    }
+
+    setIsCreatingPaymentLink(true);
     try {
       const paymentLink = await createPaymentLink(
         userMetadata?.id,
         userMetadata?.email,
       );
+      closeAllMenus();
       window.location.href = paymentLink;
     } catch (error) {
-      addToast("Failed to create payment link. Please try again.", "error");
+      const errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to create payment link. Please try again.";
+      addToast(errorMessage, "error");
       console.error("Error creating payment link:", error);
+    } finally {
+      setIsCreatingPaymentLink(false);
     }
   };
 
@@ -180,11 +192,14 @@ const SidebarFooter = () => {
                   userMetadata?.membershipStatus !== "member" && (
                     <button
                       onClick={handleBecomeMember}
-                      className={menuItemRow}
+                      className={`${menuItemRow} ${isCreatingPaymentLink ? "opacity-60 cursor-not-allowed" : ""}`}
+                      disabled={isCreatingPaymentLink}
                     >
                       <span className={menuItemLeft}>
                         <HiUserAdd className="w-4 h-4" />
-                        Become a Club Member
+                        {isCreatingPaymentLink
+                          ? "Creating checkout..."
+                          : "Become a Club Member"}
                       </span>
                       <span />
                     </button>
