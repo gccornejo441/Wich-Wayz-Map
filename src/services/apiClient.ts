@@ -139,8 +139,8 @@ export const updateUserProfile = async (
   });
 };
 
-export const getAllUsers = async (): Promise<UserMetadata[]> => {
-  return authApiRequest<UserMetadata[]>("/users");
+export const getAllUsers = async (): Promise<SafeUserMetadata[]> => {
+  return authApiRequest<SafeUserMetadata[]>("/users");
 };
 
 export const updateUserRole = async (userId: number, role: string) => {
