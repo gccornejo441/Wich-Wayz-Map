@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.10.0...wich-wayz-v1.10.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* admin api failure ([#67](https://github.com/gccornejo441/Wich-Wayz-Map/issues/67)) ([743433a](https://github.com/gccornejo441/Wich-Wayz-Map/commit/743433ac2a70c785627dea562f349b291fe41054))
+
 ## [1.10.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.9.0...wich-wayz-v1.10.0) (2026-02-20)
 
 
