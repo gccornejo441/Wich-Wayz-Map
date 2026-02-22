@@ -100,8 +100,8 @@ export const useRouteCheck = (routes: Routes) => {
   return {
     isPathValid,
     showSearchBar: isHomePage,
-    showAddShop: isHomePage,
-    showUserProfile: isHomePage,
+    showAddShop: true,
+    showUserProfile: true,
     showMap:
       (!isHomePage && isAccountProfile) ||
       isLegalOrAuxPage ||

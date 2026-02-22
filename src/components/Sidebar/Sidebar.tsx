@@ -84,7 +84,6 @@ const Sidebar = () => {
               linkTo={ROUTES.USER_LEADERBOARD}
               icon={<BsFillAwardFill className="w-6 h-6 text-white" />}
               text="Leaderboard"
-              badge="New"
             />
           </li>
           <li>
