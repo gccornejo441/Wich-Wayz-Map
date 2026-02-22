@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.10.2...wich-wayz-v1.11.0) (2026-02-22)
+
+
+### Features
+
+* all routes allowed ([#71](https://github.com/gccornejo441/Wich-Wayz-Map/issues/71)) ([89ac67b](https://github.com/gccornejo441/Wich-Wayz-Map/commit/89ac67b1fe7b81858a12ec7adfa98e41a6329d4c))
+
 ## [1.10.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.10.1...wich-wayz-v1.10.2) (2026-02-21)
 
 
