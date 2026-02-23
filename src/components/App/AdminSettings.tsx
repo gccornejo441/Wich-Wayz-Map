@@ -11,6 +11,7 @@ import CategoriesList from "../CategoriesList/CategoriesList";
 import UserTable from "../Utilites/UserTable";
 import { DuplicateLocationsTable } from "../Utilites/DuplicateLocationsTable";
 import ModerationReportsTable from "@components/Utilites/ModerationReportsTable";
+import { BulkUploadCard } from "@components/Admin/BulkUploadCard";
 
 import { Button, Input, Select } from "@components/ui";
 import {
@@ -456,6 +457,13 @@ const AdminPage = () => {
             </AdminCard>
           </div>
         </div>
+
+        <AdminCard
+          title="Bulk Shop Upload"
+          subtitle="Upload CSV to add multiple shops at once (admin only)."
+        >
+          <BulkUploadCard />
+        </AdminCard>
 
         <AdminCard
           title="User Management"
