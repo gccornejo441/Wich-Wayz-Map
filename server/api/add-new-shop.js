@@ -177,7 +177,7 @@ const upsertBrandTelemetry = async ({
   score,
   signals,
   knownLocationCount,
-  statusHint = null,
+  statusHint = "unknown",
 }) => {
   await db.execute({
     sql: `
@@ -474,7 +474,8 @@ async function handler(req, res) {
         score: chainScore.score,
         signals: chainSignals,
         knownLocationCount: Math.max(internalCount, knownBrandLocationCount),
-        statusHint: chainScore.decision === "review" ? "needs_review" : null,
+        statusHint:
+          chainScore.decision === "review" ? "needs_review" : "unknown",
       });
     }
 

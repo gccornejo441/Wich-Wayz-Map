@@ -3,6 +3,7 @@ import {
   FiBookmark,
   FiMapPin,
   FiNavigation2,
+  FiPlus,
   FiTarget,
   FiX,
 } from "react-icons/fi";
@@ -10,6 +11,7 @@ import { useSaved } from "@context/savedContext";
 import { useShops } from "@context/shopContext";
 import { useMap } from "@context/mapContext";
 import { useShopSidebar } from "@context/ShopSidebarContext";
+import { useToast } from "@context/toastContext";
 import { useOverlay } from "@/context/overlayContext";
 import { distanceMiles } from "@utils/geo";
 import {
@@ -19,6 +21,7 @@ import {
 } from "@utils/shopGeoJson";
 import type { ShopWithUser } from "@models/ShopWithUser";
 import type { Location } from "@models/Location";
+import type { CollectionVisibility } from "@models/Collection";
 
 const RADIUS_OPTIONS = [1, 3, 5, 10, 25];
 
@@ -69,7 +72,9 @@ const SavedSidebar = () => {
     collections,
     activeCollectionId,
     setActiveCollectionId,
+    createCollection,
   } = useSaved();
+  const { addToast } = useToast();
 
   const { isOpen, close } = useOverlay();
 
@@ -89,6 +94,10 @@ const SavedSidebar = () => {
   const [anchorCoords, setAnchorCoords] = useState<[number, number] | null>(
     null,
   );
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [newCollectionVisibility, setNewCollectionVisibility] =
+    useState<CollectionVisibility>("private");
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
 
   // Clear hovered location when Saved closes
   useEffect(() => {
@@ -251,6 +260,34 @@ const SavedSidebar = () => {
     }
   };
 
+  const handleCreateCollection = async () => {
+    const trimmedName = newCollectionName.trim();
+    if (!trimmedName) {
+      addToast("Enter a name for the list", "error");
+      return;
+    }
+
+    setIsCreatingCollection(true);
+    try {
+      const created = await createCollection({
+        name: trimmedName,
+        visibility: newCollectionVisibility,
+      });
+      setNewCollectionName("");
+      setNewCollectionVisibility("private");
+      setActiveCollectionId(created.id);
+      setSavedFilterMode("collection");
+      addToast("List created", "success");
+    } catch (error) {
+      console.error("Failed to create collection from saved sidebar:", error);
+      if (!(error instanceof Error && error.message === "Not authenticated")) {
+        addToast("Could not create list", "error");
+      }
+    } finally {
+      setIsCreatingCollection(false);
+    }
+  };
+
   return (
     <aside
       className={`fixed top-[48px] left-0 z-40 w-full sm:w-[360px] md:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark border-r border-surface-muted/50 dark:border-gray-700 transition-transform duration-500 ease-in-out ${
@@ -383,6 +420,51 @@ const SavedSidebar = () => {
 
         {savedFilterMode === "collection" && (
           <div className="space-y-2">
+            <div className="rounded-lg border border-surface-muted/60 dark:border-gray-700 bg-white dark:bg-surface-darker p-3">
+              <div className="text-xs uppercase tracking-wide text-text-muted dark:text-text-inverted/70 mb-2">
+                Create a personal list
+              </div>
+              <form
+                className="space-y-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleCreateCollection();
+                }}
+              >
+                <input
+                  type="text"
+                  value={newCollectionName}
+                  onChange={(event) => setNewCollectionName(event.target.value)}
+                  placeholder="New collection name"
+                  className="w-full rounded-lg border border-surface-muted dark:border-gray-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+                  maxLength={80}
+                />
+                <div className="flex items-center gap-2">
+                  <select
+                    value={newCollectionVisibility}
+                    onChange={(event) =>
+                      setNewCollectionVisibility(
+                        event.target.value as CollectionVisibility,
+                      )
+                    }
+                    className="flex-1 rounded-lg border border-surface-muted dark:border-gray-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm text-text-base dark:text-text-inverted"
+                  >
+                    <option value="private">Private</option>
+                    <option value="unlisted">Unlisted</option>
+                    <option value="public">Public</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={isCreatingCollection}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-brand-primary text-white text-sm font-semibold hover:bg-brand-secondary hover:text-text-base disabled:opacity-60"
+                  >
+                    <FiPlus />
+                    {isCreatingCollection ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
             <label
               htmlFor="collection-select"
               className="text-xs uppercase tracking-wide text-text-muted dark:text-text-inverted/70"
