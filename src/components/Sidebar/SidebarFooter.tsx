@@ -16,11 +16,13 @@ import {
   HiShieldCheck,
   HiDocumentText,
   HiFlag,
+  HiTrash,
 } from "react-icons/hi";
 import { FaMoon, FaSun } from "react-icons/fa";
 import { createPaymentLink } from "../../services/stripe";
 import { useModal } from "../../context/modalContext";
 import { useTheme } from "@/hooks/useTheme";
+import { clearAllCache } from "@services/cacheService";
 
 const CONTACT_EMAIL = "wich.wayz.map@gmail.com";
 
@@ -120,6 +122,33 @@ const SidebarFooter = () => {
   const handleAdminSettings = () => {
     navigate(ROUTES.ACCOUNT.ADMIN_SETTINGS);
     closeAllMenus();
+  };
+
+  const handleClearCache = async () => {
+    const confirmed = confirm(
+      "Are you sure you want to clear all cached data? This will reload the page.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await clearAllCache();
+      addToast("Cache cleared successfully. Reloading...", "success");
+
+      // Small delay to show toast before reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to clear cache. Please try again.";
+      addToast(errorMessage, "error");
+      console.error("Cache clearing error:", error);
+    }
   };
 
   const ThemeIcon = theme === "dark" ? FaMoon : FaSun;
@@ -342,6 +371,20 @@ const SidebarFooter = () => {
                     </span>
                     <span />
                   </Link>
+
+                  <div className={menuDivider} />
+
+                  <button
+                    type="button"
+                    onClick={handleClearCache}
+                    className={`${menuItemRow} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20`}
+                  >
+                    <span className={menuItemLeft}>
+                      <HiTrash className="w-4 h-4" />
+                      Clear Cache
+                    </span>
+                    <span />
+                  </button>
                 </div>
               )}
             </div>
