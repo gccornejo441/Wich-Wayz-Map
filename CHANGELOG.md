@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.12.0...wich-wayz-v1.13.0) (2026-02-25)
+
+
+### Features
+
+* bulk shop update ([#75](https://github.com/gccornejo441/Wich-Wayz-Map/issues/75)) ([b8ad072](https://github.com/gccornejo441/Wich-Wayz-Map/commit/b8ad0720aa922f2a29b9c49b2d39a9bfeca35e71))
+
 ## [1.12.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.11.0...wich-wayz-v1.12.0) (2026-02-24)
 
 
