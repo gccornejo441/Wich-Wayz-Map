@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.14.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.13.0...wich-wayz-v1.14.0) (2026-02-26)
+
+
+### Features
+
+* bulk shop update ([#77](https://github.com/gccornejo441/Wich-Wayz-Map/issues/77)) ([0b245b2](https://github.com/gccornejo441/Wich-Wayz-Map/commit/0b245b2bbf94af5b706c2e0ffbdfa6c7f55469e4))
+
+
+### Bug Fixes
+
+* mobile viewport zoom ([#79](https://github.com/gccornejo441/Wich-Wayz-Map/issues/79)) ([fe214cf](https://github.com/gccornejo441/Wich-Wayz-Map/commit/fe214cfb6759d52b37314e0045e2ba62b0ec147a))
+
 ## [1.13.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.12.0...wich-wayz-v1.13.0) (2026-02-25)
 
 
