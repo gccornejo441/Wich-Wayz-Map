@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.14.0...wich-wayz-v1.15.0) (2026-02-27)
+
+
+### Features
+
+* bulk upload improvements and duplicate prevention ([#80](https://github.com/gccornejo441/Wich-Wayz-Map/issues/80)) ([a4e18ba](https://github.com/gccornejo441/Wich-Wayz-Map/commit/a4e18bab3e29b6379aae7f0cd0495523f1a603fc))
+
 ## [1.14.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.13.0...wich-wayz-v1.14.0) (2026-02-26)
 
 
