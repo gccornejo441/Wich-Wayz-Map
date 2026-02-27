@@ -41,6 +41,135 @@ const toEnumValue = (value, validValues, fallback) => {
   return validValues.has(normalized) ? normalized : fallback;
 };
 
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ * Returns distance in meters
+ */
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+/**
+ * Calculate similarity between two strings using Levenshtein distance
+ * Returns a percentage (0-100) where 100 is identical
+ */
+const calculateStringSimilarity = (str1, str2) => {
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
+
+  if (s1 === s2) return 100;
+
+  const len1 = s1.length;
+  const len2 = s2.length;
+
+  if (len1 === 0 || len2 === 0) return 0;
+
+  // Levenshtein distance matrix
+  const matrix = Array(len1 + 1)
+    .fill(null)
+    .map(() => Array(len2 + 1).fill(0));
+
+  for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+  for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  const distance = matrix[len1][len2];
+  const maxLen = Math.max(len1, len2);
+  const similarity = ((maxLen - distance) / maxLen) * 100;
+  return Math.round(similarity);
+};
+
+/**
+ * Check for duplicate locations within proximity radius
+ * Returns nearby locations with their shops
+ */
+const checkForNearbyDuplicates = async (latitude, longitude, shopName) => {
+  const PROXIMITY_THRESHOLD_METERS = 25; // 25 meters
+  const NAME_SIMILARITY_THRESHOLD = 80; // 80% similar
+
+  // Get all locations (we'll filter by distance in memory since SQLite doesn't have great spatial functions)
+  const locationsResult = await db.execute({
+    sql: `
+      SELECT 
+        l.id,
+        l.latitude,
+        l.longitude,
+        l.street_address,
+        l.city,
+        l.state,
+        s.id as shop_id,
+        s.name as shop_name
+      FROM locations l
+      LEFT JOIN shop_locations sl ON l.id = sl.location_id
+      LEFT JOIN shops s ON sl.shop_id = s.id
+      WHERE l.latitude IS NOT NULL 
+        AND l.longitude IS NOT NULL
+        AND COALESCE(s.content_status, 'active') = 'active'
+    `,
+    args: [],
+  });
+
+  const nearbyShops = [];
+
+  for (const loc of locationsResult.rows) {
+    const distance = calculateDistance(
+      latitude,
+      longitude,
+      loc.latitude,
+      loc.longitude,
+    );
+
+    if (distance <= PROXIMITY_THRESHOLD_METERS && loc.shop_name) {
+      const nameSimilarity = calculateStringSimilarity(shopName, loc.shop_name);
+
+      nearbyShops.push({
+        shopId: loc.shop_id,
+        shopName: loc.shop_name,
+        locationId: loc.id,
+        address: loc.street_address,
+        city: loc.city,
+        state: loc.state,
+        distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+        nameSimilarity,
+      });
+    }
+  }
+
+  // Sort by distance
+  nearbyShops.sort((a, b) => a.distance - b.distance);
+
+  // Check if any nearby shop has high name similarity
+  const duplicates = nearbyShops.filter(
+    (shop) => shop.nameSimilarity >= NAME_SIMILARITY_THRESHOLD,
+  );
+
+  return {
+    hasDuplicates: duplicates.length > 0,
+    duplicates,
+    nearbyShops: nearbyShops.slice(0, 5), // Return top 5 nearest for context
+  };
+};
+
 const getChainEnforcementMode = () => {
   const raw = String(process.env.CHAIN_ENFORCEMENT_MODE ?? "enforce")
     .trim()
@@ -344,13 +473,54 @@ async function handler(req, res) {
   let brandKey = "";
 
   try {
-    const rateLimit = await checkSubmissionRateLimits(userId);
-    if (rateLimit.limited) {
-      return res.status(429).json({ error: rateLimit.message });
+    // Skip rate limiting for admin users
+    const isAdmin = req.dbUser.role === "admin";
+    if (!isAdmin) {
+      const rateLimit = await checkSubmissionRateLimits(userId);
+      if (rateLimit.limited) {
+        return res.status(429).json({ error: rateLimit.message });
+      }
     }
+
     brandKey = normalizeBrandKey(shopName);
     if (!brandKey) {
       return res.status(400).json({ error: "Unable to determine a brand key" });
+    }
+
+    // Check for duplicate locations (proximity-based)
+    step = "check_duplicates";
+    console.error("[add-new-shop] Checking for nearby duplicates...");
+    const duplicateCheck = await checkForNearbyDuplicates(
+      latitude,
+      longitude,
+      shopName,
+    );
+
+    if (duplicateCheck.hasDuplicates) {
+      const duplicate = duplicateCheck.duplicates[0];
+      return res.status(409).json({
+        error: "A similar shop already exists at this location",
+        duplicate: {
+          shopId: duplicate.shopId,
+          shopName: duplicate.shopName,
+          address: `${duplicate.address}, ${duplicate.city}, ${duplicate.state}`,
+          distance: duplicate.distance,
+          similarity: duplicate.nameSimilarity,
+        },
+        message: `"${duplicate.shopName}" is ${duplicate.distance}m away with ${duplicate.nameSimilarity}% name similarity. This appears to be a duplicate.`,
+      });
+    }
+
+    // Log nearby shops for awareness (even if not duplicates)
+    if (duplicateCheck.nearbyShops.length > 0) {
+      console.error(
+        "[add-new-shop] Found nearby shops (not duplicates):",
+        duplicateCheck.nearbyShops.map((s) => ({
+          name: s.shopName,
+          distance: s.distance,
+          similarity: s.nameSimilarity,
+        })),
+      );
     }
 
     if (shouldUseBrandEnforcement) {

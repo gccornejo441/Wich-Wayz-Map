@@ -12,8 +12,8 @@ export interface CsvShopRow {
   state: string;
   zip: string;
   country?: string;
-  latitude: string | number;
-  longitude: string | number;
+  latitude?: string | number;
+  longitude?: string | number;
   phone?: string;
   website_url?: string;
   categories: string;
@@ -104,7 +104,7 @@ const parseCSVLine = (line: string): string[] => {
 const validateShopRow = (row: CsvShopRow, rowNumber: number): ParsedShopRow => {
   const errors: string[] = [];
 
-  // Check required fields
+  // Check required fields (latitude/longitude now optional - will be geocoded if missing)
   const requiredFields: (keyof CsvShopRow)[] = [
     "shop_name",
     "shop_description",
@@ -112,8 +112,6 @@ const validateShopRow = (row: CsvShopRow, rowNumber: number): ParsedShopRow => {
     "city",
     "state",
     "zip",
-    "latitude",
-    "longitude",
     "categories",
     "chain_attestation",
     "estimated_location_count",
@@ -275,8 +273,8 @@ export const generateCsvTemplate = (): string => {
     "OR",
     "97201",
     "US",
-    "45.5155",
-    "-122.6789",
+    "", // latitude (optional - will be auto-geocoded)
+    "", // longitude (optional - will be auto-geocoded)
     "(503) 555-0123",
     "https://joessandwiches.com",
     "Deli,Artisan",

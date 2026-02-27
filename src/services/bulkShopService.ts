@@ -5,6 +5,7 @@
 
 import { authApiRequest } from "./apiClient";
 import { GetCategories } from "./categoryService";
+import { MapBoxLocationLookup } from "./geolocation";
 import type { CsvShopRow } from "@/utils/csvParser";
 
 export interface BulkUploadResult {
@@ -25,6 +26,7 @@ export interface ShopSubmissionResult {
 
 /**
  * Convert CSV row to API payload format
+ * Automatically geocodes address if lat/long not provided
  */
 const csvRowToPayload = async (row: CsvShopRow) => {
   // Get categories to map names to IDs
@@ -48,6 +50,47 @@ const csvRowToPayload = async (row: CsvShopRow) => {
     );
   }
 
+  // Handle coordinates - geocode if missing
+  let latitude: number;
+  let longitude: number;
+
+  const hasLatitude =
+    row.latitude !== undefined &&
+    row.latitude !== null &&
+    String(row.latitude).trim() !== "";
+  const hasLongitude =
+    row.longitude !== undefined &&
+    row.longitude !== null &&
+    String(row.longitude).trim() !== "";
+
+  if (hasLatitude && hasLongitude) {
+    // Use provided coordinates
+    latitude = Number(row.latitude);
+    longitude = Number(row.longitude);
+  } else {
+    // Geocode the address
+    const fullAddress = [
+      row.address.trim(),
+      row.address_second?.trim(),
+      row.city.trim(),
+      row.state.toUpperCase().trim(),
+      row.zip.replace(/\D/g, ""),
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const geocodeResult = await MapBoxLocationLookup(fullAddress);
+
+    if (!geocodeResult) {
+      throw new Error(
+        `Failed to geocode address: ${fullAddress}. Please provide latitude/longitude or verify the address is correct.`,
+      );
+    }
+
+    latitude = geocodeResult.coordinates.latitude;
+    longitude = geocodeResult.coordinates.longitude;
+  }
+
   return {
     shopName: row.shop_name.trim(),
     shop_description: row.shop_description.trim(),
@@ -58,8 +101,8 @@ const csvRowToPayload = async (row: CsvShopRow) => {
     state: row.state.toUpperCase().trim(),
     postcode: row.zip.replace(/\D/g, ""),
     country: row.country?.toUpperCase().trim() || "US",
-    latitude: Number(row.latitude),
-    longitude: Number(row.longitude),
+    latitude,
+    longitude,
     phone: row.phone?.trim() || "",
     website_url: row.website_url?.trim() || "",
     chain_attestation: String(row.chain_attestation).toLowerCase(),
@@ -153,9 +196,9 @@ export const submitBulkShops = async (
       onProgress(i + 1, rows.length, result);
     }
 
-    // Small delay to avoid overwhelming the server
+    // Small delay to avoid overwhelming the server and rate limits
     if (i < rows.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
 
