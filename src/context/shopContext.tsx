@@ -25,6 +25,7 @@ export interface ShopsContextType {
   clearFilters: () => Promise<void>;
   updateShopInContext: (shop: ShopWithUser) => void;
   removeShopFromContext: (shopId: number) => void;
+  refreshShops: () => Promise<void>;
 }
 
 const FILTERED_SHOPS_KEY = "filtered_shops";
@@ -137,6 +138,32 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
     invalidateSearchIndex();
   };
 
+  const refreshShops = async () => {
+    try {
+      // Fetch fresh data from API
+      const freshShops = await GetShops();
+      const freshLocs = freshShops.flatMap((s) => s.locations || []);
+
+      // Update state
+      setShops(freshShops);
+      setLocations(freshLocs);
+
+      // Update cache
+      await cacheData(SHOPS_STORE, freshShops);
+      await cacheData(LOCATIONS_STORE, freshLocs);
+
+      // Invalidate search index
+      invalidateSearchIndex();
+
+      // Clear any filtered state to show all shops
+      setFiltered([]);
+      sessionStorage.removeItem(FILTERED_SHOPS_KEY);
+    } catch (error) {
+      console.error("Failed to refresh shops:", error);
+      throw error;
+    }
+  };
+
   return (
     <ShopsContext.Provider
       value={{
@@ -150,6 +177,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
         clearFilters,
         updateShopInContext,
         removeShopFromContext,
+        refreshShops,
       }}
     >
       {children}

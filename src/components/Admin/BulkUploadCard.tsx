@@ -12,11 +12,13 @@ import {
   type ShopSubmissionResult,
 } from "@services/bulkShopService";
 import { useToast } from "@context/toastContext";
+import { useShops } from "@context/shopContext";
 
 type UploadStage = "idle" | "preview" | "uploading" | "complete";
 
 export const BulkUploadCard: React.FC = () => {
   const { addToast } = useToast();
+  const { refreshShops } = useShops();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [stage, setStage] = useState<UploadStage>("idle");
@@ -94,6 +96,20 @@ export const BulkUploadCard: React.FC = () => {
         `Upload complete: ${result.success} succeeded, ${result.failed} failed`,
         result.failed === 0 ? "success" : "error",
       );
+
+      // Refresh shops to show newly added shops on the map
+      if (result.success > 0) {
+        try {
+          await refreshShops();
+          addToast("Map updated with new shops", "success");
+        } catch (refreshError) {
+          console.error("Failed to refresh shops:", refreshError);
+          addToast(
+            "Shops added but map refresh failed. Please reload the page.",
+            "error",
+          );
+        }
+      }
     } catch (error) {
       console.error("Bulk upload failed:", error);
       addToast("Bulk upload failed. Please try again.", "error");
