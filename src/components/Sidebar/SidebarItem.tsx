@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { useOverlay } from "@/context/overlayContext";
 import { ReactNode, useMemo } from "react";
+import { useIsMobile } from "@hooks/useIsMobile";
 
 export interface BaseItemProps {
   onClick?: () => void;
@@ -24,6 +25,7 @@ export const SidebarItem = ({
 }: BaseItemProps) => {
   const { close } = useOverlay();
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const resolvedLinkTo = useMemo(() => {
     if (!linkTo) return undefined;
@@ -41,7 +43,10 @@ export const SidebarItem = ({
       return;
     }
 
-    close("nav");
+    // Only close sidebar on mobile devices
+    if (isMobile) {
+      close("nav");
+    }
     onClick?.();
   };
 
@@ -58,7 +63,10 @@ export const SidebarItem = ({
       onKeyDown={(e) => {
         if (!disabled && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
-          close("nav");
+          // Only close sidebar on mobile devices
+          if (isMobile) {
+            close("nav");
+          }
           onClick?.();
         }
       }}
