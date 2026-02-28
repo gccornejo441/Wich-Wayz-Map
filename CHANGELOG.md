@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.15.0...wich-wayz-v1.16.0) (2026-02-28)
+
+
+### Features
+
+* mobile responsive sidebar ([#82](https://github.com/gccornejo441/Wich-Wayz-Map/issues/82)) ([e610235](https://github.com/gccornejo441/Wich-Wayz-Map/commit/e610235ca7e97bd9c70dfe75c66d43197224fabf))
+
 ## [1.15.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.14.0...wich-wayz-v1.15.0) (2026-02-27)
 
 
