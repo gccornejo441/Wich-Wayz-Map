@@ -1,0 +1,60 @@
+version: 2
+updates:
+  # Monitor npm dependencies for security updates
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+      timezone: "America/New_York"
+
+    # Limit the number of open pull requests
+    open-pull-requests-limit: 5
+
+    # Group updates to reduce PR noise
+    groups:
+      # Group all non-security updates together
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+
+    # Pull request settings
+    pull-request-branch-name:
+      separator: "/"
+
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+
+    # Reviewers and assignees (optional - customize as needed)
+    # reviewers:
+    #   - "gccornejo441"
+    # assignees:
+    #   - "gccornejo441"
+
+    # Labels to add to pull requests
+    labels:
+      - "dependencies"
+      - "automated"
+
+    # Always create PRs for security updates, even if limit is reached
+    # Security updates are never grouped and always get individual PRs
+
+    # Target branch
+    target-branch: "main"
+
+    # Rebase strategy
+    rebase-strategy: "auto"
+
+    # Ignore specific dependencies (if needed)
+    # ignore:
+    #   - dependency-name: "package-name"
+    #     versions: ["1.x", "2.x"]
