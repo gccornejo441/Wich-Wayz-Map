@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.17.0...wich-wayz-v1.18.0) (2026-03-02)
+
+
+### Features
+
+* comment auth middleware ([#91](https://github.com/gccornejo441/Wich-Wayz-Map/issues/91)) ([5139553](https://github.com/gccornejo441/Wich-Wayz-Map/commit/513955369bf225a05d8f23013e81d32b21067b9d))
+
 ## [1.17.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.16.0...wich-wayz-v1.17.0) (2026-02-28)
 
 
