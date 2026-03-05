@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
 import { executeQuery } from "../lib/db.js";
+import { withRateLimit } from "../lib/rateLimiter.js";
+import { withIpBlacklist } from "../lib/ipBlacklist.js";
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
@@ -32,3 +34,6 @@ export default async function handler(req, res) {
       .json({ success: false, message: "An unexpected error occurred." });
   }
 }
+
+// Apply security middleware: IP blacklist → Rate limit → Handler
+export default withIpBlacklist()(withRateLimit("reset_password")(handler));

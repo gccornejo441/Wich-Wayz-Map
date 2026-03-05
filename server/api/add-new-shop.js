@@ -5,6 +5,9 @@ import {
   normalizeBrandKey,
 } from "./lib/brandKey.js";
 import { scoreChainLikelihood } from "./lib/chainScore.js";
+import { withRateLimit, getClientIp } from "./lib/rateLimiter.js";
+import { withRecaptcha } from "./lib/recaptchaValidator.js";
+import { withIpBlacklist, recordLowScore } from "./lib/ipBlacklist.js";
 
 const VALID_CHAIN_ATTESTATIONS = new Set(["no", "yes", "unsure"]);
 const VALID_LOCATION_COUNT_OPTIONS = new Set(["lt10", "gte10", "unsure"]);
@@ -434,6 +437,12 @@ async function handler(req, res) {
   const chainEnforcementMode = getChainEnforcementMode();
   const shouldUseBrandEnforcement = chainEnforcementMode !== "off";
 
+  // Track low reCAPTCHA scores for bot detection
+  if (req.recaptchaScore && req.recaptchaScore < 0.2) {
+    const ip = getClientIp(req);
+    recordLowScore(ip, req.recaptchaScore);
+  }
+
   const chainAttestation = toEnumValue(
     chain_attestation,
     VALID_CHAIN_ATTESTATIONS,
@@ -832,4 +841,9 @@ async function handler(req, res) {
   }
 }
 
-export default withActiveAccount(handler);
+// Apply security middleware stack: IP blacklist → Rate limit → reCAPTCHA → Auth → Handler
+export default withIpBlacklist()(
+  withRateLimit("submit_shop")(
+    withRecaptcha("submit_shop")(withActiveAccount(handler)),
+  ),
+);

@@ -24,6 +24,7 @@ import { auth } from "../services/firebase";
 import { FirebaseError } from "firebase/app";
 import { getMyUserMetadata } from "../services/apiClient";
 import { SafeUserMetadata } from "@models/SafeUserMetadata";
+import { useRecaptchaExecute } from "@hooks/useRecaptcha";
 
 /**
  * Backend user model - may contain sensitive fields
@@ -230,18 +231,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return () => unsubscribe();
   }, [fetchUserMetadataWithRetry]);
 
+  const executeRecaptcha = useRecaptchaExecute();
+
   const login = async (
     email: string,
     password: string,
     rememberMe: boolean,
   ): Promise<{ success: boolean; message: string }> => {
     try {
+      // Execute reCAPTCHA before login
+      let recaptchaToken: string | null = null;
+      try {
+        recaptchaToken = await executeRecaptcha("login");
+      } catch (recaptchaError) {
+        console.error("reCAPTCHA error during login:", recaptchaError);
+        // Continue with login even if reCAPTCHA fails (graceful degradation)
+        // Backend will handle missing token
+      }
+
       const persistence = rememberMe
         ? browserLocalPersistence
         : browserSessionPersistence;
 
       await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, email, password);
+
+      // If we have a reCAPTCHA token, we could send it to backend for logging
+      // For now, Firebase handles the authentication
+      if (recaptchaToken) {
+        // Store for potential backend verification if needed
+        sessionStorage.setItem("lastRecaptchaToken", recaptchaToken);
+      }
 
       return { success: true, message: "Login successful." };
     } catch (error: unknown) {
@@ -291,6 +311,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         throw new Error("Password is required and cannot be empty.");
       }
 
+      // Execute reCAPTCHA before registration
+      let recaptchaToken: string;
+      try {
+        recaptchaToken = await executeRecaptcha("register");
+      } catch (recaptchaError) {
+        console.error("reCAPTCHA error during registration:", recaptchaError);
+        return {
+          success: false,
+          message:
+            "Verification failed. Please refresh the page and try again.",
+        };
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -303,6 +336,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       await sendEmailVerification(user);
+
+      // Store reCAPTCHA token for potential backend verification
+      sessionStorage.setItem("lastRecaptchaToken", recaptchaToken);
 
       return {
         success: true,

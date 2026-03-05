@@ -1,5 +1,6 @@
 import { executeQuery } from "../lib/db.js";
 import { verifyFirebaseToken } from "../lib/firebaseAdmin.js";
+import { withActiveAccount } from "../lib/withAuth.js";
 
 const REACTION_TYPES = new Set([
   "like",
@@ -144,17 +145,28 @@ export default async function handleComments(req, res) {
   if (req.method === "GET") {
     await getCommentsForShop(req, res, shop_id);
   }
-  // Handle PUT requests (update a comment) - shop_id is actually comment_id here
-  else if (req.method === "PUT") {
-    await updateComment(req, res, shop_id);
-  }
-  // Handle DELETE requests (delete a comment) - shop_id is actually comment_id here
-  else if (req.method === "DELETE") {
-    await deleteComment(req, res, shop_id);
+  // Handle PUT/DELETE requests (shop_id is actually comment_id here) with auth required.
+  else if (req.method === "PUT" || req.method === "DELETE") {
+    await handleAuthenticatedCommentMutations(req, res);
   } else {
     res.status(405).json({ message: "Method Not Allowed" });
   }
 }
+
+const handleAuthenticatedCommentMutations = withActiveAccount(
+  async (req, res) => {
+    const { shop_id } = req.query;
+    if (req.method === "PUT") {
+      await updateComment(req, res, shop_id);
+      return;
+    }
+    if (req.method === "DELETE") {
+      await deleteComment(req, res, shop_id);
+      return;
+    }
+    res.status(405).json({ message: "Method Not Allowed" });
+  },
+);
 
 async function getCommentsForShop(req, res, shop_id) {
   if (typeof shop_id !== "string") {
@@ -251,17 +263,18 @@ async function updateComment(req, res, comment_id) {
     return;
   }
 
-  const { user_id, body } = req.body ?? {};
-  const bodyUserId = parseInt(user_id, 10);
-  const authenticatedUserId = await resolveAuthenticatedUserId(req);
-  const parsedUserId =
-    authenticatedUserId ??
-    (Number.isNaN(bodyUserId) ? null : Number(bodyUserId));
+  const { body } = req.body ?? {};
+  const parsedUserId = Number(req.dbUser?.id);
   const trimmedBody =
     typeof body === "string" ? body.trim().slice(0, 5000) : "";
 
-  if (!Number.isInteger(parsedUserId) || trimmedBody.length === 0) {
-    res.status(400).json({ message: "user_id/auth and body are required" });
+  if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
+    res.status(401).json({ message: "Authentication required" });
+    return;
+  }
+
+  if (trimmedBody.length === 0) {
+    res.status(400).json({ message: "body is required" });
     return;
   }
 
@@ -339,15 +352,10 @@ async function deleteComment(req, res, comment_id) {
     return;
   }
 
-  const { user_id } = req.body ?? {};
-  const bodyUserId = parseInt(user_id, 10);
-  const authenticatedUserId = await resolveAuthenticatedUserId(req);
-  const parsedUserId =
-    authenticatedUserId ??
-    (Number.isNaN(bodyUserId) ? null : Number(bodyUserId));
+  const parsedUserId = Number(req.dbUser?.id);
 
-  if (!Number.isInteger(parsedUserId)) {
-    res.status(400).json({ message: "user_id/auth is required" });
+  if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
+    res.status(401).json({ message: "Authentication required" });
     return;
   }
 
