@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.18.0...wich-wayz-v1.19.0) (2026-03-05)
+
+
+### Features
+
+* anti abuse protection ([#94](https://github.com/gccornejo441/Wich-Wayz-Map/issues/94)) ([245afea](https://github.com/gccornejo441/Wich-Wayz-Map/commit/245afeaa71d0871c1d2e86f4996a04881d4e9445))
+
 ## [1.18.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.17.0...wich-wayz-v1.18.0) (2026-03-02)
 
 
