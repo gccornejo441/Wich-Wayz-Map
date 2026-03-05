@@ -6,12 +6,67 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const expectedPriceCents = parseInt(
+  process.env.STRIPE_MEMBERSHIP_PRICE_CENTS || "500",
+  10,
+);
+const validatePaymentAmount = process.env.VALIDATE_PAYMENT_AMOUNT !== "false";
+
+// Idempotency store: Map<payment_intent_id, { processed: boolean, timestamp }>
+const processedPayments = new Map();
 
 export const config = {
   api: {
     bodyParser: false,
   },
   runtime: "nodejs",
+};
+
+/**
+ * Check if a payment has already been processed (idempotency).
+ * @param {string} paymentIntentId - The payment intent ID
+ * @returns {boolean} True if already processed
+ */
+const isPaymentProcessed = (paymentIntentId) => {
+  const entry = processedPayments.get(paymentIntentId);
+  if (!entry) return false;
+
+  // Clean up entries older than 24 hours
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  if (entry.timestamp < dayAgo) {
+    processedPayments.delete(paymentIntentId);
+    return false;
+  }
+
+  return entry.processed;
+};
+
+/**
+ * Mark a payment as processed.
+ * @param {string} paymentIntentId - The payment intent ID
+ */
+const markPaymentProcessed = (paymentIntentId) => {
+  processedPayments.set(paymentIntentId, {
+    processed: true,
+    timestamp: Date.now(),
+  });
+};
+
+/**
+ * Validate payment amount matches expected membership price.
+ * @param {number} amount - Amount in cents
+ * @returns {boolean} True if amount is valid
+ */
+const validateAmount = (amount) => {
+  if (!validatePaymentAmount) {
+    return true; // Validation disabled
+  }
+
+  // Allow some tolerance for currency conversion (±10%)
+  const minAmount = expectedPriceCents * 0.9;
+  const maxAmount = expectedPriceCents * 1.1;
+
+  return amount >= minAmount && amount <= maxAmount;
 };
 
 /**
@@ -89,35 +144,98 @@ export default async function handler(req, res) {
         session.payment_intent,
       );
 
+      // Idempotency check
+      if (isPaymentProcessed(paymentIntent.id)) {
+        console.warn(
+          `[Webhook] Payment ${paymentIntent.id} already processed (idempotency)`,
+        );
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+
+      // Validate payment status
+      if (paymentIntent.status !== "succeeded") {
+        console.error(
+          `[Webhook] Payment ${paymentIntent.id} status is ${paymentIntent.status}, not 'succeeded'`,
+        );
+        return res.status(400).send("Payment not successful");
+      }
+
+      // Validate payment amount
+      if (!validateAmount(paymentIntent.amount)) {
+        console.error(
+          `[Webhook] Invalid payment amount: ${paymentIntent.amount} cents (expected ~${expectedPriceCents})`,
+        );
+        return res.status(400).send("Invalid payment amount");
+      }
+
       console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
 
       const userId = paymentIntent.metadata?.userId;
-      if (userId) {
-        console.log(`Updating membership for user: ${userId}`);
-        await updateMembershipStatus(userId, "member");
-      } else {
-        console.warn("UserId is missing from payment metadata.");
+      if (!userId) {
+        console.error(
+          `[Webhook] UserId missing from payment metadata for ${paymentIntent.id}`,
+        );
+        return res.status(400).send("Missing user metadata");
       }
+
+      console.log(`Updating membership for user: ${userId}`);
+      await updateMembershipStatus(userId, "member");
+
+      // Mark as processed
+      markPaymentProcessed(paymentIntent.id);
+
+      res.status(200).json({ received: true, userId });
     } else if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object;
 
       console.log("Webhook event:", JSON.stringify(event, null, 2));
 
+      // Idempotency check
+      if (isPaymentProcessed(paymentIntent.id)) {
+        console.warn(
+          `[Webhook] Payment ${paymentIntent.id} already processed (idempotency)`,
+        );
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+
+      // Validate payment status
+      if (paymentIntent.status !== "succeeded") {
+        console.error(
+          `[Webhook] Payment ${paymentIntent.id} status is ${paymentIntent.status}, not 'succeeded'`,
+        );
+        return res.status(400).send("Payment not successful");
+      }
+
+      // Validate payment amount
+      if (!validateAmount(paymentIntent.amount)) {
+        console.error(
+          `[Webhook] Invalid payment amount: ${paymentIntent.amount} cents (expected ~${expectedPriceCents})`,
+        );
+        return res.status(400).send("Invalid payment amount");
+      }
+
       console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
 
       const userId = paymentIntent.metadata?.userId;
 
-      if (userId) {
-        console.log(`Updating membership for user: ${userId}`);
-        await updateMembershipStatus(userId, "member");
-      } else {
-        console.warn("UserId is missing from payment metadata.");
+      if (!userId) {
+        console.error(
+          `[Webhook] UserId missing from payment metadata for ${paymentIntent.id}`,
+        );
+        return res.status(400).send("Missing user metadata");
       }
+
+      console.log(`Updating membership for user: ${userId}`);
+      await updateMembershipStatus(userId, "member");
+
+      // Mark as processed
+      markPaymentProcessed(paymentIntent.id);
+
+      res.status(200).json({ received: true, userId });
     } else {
       console.log(`Unhandled event type: ${event.type}`);
+      res.status(200).json({ received: true, unhandled: true });
     }
-
-    res.status(200).json({ received: true });
   } catch (err) {
     console.error("Error processing webhook event:", err.message);
     res.status(500).send("Internal Server Error");
