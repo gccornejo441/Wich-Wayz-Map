@@ -210,10 +210,11 @@ const getClientIp = (req) => {
  * Middleware to check IP blacklist.
  * Rejects requests from blacklisted IPs.
  *
- * @returns {Function} Express middleware
+ * @param {Function} handler - The handler to wrap
+ * @returns {Function} Wrapped handler
  */
-export const withIpBlacklist = () => {
-  return (req, res, next) => {
+export const withIpBlacklist = (handler) => {
+  return async (req, res) => {
     const ip = getClientIp(req);
 
     const blacklistEntry = isBlacklisted(ip);
@@ -235,7 +236,7 @@ export const withIpBlacklist = () => {
       });
     }
 
-    next();
+    return handler(req, res);
   };
 };
 
