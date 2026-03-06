@@ -180,6 +180,33 @@ export const shouldAutoBlock = (ip) => {
 };
 
 /**
+ * Get client IP address from request (safe version).
+ * @param {Object} req - Request object
+ * @returns {string} IP address
+ */
+const getClientIp = (req) => {
+  // Safely check if headers exist
+  if (!req || !req.headers) {
+    return req?.socket?.remoteAddress || "unknown";
+  }
+
+  // Check for proxy headers first (Vercel, Cloudflare, etc.)
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+
+  // Check other common proxy headers
+  const realIp = req.headers["x-real-ip"];
+  if (realIp) {
+    return realIp.trim();
+  }
+
+  // Fall back to direct connection IP
+  return req.socket?.remoteAddress || "unknown";
+};
+
+/**
  * Middleware to check IP blacklist.
  * Rejects requests from blacklisted IPs.
  *
@@ -187,11 +214,7 @@ export const shouldAutoBlock = (ip) => {
  */
 export const withIpBlacklist = () => {
   return (req, res, next) => {
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-      req.headers["x-real-ip"] ||
-      req.socket?.remoteAddress ||
-      "unknown";
+    const ip = getClientIp(req);
 
     const blacklistEntry = isBlacklisted(ip);
 

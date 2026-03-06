@@ -22,6 +22,11 @@ const violationStore = new Map();
  * @returns {string} IP address
  */
 export const getClientIp = (req) => {
+  // Safely check if headers exist
+  if (!req || !req.headers) {
+    return req?.socket?.remoteAddress || "unknown";
+  }
+
   // Check for proxy headers first (Vercel, Cloudflare, etc.)
   const forwarded = req.headers["x-forwarded-for"];
   if (forwarded) {
