@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.20.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.19.0...wich-wayz-v1.20.0) (2026-03-05)
+
+
+### Features
+
+* mobile responsive sidebar ([#96](https://github.com/gccornejo441/Wich-Wayz-Map/issues/96)) ([f732af1](https://github.com/gccornejo441/Wich-Wayz-Map/commit/f732af17d7b00e2761eae1004a099e8b6624699c))
+
+## [1.19.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.18.0...wich-wayz-v1.19.0) (2026-03-05)
+
+
+### Features
+
+* anti abuse protection ([#94](https://github.com/gccornejo441/Wich-Wayz-Map/issues/94)) ([245afea](https://github.com/gccornejo441/Wich-Wayz-Map/commit/245afeaa71d0871c1d2e86f4996a04881d4e9445))
+
+## [1.18.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.17.0...wich-wayz-v1.18.0) (2026-03-02)
+
+
+### Features
+
+* comment auth middleware ([#91](https://github.com/gccornejo441/Wich-Wayz-Map/issues/91)) ([5139553](https://github.com/gccornejo441/Wich-Wayz-Map/commit/513955369bf225a05d8f23013e81d32b21067b9d))
+
+## [1.17.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.16.0...wich-wayz-v1.17.0) (2026-02-28)
+
+
+### Features
+
+* mobile responsive sidebar ([#84](https://github.com/gccornejo441/Wich-Wayz-Map/issues/84)) ([54cfe8d](https://github.com/gccornejo441/Wich-Wayz-Map/commit/54cfe8de284ac9083520b77b7cb24e75e065ec48))
+
 ## [1.16.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.15.0...wich-wayz-v1.16.0) (2026-02-28)
 
 

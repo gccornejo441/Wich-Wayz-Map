@@ -5,6 +5,7 @@ import { useAuth } from "@context/authContext";
 import UserAvatar from "@components/Avatar/UserAvatar";
 import { useState, useRef, useEffect } from "react";
 import { useOverlay } from "@/context/overlayContext";
+import { useIsMobile } from "@hooks/useIsMobile";
 import {
   HiUser,
   HiLogout,
@@ -34,6 +35,7 @@ const SidebarFooter = () => {
   const navigate = useNavigate();
   const { openLoginModal, openSignupModal } = useModal();
   const { close } = useOverlay();
+  const isMobile = useIsMobile();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showHelpSubmenu, setShowHelpSubmenu] = useState(false);
   const [isCreatingPaymentLink, setIsCreatingPaymentLink] = useState(false);
@@ -69,8 +71,10 @@ const SidebarFooter = () => {
     setShowDropdown(false);
     setShowHelpSubmenu(false);
 
-    // Close the main sidebar when navigating from dropdown
-    close("nav");
+    // Close the main sidebar on mobile devices
+    if (isMobile) {
+      close("nav");
+    }
   };
 
   const handleContactUsClick = async () => {
