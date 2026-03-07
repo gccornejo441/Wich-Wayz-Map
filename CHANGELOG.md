@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.1...wich-wayz-v1.20.2) (2026-03-07)
+
+
+### Bug Fixes
+
+* rate limiter headers safety check ([#101](https://github.com/gccornejo441/Wich-Wayz-Map/issues/101)) ([6ca1d4d](https://github.com/gccornejo441/Wich-Wayz-Map/commit/6ca1d4db7e89b409d68a0e9d8895e1ddfa08674c))
+* remove ipBlacklist from shop submission endpoint ([#103](https://github.com/gccornejo441/Wich-Wayz-Map/issues/103)) ([96fecf3](https://github.com/gccornejo441/Wich-Wayz-Map/commit/96fecf39181baf2e9f8987bc3062b7dd7c8c6ab9))
+
 ## [1.20.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.0...wich-wayz-v1.20.1) (2026-03-06)
 
 
