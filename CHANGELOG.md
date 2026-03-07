@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.3](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.2...wich-wayz-v1.20.3) (2026-03-07)
+
+
+### Bug Fixes
+
+* dev server errors and rate limiter ([#104](https://github.com/gccornejo441/Wich-Wayz-Map/issues/104)) ([ad210d1](https://github.com/gccornejo441/Wich-Wayz-Map/commit/ad210d153c3a7af63cd5d59b2fafc7fa4a5bfb53))
+
 ## [1.20.2](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.1...wich-wayz-v1.20.2) (2026-03-07)
 
 
