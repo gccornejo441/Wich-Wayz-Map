@@ -842,7 +842,7 @@ async function handler(req, res) {
 }
 
 // Apply security middleware stack: IP blacklist → Rate limit → reCAPTCHA → Auth → Handler
-export default withIpBlacklist()(
+export default withIpBlacklist(
   withRateLimit("submit_shop")(
     withRecaptcha("submit_shop")(withActiveAccount(handler)),
   ),
