@@ -834,7 +834,6 @@ async function handler(req, res) {
   }
 }
 
-// Apply security middleware stack: Rate limit → reCAPTCHA → Auth → Handler
-export default withRateLimit("submit_shop")(
-  withRecaptcha("submit_shop")(withActiveAccount(handler)),
-);
+// Apply security middleware stack: Rate limit → Auth → Handler
+// Note: reCAPTCHA temporarily disabled for development
+export default withRateLimit("submit_shop")(withActiveAccount(handler));

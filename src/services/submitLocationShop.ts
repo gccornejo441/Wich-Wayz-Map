@@ -34,6 +34,7 @@ export async function handleLocationSubmit(
   addToast: (message: string, type: "success" | "error") => void,
   navigate: (path: string) => void,
   selectShop?: (shop: ShopGeoJsonProperties) => void,
+  recaptchaToken?: string,
 ): Promise<boolean> {
   try {
     if (!auth.currentUser) {
@@ -43,9 +44,14 @@ export async function handleLocationSubmit(
 
     const payload = createLocationShopPayload(addAShopPayload, address);
 
+    // Add reCAPTCHA token to payload if provided
+    const requestPayload = recaptchaToken
+      ? { ...payload, recaptchaToken }
+      : payload;
+
     const response = await authApiRequest<AddShopApiResponse>("/add-new-shop", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestPayload),
     });
 
     if (response.status === "pending_review") {

@@ -3,10 +3,7 @@
   "installCommand": "npm ci --include=dev",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api?path=$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api?path=$1" }],
   "functions": {
     "api/index.js": { "includeFiles": "server/api/**" }
   },
