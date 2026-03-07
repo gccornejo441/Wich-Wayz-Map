@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import Map, { Marker, NavigationControl } from "react-map-gl";
+import { Map, Marker, NavigationControl } from "react-map-gl";
 import { useParams } from "react-router-dom";
 import { FiMapPin, FiShare2 } from "react-icons/fi";
 import { GiSandwich } from "react-icons/gi";

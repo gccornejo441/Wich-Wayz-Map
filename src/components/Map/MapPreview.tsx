@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HiClipboard } from "react-icons/hi";
-import Map, {
+import {
+  Map,
   FullscreenControl,
   MapLayerMouseEvent,
   MapRef,
