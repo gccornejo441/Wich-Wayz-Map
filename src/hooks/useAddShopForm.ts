@@ -22,6 +22,7 @@ import {
   normalizeState,
   coerceNumber,
 } from "@/utils/normalizers";
+import { useRecaptcha } from "@hooks/useRecaptcha";
 
 type ShopInitialData = Partial<ShopWithId> & Partial<ShopGeoJsonProperties>;
 
@@ -113,6 +114,7 @@ export const useAddShopForm = (
   const { addToast } = useToast();
   const { selectShop } = useShopSidebar();
   const navigate = useNavigate();
+  const { executeRecaptcha, isReady: isRecaptchaReady } = useRecaptcha();
 
   const [isAddressValid, setIsAddressValid] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -433,6 +435,21 @@ export const useAddShopForm = (
       return;
     }
 
+    // Generate reCAPTCHA token for new shop submission
+    let recaptchaToken: string | undefined;
+    try {
+      if (isRecaptchaReady) {
+        recaptchaToken = await executeRecaptcha("submit_shop");
+      }
+    } catch (error) {
+      console.error("reCAPTCHA error:", error);
+      addToast(
+        "Security verification failed. Please refresh and try again.",
+        "error",
+      );
+      return;
+    }
+
     const addressDraft: AddressDraft = {
       streetAddress: data.address ?? "",
       streetAddressSecond: data.address_second ?? "",
@@ -452,6 +469,7 @@ export const useAddShopForm = (
       addToast,
       navigate,
       selectShop,
+      recaptchaToken,
     );
 
     if (success) {

@@ -127,13 +127,13 @@ export const checkRateLimit = (ip, action) => {
 
   const ipStore = rateLimitStore.get(ip);
 
-  // Initialize action timestamps if needed
+  // Clean up old entries first
+  cleanupOldEntries(ip, action, config.windowMs);
+
+  // Initialize action timestamps if needed (after cleanup)
   if (!ipStore.has(action)) {
     ipStore.set(action, []);
   }
-
-  // Clean up old entries
-  cleanupOldEntries(ip, action, config.windowMs);
 
   const timestamps = ipStore.get(action);
   const requestCount = timestamps.length;
@@ -207,13 +207,13 @@ export const resetViolations = (ip) => {
 };
 
 /**
- * Rate limiting middleware.
+ * Rate limiting middleware wrapper for serverless functions.
  *
  * @param {string} action - The action to rate limit
- * @returns {Function} Express middleware
+ * @returns {Function} Handler wrapper
  */
 export const withRateLimit = (action) => {
-  return (req, res, next) => {
+  return (handler) => async (req, res) => {
     const ip = getClientIp(req);
 
     // Skip rate limiting for localhost in development
@@ -221,7 +221,7 @@ export const withRateLimit = (action) => {
       process.env.NODE_ENV === "development" &&
       (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1")
     ) {
-      return next();
+      return handler(req, res);
     }
 
     const result = checkRateLimit(ip, action);
@@ -255,7 +255,7 @@ export const withRateLimit = (action) => {
       });
     }
 
-    next();
+    return handler(req, res);
   };
 };
 

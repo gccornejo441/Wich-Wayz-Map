@@ -177,15 +177,15 @@ export const verifyRecaptchaV3 = async (
 };
 
 /**
- * Middleware wrapper for reCAPTCHA verification.
+ * Middleware wrapper for reCAPTCHA verification (serverless-compatible).
  * Extracts token from request body and verifies it.
  *
  * @param {string} action - The expected action
  * @param {number} [minScore] - Optional custom minimum score
- * @returns {Function} Express middleware
+ * @returns {Function} Handler wrapper
  */
 export const withRecaptcha = (action, minScore = null) => {
-  return async (req, res, next) => {
+  return (handler) => async (req, res) => {
     const token = req.body?.recaptchaToken;
 
     if (!token) {
@@ -220,7 +220,7 @@ export const withRecaptcha = (action, minScore = null) => {
     // Attach verification result to request for logging/monitoring
     req.recaptchaScore = result.score;
 
-    next();
+    return handler(req, res);
   };
 };
 
