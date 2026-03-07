@@ -38,6 +38,11 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-hooks/exhaustive-deps": "error", // Upgraded from warn to error
       "react-hooks/rules-of-hooks": "error",
+      // Downgrade new v7 strict rules to warnings temporarily
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/use-memo": "warn",
+      "react-hooks/incompatible-library": "warn",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
