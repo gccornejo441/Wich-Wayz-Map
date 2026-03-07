@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.0...wich-wayz-v1.20.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* limiter headers safety check ([#99](https://github.com/gccornejo441/Wich-Wayz-Map/issues/99)) ([7ff6bb6](https://github.com/gccornejo441/Wich-Wayz-Map/commit/7ff6bb6e2ad0c4e011281e4d434f76d7226f7bee))
+
 ## [1.20.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.19.0...wich-wayz-v1.20.0) (2026-03-05)
 
 
