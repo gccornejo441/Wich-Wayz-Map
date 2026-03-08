@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Map,
-  Marker,
-  NavigationControl,
-  ViewStateChangeEvent,
-} from "react-map-gl";
+import Map, { Marker, NavigationControl } from "react-map-gl";
 import { useParams } from "react-router-dom";
 import { FiMapPin, FiShare2 } from "react-icons/fi";
 import { GiSandwich } from "react-icons/gi";
@@ -191,9 +186,7 @@ const PublicCollection = () => {
       <div className="lg:col-span-2 h-[70vh] lg:h-[calc(100vh-200px)] rounded-xl overflow-hidden shadow-card border border-surface-muted dark:border-gray-700">
         <Map
           {...viewState}
-          onMove={(event: ViewStateChangeEvent) =>
-            setViewState(event.viewState)
-          }
+          onMove={(event) => setViewState(event.viewState)}
           mapboxAccessToken={token}
           mapStyle={MAP_STYLE}
         >
