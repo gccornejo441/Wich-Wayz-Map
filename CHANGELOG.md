@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.3...wich-wayz-v1.21.0) (2026-03-09)
+
+
+### Features
+
+* shop search tests ([#108](https://github.com/gccornejo441/Wich-Wayz-Map/issues/108)) ([9e010af](https://github.com/gccornejo441/Wich-Wayz-Map/commit/9e010af05c30bf7c5599657ef5e5479d48941773))
+
 ## [1.20.3](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.20.2...wich-wayz-v1.20.3) (2026-03-07)
 
 
