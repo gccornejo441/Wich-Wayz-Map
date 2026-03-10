@@ -60,11 +60,9 @@ const stopProcessTree = async (child, alreadyExited) => {
     }
 
     await new Promise((resolve) => {
-      const taskkill = spawn(
-        "taskkill",
-        ["/pid", String(child.pid), "/t"],
-        { stdio: "ignore" },
-      );
+      const taskkill = spawn("taskkill", ["/pid", String(child.pid), "/t"], {
+        stdio: "ignore",
+      });
       taskkill.on("exit", () => resolve());
       taskkill.on("error", () => resolve());
     });
