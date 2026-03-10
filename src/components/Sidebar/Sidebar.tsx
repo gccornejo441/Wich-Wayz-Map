@@ -18,6 +18,8 @@ const Sidebar = () => {
   return (
     <aside
       id="default-sidebar"
+      data-testid="app-sidebar"
+      data-state={isOpen("nav") ? "open" : "closed"}
       className={`fixed top-0 left-0 z-30 w-64 h-[100dvh]
         bg-brand-primary dark:bg-surface-darker
         text-white dark:text-text-inverted

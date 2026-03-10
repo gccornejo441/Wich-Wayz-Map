@@ -109,7 +109,10 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
         : street || cityState || "Address not available";
 
     return (
-      <div className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-white/10">
+      <div
+        data-testid="search-suggestion"
+        className="flex flex-col md:flex-row justify-between md:items-center p-2 rounded-lg text-text-base dark:text-text-inverted hover:bg-surface-muted dark:hover:bg-white/10"
+      >
         <span className="font-medium">{suggestion.shop.name}</span>
         <span className="text-sm truncate md:ml-2">{addressDisplay}</span>
       </div>
@@ -156,6 +159,7 @@ const SearchBar = ({ navRef }: SearchBarProps) => {
   const inputProps = {
     placeholder: "Search shops, city, category...",
     value: search,
+    "data-testid": "search-input",
     onChange: (
       _: React.FormEvent<HTMLElement>,
       { newValue }: { newValue: string },

@@ -68,6 +68,9 @@ wichwayz-ec2-scripts.txt
 sandwich_list.json
 
 coverage
+cypress/downloads
+cypress/screenshots
+cypress/videos
 
 .continuerules
 .crush.json
