@@ -431,6 +431,7 @@ const ShopForm = ({
     return (
       <form
         onSubmit={handleSubmit(handleFormSubmit)}
+        data-testid="shop-form"
         className="flex flex-col border-t-[1px] border-gray-200 dark:border-gray-700"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-surface-darker">
@@ -644,8 +645,10 @@ const ShopForm = ({
               )}
             </div>
             <div className="space-y-3">
-              <div>
+              <div data-testid="shop-category-select">
                 <Select<CategoryOption, true, GroupBase<CategoryOption>>
+                  inputId="shop-categories"
+                  instanceId="shop-categories"
                   placeholder="Select categories..."
                   isMulti
                   value={selectedOptions}

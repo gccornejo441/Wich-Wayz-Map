@@ -657,6 +657,8 @@ const MapSidebar = () => {
 
   return (
     <aside
+      data-testid="shop-details-sidebar"
+      data-state={sidebarOpen ? "open" : "closed"}
       className={`fixed top-[48px] left-0 z-30 w-full sm:w-[400px] h-[calc(100dvh-48px)] bg-surface-light dark:bg-surface-dark text-text-base dark:text-text-inverted transition-transform duration-500 ease-in-out transform ${
         sidebarOpen
           ? "translate-x-0 shadow-lg pointer-events-auto"
@@ -739,7 +741,10 @@ const MapSidebar = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
                 <div className="absolute left-0 right-0 bottom-0 px-5 pb-4">
                   <div className="flex items-end justify-between gap-3">
-                    <h2 className="text-2xl font-semibold text-white leading-tight line-clamp-2 drop-shadow">
+                    <h2
+                      data-testid="shop-details-title"
+                      className="text-2xl font-semibold text-white leading-tight line-clamp-2 drop-shadow"
+                    >
                       {selectedShop.shopName}
                     </h2>
 

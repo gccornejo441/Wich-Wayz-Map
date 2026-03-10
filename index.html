@@ -34,11 +34,6 @@
     <link rel="canonical" href="https://www.wichwayz.com" />
 
     <title>Wich Wayz? - A Sandwich Locator</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&amp;display=swap"
-      rel="stylesheet"
-    />
-
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#DA291C" />
@@ -76,6 +71,21 @@
         },
         "image": "https://www.wichwayz.com/assets/preview.png"
       }
+    </script>
+    <script>
+      (() => {
+        if (window.Cypress || navigator.webdriver) return;
+
+        const loadFonts = () => {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href =
+            "https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap";
+          document.head.appendChild(link);
+        };
+
+        window.addEventListener("load", loadFonts, { once: true });
+      })();
     </script>
   </head>
   <body>

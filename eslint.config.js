@@ -59,4 +59,10 @@ export default tseslint.config(
       "react/self-closing-comp": "warn",
     },
   },
+  {
+    files: ["cypress/support/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-namespace": "off",
+    },
+  },
 );
