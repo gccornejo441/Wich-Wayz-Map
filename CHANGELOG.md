@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.22.0...wich-wayz-v1.23.0) (2026-03-12)
+
+
+### Features
+
+* cypress e2e shop submission ([#115](https://github.com/gccornejo441/Wich-Wayz-Map/issues/115)) ([e47a8b7](https://github.com/gccornejo441/Wich-Wayz-Map/commit/e47a8b704a9bf234b0529c875b577234081d8ec0))
+
 ## [1.22.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.21.0...wich-wayz-v1.22.0) (2026-03-10)
 
 
