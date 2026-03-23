@@ -23,7 +23,7 @@ export interface ShopsContextType {
 
   applyFilters: (next: ShopWithUser[]) => Promise<void>;
   clearFilters: () => Promise<void>;
-  updateShopInContext: (shop: ShopWithUser) => void;
+  updateShopInContext: (shop: ShopWithUser) => Promise<void>;
   removeShopFromContext: (shopId: number) => void;
   refreshShops: () => Promise<void>;
 }
@@ -101,39 +101,62 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
   };
 
   const updateShopInContext = async (updated: ShopWithUser) => {
+    // Compute next state outside of updaters so cache writes can be awaited.
+    let nextShops: ShopWithUser[] = [];
+    let nextLocations: Location[] = [];
+
     setShops((prev) => {
-      const next = prev.map((s) => (s.id === updated.id ? updated : s));
-      cacheData(SHOPS_STORE, next);
-      return next;
+      nextShops = prev.map((s) => (s.id === updated.id ? updated : s));
+      return nextShops;
     });
+
     setFiltered((prev) => {
       if (!prev.length) return prev;
       const next = prev.map((s) => (s.id === updated.id ? updated : s));
       sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
       return next;
     });
+
     setLocations((prev) => {
       const map = new Map((updated.locations ?? []).map((l) => [l.id, l]));
-      const next = prev.map((l) => map.get(l.id) ?? l);
-      cacheData(LOCATIONS_STORE, next);
-      return next;
+      nextLocations = prev.map((l) => map.get(l.id) ?? l);
+      return nextLocations;
     });
+
+    // Persist to cache after state is updated — errors are logged, not swallowed.
+    await Promise.all([
+      cacheData(SHOPS_STORE, nextShops).catch((err) =>
+        console.error("Failed to cache shops after update:", err),
+      ),
+      cacheData(LOCATIONS_STORE, nextLocations).catch((err) =>
+        console.error("Failed to cache locations after update:", err),
+      ),
+    ]);
+
     // Invalidate the search index so updated shops appear correctly in search
     invalidateSearchIndex();
   };
 
   const removeShopFromContext = (shopId: number) => {
+    let nextShops: ShopWithUser[] = [];
+
     setShops((prev) => {
-      const next = prev.filter((s) => s.id !== shopId);
-      cacheData(SHOPS_STORE, next);
-      return next;
+      nextShops = prev.filter((s) => s.id !== shopId);
+      return nextShops;
     });
+
     setFiltered((prev) => {
       if (!prev.length) return prev;
       const next = prev.filter((s) => s.id !== shopId);
       sessionStorage.setItem(FILTERED_SHOPS_KEY, JSON.stringify(next));
       return next;
     });
+
+    // Persist to cache — errors are logged, not swallowed.
+    cacheData(SHOPS_STORE, nextShops).catch((err) =>
+      console.error("Failed to cache shops after removal:", err),
+    );
+
     // Invalidate the search index so removed shops don't appear in search
     invalidateSearchIndex();
   };
