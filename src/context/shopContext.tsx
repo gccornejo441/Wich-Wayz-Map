@@ -54,7 +54,7 @@ export const ShopsProvider = ({ children }: ShopsProviderProps) => {
           sessionStorage.removeItem(FILTERED_SHOPS_KEY);
           setFiltered([]);
         } else {
-          const storedFiltered = sessionStorage.getItem(FILTERED_SHOPS_KEY);
+          const storedFiltered = sessionStorage.thegetItem(FILTERED_SHOPS_KEY);
           if (storedFiltered) {
             setFiltered(JSON.parse(storedFiltered));
           }

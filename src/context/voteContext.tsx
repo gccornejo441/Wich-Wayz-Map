@@ -31,6 +31,7 @@ const applyVoteTransition = (
 
 export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, userMetadata } = useAuth();
+  const userId = userMetadata?.id;
 
   const [votes, setVotes] = useState<
     Record<number, { upvotes: number; downvotes: number; userVote: UserVote }>
@@ -70,7 +71,6 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       }));
 
       try {
-        const userId = userMetadata?.id;
         const voteData = await GetVotesForShop(shopId, userId);
 
         setVotes((prev) => ({
@@ -91,7 +91,7 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
         setLoadingVotes(false);
       }
     },
-    [userMetadata?.id],
+    [userId],
   );
 
   const submitVote = useCallback(
