@@ -7,7 +7,7 @@
   "author": "Gabe Cornejo <wich.wayz.map@gmail.com>",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": "20.x"
+    "node": ">=22.19.0 <23"
   },
   "scripts": {
     "dev": "vite --port 3100",
