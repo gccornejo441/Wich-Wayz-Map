@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.24.0...wich-wayz-v1.24.1) (2026-05-16)
+
+
+### Bug Fixes
+
+* update token usage in release workflow ([#130](https://github.com/gccornejo441/Wich-Wayz-Map/issues/130)) ([d402133](https://github.com/gccornejo441/Wich-Wayz-Map/commit/d402133b4f5f9f387f874689fcb8e76e60e88a3f))
+
 ## [1.24.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.23.0...wich-wayz-v1.24.0) (2026-03-13)
 
 
