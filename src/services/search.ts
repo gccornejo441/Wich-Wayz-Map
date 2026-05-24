@@ -40,27 +40,82 @@ const includesNorm = (
 };
 
 const shopMatchesFilters = (shop: IndexedDBShop, filters: ShopFilters) => {
-  const { categoryIds } = filters;
+  const { categoryIds, recentlyAdded, savedOnly, savedShopIds } = filters;
+
+  if (savedOnly) {
+    if (!savedShopIds?.includes(shop.id)) return false;
+  }
 
   if (categoryIds && categoryIds.length > 0) {
     const ids = (shop.categories ?? []).map((c) => c.id);
     if (!ids.some((id) => categoryIds.includes(id))) return false;
   }
 
+  if (recentlyAdded && recentlyAdded !== "any") {
+    const cutoff = getRecentlyAddedCutoff(recentlyAdded);
+    if (!cutoff || !isRecentlyAdded(shop, cutoff)) return false;
+  }
+
   return true;
+};
+
+const getLocationStatus = (
+  loc: NonNullable<IndexedDBShop["locations"]>[number],
+) =>
+  loc.locationStatus ??
+  loc.location_status ??
+  (loc.location_open === false ? "permanently_closed" : "open");
+
+const getRecentlyAddedCutoff = (range: ShopFilters["recentlyAdded"]) => {
+  if (!range || range === "any") return null;
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return cutoff;
+};
+
+const isRecentDate = (value: string | undefined, cutoff: Date) => {
+  if (!value) return false;
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isFinite(time) && date >= cutoff;
+};
+
+const isRecentlyAdded = (shop: IndexedDBShop, cutoff: Date) => {
+  if (isRecentDate(shop.date_created, cutoff)) return true;
+  return (shop.locations ?? []).some((loc) =>
+    isRecentDate(loc.date_created, cutoff),
+  );
 };
 
 const locationMatchesFilters = (
   loc: NonNullable<IndexedDBShop["locations"]>[number],
   filters: ShopFilters,
 ) => {
-  const { city, state, country, locationOpen } = filters;
+  const {
+    city,
+    state,
+    country,
+    locationOpen,
+    locationStatus,
+    distanceMiles: radiusMiles,
+    distanceAnchor,
+  } = filters;
 
   if (!includesNorm(loc.city, city)) return false;
   if (!includesNorm(loc.state, state)) return false;
   if (!includesNorm(loc.country, country)) return false;
 
   if (locationOpen === true && loc.location_open === false) return false;
+
+  if (locationStatus && locationStatus !== "any") {
+    if (getLocationStatus(loc) !== locationStatus) return false;
+  }
+
+  if (radiusMiles && distanceAnchor) {
+    const dist = distanceMiles(distanceAnchor, [loc.longitude, loc.latitude]);
+    if (!Number.isFinite(dist) || dist > radiusMiles) return false;
+  }
 
   return true;
 };
