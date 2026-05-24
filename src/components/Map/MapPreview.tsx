@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HiClipboard } from "react-icons/hi";
 import Map, {
   FullscreenControl,
-  MapLayerMouseEvent,
+  MapMouseEvent,
   MapRef,
   Marker,
   MarkerDragEvent,
   NavigationControl,
-} from "react-map-gl";
+} from "react-map-gl/mapbox";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -259,7 +259,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({
     void updateAddressFromCoordinates(lat, lng);
   };
 
-  const handleMapClick = (event: MapLayerMouseEvent) => {
+  const handleMapClick = (event: MapMouseEvent) => {
     const { lat, lng } = event.lngLat;
     void updateAddressFromCoordinates(lat, lng);
   };
