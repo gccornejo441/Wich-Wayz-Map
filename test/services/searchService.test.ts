@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, MockedFunction } from "vitest";
-import { SearchShops } from "../../src/services/search";
+import { FilterShops, SearchShops } from "../../src/services/search";
 import { getCachedData } from "../../src/services/indexedDB";
 import { IndexedDBShop } from "../../src/services/indexedDB";
 
@@ -102,5 +102,109 @@ describe("SearchShops", () => {
     const query = "restaurant";
     const results = await SearchShops(query);
     expect(results).toHaveLength(0);
+  });
+});
+
+describe("FilterShops", () => {
+  const recentDate = new Date();
+  recentDate.setDate(recentDate.getDate() - 5);
+
+  const oldDate = new Date();
+  oldDate.setDate(oldDate.getDate() - 120);
+
+  const mockShops: IndexedDBShop[] = [
+    {
+      id: 1,
+      name: "Open Deli",
+      description: "Classic deli sandwiches",
+      categories: [{ id: 10, category_name: "Deli" }],
+      locations: [
+        {
+          id: 1,
+          street_address: "1 Main St",
+          city: "New York",
+          state: "NY",
+          postal_code: "10001",
+          country: "USA",
+          latitude: 40.7128,
+          longitude: -74.006,
+          location_open: true,
+          locationStatus: "open",
+        },
+      ],
+      created_by: 1,
+      created_by_username: "user1",
+      date_created: recentDate.toISOString(),
+    },
+    {
+      id: 2,
+      name: "Closed Hoagies",
+      description: "Hoagies",
+      categories: [{ id: 20, category_name: "Hoagies" }],
+      locations: [
+        {
+          id: 2,
+          street_address: "2 Market St",
+          city: "Philadelphia",
+          state: "PA",
+          postal_code: "19106",
+          country: "USA",
+          latitude: 39.9526,
+          longitude: -75.1652,
+          location_open: false,
+          locationStatus: "permanently_closed",
+        },
+      ],
+      created_by: 2,
+      created_by_username: "user2",
+      date_created: oldDate.toISOString(),
+    },
+  ];
+
+  beforeEach(() => {
+    (getCachedData as MockedFunction<typeof getCachedData>).mockResolvedValue(
+      mockShops,
+    );
+  });
+
+  it("filters shops by explicit location status", async () => {
+    const results = await FilterShops({ locationStatus: "open" });
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Open Deli");
+  });
+
+  it("matches any selected category within the category group", async () => {
+    const results = await FilterShops({ categoryIds: [20, 30] });
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Closed Hoagies");
+  });
+
+  it("filters shops by distance from an anchor", async () => {
+    const results = await FilterShops({
+      distanceMiles: 5,
+      distanceAnchor: [-74.006, 40.7128],
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Open Deli");
+  });
+
+  it("filters shops by saved shop IDs", async () => {
+    const results = await FilterShops({
+      savedOnly: true,
+      savedShopIds: [2],
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Closed Hoagies");
+  });
+
+  it("filters shops by recently added range", async () => {
+    const results = await FilterShops({ recentlyAdded: "7d" });
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Open Deli");
   });
 });

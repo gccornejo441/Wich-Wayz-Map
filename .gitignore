@@ -14,10 +14,10 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
-!.vscode/settings.json
 !.vscode/launch.json
 !.vscode/tasks.json
 !.vscode/extensions.json
+.clinerules/
 
 .idea
 .DS_Store
@@ -68,12 +68,14 @@ wichwayz-ec2-scripts.txt
 sandwich_list.json
 
 coverage
+cypress/downloads
+cypress/screenshots
+cypress/videos
 
 .continuerules
 .crush.json
 data/*
 migrations/*
-!migrations/009_username_finalization.sql
 data/wich-wayz-map.db
 data/wich-wayz-map.db-shm
 data/wich-wayz-map.db-wal

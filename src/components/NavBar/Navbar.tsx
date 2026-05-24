@@ -22,6 +22,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
   return (
     <nav
       ref={navRef}
+      data-testid="app-nav"
       className="fixed top-0 left-0 right-0 z-50 h-12 transition-colors duration-500"
     >
       <div className="w-full bg-brand-primary dark:bg-surface-darker text-white dark:text-text-inverted py-1 px-4 transition-colors duration-500">

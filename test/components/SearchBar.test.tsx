@@ -54,6 +54,18 @@ vi.mock("../../src/context/toastContext", () => ({
   })),
 }));
 
+vi.mock("../../src/context/authContext", () => ({
+  useAuth: vi.fn(() => ({
+    isAuthenticated: false,
+  })),
+}));
+
+vi.mock("../../src/context/savedContext", () => ({
+  useSaved: vi.fn(() => ({
+    savedShopIds: new Set<number>(),
+  })),
+}));
+
 vi.mock("../../src/context/ShopSidebarContext", () => ({
   useShopSidebar: vi.fn(() => ({
     activeShopId: null,
@@ -72,6 +84,8 @@ describe("SearchBar", () => {
 
   beforeEach(() => {
     (useMap as jest.Mock).mockReturnValue({
+      center: [-122.4, 37.8],
+      pendingCenterCoords: [-122.4, 37.8],
       setShopId: mockSetShopId,
       setUserInteracted: mockSetUserInteracted,
       flyToLocation: mockFlyToLocation,

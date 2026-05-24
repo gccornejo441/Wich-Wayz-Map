@@ -5,9 +5,14 @@ import FilterForm from "./FilterForm";
 import { ShopFilters } from "@/types/shopFilter";
 
 interface FilterDropdownProps {
+  id?: string;
   open: boolean;
   navRef?: React.RefObject<HTMLElement>;
+  filters?: ShopFilters;
+  savedOnlyDisabled?: boolean;
+  distanceDisabled?: boolean;
   onFilterChange: (filters: ShopFilters) => void;
+  onClose?: () => void;
 }
 export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
   base: "flex flex-col",
@@ -40,13 +45,22 @@ export const tabsTheme: CustomFlowbiteTheme["tabs"] = {
 };
 
 export function FilterDropdown({
+  id,
   open,
   navRef,
+  filters: controlledFilters,
+  savedOnlyDisabled = false,
+  distanceDisabled = false,
   onFilterChange,
+  onClose,
 }: FilterDropdownProps) {
   const [top, setTop] = useState(0);
   const [filters, setFilters] = useState<ShopFilters>({});
   const [tab, setTab] = useState("general");
+
+  useEffect(() => {
+    setFilters(controlledFilters ?? {});
+  }, [controlledFilters]);
 
   const updateTop = useCallback(() => {
     if (navRef?.current) {
@@ -64,12 +78,14 @@ export function FilterDropdown({
   const handleReset = () => {
     setFilters({});
     onFilterChange({});
+    onClose?.();
   };
 
   if (!open) return null;
 
   return (
     <div
+      id={id}
       className="fixed left-0 z-40 w-screen md:max-h-full overflow-y-auto border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
       style={{ top }}
     >
@@ -88,6 +104,8 @@ export function FilterDropdown({
               section="general"
               value={filters}
               onChange={setFilters}
+              savedOnlyDisabled={savedOnlyDisabled}
+              distanceDisabled={distanceDisabled}
             />
           </TabItem>
           <TabItem
@@ -113,7 +131,10 @@ export function FilterDropdown({
           </button>
 
           <button
-            onClick={() => onFilterChange(filters)}
+            onClick={() => {
+              onFilterChange(filters);
+              onClose?.();
+            }}
             className="flex items-center gap-2 text-sm px-4 py-2 text-text-inverted rounded-lg bg-brand-primary hover:bg-brand-primaryHover dark:border-none"
           >
             Apply Filters

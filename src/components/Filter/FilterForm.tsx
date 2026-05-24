@@ -14,12 +14,16 @@ interface Props {
   value: ShopFilters;
   onChange: (filters: ShopFilters) => void;
   section?: "general" | "categories";
+  savedOnlyDisabled?: boolean;
+  distanceDisabled?: boolean;
 }
 
 export default function FilterForm({
   value,
   onChange,
   section = "general",
+  savedOnlyDisabled = false,
+  distanceDisabled = false,
 }: Props) {
   const [filters, setFilters] = useState<ShopFilters>(value);
   const [categories, setCategories] = useState<CategoryWithShopCount[]>([]);
@@ -128,13 +132,104 @@ export default function FilterForm({
               Additional Options
             </h2>
 
+            <div>
+              <label
+                htmlFor="status-filter"
+                className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase"
+              >
+                Status
+              </label>
+              <select
+                id="status-filter"
+                className="h-10 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
+                value={filters.locationStatus ?? "any"}
+                onChange={(e) =>
+                  update(
+                    "locationStatus",
+                    e.target.value as ShopFilters["locationStatus"],
+                  )
+                }
+              >
+                <option value="any">Any status</option>
+                <option value="open">Open</option>
+                <option value="temporarily_closed">Temporarily closed</option>
+                <option value="permanently_closed">Permanently closed</option>
+              </select>
+              <p className="text-xs text-text-muted dark:text-text-inverted mt-1">
+                Uses current shop status, not live business hours.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="distance-filter"
+                className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase"
+              >
+                Distance From Map Area
+              </label>
+              <select
+                id="distance-filter"
+                disabled={distanceDisabled}
+                className="h-10 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out disabled:cursor-not-allowed disabled:opacity-60"
+                value={filters.distanceMiles ?? ""}
+                onChange={(e) =>
+                  update(
+                    "distanceMiles",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
+              >
+                <option value="">Any distance</option>
+                <option value="1">Within 1 mi</option>
+                <option value="3">Within 3 mi</option>
+                <option value="5">Within 5 mi</option>
+                <option value="10">Within 10 mi</option>
+                <option value="25">Within 25 mi</option>
+              </select>
+              <p className="text-xs text-text-muted dark:text-text-inverted mt-1">
+                {distanceDisabled
+                  ? "Move the map to set an area."
+                  : "Anchors to the current map center when applied."}
+              </p>
+            </div>
+
             <div className="flex items-center">
               <CustomCheckbox
-                id="open-only"
-                label="Open Only"
-                checked={!!filters.locationOpen}
-                onChange={(ck) => update("locationOpen", ck)}
+                id="saved-only"
+                label={
+                  savedOnlyDisabled
+                    ? "Saved Only (sign in required)"
+                    : "Saved Only"
+                }
+                checked={!!filters.savedOnly}
+                onChange={(ck) => update("savedOnly", ck)}
+                disabled={savedOnlyDisabled}
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="recently-added-filter"
+                className="block text-xs font-semibold text-text-base dark:text-text-inverted mb-1 uppercase"
+              >
+                Recently Added
+              </label>
+              <select
+                id="recently-added-filter"
+                className="h-10 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
+                value={filters.recentlyAdded ?? "any"}
+                onChange={(e) =>
+                  update(
+                    "recentlyAdded",
+                    e.target.value as ShopFilters["recentlyAdded"],
+                  )
+                }
+              >
+                <option value="any">Any time</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+              </select>
             </div>
 
             <div>

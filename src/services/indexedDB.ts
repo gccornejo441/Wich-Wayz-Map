@@ -23,6 +23,9 @@ export interface IndexedDBShop {
     latitude: number;
     longitude: number;
     location_open: boolean;
+    locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
+    location_status?: "open" | "temporarily_closed" | "permanently_closed";
+    date_created?: string;
   }>;
   created_by: number;
   created_by_username: string;
