@@ -86,8 +86,8 @@ export function FilterDropdown({
   return (
     <div
       id={id}
-      className="fixed left-0 z-40 w-screen md:max-h-full overflow-y-auto border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
-      style={{ top }}
+      className="fixed left-0 z-40 w-screen flex flex-col border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
+      style={{ top, maxHeight: `calc(100vh - ${top}px)` }}
     >
       <div className="mx-auto w-full max-w-screen-xl px-4 flex flex-col overflow-hidden">
         <div className="overflow-y-auto flex-1 min-h-0">
