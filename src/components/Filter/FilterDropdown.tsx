@@ -86,8 +86,8 @@ export function FilterDropdown({
   return (
     <div
       id={id}
-      className="fixed left-0 z-40 w-screen flex flex-col border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
-      style={{ top, maxHeight: `calc(100vh - ${top}px)` }}
+      className="fixed left-0 z-40 w-screen md:max-h-full overflow-y-auto border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
+      style={{ top }}
     >
       <div className="mx-auto w-full max-w-screen-xl px-4 flex flex-col overflow-hidden">
         <div className="overflow-y-auto flex-1 min-h-0">
@@ -98,32 +98,26 @@ export function FilterDropdown({
               setTab(i === 0 ? "general" : "categories")
             }
           >
-            <TabItem
-              active={tab === "general"}
-              title="General"
-              icon={HiAdjustments}
-            >
-              <FilterForm
-                section="general"
-                value={filters}
-                onChange={setFilters}
-                savedOnlyDisabled={savedOnlyDisabled}
-                distanceDisabled={distanceDisabled}
-              />
-            </TabItem>
-            <TabItem
-              active={tab === "categories"}
-              title="Categories"
-              icon={HiClipboardList}
-            >
-              <FilterForm
-                section="categories"
-                value={filters}
-                onChange={setFilters}
-              />
-            </TabItem>
-          </Tabs>
-        </div>
+            <FilterForm
+              section="general"
+              value={filters}
+              onChange={setFilters}
+              savedOnlyDisabled={savedOnlyDisabled}
+              distanceDisabled={distanceDisabled}
+            />
+          </TabItem>
+          <TabItem
+            active={tab === "categories"}
+            title="Categories"
+            icon={HiClipboardList}
+          >
+            <FilterForm
+              section="categories"
+              value={filters}
+              onChange={setFilters}
+            />
+          </TabItem>
+        </Tabs>
 
         <div className="flex justify-end py-4 gap-3 shrink-0 border-t border-surface-muted dark:border-gray-700">
           <button
