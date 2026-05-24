@@ -86,42 +86,46 @@ export function FilterDropdown({
   return (
     <div
       id={id}
-      className="fixed left-0 z-40 w-screen md:max-h-full overflow-y-auto border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
-      style={{ top }}
+      className="fixed left-0 z-40 w-screen flex flex-col border-t border-surface-muted dark:border-gray-700 bg-surface-muted dark:bg-surface-dark text-text-base dark:text-text-inverted shadow-md transition-all duration-300"
+      style={{ top, maxHeight: `calc(100vh - ${top}px)` }}
     >
-      <div className="mx-auto w-full max-w-screen-xl px-4">
-        <Tabs
-          aria-label="Filter tabs"
-          theme={tabsTheme}
-          onActiveTabChange={(i) => setTab(i === 0 ? "general" : "categories")}
-        >
-          <TabItem
-            active={tab === "general"}
-            title="General"
-            icon={HiAdjustments}
+      <div className="mx-auto w-full max-w-screen-xl px-4 flex flex-col overflow-hidden flex-1 min-h-0">
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <Tabs
+            aria-label="Filter tabs"
+            theme={tabsTheme}
+            onActiveTabChange={(i) =>
+              setTab(i === 0 ? "general" : "categories")
+            }
           >
-            <FilterForm
-              section="general"
-              value={filters}
-              onChange={setFilters}
-              savedOnlyDisabled={savedOnlyDisabled}
-              distanceDisabled={distanceDisabled}
-            />
-          </TabItem>
-          <TabItem
-            active={tab === "categories"}
-            title="Categories"
-            icon={HiClipboardList}
-          >
-            <FilterForm
-              section="categories"
-              value={filters}
-              onChange={setFilters}
-            />
-          </TabItem>
-        </Tabs>
+            <TabItem
+              active={tab === "general"}
+              title="General"
+              icon={HiAdjustments}
+            >
+              <FilterForm
+                section="general"
+                value={filters}
+                onChange={setFilters}
+                savedOnlyDisabled={savedOnlyDisabled}
+                distanceDisabled={distanceDisabled}
+              />
+            </TabItem>
+            <TabItem
+              active={tab === "categories"}
+              title="Categories"
+              icon={HiClipboardList}
+            >
+              <FilterForm
+                section="categories"
+                value={filters}
+                onChange={setFilters}
+              />
+            </TabItem>
+          </Tabs>
+        </div>
 
-        <div className="flex justify-end pb-4 gap-3">
+        <div className="flex justify-end py-4 gap-3 shrink-0 border-t border-surface-muted dark:border-gray-700">
           <button
             onClick={handleReset}
             className="flex items-center gap-2 text-sm px-4 py-2 text-text-inverted rounded-lg bg-brand-primary hover:bg-brand-primaryHover dark:border-none"
