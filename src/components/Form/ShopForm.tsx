@@ -2,12 +2,12 @@ import Select, { GroupBase, MultiValue, StylesConfig } from "react-select";
 import { InputMask } from "@react-input/mask";
 import { useEffect, useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
-import { HiTrash, HiMap, HiSave } from "react-icons/hi";
+import { HiTrash, HiMap, HiSave, HiSparkles, HiRefresh } from "react-icons/hi";
 
 import { useAddShopForm } from "@/hooks/useAddShopForm";
+import { useChromeAI } from "@/hooks/useChromeAI";
 import { coerceNumber } from "@/utils/normalizers";
 import { useTheme } from "@hooks/useTheme";
-import MapPreview from "@components/Map/MapPreview";
 import AddCategoryModal from "@components/Modal/AddCategoryModal";
 
 import { AddAShopPayload, LocationStatus } from "@/types/dataTypes";
@@ -184,6 +184,14 @@ const ShopForm = ({
   const { isAuthenticated, userMetadata } = useAuth();
   const { addToast } = useToast();
   const { updateShopInContext, shops } = useShops();
+  const {
+    writerAvailable,
+    rewriterAvailable,
+    isGenerating,
+    isRewriting,
+    generateDescription,
+    rewriteDescription,
+  } = useChromeAI();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -355,70 +363,6 @@ const ShopForm = ({
     setPendingParsedAddress(null);
   };
 
-  const fullAddressForMaps = useMemo(
-    () =>
-      [
-        derivedAddress.streetAddress,
-        derivedAddress.streetAddressSecond,
-        derivedAddress.city,
-        derivedAddress.state,
-        derivedAddress.postalCode,
-        derivedAddress.country,
-      ]
-        .map((value) => value.trim())
-        .filter(Boolean)
-        .join(", "),
-    [
-      derivedAddress.streetAddress,
-      derivedAddress.streetAddressSecond,
-      derivedAddress.city,
-      derivedAddress.state,
-      derivedAddress.postalCode,
-      derivedAddress.country,
-    ],
-  );
-
-  const handleMapAddressUpdate = (
-    next: AddressDraft | ((prev: AddressDraft) => AddressDraft),
-  ) => {
-    const resolvedAddress =
-      typeof next === "function" ? next(derivedAddress) : next;
-
-    const streetAddress = (resolvedAddress.streetAddress ?? "").trim();
-    const line2 = (resolvedAddress.streetAddressSecond ?? "").trim();
-    const city = (resolvedAddress.city ?? "").trim();
-    const state = (resolvedAddress.state ?? "").trim().toUpperCase();
-    const postalCode = (resolvedAddress.postalCode ?? "").trim();
-    const country = (resolvedAddress.country ?? "").trim().toUpperCase();
-    const latitude = coerceNumber(resolvedAddress.latitude);
-    const longitude = coerceNumber(resolvedAddress.longitude);
-
-    setValue("address", streetAddress, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue("address_first", streetAddress, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue("address_second", line2, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue("city", city, { shouldDirty: true, shouldValidate: true });
-    setValue("state", state, { shouldDirty: true, shouldValidate: true });
-    setValue("postcode", postalCode, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setValue("country", country, { shouldDirty: true, shouldValidate: true });
-    setValue("latitude", latitude, { shouldDirty: true, shouldValidate: true });
-    setValue("longitude", longitude, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-  };
-
   const canSubmit =
     isAddressValid &&
     !errors.shopName &&
@@ -539,6 +483,115 @@ const ShopForm = ({
                   <p className="mt-1 text-xs text-red-500">
                     {errors.shop_description.message}
                   </p>
+                )}
+                {(writerAvailable || rewriterAvailable) && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    {writerAvailable && (
+                      <button
+                        type="button"
+                        disabled={
+                          isGenerating ||
+                          isRewriting ||
+                          !watch("shopName")?.trim()
+                        }
+                        onClick={async () => {
+                          const name = watch("shopName") ?? "";
+                          const catLabels = selectedOptions.map((o) => o.label);
+                          const result = await generateDescription(
+                            name,
+                            catLabels,
+                          );
+                          if (result) {
+                            setValue("shop_description", result, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md border border-gray-300 dark:border-gray-600 text-text-muted dark:text-text-inverted bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isGenerating ? (
+                          <svg
+                            className="animate-spin h-3 w-3"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                        ) : (
+                          <HiSparkles className="h-3 w-3" />
+                        )}
+                        Generate
+                      </button>
+                    )}
+                    {rewriterAvailable && (
+                      <button
+                        type="button"
+                        disabled={
+                          isGenerating ||
+                          isRewriting ||
+                          (watch("shop_description") ?? "").trim().length < 20
+                        }
+                        onClick={async () => {
+                          const desc = watch("shop_description") ?? "";
+                          const name = watch("shopName") ?? "";
+                          const catLabels = selectedOptions.map((o) => o.label);
+                          const result = await rewriteDescription(
+                            desc,
+                            name,
+                            catLabels,
+                          );
+                          if (result) {
+                            setValue("shop_description", result, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md border border-gray-300 dark:border-gray-600 text-text-muted dark:text-text-inverted bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isRewriting ? (
+                          <svg
+                            className="animate-spin h-3 w-3"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                        ) : (
+                          <HiRefresh className="h-3 w-3" />
+                        )}
+                        Improve
+                      </button>
+                    )}
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      Powered by your browser
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -985,26 +1038,6 @@ const ShopForm = ({
                   )}
                 </>
               )}
-
-              <div className="rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-surface-muted dark:bg-surface-darker">
-                  <p className="text-xs font-medium text-text-base dark:text-text-inverted">
-                    Precise Location
-                  </p>
-                  <p className="text-[11px] text-text-muted dark:text-text-inverted">
-                    Click map or drag pin
-                  </p>
-                </div>
-                <div className="h-72">
-                  <MapPreview
-                    address={derivedAddress}
-                    fullAddressForMaps={fullAddressForMaps}
-                    onAddressUpdate={handleMapAddressUpdate}
-                    prefillFlyToNonce={0}
-                    containerClassName="h-full"
-                  />
-                </div>
-              </div>
             </div>
           </div>
         </div>
