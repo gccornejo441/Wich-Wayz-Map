@@ -10,6 +10,59 @@ import {
 } from "@/services/getCategoriesWithShopCount";
 import InputField from "../Utilites/InputField";
 
+const US_STATES = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+] as const;
+
 interface Props {
   value: ShopFilters;
   onChange: (filters: ShopFilters) => void;
@@ -107,20 +160,25 @@ export default function FilterForm({
                   errors={{}}
                 />
               </div>
-              <InputField
-                name="state"
-                label=""
-                placeholder="State"
+              <select
+                id="state-filter"
+                className="h-10 w-full text-dark dark:text-white text-md border-brand-primary dark:border-text-muted border-2 px-4 py-2 rounded-md bg-white focus:border-1 focus:border-brand-primary dark:bg-surface-dark focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors duration-200 ease-in-out"
                 value={filters.state ?? ""}
                 onChange={(e) => update("state", e.target.value)}
-                errors={{}}
-              />
+              >
+                <option value="">Any state</option>
+                {US_STATES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
 
               <InputField
                 name="country"
                 label=""
                 placeholder="Country"
-                value={filters.country ?? ""}
+                value={filters.country ?? "United States"}
                 onChange={(e) => update("country", e.target.value)}
                 errors={{}}
               />
