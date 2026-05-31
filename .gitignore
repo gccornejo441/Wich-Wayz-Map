@@ -102,4 +102,4 @@ migrations/004_add_auth_provider.sql
 
 
 .claude/*
-.clinerules/*
+.clinerules/*``

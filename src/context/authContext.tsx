@@ -52,6 +52,10 @@ export interface UserMetadata {
   accountStatus: string;
   lastLogin?: string | null;
   avatar: string | null;
+  bio?: string | null;
+  favoriteSandwich?: string | null;
+  favoriteShopId?: number | null;
+  profileVisibility?: "public" | "private";
   tokenExpiry?: string | null; // Deprecated - no longer used
   resetToken?: string | null; // Backend only - never send to client
 }
@@ -76,6 +80,10 @@ export const toSafeUserMetadata = (
   membershipStatus: metadata.membershipStatus,
   accountStatus: metadata.accountStatus,
   avatar: metadata.avatar,
+  bio: metadata.bio ?? null,
+  favoriteSandwich: metadata.favoriteSandwich ?? null,
+  favoriteShopId: metadata.favoriteShopId ?? null,
+  profileVisibility: metadata.profileVisibility ?? "public",
   dateCreated: metadata.dateCreated,
   lastLogin: metadata.lastLogin,
   // Explicitly exclude all sensitive fields:

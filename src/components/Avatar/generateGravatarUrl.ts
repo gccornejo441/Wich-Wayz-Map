@@ -7,6 +7,15 @@ const generateGravatarUrl = (
   defaultImage?: string,
 ): string => {
   const hash = md5(email.trim().toLowerCase());
+  return generateGravatarUrlFromHash(hash, size, rating, defaultImage);
+};
+
+export const generateGravatarUrlFromHash = (
+  hash: string,
+  size?: number,
+  rating?: string,
+  defaultImage?: string,
+): string => {
   let url = `https://www.gravatar.com/avatar/${hash}?`;
 
   if (size) url += `s=${size}&`;

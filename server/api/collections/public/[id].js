@@ -1,4 +1,10 @@
 import { executeQuery } from "../../lib/db.js";
+import { createHash } from "node:crypto";
+
+const gravatarHash = (email) =>
+  typeof email === "string" && email.trim()
+    ? createHash("md5").update(email.trim().toLowerCase()).digest("hex")
+    : null;
 
 const parseId = (value) => {
   const parsed = Number(value);
@@ -64,7 +70,7 @@ export default async function handler(req, res) {
           s.id_location,
           u.username AS created_by_username,
           u.avatar AS users_avatar_id,
-          u.email AS users_avatar_email,
+          u.email AS user_email,
           l.id AS location_id,
           l.postal_code,
           l.latitude,
@@ -123,7 +129,7 @@ export default async function handler(req, res) {
           id_location: row.id_location,
           created_by_username: row.created_by_username || "admin",
           users_avatar_id: row.users_avatar_id || undefined,
-          users_avatar_email: row.users_avatar_email || undefined,
+          users_avatar_hash: gravatarHash(row.user_email) || undefined,
           locations: [],
           categories: [],
         });

@@ -12,6 +12,7 @@ export type ShopGeoJsonProperties = {
   description?: string;
 
   usersAvatarEmail?: string;
+  usersAvatarHash?: string;
   usersAvatarId?: string;
   createdBy?: string;
   created_by?: number;
@@ -157,6 +158,10 @@ const buildShopPropsFromShopAndLocation = (
       getString(shopAny.usersAvatarEmail) ??
       getString(shopAny.users_avatar_email) ??
       getString(shopAny.user_email),
+    usersAvatarHash:
+      getString(shopAny.usersAvatarHash) ??
+      getString(shopAny.users_avatar_hash) ??
+      getString(shopAny.user_avatar_hash),
     usersAvatarId:
       getString(shopAny.usersAvatarId) ??
       getString(shopAny.users_avatar_id) ??
@@ -255,6 +260,7 @@ export const coercePropsFromFeatureProperties = (
     imageUrl: getString(raw.imageUrl),
     description: getString(raw.description),
     usersAvatarEmail: getString(raw.usersAvatarEmail),
+    usersAvatarHash: getString(raw.usersAvatarHash),
     usersAvatarId: getString(raw.usersAvatarId),
     createdBy: getString(raw.createdBy),
     created_by: toNumber(raw.created_by),

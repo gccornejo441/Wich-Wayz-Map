@@ -22,6 +22,7 @@ export interface Comment {
   userName?: string | null;
   userAvatar?: string | null;
   userEmail?: string | null;
+  userAvatarHash?: string | null;
   reactionCounts?: ReactionCounts;
   userReaction?: ReactionType | null;
 }
