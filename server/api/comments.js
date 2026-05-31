@@ -1,5 +1,11 @@
 import { withActiveAccount } from "./lib/withAuth.js";
 import { executeQuery } from "./lib/db.js";
+import { createHash } from "node:crypto";
+
+const gravatarHash = (email) =>
+  typeof email === "string" && email.trim()
+    ? createHash("md5").update(email.trim().toLowerCase()).digest("hex")
+    : null;
 
 async function createComment(req, res) {
   if (req.method !== "POST") {
@@ -40,7 +46,7 @@ async function createComment(req, res) {
 
     const userDetails = await executeQuery(
       `
-        SELECT username AS user_name, avatar AS user_avatar, email AS user_email
+        SELECT username AS user_name, avatar AS user_avatar, email
         FROM users
         WHERE id = ?
         LIMIT 1;
@@ -59,7 +65,7 @@ async function createComment(req, res) {
       date_modified: created.date_modified ?? null,
       user_name: userRow.user_name || null,
       user_avatar: userRow.user_avatar || null,
-      user_email: userRow.user_email || null,
+      user_avatar_hash: gravatarHash(userRow.email),
     });
   } catch (err) {
     console.error("Failed to insert comment:", err);

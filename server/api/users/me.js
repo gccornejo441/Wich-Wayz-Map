@@ -18,6 +18,13 @@ const toSafeUserMetadata = (user) => ({
   membershipStatus: user.membership_status,
   accountStatus: user.account_status,
   avatar: user.avatar,
+  bio: user.bio ?? null,
+  favoriteSandwich: user.favorite_sandwich ?? null,
+  favoriteShopId:
+    user.favorite_shop_id === null || user.favorite_shop_id === undefined
+      ? null
+      : Number(user.favorite_shop_id),
+  profileVisibility: user.profile_visibility || "public",
   authProvider: user.auth_provider || "password",
   dateCreated: user.date_created,
   lastLogin: user.last_login,

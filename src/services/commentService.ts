@@ -18,6 +18,7 @@ interface RawComment {
   user_name?: string | null;
   user_avatar?: string | null;
   user_email?: string | null;
+  user_avatar_hash?: string | null;
   reaction_counts?: unknown;
   user_reaction?: unknown;
   reactionCounts?: unknown;
@@ -82,6 +83,7 @@ function normalizeComment(raw: RawComment): Comment {
     userName: raw.user_name,
     userAvatar: raw.user_avatar,
     userEmail: raw.user_email,
+    userAvatarHash: raw.user_avatar_hash,
     reactionCounts: hasReactionCounts
       ? normalizeReactionCounts(raw.reaction_counts ?? raw.reactionCounts)
       : undefined,

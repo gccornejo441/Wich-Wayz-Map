@@ -170,6 +170,16 @@ export const userProfileSchema = yup.object({
       "Username may only contain letters, numbers, underscores, or hyphens",
     ),
   avatar: yup.string().nullable(),
+  bio: yup.string().nullable().max(280, "Bio must be 280 characters or fewer"),
+  favoriteSandwich: yup
+    .string()
+    .nullable()
+    .max(80, "Favorite sandwich must be 80 characters or fewer"),
+  favoriteShopId: yup.number().nullable(),
+  profileVisibility: yup
+    .string()
+    .oneOf(["public", "private"], "Select a valid profile visibility")
+    .required("Profile visibility is required"),
 });
 
 /**

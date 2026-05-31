@@ -2,9 +2,11 @@ import { apiRequest } from "./apiClient";
 
 export interface ShopCountResult {
   userId: number;
-  email: string;
+  email?: string;
+  username?: string | null;
   shopCount: number;
   avatar: string;
+  avatarHash?: string | null;
 }
 
 /**
