@@ -29,7 +29,13 @@ describe("GetVotesForShop", () => {
 
 describe("InsertVote", () => {
   it("calls the correct API endpoint with the right payload", async () => {
-    const vote = { shop_id: 1, user_id: 123, upvote: true, downvote: false };
+    const vote = {
+      shop_id: 1,
+      user_id: 123,
+      upvote: true,
+      downvote: false,
+      recaptchaToken: "recaptcha-token",
+    };
     const mockResponse = { message: "Vote submitted successfully" };
     vi.spyOn(apiClient, "authApiRequest").mockResolvedValue(mockResponse);
 
@@ -47,7 +53,13 @@ describe("InsertVote", () => {
     );
 
     await expect(
-      InsertVote({ shop_id: 1, user_id: 123, upvote: true, downvote: false }),
+      InsertVote({
+        shop_id: 1,
+        user_id: 123,
+        upvote: true,
+        downvote: false,
+        recaptchaToken: "recaptcha-token",
+      }),
     ).rejects.toThrow("Network Error");
   });
 });

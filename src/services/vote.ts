@@ -29,6 +29,7 @@ export const InsertVote = async (vote: {
   user_id: number;
   upvote: boolean;
   downvote: boolean;
+  recaptchaToken: string;
 }) => {
   return authApiRequest<{ message: string }>("/vote", {
     method: "POST",

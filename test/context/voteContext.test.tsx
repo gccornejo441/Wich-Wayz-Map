@@ -5,6 +5,10 @@ import * as voteService from "@/services/vote";
 import * as authContext from "@/context/authContext";
 import { ReactNode } from "react";
 
+const mockExecuteRecaptcha = vi.hoisted(() =>
+  vi.fn().mockResolvedValue("recaptcha-token"),
+);
+
 // Mock the vote service
 vi.mock("@/services/vote", () => ({
   GetVotesForShop: vi.fn(),
@@ -14,6 +18,10 @@ vi.mock("@/services/vote", () => ({
 // Mock the auth context
 vi.mock("@/context/authContext", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("@hooks/useRecaptcha", () => ({
+  useRecaptchaExecute: () => mockExecuteRecaptcha,
 }));
 
 const mockUser = {
@@ -267,6 +275,7 @@ describe("VoteContext", () => {
         user_id: mockUserMetadata.id,
         upvote: true,
         downvote: false,
+        recaptchaToken: "recaptcha-token",
       });
     });
 
@@ -286,6 +295,7 @@ describe("VoteContext", () => {
         user_id: mockUserMetadata.id,
         upvote: false,
         downvote: false,
+        recaptchaToken: "recaptcha-token",
       });
     });
 
@@ -296,18 +306,19 @@ describe("VoteContext", () => {
 
       const { result } = renderHook(() => useVote(), { wrapper });
 
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
       await expect(
         act(async () => {
           await result.current.submitVote(1, "up");
         }),
       ).rejects.toThrow("Failed to submit vote.");
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      expect(voteService.InsertVote).toHaveBeenCalledWith({
+        shop_id: 1,
+        user_id: mockUserMetadata.id,
+        upvote: true,
+        downvote: false,
+        recaptchaToken: "recaptcha-token",
+      });
     });
 
     it("should not submit vote if user is not authenticated", async () => {
