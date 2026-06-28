@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.26.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.25.0...wich-wayz-v1.26.0) (2026-06-28)
+
+
+### Features
+
+* user profiles ([#137](https://github.com/gccornejo441/Wich-Wayz-Map/issues/137)) ([1e964aa](https://github.com/gccornejo441/Wich-Wayz-Map/commit/1e964aa7d39a4cdc3c3a37f399f2324ce0333ea3))
+
+
+### Bug Fixes
+
+* vote 500 error ([#139](https://github.com/gccornejo441/Wich-Wayz-Map/issues/139)) ([d953965](https://github.com/gccornejo441/Wich-Wayz-Map/commit/d953965959ba30f48de49d18233e3f5f6120b7e1))
+
 ## [1.25.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.24.0...wich-wayz-v1.25.0) (2026-05-25)
 
 
