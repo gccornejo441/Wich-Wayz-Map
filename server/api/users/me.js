@@ -39,6 +39,22 @@ const isDeletedUser = (user, hasDeletedAt) => {
   return user.account_status === "deleted" || hasDeletedTimestamp;
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const userDataErrorResponse = (
+  error,
+  fallbackError = "Failed to fetch user data",
+) => {
+  if (isProduction) {
+    return { error: fallbackError };
+  }
+
+  return {
+    error: fallbackError,
+    details: error instanceof Error ? error.message : String(error),
+  };
+};
+
 const getActiveUserByFirebaseUid = async (turso, uid, hasDeletedAt) => {
   const deletedFilter = hasDeletedAt ? " AND deleted_at IS NULL" : "";
   return turso.execute({
@@ -275,14 +291,15 @@ async function handler(req, res) {
     }
 
     if (!result.rows[0]) {
-      console.error("Failed to resolve user after sync:", { uid, email });
-      return res.status(500).json({ error: "Failed to fetch user data" });
+      const error = new Error("Failed to resolve user after sync");
+      console.error(error.message, { uid, email });
+      return res.status(500).json(userDataErrorResponse(error));
     }
 
     return res.status(200).json(toSafeUserMetadata(result.rows[0]));
   } catch (error) {
     console.error("Failed to get/create user:", error);
-    return res.status(500).json({ error: "Failed to fetch user data" });
+    return res.status(500).json(userDataErrorResponse(error));
   }
 }
 
