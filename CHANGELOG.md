@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.1](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.26.0...wich-wayz-v1.26.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* recaptcha api errors ([#140](https://github.com/gccornejo441/Wich-Wayz-Map/issues/140)) ([b893200](https://github.com/gccornejo441/Wich-Wayz-Map/commit/b893200c1258045be325c789ff0889b32d2206ed))
+
 ## [1.26.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.25.0...wich-wayz-v1.26.0) (2026-06-28)
 
 
