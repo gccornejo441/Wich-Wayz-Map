@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.26.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.25.0...wich-wayz-v1.26.0) (2026-06-28)
+
+
+### Features
+
+* user profiles ([#137](https://github.com/gccornejo441/Wich-Wayz-Map/issues/137)) ([1e964aa](https://github.com/gccornejo441/Wich-Wayz-Map/commit/1e964aa7d39a4cdc3c3a37f399f2324ce0333ea3))
+
+
+### Bug Fixes
+
+* vote 500 error ([#139](https://github.com/gccornejo441/Wich-Wayz-Map/issues/139)) ([d953965](https://github.com/gccornejo441/Wich-Wayz-Map/commit/d953965959ba30f48de49d18233e3f5f6120b7e1))
+
+## [1.25.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.24.0...wich-wayz-v1.25.0) (2026-05-25)
+
+
+### Features
+
+* filter search form ([#132](https://github.com/gccornejo441/Wich-Wayz-Map/issues/132)) ([abc2999](https://github.com/gccornejo441/Wich-Wayz-Map/commit/abc299966438f4662d1491a1eaf4a8225a7b7d88))
+* shop form ai updates ([#136](https://github.com/gccornejo441/Wich-Wayz-Map/issues/136)) ([9410f52](https://github.com/gccornejo441/Wich-Wayz-Map/commit/9410f52105f27df83ab4e2118e960893e59cf806))
+
+
+### Bug Fixes
+
+* filter button fix ([#135](https://github.com/gccornejo441/Wich-Wayz-Map/issues/135)) ([2cc3d09](https://github.com/gccornejo441/Wich-Wayz-Map/commit/2cc3d09970f0450fd5dfc9ec141e5a7bbed3464e))
+* update token usage in release workflow ([#130](https://github.com/gccornejo441/Wich-Wayz-Map/issues/130)) ([d402133](https://github.com/gccornejo441/Wich-Wayz-Map/commit/d402133b4f5f9f387f874689fcb8e76e60e88a3f))
+* updating filter buttons ([#133](https://github.com/gccornejo441/Wich-Wayz-Map/issues/133)) ([f224893](https://github.com/gccornejo441/Wich-Wayz-Map/commit/f2248931b9c3c8827fb4da36ec7483bd30ac3f88))
+
 ## [1.24.0](https://github.com/gccornejo441/Wich-Wayz-Map/compare/wich-wayz-v1.23.0...wich-wayz-v1.24.0) (2026-03-13)
 
 
