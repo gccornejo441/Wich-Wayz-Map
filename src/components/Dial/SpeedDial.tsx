@@ -70,10 +70,12 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
   return (
     <div className="fixed bottom-6 right-3 z-50 group pointer-events-none">
       <div
+        id="speed-dial-menu-dropdown"
+        aria-hidden={!isOpen}
         className={`flex flex-col justify-end px-1 pointer-events-auto ${
           isOpen
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-95 translate-y-4"
+            ? "visible opacity-100 scale-100 translate-y-0"
+            : "invisible opacity-0 scale-95 translate-y-4"
         } transition-all duration-300 ease-out py-1 mb-4 space-y-2 border border-gray-100 dark:border-gray-700 rounded-lg shadow-sm bg-brand-primary dark:bg-surface-darker`}
       >
         <ul className="text-sm text-white">
@@ -123,6 +125,7 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
         onClick={toggleMenu}
         aria-controls="speed-dial-menu-dropdown"
         aria-expanded={isOpen}
+        aria-label={isOpen ? "Close actions menu" : "Open actions menu"}
         className="flex items-center justify-center ml-auto text-white bg-brand-primary dark:bg-surface-darker rounded-full w-14 h-14 focus:ring-4 focus:outline-none focus:ring-brand-primary/50 dark:focus:ring-surface-dark/50 pointer-events-auto touch-manipulation"
       >
         <HiOutlineDotsHorizontal className="w-6 h-6" aria-hidden="true" />
@@ -138,13 +141,15 @@ const SpeedDial = ({ onLocateUser }: { onLocateUser: () => void }) => {
               <span className="truncate">{shareableLink}</span>
               <button
                 onClick={handleCopyLink}
+                aria-label="Copy share link"
                 className="ml-2 text-primary dark:text-brand-secondary"
               >
-                <HiClipboardCopy className="w-5 h-5" />
+                <HiClipboardCopy className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
             <button
               onClick={() => setIsModalOpen(false)}
+              aria-label="Close share dialog"
               className="w-full py-2 text-white bg-brand-primary dark:bg-surface-darker rounded"
             >
               Close

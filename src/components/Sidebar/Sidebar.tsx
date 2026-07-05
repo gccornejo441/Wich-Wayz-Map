@@ -29,7 +29,7 @@ const Sidebar = () => {
             ? "translate-x-0 opacity-100 shadow-2xl pointer-events-auto"
             : "-translate-x-full opacity-0 shadow-none pointer-events-none"
         }`}
-      aria-label="Sidebar"
+      aria-label="Main sidebar"
     >
       <div className="flex flex-col h-full px-3">
         <ul className="flex-1 overflow-y-auto space-y-2 font-medium">

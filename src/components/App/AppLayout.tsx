@@ -10,6 +10,7 @@ import { OnboardingModal } from "@/features/onboarding/OnboardingModal";
 import NearbySidebar from "../Sidebar/NearbySidebar";
 import SavedSidebar from "../Sidebar/SavedSidebar";
 import { useOverlay } from "@/context/overlayContext";
+import { usePageMetadata } from "@/hooks/usePageMetadata";
 
 interface AppLayoutProps {
   fullBleed?: boolean;
@@ -19,6 +20,7 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
   const { currentModal } = useModal();
 
   const { isOpen, closeActive, toggle } = useOverlay();
+  usePageMetadata();
 
   const isSidebarOpen = isOpen("nav");
   const isShopOpen = isOpen("shop");
@@ -79,11 +81,14 @@ const AppLayout = ({ fullBleed = false }: AppLayoutProps) => {
       </div>
 
       {fullBleed ? (
-        <main className="absolute inset-0 z-0">
+        <main className="absolute inset-0 z-0" aria-label="Main content">
           <Outlet />
         </main>
       ) : (
-        <main className="relative z-10 flex items-center justify-center">
+        <main
+          className="relative z-10 flex items-center justify-center"
+          aria-label="Main content"
+        >
           <div className="container mx-auto w-full md:px-4 md:py-6">
             <Outlet />
           </div>

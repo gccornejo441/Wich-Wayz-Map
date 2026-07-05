@@ -800,14 +800,27 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
     <div
       id="mapbox-root"
       data-testid="map-root"
+      role="region"
+      aria-label="Interactive sandwich shop map"
       style={{ position: "fixed", inset: 0 }}
     >
+      <h1 className="sr-only">Wich Wayz sandwich shop map</h1>
+      <p className="sr-only">
+        Find sandwich shops near you, search by location or category, and
+        explore saved shops and map results.
+      </p>
+
       {loading && (
         <div
           data-testid="map-loading"
+          role="status"
+          aria-live="polite"
           className="absolute top-0 left-0 w-[100vw] h-[100dvh] flex items-center justify-center bg-surface-light dark:bg-surface-dark opacity-75 z-50"
         >
-          <GiSandwich className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4" />
+          <GiSandwich
+            className="animate-spin text-[50px] text-brand-primary dark:text-brand-secondary mr-4"
+            aria-hidden="true"
+          />
           <span className="text-brand-primary dark:text-brand-secondary text-md font-semibold">
             {loadingCaption}
           </span>
@@ -817,6 +830,7 @@ const MapBox = ({ isLoggedIn = true }: MapBoxProps) => {
       <div
         ref={mapContainerRef}
         data-testid="map-canvas"
+        aria-label="Map showing sandwich shop locations"
         style={{ width: "100%", height: "100%" }}
       />
     </div>

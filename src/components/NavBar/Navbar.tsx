@@ -23,6 +23,7 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
     <nav
       ref={navRef}
       data-testid="app-nav"
+      aria-label="Primary navigation"
       className="fixed top-0 left-0 right-0 z-50 h-12 transition-colors duration-500"
     >
       <div className="w-full bg-brand-primary dark:bg-surface-darker text-white dark:text-text-inverted py-1 px-4 transition-colors duration-500">
@@ -31,7 +32,11 @@ const NavBar = ({ searchBar, onToggleSidebar, navRef }: NavBarProps) => {
             {(showSearchBar || showMap) && (
               <SidebarToggleButton onClick={onToggleSidebar} />
             )}
-            <Link to="/" className="flex items-center gap-2 cursor-pointer">
+            <Link
+              to="/"
+              aria-label="Wich Wayz home"
+              className="flex items-center gap-2 cursor-pointer"
+            >
               <Logo imageSource="/Wich-Wayz-Logo.svg" className="h-10" />
             </Link>
           </div>
