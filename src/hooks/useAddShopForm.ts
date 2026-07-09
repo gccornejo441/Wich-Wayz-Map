@@ -187,6 +187,20 @@ export const useAddShopForm = (
     });
   }, [selectedCategories, setValue]);
 
+  const splitStreetUnit = (value: string) => {
+    const trimmed = value.trim();
+    const match = trimmed.match(
+      /^(.*?)(?:,?\s+)((?:#|apt\.?|apartment|unit|suite|ste\.?|floor|fl\.?|bldg\.?|building)\s*[A-Za-z0-9-]+(?:\s*[A-Za-z0-9-]+)?)$/i,
+    );
+
+    if (!match) return { street: trimmed, unit: "" };
+
+    return {
+      street: match[1].trim(),
+      unit: match[2].trim(),
+    };
+  };
+
   const applyParsedAddressToForm = (parsed: {
     coordinates: { latitude: number; longitude: number };
     components: {
@@ -258,6 +272,7 @@ export const useAddShopForm = (
     house_number?: string;
     street?: string;
     road?: string;
+    secondary_address?: string;
     city?: string;
     town?: string;
     state?: string;
@@ -265,12 +280,14 @@ export const useAddShopForm = (
   }): string => {
     const house = (components.house_number || "").trim();
     const street = (components.street || components.road || "").trim();
+    const secondary = (components.secondary_address || "").trim();
     const city = (components.city || components.town || "").trim();
     const state = (components.state || "").trim();
     const postcode = (components.postcode || "").trim();
 
     const parts = [
       [house, street].filter(Boolean).join(" ").trim(),
+      secondary,
       city,
       state,
       postcode,
@@ -280,15 +297,30 @@ export const useAddShopForm = (
   };
 
   const buildUsQueryFromForm = () => {
-    const line1 = (getValues("address") ?? "").trim();
+    const rawLine1 = (getValues("address") ?? "").trim();
+    const existingLine2 = (getValues("address_second") ?? "").trim();
+    const splitLine1 = splitStreetUnit(rawLine1);
+    const line1 = splitLine1.street;
+    const line2 = existingLine2 || splitLine1.unit;
     const city = (getValues("city") ?? "").trim();
     const stateCode = normalizeState(getValues("state"));
     const zip = normalizeZip(getValues("postcode"));
 
     if (!stateCode) return null;
 
+    if (splitLine1.unit && !existingLine2) {
+      setValue("address", line1, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("address_second", splitLine1.unit, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+
     const q = [line1, city, stateCode, zip].filter(Boolean).join(" ").trim();
-    return { q, stateCode };
+    return { q, stateCode, line2 };
   };
 
   const searchAddressSuggestions = async (): Promise<{
@@ -338,10 +370,21 @@ export const useAddShopForm = (
         return { success: false };
       }
 
-      const suggestions = filtered.map((result) => ({
-        formattedAddress: formatAddressFromComponents(result.components),
-        parsedData: result,
-      }));
+      const suggestions = filtered.map((result) => {
+        const components = {
+          ...result.components,
+          secondary_address:
+            result.components.secondary_address || built.line2 || undefined,
+        };
+
+        return {
+          formattedAddress: formatAddressFromComponents(components),
+          parsedData: {
+            ...result,
+            components,
+          },
+        };
+      });
 
       return { success: true, suggestions };
     } catch (error) {
@@ -398,7 +441,7 @@ export const useAddShopForm = (
         "Please prefill the address or set coordinates before submitting.",
         "error",
       );
-      return;
+      return false;
     }
 
     data.postcode = normalizeZip(data.postcode);
@@ -425,14 +468,17 @@ export const useAddShopForm = (
           addToast("Shop updated successfully!", "success");
           updateShopInContext(updatedShop);
           navigate("/");
+          return true;
         } else {
           addToast("Failed to update shop.", "error");
+          return false;
         }
       } catch (error) {
         console.error("Update failed:", error);
         addToast("Failed to update shop.", "error");
+        return false;
       }
-      return;
+      return false;
     }
 
     // Generate reCAPTCHA token for new shop submission
@@ -447,7 +493,7 @@ export const useAddShopForm = (
         "Security verification failed. Please refresh and try again.",
         "error",
       );
-      return;
+      return false;
     }
 
     const addressDraft: AddressDraft = {
@@ -475,6 +521,8 @@ export const useAddShopForm = (
     if (success) {
       navigate("/");
     }
+
+    return success;
   };
 
   return {

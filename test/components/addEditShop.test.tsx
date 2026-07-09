@@ -87,6 +87,7 @@ vi.mock("@/components/Form/ShopForm", () => ({
     return (
       <div data-testid="shop-form">
         <div>{props.mode === "edit" ? "Edit Form" : "Add Form"}</div>
+        <div>Layout: {props.layoutMode}</div>
         {props.onNavigateToMap && (
           <button onClick={props.onNavigateToMap}>To Map</button>
         )}
@@ -112,6 +113,9 @@ describe("AddEditShop", () => {
 
     expect(screen.getByText("To Map")).toBeInTheDocument();
     expect(screen.getByTestId("shop-form")).toHaveTextContent("Add Form");
+    expect(screen.getByTestId("shop-form")).toHaveTextContent(
+      "Layout: map-section",
+    );
   });
 
   it("navigates to '/' when 'To Map' is clicked", () => {
@@ -137,6 +141,9 @@ describe("AddEditShop", () => {
     );
 
     expect(screen.getByTestId("shop-form")).toHaveTextContent("Edit Form");
+    expect(screen.getByTestId("shop-form")).toHaveTextContent(
+      "Layout: form-section",
+    );
   });
 
   describe("Postcode Normalization", () => {
