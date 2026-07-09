@@ -204,7 +204,7 @@ export function createLocationShopPayload(
     longitude = addAShopPayload.longitude ?? 0;
   }
 
-  const cleanedCity = cleanString(city, "title");
+  const cleanedCity = city.trim();
 
   const location = {
     house_number: "",

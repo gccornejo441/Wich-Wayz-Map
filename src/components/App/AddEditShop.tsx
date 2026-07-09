@@ -72,6 +72,7 @@ const AddEditShop = () => {
   const { removeShopFromContext } = useShops();
   const { addToast } = useToast();
   const { userMetadata } = useAuth();
+  const mode = initialData ? "edit" : "add";
 
   const handleDeleteShop = async () => {
     if (!initialData?.shopId) {
@@ -109,11 +110,15 @@ const AddEditShop = () => {
   return (
     <div className="min-h-[100dvh] pt-[50px] md:pt-10 bg-surface-light dark:bg-surface-dark pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-center">
-        <div className="w-full max-w-3xl bg-white dark:bg-surface-darker border-x border-gray-200 dark:border-gray-700">
+        <div
+          className={`w-full bg-white dark:bg-surface-darker border-x border-gray-200 dark:border-gray-700 ${
+            mode === "add" ? "max-w-6xl" : "max-w-3xl"
+          }`}
+        >
           <ShopForm
             initialData={initialData}
-            mode={initialData ? "edit" : "add"}
-            layoutMode="form-section"
+            mode={mode}
+            layoutMode={mode === "add" ? "map-section" : "form-section"}
             onDelete={handleDeleteShop}
             onNavigateToMap={() => navigate("/")}
           />

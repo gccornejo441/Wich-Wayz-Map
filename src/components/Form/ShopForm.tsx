@@ -1,7 +1,8 @@
 import Select, { GroupBase, MultiValue, StylesConfig } from "react-select";
 import { InputMask } from "@react-input/mask";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { HiTrash, HiMap, HiSave } from "react-icons/hi";
 
 import { useAddShopForm } from "@/hooks/useAddShopForm";
@@ -22,6 +23,9 @@ import { useToast } from "@context/toastContext";
 import { updateShopLocationStatus } from "@services/shopService";
 import { useShops } from "@context/shopContext";
 import { applyLocationStatusToShop } from "@/utils/shops";
+import { buildDeepLink } from "@utils/deepLink";
+import { ShopWithUser } from "@models/ShopWithUser";
+import { MapBoxLocationLookup } from "@/services/geolocation";
 
 type AddressLookupState =
   | "idle"
@@ -154,6 +158,142 @@ const toNullableCoordinate = (value: unknown): number | null => {
   return coerceNumber(value);
 };
 
+const ADD_SHOP_DRAFT_KEY = "wich-wayz-add-shop-draft";
+const ADD_SHOP_DRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+const DUPLICATE_WARNING_RADIUS_MILES = 0.1;
+const DUPLICATE_WARNING_NAME_SIMILARITY = 0.7;
+
+type AddShopDraft = {
+  values: Partial<AddAShopPayload>;
+  selectedCategories: number[];
+  updatedAt: number;
+};
+
+type DuplicateCandidate = {
+  shop: ShopWithUser;
+  locationId?: number;
+  latitude: number;
+  longitude: number;
+  distanceMiles: number;
+  signature: string;
+};
+
+const draftFields: Array<keyof AddAShopPayload> = [
+  "shopName",
+  "shop_description",
+  "address",
+  "website_url",
+  "phone",
+  "address_first",
+  "address_second",
+  "house_number",
+  "city",
+  "state",
+  "postcode",
+  "country",
+  "latitude",
+  "longitude",
+  "chain_attestation",
+  "estimated_location_count",
+  "eligibility_confirmed",
+  "categoryIds",
+];
+
+const meaningfulDraftFields: Array<keyof AddAShopPayload> = [
+  "shopName",
+  "shop_description",
+  "address",
+  "website_url",
+  "phone",
+  "address_first",
+  "address_second",
+  "house_number",
+  "city",
+  "state",
+  "postcode",
+  "country",
+  "latitude",
+  "longitude",
+  "categoryIds",
+];
+
+const hasUsableDraft = (draft: AddShopDraft) =>
+  Boolean(
+    draft.selectedCategories.length ||
+    meaningfulDraftFields.some((field) => {
+      const value = draft.values[field];
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "number") return value !== 0;
+      return typeof value === "string" && value.trim().length > 0;
+    }),
+  );
+
+const isStaleDraft = (draft: AddShopDraft) =>
+  typeof draft.updatedAt === "number" &&
+  Date.now() - draft.updatedAt > ADD_SHOP_DRAFT_MAX_AGE_MS;
+
+const normalizeForMatch = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(the|a|an|shop|sandwich|sandwiches|deli|restaurant)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getNameSimilarity = (left: string, right: string) => {
+  const a = normalizeForMatch(left);
+  const b = normalizeForMatch(right);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.85;
+
+  const aTokens = new Set(a.split(" "));
+  const bTokens = new Set(b.split(" "));
+  const shared = [...aTokens].filter((token) => bTokens.has(token)).length;
+  return shared / Math.max(aTokens.size, bTokens.size);
+};
+
+const distanceMiles = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+) => {
+  const radiusMiles = 3958.8;
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return radiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const formatDistance = (miles: number) =>
+  miles < 0.1 ? "less than 0.1 mi" : `${miles.toFixed(1)} mi`;
+
+const buildDuplicateSignature = (
+  shopId: number | undefined,
+  locationId: number | undefined,
+  candidateLatitude: number,
+  candidateLongitude: number,
+  currentName: string,
+  currentLatitude: number,
+  currentLongitude: number,
+) =>
+  [
+    shopId ?? "shop",
+    locationId ??
+      `${candidateLatitude.toFixed(5)},${candidateLongitude.toFixed(5)}`,
+    normalizeForMatch(currentName),
+    currentLatitude.toFixed(4),
+    currentLongitude.toFixed(4),
+  ].join("|");
+
 const ShopForm = ({
   initialData,
   mode,
@@ -176,10 +316,12 @@ const ShopForm = ({
     setValue,
     watch,
     control,
+    getValues,
   } = useAddShopForm(initialData, mode);
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const navigate = useNavigate();
 
   const { isAuthenticated, userMetadata } = useAuth();
   const { addToast } = useToast();
@@ -198,6 +340,18 @@ const ShopForm = ({
   const [pendingParsedAddress, setPendingParsedAddress] = useState<
     AddressSuggestion["parsedData"] | null
   >(null);
+  const [isManualAddressOpen, setIsManualAddressOpen] = useState(
+    mode === "add",
+  );
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const [dismissedDuplicateSignatures, setDismissedDuplicateSignatures] =
+    useState<Set<string>>(() => new Set());
+  const draftHydratedKeyRef = useRef<string | null>(
+    mode === "edit" ? "edit" : null,
+  );
+  const autoGeocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const watchedFields = useWatch({
     control,
@@ -212,6 +366,7 @@ const ShopForm = ({
       "longitude",
     ],
   });
+  const draftValues = useWatch({ control });
 
   const derivedAddress: AddressDraft = {
     streetAddress: (watchedFields[0] as string) ?? "",
@@ -244,6 +399,33 @@ const ShopForm = ({
     });
   }, [initialData?.website_url, initialData?.phone, setValue]);
 
+  useEffect(() => {
+    if (autoGeocodeTimerRef.current) clearTimeout(autoGeocodeTimerRef.current);
+
+    const address = (watchedFields[0] as string) ?? "";
+    if (!address.trim() || mode !== "add") return;
+
+    autoGeocodeTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await MapBoxLocationLookup(address, { limit: 1 });
+        if (!result) return;
+        setValue("latitude", result.coordinates.latitude, {
+          shouldDirty: true,
+        });
+        setValue("longitude", result.coordinates.longitude, {
+          shouldDirty: true,
+        });
+      } catch {
+        // Silently fail — user can click "Recalculate pin" manually
+      }
+    }, 800);
+
+    return () => {
+      if (autoGeocodeTimerRef.current)
+        clearTimeout(autoGeocodeTimerRef.current);
+    };
+  }, [watchedFields[0], mode, setValue]);
+
   const [locationStatus, setLocationStatus] = useState<LocationStatus>(
     (initialData?.locationStatus as LocationStatus) || "open",
   );
@@ -262,10 +444,38 @@ const ShopForm = ({
   const isEditMode = mode === "edit";
   const chainAttestation = watch("chain_attestation");
   const estimatedLocationCount = watch("estimated_location_count");
+  const eligibilityConfirmed = watch("eligibility_confirmed");
+  const watchedShopName = watch("shopName") ?? "";
+  const watchedDescription = watch("shop_description") ?? "";
+  const watchedWebsite = watch("website_url") ?? "";
+  const watchedPhone = watch("phone") ?? "";
 
   const isExplicitlyIneligible =
     mode === "add" &&
     (chainAttestation === "yes" || estimatedLocationCount === "gte10");
+
+  const fullAddressForMaps = useMemo(
+    () =>
+      [
+        derivedAddress.streetAddress,
+        derivedAddress.streetAddressSecond,
+        derivedAddress.city,
+        derivedAddress.state,
+        derivedAddress.postalCode,
+        derivedAddress.country,
+      ]
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .join(", "),
+    [
+      derivedAddress.streetAddress,
+      derivedAddress.streetAddressSecond,
+      derivedAddress.city,
+      derivedAddress.state,
+      derivedAddress.postalCode,
+      derivedAddress.country,
+    ],
+  );
 
   const categoryOptions: CategoryOption[] = categories.map((cat) => ({
     value: cat.id!,
@@ -276,11 +486,282 @@ const ShopForm = ({
     selectedCategories.includes(opt.value),
   );
 
+  const draftStorageKey = useMemo(
+    () => `${ADD_SHOP_DRAFT_KEY}:${userMetadata?.id ?? "anonymous"}`,
+    [userMetadata?.id],
+  );
+
+  const hasSelectedLocation =
+    typeof derivedAddress.latitude === "number" &&
+    typeof derivedAddress.longitude === "number" &&
+    !(derivedAddress.latitude === 0 && derivedAddress.longitude === 0);
+
+  const selectedLocationSummary =
+    fullAddressForMaps ||
+    (hasSelectedLocation
+      ? `Lat: ${derivedAddress.latitude?.toFixed(5)}, Lng: ${derivedAddress.longitude?.toFixed(5)}`
+      : "");
+
+  const selectedCategoryLabels = selectedOptions.map((option) => option.label);
+
+  const duplicateCandidate = useMemo<DuplicateCandidate | null>(() => {
+    if (
+      isEditMode ||
+      !watchedShopName.trim() ||
+      !hasSelectedLocation ||
+      typeof derivedAddress.latitude !== "number" ||
+      typeof derivedAddress.longitude !== "number"
+    ) {
+      return null;
+    }
+
+    const currentLatitude = derivedAddress.latitude;
+    const currentLongitude = derivedAddress.longitude;
+    let best: DuplicateCandidate | null = null;
+
+    for (const shop of shops) {
+      const similarity = getNameSimilarity(watchedShopName, shop.name);
+      if (similarity < DUPLICATE_WARNING_NAME_SIMILARITY) continue;
+
+      const locations =
+        shop.locations && shop.locations.length
+          ? shop.locations
+          : shop.latitude !== undefined && shop.longitude !== undefined
+            ? [
+                {
+                  latitude: shop.latitude,
+                  longitude: shop.longitude,
+                  postal_code: "",
+                  street_address: "",
+                  city: "",
+                  state: "",
+                  country: "",
+                },
+              ]
+            : [];
+
+      for (const location of locations) {
+        const latitude = coerceNumber(location.latitude);
+        const longitude = coerceNumber(location.longitude);
+        if (latitude === 0 && longitude === 0) continue;
+
+        const nextDistance = distanceMiles(
+          currentLatitude,
+          currentLongitude,
+          latitude,
+          longitude,
+        );
+
+        if (nextDistance > DUPLICATE_WARNING_RADIUS_MILES) continue;
+        const signature = buildDuplicateSignature(
+          shop.id,
+          location.id,
+          latitude,
+          longitude,
+          watchedShopName,
+          currentLatitude,
+          currentLongitude,
+        );
+        if (dismissedDuplicateSignatures.has(signature)) continue;
+        if (!best || nextDistance < best.distanceMiles) {
+          best = {
+            shop,
+            locationId: location.id,
+            latitude,
+            longitude,
+            distanceMiles: nextDistance,
+            signature,
+          };
+        }
+      }
+    }
+
+    return best;
+  }, [
+    derivedAddress.latitude,
+    derivedAddress.longitude,
+    dismissedDuplicateSignatures,
+    hasSelectedLocation,
+    isEditMode,
+    shops,
+    watchedShopName,
+  ]);
+
+  useEffect(() => {
+    if (mode !== "add" || typeof window === "undefined") return;
+    if (draftHydratedKeyRef.current === draftStorageKey) return;
+
+    const currentDraft: AddShopDraft = {
+      values: getValues(),
+      selectedCategories,
+      updatedAt: Date.now(),
+    };
+
+    if (hasUsableDraft(currentDraft)) {
+      draftHydratedKeyRef.current = draftStorageKey;
+      return;
+    }
+
+    const storedDraft = window.localStorage.getItem(draftStorageKey);
+    if (!storedDraft) {
+      draftHydratedKeyRef.current = draftStorageKey;
+      return;
+    }
+
+    try {
+      const draft = JSON.parse(storedDraft) as AddShopDraft;
+      if (isStaleDraft(draft)) {
+        window.localStorage.removeItem(draftStorageKey);
+        draftHydratedKeyRef.current = draftStorageKey;
+        return;
+      }
+
+      if (!hasUsableDraft(draft)) {
+        window.localStorage.removeItem(draftStorageKey);
+        draftHydratedKeyRef.current = draftStorageKey;
+        return;
+      }
+
+      draftFields.forEach((field) => {
+        if (field in draft.values) {
+          setValue(field, draft.values[field] as never, {
+            shouldDirty: false,
+            shouldValidate: true,
+          });
+        }
+      });
+      setSelectedCategories(draft.selectedCategories);
+      setShowDraftBanner(true);
+    } catch (error) {
+      console.error("Failed to restore add shop draft:", error);
+      window.localStorage.removeItem(draftStorageKey);
+    } finally {
+      draftHydratedKeyRef.current = draftStorageKey;
+    }
+  }, [
+    draftStorageKey,
+    getValues,
+    mode,
+    selectedCategories,
+    setSelectedCategories,
+    setValue,
+  ]);
+
+  useEffect(() => {
+    if (
+      mode !== "add" ||
+      typeof window === "undefined" ||
+      draftHydratedKeyRef.current !== draftStorageKey
+    ) {
+      return;
+    }
+
+    const values = getValues();
+    const draft: AddShopDraft = {
+      values,
+      selectedCategories,
+      updatedAt: Date.now(),
+    };
+
+    if (!hasUsableDraft(draft)) {
+      window.localStorage.removeItem(draftStorageKey);
+      return;
+    }
+
+    window.localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [draftStorageKey, draftValues, getValues, mode, selectedCategories]);
+
+  const clearAddShopDraft = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(draftStorageKey);
+      window.localStorage.removeItem(`${ADD_SHOP_DRAFT_KEY}:anonymous`);
+      window.localStorage.removeItem(ADD_SHOP_DRAFT_KEY);
+    }
+    setShowDraftBanner(false);
+  };
+
+  const handleEligibilityChoice = (
+    choice: "local" | "unsure" | "large-chain",
+  ) => {
+    if (choice === "local") {
+      setValue("chain_attestation", "no", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("estimated_location_count", "lt10", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("eligibility_confirmed", true, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    if (choice === "unsure") {
+      setValue("chain_attestation", "unsure", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("estimated_location_count", "unsure", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("eligibility_confirmed", true, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    setValue("chain_attestation", "yes", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("estimated_location_count", "gte10", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue("eligibility_confirmed", false, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const eligibilityChoice: "local" | "unsure" | "large-chain" | null =
+    chainAttestation === "yes" || estimatedLocationCount === "gte10"
+      ? "large-chain"
+      : !eligibilityConfirmed
+        ? null
+        : chainAttestation === "unsure" || estimatedLocationCount === "unsure"
+          ? "unsure"
+          : "local";
+
+  const openDuplicateCandidate = () => {
+    if (!duplicateCandidate?.shop.id) return;
+
+    navigate(
+      buildDeepLink(
+        {
+          lat: duplicateCandidate.latitude,
+          lng: duplicateCandidate.longitude,
+          z: 16,
+          shopId: duplicateCandidate.shop.id,
+        },
+        "/",
+      ),
+    );
+  };
+
   const handleFormSubmit = async (data: AddAShopPayload) => {
     setIsSubmitting(true);
     try {
       data.website_url = normalizeWebsiteUrl(String(data.website_url ?? ""));
-      await onSubmit(data);
+      const didSubmit = await onSubmit(data);
+      if (didSubmit === true && !isEditMode) {
+        clearAddShopDraft();
+      }
 
       if (
         isEditMode &&
@@ -328,11 +809,54 @@ const ShopForm = ({
     !isSubmitting &&
     addressLookupState !== "loading";
 
+  const canRecalculatePin =
+    Boolean(
+      derivedAddress.streetAddress.trim() &&
+      derivedAddress.city.trim() &&
+      derivedAddress.state.trim() &&
+      derivedAddress.postalCode.trim(),
+    ) &&
+    !isSubmitting &&
+    addressLookupState !== "loading";
+
   const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
     setLookupMessage(suggestion.formattedAddress);
     setAddressLookupState("success");
     setAddressSuggestions([]);
     setPendingParsedAddress(suggestion.parsedData);
+  };
+
+  const handleUseSuggestionForPin = (suggestion: AddressSuggestion) => {
+    commitParsedAddress(suggestion.parsedData);
+    setLookupMessage(suggestion.formattedAddress);
+    setAddressLookupState("success");
+    setAddressSuggestions([]);
+    setPendingParsedAddress(null);
+    setAddressLocked(true);
+    setIsManualAddressOpen(false);
+  };
+
+  const handleRecalculatePinFromAddress = async () => {
+    setAddressLookupState("loading");
+    setLookupMessage("");
+    setAddressSuggestions([]);
+    setPendingParsedAddress(null);
+
+    const result = await searchAddressSuggestions();
+    if (result.success && result.suggestions) {
+      if (result.suggestions.length === 1) {
+        handleUseSuggestionForPin(result.suggestions[0]);
+      } else {
+        setAddressSuggestions(result.suggestions);
+        setAddressLookupState("suggestions");
+        setIsManualAddressOpen(true);
+      }
+      return;
+    }
+
+    setAddressLookupState("error");
+    setLookupMessage("No match found. Check address and try again.");
+    setIsManualAddressOpen(true);
   };
 
   const handleConfirmAddress = () => {
@@ -355,29 +879,6 @@ const ShopForm = ({
     setPendingParsedAddress(null);
   };
 
-  const fullAddressForMaps = useMemo(
-    () =>
-      [
-        derivedAddress.streetAddress,
-        derivedAddress.streetAddressSecond,
-        derivedAddress.city,
-        derivedAddress.state,
-        derivedAddress.postalCode,
-        derivedAddress.country,
-      ]
-        .map((value) => value.trim())
-        .filter(Boolean)
-        .join(", "),
-    [
-      derivedAddress.streetAddress,
-      derivedAddress.streetAddressSecond,
-      derivedAddress.city,
-      derivedAddress.state,
-      derivedAddress.postalCode,
-      derivedAddress.country,
-    ],
-  );
-
   const handleMapAddressUpdate = (
     next: AddressDraft | ((prev: AddressDraft) => AddressDraft),
   ) => {
@@ -393,6 +894,8 @@ const ShopForm = ({
     const latitude = coerceNumber(resolvedAddress.latitude);
     const longitude = coerceNumber(resolvedAddress.longitude);
 
+    setIsManualAddressOpen(false);
+    setAddressLocked(true);
     setValue("address", streetAddress, {
       shouldDirty: true,
       shouldValidate: true,
@@ -423,7 +926,631 @@ const ShopForm = ({
     isAddressValid &&
     !errors.shopName &&
     !errors.address &&
-    !isExplicitlyIneligible;
+    !isExplicitlyIneligible &&
+    (isEditMode || eligibilityConfirmed);
+
+  if (layoutMode === "map-section" && !isEditMode) {
+    return (
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        data-testid="shop-form"
+        className="flex flex-col border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-surface-darker"
+      >
+        <input type="hidden" {...register("chain_attestation")} />
+        <input type="hidden" {...register("estimated_location_count")} />
+        <input type="hidden" {...register("eligibility_confirmed")} />
+
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h4 className="text-base font-semibold text-text-base dark:text-text-inverted">
+              Add New Shop
+            </h4>
+            <p className="text-xs text-text-muted dark:text-gray-300">
+              Enter the address first, then fine-tune the pin if needed.
+            </p>
+          </div>
+          {onNavigateToMap ? (
+            <button
+              type="button"
+              onClick={onNavigateToMap}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gray-500 px-3 py-2 text-xs text-white transition hover:bg-gray-600"
+            >
+              <HiMap className="h-4 w-4" />
+              To Map
+            </button>
+          ) : null}
+        </div>
+
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+          <section className="order-2 border-b border-gray-200 p-4 dark:border-gray-700 lg:order-1 lg:border-b-0 lg:border-r">
+            <div className="overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
+              <div className="flex flex-col gap-2 border-b border-gray-200 bg-surface-muted px-3 py-2 dark:border-gray-700 dark:bg-surface-darker sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                    Choose the location
+                  </p>
+                  <p className="text-[11px] text-text-muted dark:text-gray-300">
+                    Recalculate from address, then click map or drag pin
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRecalculatePinFromAddress}
+                  disabled={!canRecalculatePin}
+                  className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    !canRecalculatePin
+                      ? "cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700"
+                      : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-gray-900"
+                  }`}
+                >
+                  {addressLookupState === "loading"
+                    ? "Recalculating..."
+                    : "Recalculate pin"}
+                </button>
+              </div>
+              <div className="h-[250px] md:h-[360px]">
+                <MapPreview
+                  address={derivedAddress}
+                  fullAddressForMaps={fullAddressForMaps}
+                  onAddressUpdate={handleMapAddressUpdate}
+                  prefillFlyToNonce={0}
+                  containerClassName="h-full"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-lg border border-gray-200 bg-surface-muted p-3 dark:border-gray-700 dark:bg-surface-dark">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-text-base dark:text-text-inverted">
+                    Selected location
+                  </p>
+                  <p className="mt-1 text-sm text-text-muted dark:text-gray-300">
+                    {selectedLocationSummary ||
+                      "Choose a spot on the map to set the shop address."}
+                  </p>
+                </div>
+                {hasSelectedLocation ? (
+                  <span className="rounded bg-green-100 px-2 py-1 text-[11px] font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    Pin set
+                  </span>
+                ) : null}
+              </div>
+              {hasSelectedLocation ? (
+                <p className="mt-2 text-[11px] text-text-muted dark:text-gray-300">
+                  Lat: {derivedAddress.latitude?.toFixed(5)} | Lng:{" "}
+                  {derivedAddress.longitude?.toFixed(5)}
+                </p>
+              ) : null}
+            </div>
+
+            {duplicateCandidate ? (
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+                <p className="font-semibold">
+                  Possible match nearby: {duplicateCandidate.shop.name} -{" "}
+                  {formatDistance(duplicateCandidate.distanceMiles)} away. Is
+                  this the same place?
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={openDuplicateCandidate}
+                    className="rounded bg-amber-700 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-amber-800"
+                  >
+                    Open existing shop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDismissedDuplicateSignatures((prev) => {
+                        const next = new Set(prev);
+                        next.add(duplicateCandidate.signature);
+                        return next;
+                      })
+                    }
+                    className="rounded border border-amber-400 px-3 py-1.5 text-xs font-medium transition hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                  >
+                    Continue anyway
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="order-1 space-y-5 p-4 lg:order-2">
+            {showDraftBanner ? (
+              <div className="rounded-lg border border-brand-secondary bg-brand-secondary/15 px-3 py-2 text-sm text-text-base dark:text-text-inverted">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>Restored your unsent shop draft.</span>
+                  <button
+                    type="button"
+                    onClick={clearAddShopDraft}
+                    className="text-left text-xs font-medium text-brand-primary underline hover:text-brand-secondary"
+                  >
+                    Clear draft
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            <div>
+              <h4 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold text-text-base dark:border-gray-700 dark:text-text-inverted">
+                Shop details
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="shopName"
+                    className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Shop Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="shopName"
+                    type="text"
+                    placeholder="Enter shop name"
+                    {...register("shopName")}
+                    className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:bg-surface-dark dark:text-text-inverted ${
+                      errors.shopName
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  />
+                  {errors.shopName && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.shopName.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="shop_description"
+                    className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="shop_description"
+                    rows={3}
+                    placeholder="What makes this place worth adding?"
+                    {...register("shop_description")}
+                    className={`w-full resize-none rounded-md border-2 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:bg-surface-dark dark:text-text-inverted ${
+                      errors.shop_description
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  />
+                  {errors.shop_description && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.shop_description.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                  Address
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsManualAddressOpen((prev) => !prev)}
+                  className="text-xs font-medium text-brand-primary underline hover:text-brand-secondary"
+                >
+                  {isManualAddressOpen
+                    ? "View map confirmation"
+                    : "Edit manually"}
+                </button>
+              </div>
+
+              {!isManualAddressOpen ? (
+                <div className="rounded-lg border border-gray-200 bg-surface-muted p-3 dark:border-gray-700 dark:bg-surface-dark">
+                  <p className="text-xs font-semibold text-text-base dark:text-text-inverted">
+                    {hasSelectedLocation
+                      ? "Location confirmed"
+                      : "No location selected yet"}
+                  </p>
+                  <p className="mt-1 text-sm text-text-muted dark:text-gray-300">
+                    {selectedLocationSummary ||
+                      "Use the map to choose the shop location."}
+                  </p>
+                  {!isAddressValid && (
+                    <p className="mt-2 text-xs text-red-500">
+                      City, state, ZIP, street, and valid coordinates are
+                      required.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      htmlFor="address"
+                      className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      Street
+                    </label>
+                    <input
+                      id="address"
+                      type="text"
+                      placeholder="123 Main St"
+                      {...register("address")}
+                      className="w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:border-gray-600 dark:bg-surface-dark dark:text-text-inverted"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="address_second"
+                      className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      Line 2
+                    </label>
+                    <input
+                      id="address_second"
+                      type="text"
+                      placeholder="Apt, Suite"
+                      {...register("address_second")}
+                      className="w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:border-gray-600 dark:bg-surface-dark dark:text-text-inverted"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="city"
+                      className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                    >
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="city"
+                      type="text"
+                      placeholder="City"
+                      {...register("city")}
+                      className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:bg-surface-dark dark:text-text-inverted ${
+                        errors.city
+                          ? "border-red-500"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
+                    />
+                    {errors.city && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {errors.city.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        htmlFor="state"
+                        className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                      >
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="state"
+                        {...register("state")}
+                        className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:bg-surface-dark dark:text-text-inverted ${
+                          errors.state
+                            ? "border-red-500"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                      >
+                        <option value="">Select...</option>
+                        {US_STATES.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.code}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.state && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.state.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="postcode"
+                        className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                      >
+                        ZIP <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="postcode"
+                        type="text"
+                        placeholder="12345"
+                        {...register("postcode")}
+                        className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:bg-surface-dark dark:text-text-inverted ${
+                          errors.postcode
+                            ? "border-red-500"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                      />
+                      {errors.postcode && (
+                        <p className="mt-1 text-xs text-red-500">
+                          {errors.postcode.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleRecalculatePinFromAddress}
+                    disabled={!canRecalculatePin}
+                    className={`w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      !canRecalculatePin
+                        ? "cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700"
+                        : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-gray-900"
+                    }`}
+                  >
+                    {addressLookupState === "loading"
+                      ? "Recalculating pin..."
+                      : "Recalculate pin from address"}
+                  </button>
+
+                  {addressLookupState === "suggestions" &&
+                    addressSuggestions.length > 0 && (
+                      <div className="space-y-2 rounded-lg border border-gray-300 bg-surface-muted p-2 dark:border-gray-600 dark:bg-surface-darker">
+                        <p className="text-xs font-medium text-text-base dark:text-text-inverted">
+                          Select the best match:
+                        </p>
+                        {addressSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() =>
+                              handleUseSuggestionForPin(suggestion)
+                            }
+                            className="w-full rounded bg-white px-2 py-1.5 text-left text-xs text-text-base transition-colors hover:bg-brand-primary/10 dark:bg-surface-dark dark:text-text-inverted dark:hover:bg-brand-primary/20"
+                          >
+                            {suggestion.formattedAddress}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                  {addressLookupState === "error" && lookupMessage && (
+                    <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+                      {lookupMessage}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold text-text-base dark:border-gray-700 dark:text-text-inverted">
+                Is this an independent or small local shop?
+              </h4>
+              <div className="grid gap-2">
+                {[
+                  {
+                    id: "local",
+                    label: "Yes, it is local/independent",
+                  },
+                  { id: "unsure", label: "I'm not sure" },
+                  { id: "large-chain", label: "No, it is a large chain" },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() =>
+                      handleEligibilityChoice(
+                        option.id as "local" | "unsure" | "large-chain",
+                      )
+                    }
+                    className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      eligibilityChoice === option.id
+                        ? "border-brand-primary bg-brand-primary/10 text-text-base dark:text-text-inverted"
+                        : "border-gray-300 bg-white text-text-base hover:border-brand-primary dark:border-gray-600 dark:bg-surface-dark dark:text-text-inverted"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {eligibilityChoice === "unsure" && !isExplicitlyIneligible ? (
+                <p className="mt-2 text-xs text-text-muted dark:text-gray-300">
+                  You can still submit it; the review step will verify
+                  eligibility.
+                </p>
+              ) : null}
+              {!eligibilityConfirmed && !isExplicitlyIneligible ? (
+                <p className="mt-2 text-xs text-red-500">
+                  Please confirm this shop is eligible to submit.
+                </p>
+              ) : null}
+              {(errors.chain_attestation ||
+                errors.estimated_location_count ||
+                errors.eligibility_confirmed) && (
+                <p className="mt-2 text-xs text-red-500">
+                  {errors.chain_attestation?.message ||
+                    errors.estimated_location_count?.message ||
+                    errors.eligibility_confirmed?.message}
+                </p>
+              )}
+              {isExplicitlyIneligible && (
+                <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-300">
+                  Large chains and brands with 10+ locations cannot be
+                  submitted.
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                  Categories <span className="text-red-500">*</span>
+                </h4>
+                {selectedCategories.length > 0 && (
+                  <span className="rounded bg-brand-primary px-2 py-0.5 text-xs text-white">
+                    {selectedCategories.length}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-3">
+                <div data-testid="shop-category-select">
+                  <Select<CategoryOption, true, GroupBase<CategoryOption>>
+                    inputId="shop-categories"
+                    instanceId="shop-categories"
+                    placeholder="Select categories..."
+                    isMulti
+                    value={selectedOptions}
+                    options={categoryOptions}
+                    onChange={(selected: MultiValue<CategoryOption>) => {
+                      setSelectedCategories(selected.map((opt) => opt.value));
+                    }}
+                    styles={getCustomSelectStyles(isDark)}
+                    menuPortalTarget={
+                      typeof window !== "undefined" ? document.body : null
+                    }
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    isClearable
+                    isSearchable
+                  />
+                  {errors.categoryIds && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.categoryIds.message}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(true)}
+                  className="text-xs text-brand-primary underline hover:text-brand-secondary"
+                >
+                  + Add New Category
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="mb-3 border-b border-gray-200 pb-2 text-sm font-semibold text-text-base dark:border-gray-700 dark:text-text-inverted">
+                Contact
+              </h4>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="website_url"
+                    className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Website
+                  </label>
+                  <input
+                    id="website_url"
+                    type="text"
+                    placeholder="https://example.com"
+                    {...register("website_url", {
+                      setValueAs: (v) => normalizeWebsiteUrl(String(v ?? "")),
+                    })}
+                    className="w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:border-gray-600 dark:bg-surface-dark dark:text-text-inverted"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-1.5 block text-xs font-medium text-text-base dark:text-text-inverted"
+                  >
+                    Phone
+                  </label>
+                  <InputMask
+                    id="phone"
+                    mask="(___) ___-____"
+                    replacement={{ _: /\d/ }}
+                    placeholder="(123) 456-7890"
+                    {...register("phone")}
+                    className="w-full rounded-md border-2 border-gray-300 bg-white px-3 py-2 text-sm text-text-base transition-colors focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary dark:border-gray-600 dark:bg-surface-dark dark:text-text-inverted"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <h4 className="mb-3 text-sm font-semibold text-text-base dark:text-text-inverted">
+                Submission preview
+              </h4>
+              <div className="space-y-2 text-sm text-text-base dark:text-text-inverted">
+                <p>
+                  <span className="font-medium">Shop:</span>{" "}
+                  {watchedShopName || "Shop name"}
+                </p>
+                <p>
+                  <span className="font-medium">Description:</span>{" "}
+                  {watchedDescription || "Description"}
+                </p>
+                <p>
+                  <span className="font-medium">Categories:</span>{" "}
+                  {selectedCategoryLabels.length
+                    ? selectedCategoryLabels.join(", ")
+                    : "Select at least one category"}
+                </p>
+                <p>
+                  <span className="font-medium">Address:</span>{" "}
+                  {selectedLocationSummary || "Choose a location"}
+                </p>
+                {watchedWebsite ? (
+                  <p>
+                    <span className="font-medium">Website:</span>{" "}
+                    {normalizeWebsiteUrl(String(watchedWebsite))}
+                  </p>
+                ) : null}
+                {watchedPhone ? (
+                  <p>
+                    <span className="font-medium">Phone:</span> {watchedPhone}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={!canSubmit || isSubmitting}
+              className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                !canSubmit || isSubmitting
+                  ? "cursor-not-allowed bg-gray-300 text-gray-500 dark:bg-gray-600"
+                  : "bg-brand-primary text-white hover:bg-brand-secondary hover:text-gray-900"
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                "Submit for Review"
+              )}
+            </button>
+          </section>
+        </div>
+
+        <AddCategoryModal
+          isOpen={showCategoryModal}
+          onClose={() => setShowCategoryModal(false)}
+          onSubmit={async (name, desc) => {
+            try {
+              const newCategory = await addCategoryIfNotExists(name, desc);
+              await refreshCategories();
+
+              if (newCategory?.id && typeof newCategory.id === "number") {
+                setSelectedCategories((prev) => [...prev, newCategory.id!]);
+              }
+
+              setShowCategoryModal(false);
+            } catch (err) {
+              if (err instanceof Error) alert(err.message);
+              else console.error("Unexpected error:", err);
+            }
+          }}
+        />
+      </form>
+    );
+  }
 
   if (layoutMode === "form-section") {
     const isAdmin = userMetadata?.role === "admin";
