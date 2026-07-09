@@ -13,6 +13,7 @@ import Analytics from "./Analytics";
 import UserLeaderboard from "./UserLeaderboard";
 import AppLayout from "./AppLayout";
 import PublicCollection from "./PublicCollection";
+import PublicUserProfile from "./PublicUserProfile";
 import Register from "./Register";
 import SignIn from "./SignIn";
 import EmailVerification from "./EmailVerification";
@@ -57,6 +58,10 @@ function MainRoutes() {
           element={<CommunityGuidelines />}
         />
         <Route path={ROUTES.USER_LEADERBOARD} element={<UserLeaderboard />} />
+        <Route
+          path={ROUTES.USERS.PUBLIC_PROFILE}
+          element={<PublicUserProfile />}
+        />
         <Route path={ROUTES.ACCOUNT.REGISTER} element={<Register />} />
         <Route path={ROUTES.ACCOUNT.SIGN_IN} element={<SignIn />} />
         <Route

@@ -214,7 +214,7 @@ const getClientIp = (req) => {
  * @returns {Function} Wrapped handler
  */
 export const withIpBlacklist = (handler) => {
-  return async (req, res) => {
+  const wrap = (handlerFn) => async (req, res) => {
     const ip = getClientIp(req);
 
     const blacklistEntry = isBlacklisted(ip);
@@ -236,8 +236,10 @@ export const withIpBlacklist = (handler) => {
       });
     }
 
-    return handler(req, res);
+    return handlerFn(req, res);
   };
+
+  return typeof handler === "function" ? wrap(handler) : wrap;
 };
 
 /**

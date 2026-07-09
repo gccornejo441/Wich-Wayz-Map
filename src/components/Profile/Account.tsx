@@ -14,6 +14,15 @@ export interface AccountProps {
   setLastName: (value: string) => void;
   username: string;
   setUsername: (value: string) => void;
+  bio: string;
+  setBio: (value: string) => void;
+  favoriteSandwich: string;
+  setFavoriteSandwich: (value: string) => void;
+  favoriteShopId: number | null;
+  setFavoriteShopId: (value: number | null) => void;
+  favoriteShopOptions: Array<{ id: number; name: string }>;
+  profileVisibility: "public" | "private";
+  setProfileVisibility: (value: "public" | "private") => void;
   isUsernameEditable: boolean;
   handleUpdateProfile: Callback;
   onAccountDeleted?: Callback;
@@ -27,6 +36,15 @@ const Account = ({
   setLastName,
   username,
   setUsername,
+  bio,
+  setBio,
+  favoriteSandwich,
+  setFavoriteSandwich,
+  favoriteShopId,
+  setFavoriteShopId,
+  favoriteShopOptions,
+  profileVisibility,
+  setProfileVisibility,
   isUsernameEditable,
   email,
   handleUpdateProfile,
@@ -172,6 +190,85 @@ const Account = ({
               className="px-2 py-1 bg-muted dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-brand-secondary dark:border-gray-600 rounded-lg cursor-not-allowed focus:outline-none"
               title="This field is read-only"
             />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="bio" className="text-sm">
+              Bio
+            </label>
+            <textarea
+              id="bio"
+              value={bio || ""}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                setBio(e.target.value)
+              }
+              maxLength={280}
+              rows={4}
+              placeholder="Tell the community what kind of sandwich spots you look for"
+              className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+            />
+            <span className="mt-1 text-xs text-text-muted dark:text-text-inverted">
+              {bio.length}/280
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="favorite-sandwich" className="text-sm">
+              Favorite Sandwich
+            </label>
+            <input
+              id="favorite-sandwich"
+              type="text"
+              value={favoriteSandwich || ""}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setFavoriteSandwich(e.target.value)
+              }
+              maxLength={80}
+              placeholder="Italian hoagie, chopped cheese, banh mi..."
+              className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="favorite-shop" className="text-sm">
+              Favorite Restaurant
+            </label>
+            <select
+              id="favorite-shop"
+              value={favoriteShopId ?? ""}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                setFavoriteShopId(
+                  e.target.value ? Number(e.target.value) : null,
+                )
+              }
+              className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+            >
+              <option value="">No favorite selected</option>
+              {favoriteShopOptions.map((shop) => (
+                <option key={shop.id} value={shop.id}>
+                  {shop.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="profile-visibility" className="text-sm">
+              Profile Visibility
+            </label>
+            <select
+              id="profile-visibility"
+              value={profileVisibility}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                setProfileVisibility(
+                  e.target.value === "private" ? "private" : "public",
+                )
+              }
+              className="px-2 py-1 bg-white dark:bg-surface-darker border border-brand-secondary dark:border-gray-600 rounded-lg text-text-base dark:text-text-inverted focus:outline-none focus:ring-2 focus:ring-brand-secondary"
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+            <span className="mt-1 text-xs text-text-muted dark:text-text-inverted">
+              Public profiles can show your bio, favorite sandwich, favorite
+              restaurant, stats, and public lists.
+            </span>
           </div>
         </div>
         <button

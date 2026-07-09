@@ -1,7 +1,10 @@
 import { Avatar } from "flowbite-react";
-import generateGravatarUrl from "./generateGravatarUrl";
+import generateGravatarUrl, {
+  generateGravatarUrlFromHash,
+} from "./generateGravatarUrl";
 export interface GravatarProps {
-  email: string;
+  email?: string;
+  hash?: string;
   size?: number;
   rating?: "g" | "pg" | "r" | "x";
   defaultImage?:
@@ -30,6 +33,7 @@ export interface GravatarAvatarProps extends Omit<GravatarProps, "size"> {
 
 const Gravatar = ({
   email,
+  hash,
   alt = "User Avatar",
   bordered = false,
   color = "gray",
@@ -42,12 +46,10 @@ const Gravatar = ({
   rating = "g",
   defaultImage = "mp",
 }: GravatarAvatarProps) => {
-  const gravatarUrl = generateGravatarUrl(
-    email,
-    size === "lg" ? 128 : 50,
-    rating,
-    defaultImage,
-  );
+  const pixelSize = size === "lg" ? 128 : 50;
+  const gravatarUrl = hash
+    ? generateGravatarUrlFromHash(hash, pixelSize, rating, defaultImage)
+    : generateGravatarUrl(email ?? "", pixelSize, rating, defaultImage);
 
   return (
     <Avatar

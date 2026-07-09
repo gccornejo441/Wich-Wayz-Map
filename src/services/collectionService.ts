@@ -147,6 +147,9 @@ const mapShop = (raw: Record<string, unknown>): ShopWithUser => ({
   users_avatar_email:
     (raw.users_avatar_email as string | undefined) ??
     (raw.usersAvatarEmail as string | undefined),
+  users_avatar_hash:
+    (raw.users_avatar_hash as string | undefined) ??
+    (raw.usersAvatarHash as string | undefined),
   locations: Array.isArray(raw.locations)
     ? (raw.locations as Record<string, unknown>[]).map(mapLocation)
     : [],

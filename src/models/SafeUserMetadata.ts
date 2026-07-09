@@ -23,6 +23,10 @@ export interface SafeUserMetadata {
   membershipStatus: string;
   accountStatus: string;
   avatar: string | null;
+  bio?: string | null;
+  favoriteSandwich?: string | null;
+  favoriteShopId?: number | null;
+  profileVisibility?: "public" | "private";
   dateCreated?: string;
   lastLogin?: string | null;
 }

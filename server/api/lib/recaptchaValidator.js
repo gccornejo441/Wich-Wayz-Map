@@ -8,6 +8,23 @@
  */
 
 const RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
+const isProduction = process.env.NODE_ENV === "production";
+
+const createRecaptchaErrorResponse = (result) => {
+  const response = {
+    error: result.error || "reCAPTCHA verification failed",
+    code: "RECAPTCHA_VERIFICATION_FAILED",
+  };
+
+  if (!isProduction) {
+    response.details = {
+      action: result.action,
+      errorCodes: result.errorCodes || [],
+    };
+  }
+
+  return response;
+};
 
 /**
  * Get minimum score threshold for an action from environment variables.
@@ -198,10 +215,7 @@ export const withRecaptcha = (action, minScore = null) => {
     const result = await verifyRecaptchaV3(token, action, minScore);
 
     if (!result.success) {
-      return res.status(400).json({
-        error: result.error || "reCAPTCHA verification failed",
-        code: "RECAPTCHA_VERIFICATION_FAILED",
-      });
+      return res.status(400).json(createRecaptchaErrorResponse(result));
     }
 
     if (!result.isHuman) {

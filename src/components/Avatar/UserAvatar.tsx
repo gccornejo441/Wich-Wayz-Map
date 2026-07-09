@@ -2,13 +2,28 @@ import Gravatar from "../Avatar/Gravatar";
 
 export interface UserAvatarProps {
   avatarId: string;
-  userEmail: string;
+  userEmail?: string;
+  avatarHash?: string | null;
   size?: "sm" | "md" | "lg";
 }
 
-const UserAvatar = ({ avatarId, userEmail, size = "md" }: UserAvatarProps) => {
+const UserAvatar = ({
+  avatarId,
+  userEmail,
+  avatarHash,
+  size = "md",
+}: UserAvatarProps) => {
+  if (avatarId === "gravatar" && !avatarHash && !userEmail) {
+    avatarId = "default";
+  }
+
   return avatarId === "gravatar" ? (
-    <Gravatar email={userEmail} size={size} alt="User Gravatar" />
+    <Gravatar
+      email={userEmail}
+      hash={avatarHash ?? undefined}
+      size={size}
+      alt="User Gravatar"
+    />
   ) : (
     <img
       src={`/assets/avatars/${avatarId}.svg`}

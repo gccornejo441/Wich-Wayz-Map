@@ -1,6 +1,12 @@
 import { executeQuery } from "../lib/db.js";
 import { verifyFirebaseToken } from "../lib/firebaseAdmin.js";
 import { withActiveAccount } from "../lib/withAuth.js";
+import { createHash } from "node:crypto";
+
+const gravatarHash = (email) =>
+  typeof email === "string" && email.trim()
+    ? createHash("md5").update(email.trim().toLowerCase()).digest("hex")
+    : null;
 
 const REACTION_TYPES = new Set([
   "like",
@@ -190,7 +196,7 @@ async function getCommentsForShop(req, res, shop_id) {
       c.date_modified,
       u.username AS user_name,
       u.avatar AS user_avatar,
-      u.email AS user_email
+      u.email
     FROM comments c
     LEFT JOIN users u ON c.user_id = u.id
     WHERE c.shop_id = ?
@@ -210,7 +216,7 @@ async function getCommentsForShop(req, res, shop_id) {
         date_modified: row.date_modified ?? null,
         user_name: row.user_name || null,
         user_avatar: row.user_avatar || null,
-        user_email: row.user_email || null,
+        user_avatar_hash: gravatarHash(row.email),
       })) ?? [];
 
     if (commentsBase.length === 0) {
@@ -318,7 +324,7 @@ async function updateComment(req, res, comment_id) {
     // Fetch user details
     const userDetails = await executeQuery(
       `
-        SELECT username AS user_name, avatar AS user_avatar, email AS user_email
+        SELECT username AS user_name, avatar AS user_avatar, email
         FROM users
         WHERE id = ?
         LIMIT 1;
@@ -337,7 +343,7 @@ async function updateComment(req, res, comment_id) {
       date_modified: updated.date_modified,
       user_name: userRow.user_name || null,
       user_avatar: userRow.user_avatar || null,
-      user_email: userRow.user_email || null,
+      user_avatar_hash: gravatarHash(userRow.email),
     });
   } catch (err) {
     console.error("Failed to update comment:", err);

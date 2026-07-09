@@ -53,5 +53,5 @@ async function handler(req, res) {
 
 // Apply security middleware stack: IP blacklist → Rate limit → reCAPTCHA → Auth → Handler
 export default withIpBlacklist()(
-  withRateLimit("vote")(withRecaptcha("vote")(withActiveAccount(handler))),
+  withRateLimit("vote")(withRecaptcha("vote", 0.1)(withActiveAccount(handler))),
 );

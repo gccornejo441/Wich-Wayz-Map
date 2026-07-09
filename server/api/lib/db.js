@@ -249,6 +249,32 @@ const initSchema = async () => {
     });
 
     await ensureColumn({
+      tableName: "users",
+      columnName: "bio",
+      columnDefinition: "bio TEXT",
+    });
+
+    await ensureColumn({
+      tableName: "users",
+      columnName: "favorite_sandwich",
+      columnDefinition: "favorite_sandwich TEXT",
+    });
+
+    await ensureColumn({
+      tableName: "users",
+      columnName: "favorite_shop_id",
+      columnDefinition:
+        "favorite_shop_id INTEGER REFERENCES shops(id) ON DELETE SET NULL",
+    });
+
+    await ensureColumn({
+      tableName: "users",
+      columnName: "profile_visibility",
+      columnDefinition:
+        "profile_visibility TEXT NOT NULL DEFAULT 'public' CHECK (profile_visibility IN ('public', 'private'))",
+    });
+
+    await ensureColumn({
       tableName: "shops",
       columnName: "duplicate_of_shop_id",
       columnDefinition:

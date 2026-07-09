@@ -1,4 +1,10 @@
 import { executeQuery } from "../lib/db.js";
+import { createHash } from "node:crypto";
+
+const gravatarHash = (email) =>
+  typeof email === "string" && email.trim()
+    ? createHash("md5").update(email.trim().toLowerCase()).digest("hex")
+    : null;
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -11,6 +17,7 @@ export default async function handler(req, res) {
       `
         SELECT 
           u.id AS userId, 
+          u.username,
           u.email,
           u.avatar, 
           COUNT(s.id) AS shopCount
@@ -19,10 +26,18 @@ export default async function handler(req, res) {
         LEFT JOIN 
           shops s ON u.id = s.created_by
         GROUP BY 
-          u.id, u.email;
+          u.id, u.email, u.username;
       `,
     );
-    res.status(200).json(rows);
+    res.status(200).json(
+      rows.map((row) => ({
+        userId: Number(row.userId),
+        username: row.username || null,
+        avatar: row.avatar || null,
+        avatarHash: gravatarHash(row.email),
+        shopCount: Number(row.shopCount ?? 0),
+      })),
+    );
   } catch (error) {
     console.error("Failed to fetch shop counts by user:", error);
     res.status(500).json({ message: "Failed to fetch shop counts by user" });

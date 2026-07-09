@@ -25,7 +25,7 @@ import VoteButtons from "../Map/VoteButtons";
 import UserAvatar from "../Avatar/UserAvatar";
 import { GiSandwich } from "react-icons/gi";
 import { useToast } from "@/context/toastContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import {
   getCommentsForShop,
@@ -54,6 +54,11 @@ const getVoteMessage = (upvotes: number, downvotes: number) => {
   if (upvotes > downvotes) return "Mostly positive";
   if (upvotes < downvotes) return "Mostly negative";
   return "Mixed reviews";
+};
+
+const getPublicProfilePath = (username?: string | null) => {
+  const trimmed = username?.trim();
+  return trimmed ? `/u/${encodeURIComponent(trimmed)}` : null;
 };
 
 const formatRelativeTime = (value: string | number | Date) => {
@@ -153,7 +158,7 @@ const MapSidebar = () => {
     useVote();
   const { savedShopIds, toggleSaved, refreshCollections, setSavedFilterMode } =
     useSaved();
-  const { open: openOverlay } = useOverlay();
+  const { open: openOverlay, closeActive } = useOverlay();
 
   const isMember = isAuthenticated && user?.emailVerified;
 
@@ -1024,16 +1029,48 @@ const MapSidebar = () => {
 
                   {selectedShop.createdBy && (
                     <div className="flex items-center mt-2 text-sm text-text-muted dark:text-text-inverted">
-                      <UserAvatar
-                        avatarId={selectedShop.usersAvatarId || "default"}
-                        userEmail={
-                          selectedShop.usersAvatarEmail || "guest@example.com"
-                        }
-                        size="sm"
-                      />
-                      <span className="ml-2">
-                        Added by: {selectedShop.createdBy}
-                      </span>
+                      {(() => {
+                        const profilePath = getPublicProfilePath(
+                          selectedShop.createdBy,
+                        );
+                        const avatar = (
+                          <UserAvatar
+                            avatarId={selectedShop.usersAvatarId || "default"}
+                            avatarHash={selectedShop.usersAvatarHash}
+                            userEmail={selectedShop.usersAvatarEmail}
+                            size="sm"
+                          />
+                        );
+
+                        return profilePath ? (
+                          <>
+                            <Link
+                              to={profilePath}
+                              onClick={closeActive}
+                              aria-label={`View ${selectedShop.createdBy}'s profile`}
+                            >
+                              {avatar}
+                            </Link>
+                            <span className="ml-2">
+                              Added by:{" "}
+                              <Link
+                                to={profilePath}
+                                onClick={closeActive}
+                                className="font-semibold text-brand-primary hover:underline"
+                              >
+                                {selectedShop.createdBy}
+                              </Link>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {avatar}
+                            <span className="ml-2">
+                              Added by: {selectedShop.createdBy}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -1101,10 +1138,11 @@ const MapSidebar = () => {
                               );
 
                               const avatarId = comment.userAvatar || "default";
-                              const avatarEmail =
-                                comment.userEmail || "guest@example.com";
                               const displayName =
                                 comment.userName || "Sandwich Fan";
+                              const profilePath = getPublicProfilePath(
+                                comment.userName,
+                              );
 
                               const isOwnComment =
                                 userMetadata?.id === comment.userId;
@@ -1128,10 +1166,28 @@ const MapSidebar = () => {
                                   className="rounded-xl bg-surface-light dark:bg-surface-darker border border-surface-dark/10 dark:border-surface-muted/20 shadow-sm"
                                 >
                                   <div className="flex items-start gap-3 p-3">
-                                    {avatarId ? (
+                                    {avatarId && profilePath ? (
+                                      <Link
+                                        to={profilePath}
+                                        onClick={closeActive}
+                                        aria-label={`View ${displayName}'s profile`}
+                                      >
+                                        <UserAvatar
+                                          avatarId={avatarId}
+                                          avatarHash={comment.userAvatarHash}
+                                          userEmail={
+                                            comment.userEmail ?? undefined
+                                          }
+                                          size="sm"
+                                        />
+                                      </Link>
+                                    ) : avatarId ? (
                                       <UserAvatar
                                         avatarId={avatarId}
-                                        userEmail={avatarEmail}
+                                        avatarHash={comment.userAvatarHash}
+                                        userEmail={
+                                          comment.userEmail ?? undefined
+                                        }
                                         size="sm"
                                       />
                                     ) : (
@@ -1142,9 +1198,19 @@ const MapSidebar = () => {
 
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
-                                          {displayName}
-                                        </span>
+                                        {profilePath ? (
+                                          <Link
+                                            to={profilePath}
+                                            onClick={closeActive}
+                                            className="text-sm font-semibold text-brand-primary hover:underline"
+                                          >
+                                            {displayName}
+                                          </Link>
+                                        ) : (
+                                          <span className="text-sm font-semibold text-text-base dark:text-text-inverted">
+                                            {displayName}
+                                          </span>
+                                        )}
 
                                         {showNew && (
                                           <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-brand-secondary text-black">

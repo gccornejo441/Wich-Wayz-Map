@@ -16,7 +16,12 @@
       "@utils/*": ["./src/utils/*"],
       "@models/*": ["./src/models/*"]
     },
-    "types": ["@testing-library/jest-dom", "node", "vitest/globals"],
+    "types": [
+      "@testing-library/jest-dom",
+      "node",
+      "vitest/globals",
+      "dom-chromium-ai"
+    ],
 
     /* Bundler mode */
     "moduleResolution": "Bundler",

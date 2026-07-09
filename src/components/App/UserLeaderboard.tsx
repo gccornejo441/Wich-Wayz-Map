@@ -4,6 +4,7 @@ import {
   ShopCountResult,
 } from "@/services/userLeaderboardService";
 import UserAvatar from "../Avatar/UserAvatar";
+import { Link } from "react-router-dom";
 
 const LeaderboardList = ({
   leaderboard,
@@ -14,27 +15,63 @@ const LeaderboardList = ({
     <ul className="divide-y divide-surface-muted dark:divide-gray-700">
       {leaderboard.map((user, index) => {
         if (user.shopCount === 0) return null;
+        const displayName = user.username || `User ${user.userId}`;
+        const profilePath = user.username
+          ? `/u/${encodeURIComponent(user.username)}`
+          : null;
+
         return (
           <li key={user.userId} className="flex items-center py-4 space-x-4">
             <span className="text-lg font-bold text-text-base dark:text-text-inverted w-6">
               {index + 1}
             </span>
-            <div className="w-12 h-12 md:rounded-full md:border-2 md:border-surface-muted dark:md:border-gray-700 md:bg-surface-muted dark:md:bg-gray-700 flex items-center justify-center cursor-pointer">
-              {user.avatar ? (
-                <UserAvatar
-                  avatarId={user.avatar}
-                  userEmail={user.email}
-                  size="md"
-                />
-              ) : (
-                <span className="text-lg font-medium text-text-base dark:text-text-inverted">
-                  {user.email.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <span className="flex-1 text-lg font-medium text-text-base dark:text-text-inverted">
-              {user.email.split("@")[0]}
-            </span>
+            {profilePath ? (
+              <Link
+                to={profilePath}
+                className="w-12 h-12 md:rounded-full md:border-2 md:border-surface-muted dark:md:border-gray-700 md:bg-surface-muted dark:md:bg-gray-700 flex items-center justify-center cursor-pointer"
+                aria-label={`View ${displayName}'s profile`}
+              >
+                {user.avatar ? (
+                  <UserAvatar
+                    avatarId={user.avatar}
+                    avatarHash={user.avatarHash}
+                    userEmail={user.email}
+                    size="md"
+                  />
+                ) : (
+                  <span className="text-lg font-medium text-text-base dark:text-text-inverted">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <div className="w-12 h-12 md:rounded-full md:border-2 md:border-surface-muted dark:md:border-gray-700 md:bg-surface-muted dark:md:bg-gray-700 flex items-center justify-center">
+                {user.avatar ? (
+                  <UserAvatar
+                    avatarId={user.avatar}
+                    avatarHash={user.avatarHash}
+                    userEmail={user.email}
+                    size="md"
+                  />
+                ) : (
+                  <span className="text-lg font-medium text-text-base dark:text-text-inverted">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
+            {profilePath ? (
+              <Link
+                to={profilePath}
+                className="flex-1 text-lg font-medium text-brand-primary hover:underline"
+              >
+                {displayName}
+              </Link>
+            ) : (
+              <span className="flex-1 text-lg font-medium text-text-base dark:text-text-inverted">
+                {displayName}
+              </span>
+            )}
             <span className="text-xl font-semibold text-text-base dark:text-text-inverted">
               {user.shopCount} shops
             </span>

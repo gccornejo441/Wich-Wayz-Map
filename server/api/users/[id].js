@@ -47,6 +47,10 @@ export default async function handler(req, res) {
       last_name,
       username,
       avatar,
+      bio,
+      favorite_sandwich,
+      favorite_shop_id,
+      profile_visibility,
     } = req.body || {};
 
     const updates = [];
@@ -103,6 +107,48 @@ export default async function handler(req, res) {
     if (avatar !== undefined) {
       updates.push("avatar = ?");
       args.push(avatar);
+    }
+
+    if (bio !== undefined) {
+      updates.push("bio = ?");
+      args.push(typeof bio === "string" ? bio.trim().slice(0, 280) : null);
+    }
+
+    if (favorite_sandwich !== undefined) {
+      updates.push("favorite_sandwich = ?");
+      args.push(
+        typeof favorite_sandwich === "string"
+          ? favorite_sandwich.trim().slice(0, 80)
+          : null,
+      );
+    }
+
+    if (favorite_shop_id !== undefined) {
+      const parsedFavoriteShopId =
+        favorite_shop_id === null || favorite_shop_id === ""
+          ? null
+          : Number(favorite_shop_id);
+
+      if (
+        parsedFavoriteShopId !== null &&
+        (!Number.isInteger(parsedFavoriteShopId) || parsedFavoriteShopId <= 0)
+      ) {
+        res.status(400).json({ message: "Invalid favorite shop" });
+        return;
+      }
+
+      updates.push("favorite_shop_id = ?");
+      args.push(parsedFavoriteShopId);
+    }
+
+    if (profile_visibility !== undefined) {
+      if (profile_visibility !== "public" && profile_visibility !== "private") {
+        res.status(400).json({ message: "Invalid profile visibility" });
+        return;
+      }
+
+      updates.push("profile_visibility = ?");
+      args.push(profile_visibility);
     }
 
     try {

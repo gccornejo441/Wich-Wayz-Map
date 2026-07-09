@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 
 declare global {
   interface Window {
-    grecaptcha: {
+    grecaptcha?: {
       ready: (callback: () => void) => void;
       execute: (
         siteKey: string,
@@ -24,6 +24,96 @@ interface RecaptchaState {
   isLoading: boolean;
   error: string | null;
 }
+
+let recaptchaLoadPromise: Promise<void> | null = null;
+
+const waitForRecaptcha = (timeoutMs = 10000): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+
+    const checkReady = () => {
+      if (window.grecaptcha) {
+        window.grecaptcha.ready(resolve);
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        reject(new Error("reCAPTCHA failed to load"));
+        return;
+      }
+
+      window.setTimeout(checkReady, 100);
+    };
+
+    checkReady();
+  });
+};
+
+const loadRecaptchaScript = async (siteKey: string): Promise<void> => {
+  if (!siteKey) {
+    throw new Error("reCAPTCHA site key not configured");
+  }
+
+  if (window.grecaptcha) {
+    await waitForRecaptcha();
+    return;
+  }
+
+  if (recaptchaLoadPromise) {
+    await recaptchaLoadPromise;
+    return;
+  }
+
+  recaptchaLoadPromise = new Promise<void>((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src*="recaptcha/api.js"]`,
+    );
+
+    const script =
+      existingScript ??
+      Object.assign(document.createElement("script"), {
+        src: `https://www.google.com/recaptcha/api.js?render=${siteKey}`,
+        async: true,
+        defer: true,
+      });
+
+    const timeout = window.setTimeout(() => {
+      reject(new Error("reCAPTCHA failed to load"));
+    }, 10000);
+
+    const handleLoaded = () => {
+      waitForRecaptcha()
+        .then(() => {
+          window.clearTimeout(timeout);
+          resolve(undefined);
+        })
+        .catch((error: unknown) => {
+          window.clearTimeout(timeout);
+          reject(error);
+        });
+    };
+
+    const handleError = () => {
+      window.clearTimeout(timeout);
+      reject(new Error("Failed to load reCAPTCHA script"));
+    };
+
+    script.addEventListener("load", handleLoaded, { once: true });
+    script.addEventListener("error", handleError, { once: true });
+
+    if (existingScript) {
+      void waitForRecaptcha().then(handleLoaded).catch(handleError);
+      return;
+    }
+
+    document.head.appendChild(script);
+  }).catch((error: unknown) => {
+    recaptchaLoadPromise = null;
+    throw error;
+  });
+
+  await recaptchaLoadPromise;
+};
 
 /**
  * Hook to use reCAPTCHA v3 in React components.
@@ -44,87 +134,29 @@ export const useRecaptcha = () => {
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
-    if (!siteKey) {
-      setState({
-        isReady: false,
-        isLoading: false,
-        error: "reCAPTCHA site key not configured",
-      });
-      return;
-    }
+    let isMounted = true;
 
-    // Check if reCAPTCHA is already loaded
-    if (window.grecaptcha) {
-      window.grecaptcha.ready(() => {
+    loadRecaptchaScript(siteKey)
+      .then(() => {
+        if (!isMounted) return;
         setState({
           isReady: true,
           isLoading: false,
           error: null,
         });
-      });
-      return;
-    }
-
-    // Load reCAPTCHA script if not already loaded
-    const existingScript = document.querySelector(
-      `script[src*="recaptcha/api.js"]`,
-    );
-
-    if (existingScript) {
-      // Script is loading, wait for it
-      const checkReady = setInterval(() => {
-        if (window.grecaptcha) {
-          clearInterval(checkReady);
-          window.grecaptcha.ready(() => {
-            setState({
-              isReady: true,
-              isLoading: false,
-              error: null,
-            });
-          });
-        }
-      }, 100);
-
-      return () => clearInterval(checkReady);
-    }
-
-    // Load the script
-    const script = document.createElement("script");
-    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
-    script.async = true;
-    script.defer = true;
-
-    script.onload = () => {
-      if (window.grecaptcha) {
-        window.grecaptcha.ready(() => {
-          setState({
-            isReady: true,
-            isLoading: false,
-            error: null,
-          });
-        });
-      } else {
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return;
         setState({
           isReady: false,
           isLoading: false,
-          error: "Failed to load reCAPTCHA",
+          error:
+            error instanceof Error ? error.message : "Failed to load reCAPTCHA",
         });
-      }
-    };
-
-    script.onerror = () => {
-      setState({
-        isReady: false,
-        isLoading: false,
-        error: "Failed to load reCAPTCHA script",
       });
-    };
-
-    document.head.appendChild(script);
 
     return () => {
-      // Cleanup: remove script on unmount (optional)
-      // Note: You might want to keep the script loaded for the entire session
+      isMounted = false;
     };
   }, [siteKey]);
 
@@ -137,27 +169,21 @@ export const useRecaptcha = () => {
    */
   const executeRecaptcha = useCallback(
     async (action: string): Promise<string> => {
-      if (!siteKey) {
-        throw new Error("reCAPTCHA site key not configured");
-      }
+      await loadRecaptchaScript(siteKey);
 
-      if (!state.isReady) {
-        throw new Error("reCAPTCHA not ready. Please wait.");
-      }
-
-      if (!window.grecaptcha) {
+      const grecaptcha = window.grecaptcha;
+      if (!grecaptcha) {
         throw new Error("reCAPTCHA not loaded");
       }
 
       try {
-        const token = await window.grecaptcha.execute(siteKey, { action });
-        return token;
+        return await grecaptcha.execute(siteKey, { action });
       } catch (error) {
         console.error("reCAPTCHA execution failed:", error);
         throw new Error("Failed to verify. Please try again.");
       }
     },
-    [siteKey, state.isReady],
+    [siteKey],
   );
 
   return {
@@ -179,25 +205,14 @@ export const useRecaptchaExecute = () => {
 
   return useCallback(
     async (action: string): Promise<string> => {
-      if (!siteKey) {
-        throw new Error("reCAPTCHA site key not configured");
+      await loadRecaptchaScript(siteKey);
+
+      const grecaptcha = window.grecaptcha;
+      if (!grecaptcha) {
+        throw new Error("reCAPTCHA not loaded");
       }
 
-      return new Promise((resolve, reject) => {
-        if (!window.grecaptcha) {
-          reject(new Error("reCAPTCHA not loaded"));
-          return;
-        }
-
-        window.grecaptcha.ready(async () => {
-          try {
-            const token = await window.grecaptcha.execute(siteKey, { action });
-            resolve(token);
-          } catch (error) {
-            reject(error);
-          }
-        });
-      });
+      return grecaptcha.execute(siteKey, { action });
     },
     [siteKey],
   );

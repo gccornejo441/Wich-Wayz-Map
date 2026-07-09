@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { useAuth } from "./authContext";
-import { VoteContextData } from "../types/dataTypes";
-import { GetVotesForShop, InsertVote } from "../services/vote";
+import { useAuth } from "@context/authContext";
+import { useRecaptchaExecute } from "@hooks/useRecaptcha";
+import { VoteContextData } from "@/types/dataTypes";
+import { GetVotesForShop, InsertVote } from "@services/vote";
 
 type UserVote = "up" | "down" | null;
 
@@ -31,6 +32,7 @@ const applyVoteTransition = (
 
 export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, userMetadata } = useAuth();
+  const executeRecaptcha = useRecaptchaExecute();
   const userId = userMetadata?.id;
 
   const [votes, setVotes] = useState<
@@ -99,18 +101,21 @@ export const VoteProvider = ({ children }: { children: React.ReactNode }) => {
       if (!user || !userMetadata) return;
 
       try {
+        const recaptchaToken = await executeRecaptcha("vote");
+
         await InsertVote({
           shop_id: shopId,
           user_id: userMetadata.id,
           upvote: nextUserVote === "up",
           downvote: nextUserVote === "down",
+          recaptchaToken,
         });
       } catch (error) {
         console.error(`Error submitting vote for shopId ${shopId}:`, error);
         throw new Error("Failed to submit vote.");
       }
     },
-    [user, userMetadata],
+    [executeRecaptcha, user, userMetadata],
   );
 
   return (

@@ -68,6 +68,7 @@ export interface PopupContent {
   categories?: string;
   usersAvatarId?: string;
   usersAvatarEmail?: string;
+  usersAvatarHash?: string;
   latitude: number;
   longitude: number;
   locationStatus?: "open" | "temporarily_closed" | "permanently_closed";
@@ -141,7 +142,10 @@ export type ShopDataVariants = {
   // User/Creator fields
   usersAvatarEmail?: string;
   users_avatar_email?: string;
+  usersAvatarHash?: string;
+  users_avatar_hash?: string;
   user_email?: string;
+  user_avatar_hash?: string;
   usersAvatarId?: string;
   users_avatar_id?: string;
   user_avatar_id?: string;
@@ -202,4 +206,5 @@ export interface CommentResponse {
   userName?: string | null;
   userAvatar?: string | null;
   userEmail?: string | null;
+  userAvatarHash?: string | null;
 }

@@ -9,6 +9,7 @@ import { ROUTES } from "@constants/routes";
 import { updateUserProfile } from "@services/apiClient";
 import { resendVerification } from "@services/firebase";
 import { userProfileSchema } from "@constants/validators";
+import { useShops } from "@context/shopContext";
 import * as yup from "yup";
 
 const UserProfile = () => {
@@ -22,6 +23,7 @@ const UserProfile = () => {
 
   const navigate = useNavigate();
   const { isAuthenticated, user, userMetadata, setUserMetadata } = useAuth();
+  const { shops } = useShops();
 
   useEffect(() => {
     if (!userMetadata) return;
@@ -56,6 +58,10 @@ const UserProfile = () => {
           lastName: userMetadata.lastName,
           username: isUsernameEditable ? userMetadata.username : undefined,
           avatar: userMetadata.avatar,
+          bio: userMetadata.bio,
+          favoriteSandwich: userMetadata.favoriteSandwich,
+          favoriteShopId: userMetadata.favoriteShopId,
+          profileVisibility: userMetadata.profileVisibility ?? "public",
         },
         { abortEarly: false },
       );
@@ -64,6 +70,10 @@ const UserProfile = () => {
         first_name: validatedData.firstName ?? null,
         last_name: validatedData.lastName ?? null,
         avatar: validatedData.avatar ?? null,
+        bio: validatedData.bio ?? null,
+        favorite_sandwich: validatedData.favoriteSandwich ?? null,
+        favorite_shop_id: validatedData.favoriteShopId ?? null,
+        profile_visibility: validatedData.profileVisibility ?? "public",
       };
 
       const normalizedUsername =
@@ -88,6 +98,10 @@ const UserProfile = () => {
         firstName: validatedData.firstName ?? null,
         lastName: validatedData.lastName ?? null,
         avatar: validatedData.avatar ?? null,
+        bio: validatedData.bio ?? null,
+        favoriteSandwich: validatedData.favoriteSandwich ?? null,
+        favoriteShopId: validatedData.favoriteShopId ?? null,
+        profileVisibility: validatedData.profileVisibility ?? "public",
       };
 
       if (isUsernameChangeRequested) {
@@ -176,7 +190,7 @@ const UserProfile = () => {
   const isBusy = isSendingVerification || isRefreshingVerification;
 
   return (
-    <div className="max-w-3xl mx-auto min-h-[100dvh] mt-6 md:mt-0 py-6">
+    <div className="max-w-3xl mx-auto min-h-[100dvh] pt-20 pb-6">
       <div className="p-6 mx-auto bg-surface-light dark:bg-surface-dark pb-4 border-b border-brand-secondary dark:border-brand-secondary">
         <h2 className="text-xl font-semibold text-text-base dark:text-text-inverted mb-2">
           App Settings
@@ -325,6 +339,28 @@ const UserProfile = () => {
                   username={userMetadata.username || ""}
                   setUsername={(username) =>
                     setUserMetadata({ ...userMetadata, username })
+                  }
+                  bio={userMetadata.bio || ""}
+                  setBio={(bio) => setUserMetadata({ ...userMetadata, bio })}
+                  favoriteSandwich={userMetadata.favoriteSandwich || ""}
+                  setFavoriteSandwich={(favoriteSandwich) =>
+                    setUserMetadata({ ...userMetadata, favoriteSandwich })
+                  }
+                  favoriteShopId={userMetadata.favoriteShopId ?? null}
+                  setFavoriteShopId={(favoriteShopId) =>
+                    setUserMetadata({ ...userMetadata, favoriteShopId })
+                  }
+                  favoriteShopOptions={shops
+                    .filter((shop) => typeof shop.id === "number")
+                    .map((shop) => ({ id: shop.id as number, name: shop.name }))
+                    .sort((a, b) => a.name.localeCompare(b.name))}
+                  profileVisibility={
+                    userMetadata.profileVisibility === "private"
+                      ? "private"
+                      : "public"
+                  }
+                  setProfileVisibility={(profileVisibility) =>
+                    setUserMetadata({ ...userMetadata, profileVisibility })
                   }
                   isUsernameEditable={!userMetadata.usernameFinalizedAt}
                   handleUpdateProfile={handleUpdateProfile}

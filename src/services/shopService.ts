@@ -79,6 +79,8 @@ export const fetchShopById = async (
       createdBy: shop.created_by_username || undefined,
       created_by: shop.created_by,
       usersAvatarId: shop.users_avatar_id || undefined,
+      usersAvatarHash:
+        (shop as { users_avatar_hash?: string }).users_avatar_hash || undefined,
       usersAvatarEmail:
         (shop as { users_avatar_email?: string }).users_avatar_email ||
         undefined,

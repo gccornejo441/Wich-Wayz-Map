@@ -25,6 +25,9 @@ export interface Routes {
   };
   ANALYTICS: string;
   USER_LEADERBOARD: string;
+  USERS: {
+    PUBLIC_PROFILE: string;
+  };
   COLLECTIONS: {
     PUBLIC: string;
   };
@@ -55,6 +58,9 @@ export const ROUTES: Routes = {
   },
   ANALYTICS: "/analytics",
   USER_LEADERBOARD: "/user-leaderboard",
+  USERS: {
+    PUBLIC_PROFILE: "/u/:username",
+  },
   COLLECTIONS: {
     PUBLIC: "/lists/:id",
   },
@@ -88,6 +94,7 @@ export const useRouteCheck = (routes: Routes) => {
   const isAccountProfile = location.pathname === ROUTES.ACCOUNT.PROFILE;
   const isAddShopPage = location.pathname === ROUTES.SHOPS.ADD;
   const isSignInPage = location.pathname === ROUTES.ACCOUNT.SIGN_IN;
+  const isPublicUserProfile = location.pathname.startsWith("/u/");
 
   const isLegalOrAuxPage =
     location.pathname === ROUTES.LEGAL.PRIVACY_POLICY ||
@@ -95,7 +102,8 @@ export const useRouteCheck = (routes: Routes) => {
     location.pathname === ROUTES.LEGAL.COMMUNITY_GUIDELINES ||
     location.pathname === ROUTES.ABOUT ||
     location.pathname === ROUTES.ANALYTICS ||
-    location.pathname === ROUTES.USER_LEADERBOARD;
+    location.pathname === ROUTES.USER_LEADERBOARD ||
+    isPublicUserProfile;
 
   return {
     isPathValid,

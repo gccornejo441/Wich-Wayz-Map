@@ -18,6 +18,13 @@ const toSafeUserMetadata = (user) => ({
   membershipStatus: user.membership_status,
   accountStatus: user.account_status,
   avatar: user.avatar,
+  bio: user.bio ?? null,
+  favoriteSandwich: user.favorite_sandwich ?? null,
+  favoriteShopId:
+    user.favorite_shop_id === null || user.favorite_shop_id === undefined
+      ? null
+      : Number(user.favorite_shop_id),
+  profileVisibility: user.profile_visibility || "public",
   authProvider: user.auth_provider || "password",
   dateCreated: user.date_created,
   lastLogin: user.last_login,
@@ -30,6 +37,22 @@ const isDeletedUser = (user, hasDeletedAt) => {
     user.deleted_at !== undefined &&
     String(user.deleted_at).trim() !== "";
   return user.account_status === "deleted" || hasDeletedTimestamp;
+};
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const userDataErrorResponse = (
+  error,
+  fallbackError = "Failed to fetch user data",
+) => {
+  if (isProduction) {
+    return { error: fallbackError };
+  }
+
+  return {
+    error: fallbackError,
+    details: error instanceof Error ? error.message : String(error),
+  };
 };
 
 const getActiveUserByFirebaseUid = async (turso, uid, hasDeletedAt) => {
@@ -268,14 +291,15 @@ async function handler(req, res) {
     }
 
     if (!result.rows[0]) {
-      console.error("Failed to resolve user after sync:", { uid, email });
-      return res.status(500).json({ error: "Failed to fetch user data" });
+      const error = new Error("Failed to resolve user after sync");
+      console.error(error.message, { uid, email });
+      return res.status(500).json(userDataErrorResponse(error));
     }
 
     return res.status(200).json(toSafeUserMetadata(result.rows[0]));
   } catch (error) {
     console.error("Failed to get/create user:", error);
-    return res.status(500).json({ error: "Failed to fetch user data" });
+    return res.status(500).json(userDataErrorResponse(error));
   }
 }
 

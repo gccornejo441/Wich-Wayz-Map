@@ -6,6 +6,7 @@ export interface ShopWithUser extends Shop {
   created_by_username?: string;
   users_avatar_id?: string;
   users_avatar_email?: string;
+  users_avatar_hash?: string;
   locations?: Location[];
   categories?: Category[];
 }
