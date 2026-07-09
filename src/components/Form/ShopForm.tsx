@@ -366,6 +366,7 @@ const ShopForm = ({
       "longitude",
     ],
   });
+  const watchedAddress = watchedFields[0] as string | undefined;
   const draftValues = useWatch({ control });
 
   const derivedAddress: AddressDraft = {
@@ -402,7 +403,7 @@ const ShopForm = ({
   useEffect(() => {
     if (autoGeocodeTimerRef.current) clearTimeout(autoGeocodeTimerRef.current);
 
-    const address = (watchedFields[0] as string) ?? "";
+    const address = watchedAddress ?? "";
     if (!address.trim() || mode !== "add") return;
 
     autoGeocodeTimerRef.current = setTimeout(async () => {
@@ -424,7 +425,7 @@ const ShopForm = ({
       if (autoGeocodeTimerRef.current)
         clearTimeout(autoGeocodeTimerRef.current);
     };
-  }, [watchedFields[0], mode, setValue]);
+  }, [watchedAddress, mode, setValue]);
 
   const [locationStatus, setLocationStatus] = useState<LocationStatus>(
     (initialData?.locationStatus as LocationStatus) || "open",
